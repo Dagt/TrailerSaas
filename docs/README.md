@@ -40,22 +40,28 @@ These files describe the current real-world operation. They are evidence, not ne
 - [Yard Check](state-machines/yard-check.md)
 - [Alert](state-machines/alert.md)
 
-## 6. Workflows
+## 6. UX / User Flows
+
+- [UX flow index](ux/README.md)
+- [Transport Operations Web](ux/transport-operations-web.md)
+- [Road Driver Mobile](ux/road-driver-mobile.md)
+
+## 7. Workflows
 
 - [Core workflows](workflows/core-workflows.md)
 
-## 7. Architecture
+## 8. Architecture
 
 - [Non-functional requirements](architecture/non-functional-requirements.md)
 
-## 8. Security
+## 9. Security
 
 - [Tenancy and authorization](security/tenancy-and-authorization.md)
 - [Permission capabilities](security/permission-capabilities.md)
 
 Technology selection is intentionally deferred until product behavior is sufficiently stable.
 
-## 9. Decisions
+## 10. Decisions
 
 - [ADR index](decisions/README.md)
 - [ADR template](decisions/ADR-000-template.md)
