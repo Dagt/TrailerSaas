@@ -1,6 +1,6 @@
 # MVP Scope v0.1
 
-**Status:** Draft for approval after second discovery round
+**Status:** Draft for approval after final discovery round
 
 The MVP should prove that TrailerSaaS can maintain trustworthy trailer inventory/location and coordinate customer orders, driver trips, stops and delivery evidence without relying on spreadsheets and message reconstruction.
 
@@ -29,6 +29,7 @@ The MVP should prove that TrailerSaaS can maintain trustworthy trailer inventory
 
 - Customer-side order creation
 - Order number / PO / shipment / BOL references
+- Manifest data: product description, quantity, pallet count and weight
 - Multiple orders in one trailer/trip
 - One order spanning multiple trailers
 - Multi-stop trips
@@ -44,8 +45,8 @@ The MVP should prove that TrailerSaaS can maintain trustworthy trailer inventory
 
 - Sign in
 - On Duty / Off Duty
-- Pre-trip
-- Tractor photos
+- Pre-trip with structured checklist
+- Required exterior tractor photos: front, rear, driver side, passenger side
 - Odometer/mileage
 - View assigned trips/orders/stops
 - Scan trailer QR
@@ -55,8 +56,8 @@ The MVP should prove that TrailerSaaS can maintain trustworthy trailer inventory
 - Drop & Hook
 - Multi-stop execution
 - BOL/POD photo upload
-- Return to base
-- Post-trip
+- Return to base when applicable
+- Post-trip with final mileage, damages, failures and comments
 - Basic delay/damage/exception reporting
 - Temporary offline queue/retry for critical actions
 
@@ -64,7 +65,7 @@ The MVP should prove that TrailerSaaS can maintain trustworthy trailer inventory
 
 - Optional fuel action during active trip
 - Odometer/mileage
-- Fuel total/details once final fields are confirmed
+- Receipt photo
 
 This is not full fuel management.
 
@@ -82,8 +83,9 @@ This is not full fuel management.
 ### G. Trailer inventory and history
 
 - Internal unique trailer identity
-- Non-unique visible trailer numbers supported
-- Search/disambiguation by trailer/customer context
+- Tenant-visible trailer number unique for the initial design-partner workflow
+- Persistent designated-customer assignment, changeable only by Administration
+- Search by operational trailer identifier
 - Current location
 - Load state
 - Operational state
@@ -105,6 +107,8 @@ This is not full fuel management.
 - Location-discrepancy warning
 - Confirmed correction workflow
 - Location Unknown handling
+- automatic Administration alert for missing trailer
+- preserve last known location / last seen / last driver
 
 ### I. Alerts
 
@@ -118,7 +122,8 @@ Initial required alert:
 - Customer-scoped trailer inventory
 - Customer-scoped order/delivery visibility
 - Direct order/delivery creation
-- Modify/cancel before allowed cutoff
+- normal self-service modify/cancel before driver departure
+- exceptional audited change/cancellation flow after departure
 - View location/status/content
 - View permitted BOL/POD/evidence
 - No access to unrelated customers
@@ -204,3 +209,31 @@ These values must remain configurable/policy-driven until product/legal retentio
 12. Corrections/destination changes are auditable.
 13. Critical mobile actions survive temporary connectivity loss.
 14. Cross-tenant authorization tests prevent data leakage.
+
+
+## Standard MVP POD rule
+
+For the first version, use one common delivery-evidence rule for all customers.
+
+When a receiver is available:
+
+- signed BOL photo/file is the primary POD.
+
+When no receiver is available:
+
+- select **No receiver available**;
+- capture BOL photo;
+- capture delivery photo;
+- add comment.
+
+Per-customer POD rule customization is deferred.
+
+## Lifecycle separation
+
+The MVP must treat these as distinct:
+
+- Delivery/Stop completion;
+- Trip/Run completion;
+- Shift completion / Off Duty.
+
+Off Duty is the end of the driver's workday and must not be used as the universal completion event for every delivery.
