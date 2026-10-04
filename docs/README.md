@@ -75,12 +75,18 @@ These files describe the current real-world operation. They are evidence, not ne
 - [Tenancy and authorization](security/tenancy-and-authorization.md)
 - [Permission capabilities](security/permission-capabilities.md)
 
-Baseline technology and architecture decisions are accepted under `docs/decisions/`; remaining architecture items are tracked in the pre-implementation roadmap.
+Baseline technology and architecture decisions ADR-001 through ADR-022 are accepted under `docs/decisions/`.
 
 ## 12. Decisions
 
 - [ADR index](decisions/README.md)
 - [ADR template](decisions/ADR-000-template.md)
+
+## 13. Backlog
+
+- [MVP implementation backlog](backlog/README.md)
+- [Implementation order](backlog/implementation-order.md)
+- [Codex issue workflow](backlog/codex-workflow.md)
 
 ## Documentation status labels
 
@@ -111,13 +117,6 @@ Core functional behavior is now sufficiently defined to move from requirements e
 
 Remaining open items are mostly product-policy, compliance, UX-content or architecture decisions rather than gaps in understanding the operating workflow.
 
-## Next documentation milestones
+## Current implementation milestone
 
-1. Freeze product state machines and lifecycle semantics.
-2. Approve revised domain model and core workflows.
-3. Freeze MVP v0.1.
-4. Create UX flow/wireframe specification for Web, Road Mode and Yard Mode.
-5. Select architecture through ADRs.
-6. Define database model and API contracts.
-7. Convert requirements into implementation epics/issues.
-8. Begin implementation with Codex.
+The specification and backlog phases are complete. GitHub tracking issue #66 links the 14 MVP Epics, and `docs/backlog/implementation-order.md` defines the dependency waves for issue-driven implementation.
