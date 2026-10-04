@@ -1,6 +1,6 @@
 # Core Workflows
 
-**Status:** Draft refined after second discovery round
+**Status:** Draft refined after final discovery round
 
 ## WF-001 — Customer creates order
 
@@ -16,7 +16,9 @@
    - known load information.
 3. Order appears automatically in the tenant's operational queue.
 4. No separate approval request is required in the design-partner workflow.
-5. Customer may modify/cancel before the final allowed cutoff; exact state cutoff remains open.
+5. Normal customer self-service modification/cancellation is allowed before driver departure.
+6. Changes after departure are exceptional and require coordinated operational handling rather than a silent edit.
+7. A customer/final-customer appointment may still force a destination/time change before arrival; such changes are audited.
 
 ## WF-002 — Transport operations plans trip/run
 
@@ -36,8 +38,12 @@
 2. Driver marks **On Duty**.
 3. Driver begins Pre-Trip.
 4. Driver records odometer/mileage.
-5. Driver captures required tractor photos.
-6. Driver completes pre-trip confirmation.
+5. Driver captures four required exterior photos:
+   - front;
+   - rear;
+   - driver side;
+   - passenger side.
+6. Driver completes the structured Pre-Trip checklist.
 7. Driver proceeds to office/dispatch instructions.
 
 The MVP inspection flow is operational evidence, not a full regulatory inspection product.
@@ -75,7 +81,7 @@ During an active Trip:
 
 1. Driver selects **Fuel**.
 2. Records mileage/odometer.
-3. Records fuel total/details required by final field definition.
+3. Captures a receipt photo.
 4. Event is associated with driver, tractor and trip.
 
 This is lightweight logging only; full fuel management is out of scope.
@@ -122,11 +128,13 @@ Baseline flow:
 1. Driver captures photo/file of signed BOL when receiver signature is available.
 2. Evidence is associated with Order/Stop/Trip.
 3. If nobody is available to sign:
-   - driver records delivery evidence available;
-   - system follows an exception path rather than blocking delivery indefinitely.
+   - driver selects **No receiver available**;
+   - captures a BOL photo;
+   - captures a delivery photo;
+   - adds a comment;
+   - delivery may still be completed.
 4. Standalone signature-on-screen is not required for MVP.
-
-Evidence requirements may be configurable by customer later.
+5. MVP uses one common POD rule for all customers; per-customer POD rules are deferred.
 
 ## WF-011 — Multi-stop trip
 
@@ -139,15 +147,19 @@ If one trailer/run has several deliveries:
 5. Trailer may remain same or change through Drop & Hook.
 6. History must retain which orders/trailer applied to each segment.
 
-## WF-012 — Return to base and complete trip
+## WF-012 — Return to base, Post-Trip and shift end
 
-1. Driver marks arrival at base.
+1. Driver marks arrival at base when applicable.
 2. Current trailer location becomes yard/base where appropriate.
-3. Driver completes Post-Trip.
-4. Driver marks **Off Duty**.
-5. Trip/Run is completed according to final state rules.
+3. Driver completes Post-Trip:
+   - final mileage;
+   - damages;
+   - failures/problems;
+   - comments.
+4. A Trip/Run may be closed according to its own lifecycle.
+5. Driver marks **Off Duty** only when the driver's workday/shift is actually finished.
 
-Discovery identifies return to base as the normal completion point for the driver's described task/run.
+Delivery completion, Trip completion and Shift completion are separate lifecycle events.
 
 ## WF-013 — Yard / Spotter mode
 
@@ -249,3 +261,25 @@ If change is required:
 6. Derived current state is updated.
 
 Normal correction must not destructively erase operational history.
+
+
+## WF-021 — Cancel / redirect after departure
+
+1. Hood Container/customer-side authority cancels or changes the active Order.
+2. System records cancellation/change as an operational exception.
+3. Driver receives new instructions.
+4. Driver may:
+   - return to base with trailer/cargo; or
+   - receive a new destination.
+5. New instruction may originate from authorized customer operations or 2 Fast Logistics operations.
+6. Original destination/order instruction remains in audit history.
+7. Cargo/trailer state is updated according to the resulting route.
+
+## WF-022 — Missing trailer escalation
+
+1. Yard Check finishes with an expected trailer missing.
+2. User confirms the missing result.
+3. Trailer current location becomes `LOCATION_UNKNOWN`.
+4. System preserves last known location, last seen time and last driver.
+5. Administration receives an automatic alert.
+6. Administration owns investigation/resolution.
