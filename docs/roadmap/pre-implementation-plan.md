@@ -37,7 +37,7 @@ Current status: the v0.1 machines are documented and Accepted under `docs/state-
 
 ## Phase 2 — UX / User Flows
 
-**Progress: In progress. Transport Operations Web and Road Driver Mobile drafted.**
+**Progress: Draft complete. All five MVP actor flows documented; pending acceptance.**
 
 Define screen-level flows for:
 
@@ -64,7 +64,7 @@ For each flow define:
 
 All MVP workflows have a deterministic UI flow.
 
-Current status: priority flows for Transport Operations Web and Road Driver Mobile are documented under `docs/ux/`. Remaining Phase 2 flows: Tenant Admin Web, Customer Dispatcher Web, Yard / Spotter Mobile.
+Current status: Tenant Admin Web, Transport Operations Web, Customer Dispatcher Web, Road Driver Mobile and Yard / Spotter Mobile are all documented under `docs/ux/`. After review/acceptance, Phase 2 can close and Phase 3 (freeze relational schema) becomes active.
 
 ## Phase 3 — Freeze Relational Schema
 
