@@ -1,6 +1,6 @@
 # Relational Data Model v0.1
 
-**Status:** Draft physical-model baseline  
+**Status:** Superseded draft — retained for history; use schema-v1.0.md  
 **Database:** PostgreSQL  
 **Related ADRs:** ADR-003, ADR-006, ADR-011
 
