@@ -90,6 +90,7 @@ Baseline technology and architecture decisions ADR-001 through ADR-022 are accep
 
 ## Documentation status labels
 
+- **Accepted** — approved as an implementation baseline; changes require explicit review/update.
 - **Confirmed** — directly supported by discovery or explicitly approved.
 - **Proposed** — recommended product behavior awaiting validation.
 - **Assumption** — temporary interpretation that must not silently become a requirement.
