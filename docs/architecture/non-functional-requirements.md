@@ -1,9 +1,9 @@
 # Non-Functional Requirements
 
-**Status:** Draft  
+**Status:** Accepted baseline v0.1 on 2026-10-04  
 **Convention:** `NFR-###`
 
-These requirements should guide architecture selection later. They do not prescribe a stack.
+These accepted requirements guide implementation and production hardening. The accepted ADRs define the stack and architecture used to satisfy them.
 
 ## Security and tenancy
 
