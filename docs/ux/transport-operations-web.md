@@ -1,6 +1,6 @@
 # Transport Operations Web — UX Flow v0.1
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Primary actor:** TRANSPORT_OPERATIONS  
 **Related requirements:** FR-030–045, FR-090–103, FR-150–164, FR-170–174, FR-195–197  
 **Related state machines:** Order, Trip, Stop, Trailer, Alert
