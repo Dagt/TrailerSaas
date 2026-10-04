@@ -21,7 +21,10 @@ The runtime application database role:
 
 - must not be superuser;
 - must not have `BYPASSRLS`;
+- must not own tenant tables;
 - is subject to tenant policies.
+
+Where appropriate, enable `FORCE ROW LEVEL SECURITY` on tenant-owned tables so owner-like execution paths cannot accidentally bypass policy.
 
 The migration/administration role is separate and may own schema objects / bypass policies as required for migrations and controlled maintenance.
 
