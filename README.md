@@ -40,6 +40,52 @@ The objective is that, when development begins, Codex or any engineer can unders
 
 See [docs/README.md](docs/README.md) for the documentation map and [docs/backlog/README.md](docs/backlog/README.md) for the implementation backlog.
 
+## Backend local development
+
+The Issue #15 scaffold lives in `backend/`: one Maven project and one deployable
+Spring Boot application, following ADR-001/002/006. Install JDK 25 and make
+`java` available on PATH (or set `JAVA_HOME` to the JDK). The Maven Wrapper pins
+Maven 3.9.11; its first run requires network access to download Maven/dependencies.
+
+From the repository root, on Windows PowerShell:
+
+```powershell
+cd backend
+.\mvnw.cmd clean verify
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
+```
+
+On macOS/Linux:
+
+```sh
+cd backend
+./mvnw clean verify
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+The local profile listens on `127.0.0.1:8080`. Stop with Ctrl+C.
+Health is available at `http://127.0.0.1:8080/actuator/health`, with
+`/liveness` and `/readiness` subpaths. Only health is exposed over HTTP;
+responses omit component details. No external services or credentials are
+required. Readiness currently reflects application lifecycle only; PostgreSQL
+dependency checks belong to the later persistence baseline.
+
+`src/main/java/com/trailersaas` contains the application entry point and twelve
+module packages declared through `package-info.java`: `identity`, `customers`,
+`drivers`, `tractors`, `trailers`, `orders`, `trips`, `yard`, `inspections`,
+`documents`, `notifications`, and `audit`. These follow ADR-001: identity includes
+tenancy, trips includes dispatch, and notifications reserves alerts. Master data
+uses the relevant customer/equipment packages rather than a shared catch-all module.
+Module root packages form the future public APIs; nested packages are internal
+by Spring Modulith convention. Explicit services/events and allowed dependency
+lists can be added when later issues introduce actual interactions.
+
+`src/test/java/com/trailersaas` provides JUnit tests for module discovery/boundary
+verification and local-profile startup with real HTTP health/probe requests on a
+random port. Future module tests belong under their matching capability package.
+The scaffold contains no business features, authentication or persistence;
+PostgreSQL/Flyway/Testcontainers are deferred to #19 and CI quality gates to #18.
+
 ## Current phase
 
 ### Current implementation readiness
