@@ -1,6 +1,6 @@
 # ADR-022 — PostgreSQL-Backed Outbox and Background Jobs
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
