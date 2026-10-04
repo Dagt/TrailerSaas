@@ -1,6 +1,6 @@
 # ADR-007 — Authentication: Firebase Authentication, Authorization in TrailerSaaS
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
