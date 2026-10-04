@@ -7,6 +7,7 @@ This folder is the project knowledge base and implementation source of truth.
 - [Design-partner baseline](discovery/design-partner-baseline.md)
 - [Initial questionnaire answer matrix](discovery/questionnaire-answer-matrix.md)
 - [Follow-up questionnaire — 2026-10-03](discovery/follow-up-questionnaire-2026-10-03.md)
+- [Final questionnaire — 2026-10-04](discovery/final-questionnaire-2026-10-04.md)
 - [Design-partner facilities and docks](discovery/design-partner-facilities.md)
 
 These files describe the current real-world operation. They are evidence, not necessarily the final generic SaaS design.
@@ -49,35 +50,31 @@ Technology selection is intentionally deferred until product behavior is suffici
 
 ## Current discovery state
 
-The second discovery round resolved major questions around:
+The three planned discovery rounds are complete.
 
-- many-to-many order/trailer relationships;
-- multi-stop trips;
-- drop & hook vs live load;
-- wrong-trailer authorization;
-- non-unique displayed trailer numbers;
-- trailer content requirements;
-- GPS/geofence behavior;
-- customer-side dispatch;
-- driver handoff;
-- delivery evidence;
-- yard reconciliation;
-- correction permissions;
-- retention preferences;
-- on/off duty tracking;
-- Samsara/Amtech MVP boundaries;
-- destination-change audit;
-- OOS workflow;
-- driver road-mode and yard-mode workflows.
+Core functional behavior is now sufficiently defined to move from requirements elicitation into product specification and architecture. The final round clarified:
 
-Remaining open questions are intentionally narrower and should be resolved before architecture is frozen.
+- customer vs 2 Fast Logistics responsibilities;
+- customer edit/cancel behavior;
+- delivery vs trip vs shift completion;
+- cancellation after departure;
+- required manifest/cargo fields;
+- Pre-Trip and Post-Trip capture;
+- lightweight fuel logging;
+- unsigned-BOL exception evidence;
+- one common POD rule for MVP;
+- persistent customer designation of trailers;
+- current design-partner trailer-number uniqueness;
+- missing-trailer alerts and last-known-location behavior.
+
+Remaining open items are mostly product-policy, compliance, UX-content or architecture decisions rather than gaps in understanding the operating workflow.
 
 ## Next documentation milestones
 
-1. Resolve remaining blocking open questions.
+1. Freeze product state machines and lifecycle semantics.
 2. Approve revised domain model and core workflows.
 3. Freeze MVP v0.1.
-4. Create UX flow/wireframe specification.
+4. Create UX flow/wireframe specification for Web, Road Mode and Yard Mode.
 5. Select architecture through ADRs.
 6. Define database model and API contracts.
 7. Convert requirements into implementation epics/issues.
