@@ -1,6 +1,6 @@
 # Business Rules
 
-**Status:** Draft refined after final discovery round  
+**Status:** Accepted v0.1 on 2026-10-04  
 **Convention:** `BR-###`
 
 ## Identity and tenancy
