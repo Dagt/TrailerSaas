@@ -43,8 +43,11 @@ These files describe the current real-world operation. They are evidence, not ne
 ## 6. UX / User Flows
 
 - [UX flow index](ux/README.md)
+- [Tenant Admin Web](ux/tenant-admin-web.md)
 - [Transport Operations Web](ux/transport-operations-web.md)
+- [Customer Dispatcher Web](ux/customer-dispatcher-web.md)
 - [Road Driver Mobile](ux/road-driver-mobile.md)
+- [Yard / Spotter Mobile](ux/yard-spotter-mobile.md)
 
 ## 7. Workflows
 
