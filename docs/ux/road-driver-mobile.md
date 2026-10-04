@@ -1,6 +1,6 @@
 # Road Driver Mobile — UX Flow v0.1
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Primary actor:** DRIVER  
 **Related requirements:** FR-050–078, FR-080–084, FR-110–115, FR-140–144, FR-190–197  
 **Related state machines:** Shift, Trip, Stop, Trailer
