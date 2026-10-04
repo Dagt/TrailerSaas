@@ -1,6 +1,6 @@
 # UX / User Flow Specifications
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Date:** 2026-10-04
 
 This section translates approved requirements and state machines into deterministic screen-level behavior before API and UI implementation.
@@ -13,7 +13,7 @@ This section translates approved requirements and state machines into determinis
 - [Road Driver Mobile](road-driver-mobile.md)
 - [Yard / Spotter Mobile](yard-spotter-mobile.md)
 
-All five MVP actor flows are now drafted at screen-flow level.
+All five MVP actor flows are Accepted v0.1 at screen-flow level.
 
 ## UX principles
 
