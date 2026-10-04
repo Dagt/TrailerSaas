@@ -86,6 +86,24 @@ random port. Future module tests belong under their matching capability package.
 The scaffold contains no business features, authentication or persistence;
 PostgreSQL/Flyway/Testcontainers are deferred to #19 and CI quality gates to #18.
 
+## Web local development
+
+The Issue #16 foundation lives in `web/`: React 19, TypeScript, Vite 8,
+TanStack Query, React Hook Form and Zod, following ADR-004. Use Node.js 24
+(or supported Node.js 22.13+) and npm:
+
+```sh
+cd web
+npm ci
+npm run dev
+```
+
+Vite prints the local URL (normally `http://127.0.0.1:5173`).
+For all checks run `npm run typecheck`, `npm run lint`, `npm test` and
+`npm run build`. See [web/README.md](web/README.md) for environment setup,
+PowerShell equivalents, the route structure and deployment notes.
+The scaffold has no authentication, business screens or API calls.
+
 ## Current phase
 
 ### Current implementation readiness
