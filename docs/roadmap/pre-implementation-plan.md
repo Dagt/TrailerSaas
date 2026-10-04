@@ -156,7 +156,7 @@ ADR-012 through ADR-022 are Accepted. Phase 6 is closed.
 
 ## Phase 7 — Implementation Backlog
 
-**Progress: Active.**
+**Progress: Complete on 2026-10-04.**
 
 Convert approved specification into:
 
@@ -167,24 +167,30 @@ Convert approved specification into:
 - requirement IDs
 - implementation order
 
-Suggested top-level epics:
+Implemented backlog structure:
 
-1. Platform foundation
-2. Identity / tenancy / authorization
-3. Master data
-4. Orders / manifests
-5. Trips / dispatch
-6. Trailer movement tracking
-7. Driver mobile
-8. Yard mode
-9. Yard check
-10. Documents / evidence
-11. Alerts / notifications
-12. Customer portal
-13. Audit / history
-14. Production hardening
+1. #1 Platform foundation
+2. #2 Identity / tenancy / authorization
+3. #3 Master data
+4. #4 Orders / manifests
+5. #5 Trips / dispatch
+6. #6 Trailer movement tracking
+7. #7 Driver mobile
+8. #8 Yard mode
+9. #9 Yard check
+10. #10 Documents / evidence
+11. #11 Alerts / notifications
+12. #12 Customer portal
+13. #13 Audit / history
+14. #14 Production hardening
+
+Child implementation Issues are #15–#65. Tracking Issue #66 covers the MVP. Dependencies and execution waves are documented in `docs/backlog/`.
+
+Phase 7 is closed.
 
 ## Phase 8 — Repository Scaffold
+
+**Progress: Active / ready to execute through Issues #15–#21.**
 
 Only after the specification above is stable:
 
