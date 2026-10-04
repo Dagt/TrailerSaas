@@ -1,6 +1,6 @@
 # API Contracts v1
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Base style:** REST/JSON  
 **Prefix:** `/api/v1`
 
