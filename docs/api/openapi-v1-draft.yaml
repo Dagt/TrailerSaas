@@ -1,0 +1,769 @@
+openapi: 3.1.0
+info:
+  title: TrailerSaaS API
+  version: 1.0.0-draft
+  description: >
+    Draft OpenAPI skeleton derived from the accepted MVP requirements, state machines,
+    UX flows and schema v1.0. Operation-specific behavior remains defined by the
+    markdown API contract documents until this specification is fully expanded.
+servers: []
+security:
+  - firebaseBearer: []
+
+tags:
+  - name: Identity
+  - name: Memberships
+  - name: Settings
+  - name: Customers
+  - name: Sites
+  - name: Drivers
+  - name: Tractors
+  - name: Trailers
+  - name: Orders
+  - name: Trips
+  - name: DriverMobile
+  - name: Yard
+  - name: Documents
+  - name: Alerts
+  - name: Audit
+
+paths:
+  /api/v1/me:
+    get:
+      tags: [Identity]
+      operationId: getCurrentUserContext
+      responses:
+        '200':
+          description: Current authenticated User and memberships
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserContext'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/settings:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Settings]
+      operationId: getTenantSettings
+      responses:
+        '200':
+          description: Tenant settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Settings]
+      operationId: updateTenantSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion]
+              properties:
+                expectedVersion: { type: integer, format: int64 }
+                staleTrailerThresholdHours: { type: integer }
+                defaultTimezone: { type: string }
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/customers:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Customers]
+      operationId: listCustomers
+      responses:
+        '200':
+          $ref: '#/components/responses/PagedResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Customers]
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/customers/{customerId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CustomerId'
+    get:
+      tags: [Customers]
+      operationId: getCustomer
+      responses:
+        '200':
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Customers]
+      operationId: updateCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: Updated Customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/orders:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Orders]
+      operationId: listOrders
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: customerId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          $ref: '#/components/responses/PagedResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Orders]
+      operationId: createOrder
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/orders/{orderId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Orders]
+      operationId: getOrder
+      responses:
+        '200':
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Orders]
+      operationId: updateOrderBeforeExecution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion]
+              properties:
+                expectedVersion: { type: integer, format: int64 }
+                poNumber: { type: [string, "null"] }
+                shipmentNumber: { type: [string, "null"] }
+                bolReference: { type: [string, "null"] }
+      responses:
+        '200':
+          description: Updated Order
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/orders/{orderId}/cancellations:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrderId'
+      - $ref: '#/components/parameters/IdempotencyKeyOptional'
+    post:
+      tags: [Orders]
+      operationId: cancelOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOrderRequest'
+      responses:
+        '200':
+          description: Updated Order state
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Trips]
+      operationId: listTrips
+      responses:
+        '200':
+          $ref: '#/components/responses/PagedResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Trips]
+      operationId: createTrip
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequest'
+      responses:
+        '201':
+          description: Trip created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Trips]
+      operationId: getTrip
+      responses:
+        '200':
+          description: Trip detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/hooks:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: hookTrailer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HookTrailerRequest'
+      responses:
+        '200':
+          description: Trailer hooked
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/stops/{stopId}/arrivals:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/StopId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: confirmStopArrival
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArrivalRequest'
+      responses:
+        '200':
+          description: Arrival recorded
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/stops/{stopId}/delivery-completions:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/StopId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: completeDeliveryStop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryCompletionRequest'
+      responses:
+        '200':
+          description: Delivery completed
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/yard-checks:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Yard]
+      operationId: listYardChecks
+      responses:
+        '200':
+          $ref: '#/components/responses/PagedResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Yard]
+      operationId: startYardCheck
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartYardCheckRequest'
+      responses:
+        '201':
+          description: Yard Check started
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/yard-checks/{yardCheckId}/scans:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: yardCheckId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Yard]
+      operationId: scanYardCheckTrailer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/YardCheckScanRequest'
+      responses:
+        '200':
+          description: Scan result
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/documents/uploads:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Documents]
+      operationId: initializeDocumentUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializeUploadRequest'
+      responses:
+        '201':
+          description: Upload initialized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitializeUploadResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/alerts:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Alerts]
+      operationId: listAlerts
+      responses:
+        '200':
+          $ref: '#/components/responses/PagedResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/audit-events:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Audit]
+      operationId: listAuditEvents
+      responses:
+        '200':
+          $ref: '#/components/responses/PagedResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+
+components:
+  securitySchemes:
+    firebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      description: Requested Tenant context; membership is always re-authorized server-side.
+      schema: { type: string, format: uuid }
+    CustomerId:
+      name: customerId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    TripId:
+      name: tripId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    StopId:
+      name: stopId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKeyOptional:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, format: uuid }
+
+  responses:
+    Problem:
+      description: Error response
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PagedResponse:
+      description: Cursor-paginated response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PagedResponse'
+
+  schemas:
+    Problem:
+      type: object
+      required: [title, status, code]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        code: { type: string }
+        detail: { type: string }
+        traceId: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+    PagedResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {}
+        nextCursor:
+          type: [string, "null"]
+
+    CurrentUserContext:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: [string, "null"] }
+        displayName: { type: [string, "null"] }
+        memberships:
+          type: array
+          items:
+            type: object
+
+    TenantSettings:
+      type: object
+      properties:
+        staleTrailerThresholdHours: { type: integer }
+        defaultTimezone: { type: [string, "null"] }
+        version: { type: integer, format: int64 }
+
+    CreateCustomerRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+
+    UpdateCustomerRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64 }
+        name: { type: string }
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+
+    Customer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        status: { type: string }
+        version: { type: integer, format: int64 }
+
+    CargoLineInput:
+      type: object
+      required: [description]
+      properties:
+        description: { type: string }
+        quantity: { type: number }
+        palletCount: { type: integer }
+        weight: { type: number }
+        weightUnit: { type: string }
+
+    RequestedStopInput:
+      type: object
+      required: [sequenceNumber, stopType]
+      properties:
+        sequenceNumber: { type: integer, minimum: 1 }
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        siteSnapshot: { type: [object, "null"] }
+        stopType: { type: string }
+        scheduledAt: { type: [string, "null"], format: date-time }
+        instructions: { type: [string, "null"] }
+
+    CreateOrderRequest:
+      type: object
+      required: [customerId, orderNumber, requestedStops]
+      properties:
+        customerId: { type: string, format: uuid }
+        orderNumber: { type: string }
+        poNumber: { type: [string, "null"] }
+        shipmentNumber: { type: [string, "null"] }
+        bolReference: { type: [string, "null"] }
+        cargoLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/CargoLineInput'
+        requestedStops:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/RequestedStopInput'
+        plannedTrailerId: { type: [string, "null"], format: uuid }
+
+    OrderSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        orderNumber: { type: string }
+        status: { type: string }
+        version: { type: integer, format: int64 }
+
+    CancelOrderRequest:
+      type: object
+      required: [expectedVersion, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64 }
+        reason: { type: string }
+        resolution:
+          type: [object, "null"]
+
+    TripStopInput:
+      type: object
+      required: [sequenceNumber, stopType, orderIds]
+      properties:
+        sequenceNumber: { type: integer }
+        stopType: { type: string }
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        siteSnapshot: { type: [object, "null"] }
+        scheduledAt: { type: [string, "null"], format: date-time }
+        orderIds:
+          type: array
+          items: { type: string, format: uuid }
+        instructions: { type: [string, "null"] }
+
+    CreateTripRequest:
+      type: object
+      required: [orderIds, stops]
+      properties:
+        orderIds:
+          type: array
+          minItems: 1
+          items: { type: string, format: uuid }
+        stops:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/TripStopInput'
+        driverId: { type: [string, "null"], format: uuid }
+        tractorId: { type: [string, "null"], format: uuid }
+        plannedInitialTrailerId: { type: [string, "null"], format: uuid }
+
+    TripSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string }
+        currentDriverId: { type: [string, "null"], format: uuid }
+        currentTractorId: { type: [string, "null"], format: uuid }
+        plannedInitialTrailerId: { type: [string, "null"], format: uuid }
+        version: { type: integer, format: int64 }
+
+    HookTrailerRequest:
+      type: object
+      required: [trailerId, tractorId, driverId, occurredAt, expectedTrailerVersion]
+      properties:
+        trailerId: { type: string, format: uuid }
+        tractorId: { type: string, format: uuid }
+        driverId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+        expectedTrailerVersion: { type: integer, format: int64 }
+
+    ArrivalRequest:
+      type: object
+      required: [occurredAt, source]
+      properties:
+        occurredAt: { type: string, format: date-time }
+        source:
+          type: string
+          enum: [MANUAL, GEOFENCE_CONFIRMED]
+        coordinates:
+          type: [object, "null"]
+          properties:
+            latitude: { type: number }
+            longitude: { type: number }
+            accuracyM: { type: number }
+
+    DeliveryCompletionRequest:
+      oneOf:
+        - type: object
+          required: [evidenceMode, bolDocumentId, occurredAt]
+          properties:
+            evidenceMode:
+              type: string
+              const: SIGNED_BOL
+            bolDocumentId: { type: string, format: uuid }
+            occurredAt: { type: string, format: date-time }
+        - type: object
+          required: [evidenceMode, bolDocumentId, deliveryPhotoDocumentId, comment, occurredAt]
+          properties:
+            evidenceMode:
+              type: string
+              const: NO_RECEIVER_AVAILABLE
+            bolDocumentId: { type: string, format: uuid }
+            deliveryPhotoDocumentId: { type: string, format: uuid }
+            comment: { type: string, minLength: 1 }
+            occurredAt: { type: string, format: date-time }
+
+    StartYardCheckRequest:
+      type: object
+      required: [siteId]
+      properties:
+        siteId: { type: string, format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+
+    YardCheckScanRequest:
+      type: object
+      required: [trailerId, scannedAt]
+      properties:
+        trailerId: { type: string, format: uuid }
+        observedLocationId: { type: [string, "null"], format: uuid }
+        scannedAt: { type: string, format: date-time }
+
+    InitializeUploadRequest:
+      type: object
+      required: [documentType, contentType, sizeBytes]
+      properties:
+        documentType: { type: string }
+        contentType: { type: string }
+        sizeBytes: { type: integer, format: int64 }
+        checksumSha256: { type: [string, "null"] }
+
+    InitializeUploadResponse:
+      type: object
+      properties:
+        documentId: { type: string, format: uuid }
+        uploadStatus: { type: string }
+        uploadUrl: { type: string, format: uri }
+        expiresAt: { type: string, format: date-time }
