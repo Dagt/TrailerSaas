@@ -1,6 +1,6 @@
 # MVP Scope v0.1
 
-**Status:** Draft for approval after final discovery round
+**Status:** Accepted v0.1 on 2026-10-04
 
 The MVP should prove that TrailerSaaS can maintain trustworthy trailer inventory/location and coordinate customer orders, driver trips, stops and delivery evidence without relying on spreadsheets and message reconstruction.
 
