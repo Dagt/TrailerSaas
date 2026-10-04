@@ -2,7 +2,7 @@
 
 Working repository for the discovery, product definition, architecture and implementation of a SaaS platform for trailer / dry-van operational control.
 
-> **Status:** Discovery and product-definition phase. No implementation decisions are final yet.
+> **Status:** Pre-implementation specification complete. Accepted architecture, state machines, UX, schema, API and offline-sync contracts are in place; the implementation backlog is ready.
 
 ## Product goal
 
@@ -38,22 +38,23 @@ The objective is that, when development begins, Codex or any engineer can unders
 
 ## Documentation
 
-See [docs/README.md](docs/README.md) for the documentation map.
+See [docs/README.md](docs/README.md) for the documentation map and [docs/backlog/README.md](docs/backlog/README.md) for the implementation backlog.
 
 ## Current phase
 
-### Phase 0 — Discovery
-- [x] Initial operational problem identified
-- [x] Requirements questionnaire answered
-- [x] Initial actors identified
-- [x] Initial product boundaries identified
-- [ ] Validate open operational questions
-- [ ] Approve MVP workflows
-- [ ] Approve business rules
-- [ ] Define non-functional requirements
-- [ ] Select architecture and technology stack
-- [ ] Produce implementation backlog
-- [ ] Begin coding
+### Current implementation readiness
+- [x] Discovery complete
+- [x] MVP scope / business rules defined
+- [x] State machines accepted
+- [x] UX/User flows accepted
+- [x] Architecture ADR-001 through ADR-022 accepted
+- [x] PostgreSQL schema v1.0 accepted
+- [x] API contracts v0.1 accepted
+- [x] Mobile offline sync protocol accepted
+- [x] GitHub MVP backlog created (#1–#66)
+- [ ] Repository scaffold
+- [ ] MVP implementation
+- [ ] Production readiness
 
 ## Working principles
 
