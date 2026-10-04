@@ -1,6 +1,6 @@
 # ADR-018 — Trailer QR Identity and Resolution
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
