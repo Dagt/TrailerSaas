@@ -92,7 +92,7 @@ Current status: schema v1.0 is Accepted and migration-ready. Phase 3 is closed.
 
 ## Phase 4 — API Contracts
 
-**Progress: Draft complete — markdown contracts and initial OpenAPI skeleton created; pending acceptance.**
+**Progress: Accepted v0.1 on 2026-10-04. Markdown contracts are approved; the OpenAPI YAML remains a derived implementation artifact to expand during scaffold.**
 
 Define REST API contract before implementation.
 
@@ -110,9 +110,11 @@ Document:
 
 OpenAPI should become part of the implementation contract.
 
-Current status: API conventions, identity/master data, Orders/dispatch, Driver mobile, Yard, documents/evidence, alerts/audit and the consolidated endpoint catalog are documented under `docs/api/`. An initial `openapi-v1-draft.yaml` skeleton is also present. After acceptance, expand/finalize the OpenAPI schemas and mark Phase 4 closed.
+Current status: API conventions, identity/master data, Orders/dispatch, Driver mobile, Yard, documents/evidence, alerts/audit and the consolidated endpoint catalog are Accepted v0.1. Phase 4 is closed. `openapi-v1-draft.yaml` is a derived skeleton that will be expanded during repository scaffold without changing accepted domain behavior.
 
 ## Phase 5 — Mobile Offline Sync Protocol
+
+**Progress: Draft complete — protocol, local data model and ADR-012 created; pending acceptance.**
 
 Define:
 
@@ -127,6 +129,8 @@ Define:
 ### Exit criteria
 
 Offline behavior is deterministic before mobile coding begins.
+
+Current status: `docs/mobile/offline-sync-protocol.md`, `docs/mobile/local-offline-data-model.md` and proposed `ADR-012` define the complete MVP approach.
 
 ## Phase 6 — Architecture Completion
 
