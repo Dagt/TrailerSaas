@@ -201,8 +201,6 @@ accepted_at         timestamptz NULL
 UNIQUE (tenant_id, id)
 ```
 
-`site_snapshot` preserves the operational destination presented to the Driver even if Site master data is edited later.
-
 Status:
 
 - PENDING
