@@ -201,6 +201,8 @@ accepted_at         timestamptz NULL
 UNIQUE (tenant_id, id)
 ```
 
+`site_snapshot` preserves the operational destination presented to the Driver even if Site master data is edited later.
+
 Status:
 
 - PENDING
@@ -597,6 +599,7 @@ location_id         uuid NULL
 stop_type           varchar NOT NULL
 scheduled_at        timestamptz NULL
 instructions        text NULL
+site_snapshot       jsonb NULL
 created_at          timestamptz NOT NULL
 updated_at          timestamptz NOT NULL
 version             bigint NOT NULL DEFAULT 0
@@ -609,6 +612,8 @@ UNIQUE (tenant_id, id)
 ```
 
 This table is important because Customer Dispatcher defines destinations before a Trip necessarily exists.
+
+`site_snapshot` preserves the address/name/instruction context used when the Order was created, even if master Site data changes later. It also permits an Order destination that has not yet been normalized into a reusable Physical Site.
 
 ## load_manifests
 
@@ -634,6 +639,9 @@ id                  uuid PK
 tenant_id           uuid NOT NULL
 manifest_id         uuid NOT NULL
 order_id            uuid NOT NULL
+allocated_quantity  numeric NULL
+allocated_pallet_count integer NULL
+allocated_weight    numeric NULL
 created_at          timestamptz NOT NULL
 
 FK (tenant_id, manifest_id)
@@ -655,6 +663,7 @@ tenant_id           uuid NOT NULL
 status              varchar NOT NULL
 current_driver_id   uuid NULL
 current_tractor_id  uuid NULL
+planned_initial_trailer_id uuid NULL
 started_at          timestamptz NULL
 completed_at        timestamptz NULL
 cancelled_at        timestamptz NULL
@@ -675,7 +684,9 @@ Status:
 - COMPLETED
 - CANCELLED
 
-Tenant-safe FKs to drivers/tractors.
+Tenant-safe FKs to drivers/tractors/trailers.
+
+`planned_initial_trailer_id` is the expected starting Trailer when known. It does not represent physical coupling and may be null until pickup.
 
 No Shift FK is required because one Shift may contain multiple Trips and Trips are operational units independent of Shift closure.
 
@@ -698,6 +709,7 @@ service_started_at  timestamptz NULL
 completed_at        timestamptz NULL
 departed_at         timestamptz NULL
 instructions        text NULL
+site_snapshot       jsonb NULL
 created_at          timestamptz NOT NULL
 updated_at          timestamptz NOT NULL
 version             bigint NOT NULL DEFAULT 0
@@ -776,7 +788,7 @@ Candidate types:
 - TRAILER_SUBSTITUTION_AUTHORIZED
 - TRAILER_SUBSTITUTION_REJECTED
 
-Current Driver/Tractor remain on `trips` for fast operational reads.
+Current Driver/Tractor and planned initial Trailer remain on `trips` for fast operational reads. Actual physical coupling remains authoritative in `trailer_couplings`.
 
 ## trip_stop_events
 
@@ -1440,18 +1452,19 @@ When implementation begins, generate Flyway migrations in dependency order rathe
 Suggested sequence:
 
 ```text
-V001 tenancy_identity
+V001 tenancy_identity_core
 V002 customers_locations
-V003 drivers_equipment
-V004 orders_manifest
-V005 trips_stops
-V006 movement_events_couplings
-V007 shifts_inspections_fuel
-V008 documents_delivery_evidence
-V009 yard_checks
-V010 alerts_devices
-V011 audit_idempotency
-V012 indexes_constraints
+V003 authorization_roles_invitations
+V004 drivers_equipment
+V005 orders_manifest
+V006 trips_stops
+V007 movement_events_couplings
+V008 shifts_inspections_fuel
+V009 documents_delivery_evidence
+V010 yard_checks
+V011 alerts_devices
+V012 audit_idempotency
+V013 indexes_constraints
 ```
 
 Exact migration numbering/naming can be finalized during repository scaffold.
