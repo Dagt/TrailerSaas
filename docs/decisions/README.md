@@ -17,7 +17,7 @@ Architecture choices that materially affect the system are recorded here.
 - [ADR-011 — Multi-Tenancy, Memberships and Authorization](ADR-011-tenancy-and-authorization.md)
 - [ADR-012 — Mobile Offline Synchronization Architecture](ADR-012-mobile-offline-sync.md)
 
-## Phase 6 proposed decisions
+## Phase 6 accepted decisions
 
 - [ADR-013 — PostgreSQL Row Level Security for Tenant Defense-in-Depth](ADR-013-postgresql-rls.md)
 - [ADR-014 — Geofence-Assisted Arrival Without Continuous Tracking](ADR-014-geofencing-location.md)
@@ -30,7 +30,7 @@ Architecture choices that materially affect the system are recorded here.
 - [ADR-021 — External Integration Boundary for Samsara and Amtech](ADR-021-external-integrations.md)
 - [ADR-022 — PostgreSQL-Backed Outbox and Background Jobs](ADR-022-postgresql-outbox-jobs.md)
 
-ADR-013 through ADR-022 are currently **Proposed** as the Phase 6 architecture-completion package. They should be reviewed together before being marked Accepted.
+ADR-013 through ADR-022 were reviewed and **Accepted** on 2026-10-04 as the architecture-completion package.
 
 ## File naming
 
