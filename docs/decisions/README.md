@@ -15,6 +15,7 @@ Architecture choices that materially affect the system are recorded here.
 - [ADR-009 — Initial Deployment: Railway + Cloudflare](ADR-009-initial-deployment.md)
 - [ADR-010 — Push Notifications: Firebase Cloud Messaging](ADR-010-notifications.md)
 - [ADR-011 — Multi-Tenancy, Memberships and Authorization](ADR-011-tenancy-and-authorization.md)
+- [ADR-012 — Mobile Offline Synchronization Architecture](ADR-012-mobile-offline-sync.md) — Proposed
 
 These decisions were reviewed and **Accepted** on 2026-10-04 as the baseline architecture for TrailerSaaS. Future changes must be recorded through new or superseding ADRs.
 
