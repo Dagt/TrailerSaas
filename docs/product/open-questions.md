@@ -17,14 +17,14 @@ Recommended product behavior:
 
 This is a product decision to formalize in the state machine, not a missing discovery fact.
 
-### OQ-051 — Exact Trip/Run completion event
-We now distinguish:
+### OQ-051 — Exact Trip/Run completion event — RESOLVED IN STATE MACHINE v0.1
+The proposed Trip machine resolves this by making completion depend on the Trip's required Stops:
 
-- Delivery/Stop completion;
-- Trip/Run completion;
-- Shift/Off Duty completion.
+- all required Stops are terminal;
+- no cancellation instruction remains unresolved;
+- if return-to-base is required for that Trip, it is modeled as an explicit final Stop and must be completed.
 
-Need to choose the exact Trip completion rule for the product state machine (for example return-to-base, final stop departure, dispatcher close, or run-specific behavior).
+Off Duty remains independent from Trip completion.
 
 ### OQ-052 — Pre-Trip checklist content
 Pre-Trip definitely requires:
