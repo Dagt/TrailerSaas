@@ -1,6 +1,6 @@
 # Stop / Delivery State Machine
 
-**Status:** Proposed v0.1
+**Status:** Accepted v0.1
 
 ## Purpose
 
