@@ -1,6 +1,6 @@
 # ADR-010 — Push Notifications: Firebase Cloud Messaging
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
