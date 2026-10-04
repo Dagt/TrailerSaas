@@ -1,6 +1,6 @@
 # Actors and Permissions
 
-**Status:** Draft refined after second discovery round
+**Status:** Draft refined after final discovery round
 
 Authorization is tenant-scoped and role-based. Customer users additionally require customer scope.
 
@@ -22,18 +22,18 @@ Candidate capabilities:
 
 Typical user: transportation-company shipping/operations/dispatcher personnel.
 
-Candidate capabilities:
+Confirmed/expected capabilities:
 
 - view customer-created Orders;
-- plan Trips and Stops;
-- assign driver/tractor/trailer;
-- authorize trailer substitution;
-- authorize destination change;
-- reassign exceptional driver/tractor;
+- plan operational Trips/Runs and Stops;
+- assign tractor;
+- participate in driver assignment;
 - monitor active operations;
-- handle exceptions.
+- participate in destination/reroute decisions;
+- reassign exceptional driver/tractor;
+- handle active-trip exceptions.
 
-Some responsibilities may overlap with customer-side shipping in the design partner and require final permission matrix validation.
+For the Hood Container design-partner workflow, customer-side dispatch retains substantial authority over trailer selection, cancellation and trailer substitution.
 
 ## Actor 3 — Customer Dispatcher / Shipping
 
@@ -41,11 +41,18 @@ Belongs to a manufacturing/customer company.
 
 Confirmed design-partner behavior:
 
-- can create Orders/deliveries directly;
-- created work appears in operational queue automatically;
-- can view its customer-scoped trailer inventory;
+- creates Orders/deliveries directly;
+- defines destinations/stops;
+- assigns/selects trailer;
+- participates in driver assignment;
+- may change destination together with 2 Fast Logistics;
+- cancels Orders;
+- authorizes use of a different trailer;
+- participates in marking Order complete;
+- created work appears in the operational queue automatically;
+- can view customer-scoped trailer inventory;
 - can view own Orders/deliveries;
-- can modify/cancel before permitted cutoff;
+- normally modifies/cancels before driver departure;
 - can view permitted BOL/POD evidence.
 
 Must never access another customer.
@@ -136,11 +143,26 @@ Standalone account/digital signature is not required for MVP.
 5. Corrections/reassignments/substitutions remain auditable.
 6. Cross-tenant/customer identifiers must not leak unrelated records.
 
+## Design-partner responsibility summary
+
+| Action | Customer / Hood | 2 Fast Logistics | Shared / Other |
+|---|---:|---:|---:|
+| Create Order | ✓ | — | — |
+| Define Stops | ✓ | — | — |
+| Assign Driver | ✓ | ✓ | shared |
+| Assign Tractor | — | ✓ | — |
+| Assign Trailer | ✓ | — | — |
+| Change Destination | ✓ | ✓ | shared |
+| Change Appointment | — | — | final customer |
+| Cancel Order | ✓ | — | — |
+| Authorize different trailer | ✓ | — | — |
+| Mark Order complete | ✓ | ✓ | shared |
+
+The generic SaaS must keep these as configurable permissions/role capabilities rather than hard-coding Hood Container-specific names.
+
 ## Remaining permission questions
 
-See `open-questions.md` for:
+Only non-blocking policy details remain, especially:
 
-- exact distinction between customer shipping and tenant shipping correction authority;
-- exact customer edit/cancel cutoff;
-- who may return OOS trailer to service;
-- whether customer dispatch can ever assign driver/trip directly.
+- who may return an OOS trailer to service;
+- whether customer-side and transportation-side Shipping share the same location-correction capability in all tenants.
