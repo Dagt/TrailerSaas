@@ -6,7 +6,7 @@
 
 ## Operating profile
 
-The initial design partner is a U.S. trucking / transportation operation serving manufacturing and packaging-related customers.
+The initial design partner is **2 Fast Logistics Inc**, a U.S. trucking / transportation operation serving manufacturing and packaging-related customers. The supplied company logo identifies the business as “2 Fast Logistics Inc.”
 
 ### Current scale
 
@@ -224,3 +224,27 @@ Top desired outcomes:
 The most expensive stated operational problem is lost/misplaced orders. Staff may spend roughly **1–2 hours** searching for trailers or verifying information.
 
 A later-use case is shift entry/exit time for payroll, but full payroll is not established as an MVP requirement.
+
+
+## Follow-up discovery additions — 2026-10-03
+
+The second discovery round established several additional facts that supersede earlier ambiguity:
+
+- Orders, trips and trailers do not have a one-to-one relationship.
+- Multiple orders can travel in one trailer, and one order can require multiple trailers.
+- One trip can contain multiple delivery stops.
+- Displayed trailer numbers are not globally unique across the operation.
+- Wrong-trailer substitution requires dispatcher authorization.
+- Continuous route history is not needed; arrival/departure events are sufficient.
+- Arrival may be geofence-assisted and driver-confirmed; departure is manual.
+- Always-on background location on drivers' personal phones should not be an MVP dependency.
+- Customer/manufacturer dispatch users can create orders directly into the operational queue.
+- Signed BOL photo/file is the primary proof of delivery when a signature is available.
+- The ideal Road Mode includes On Duty, Pre-Trip, tractor photos/mileage, assigned work, QR trailer confirmation, trip execution, BOL evidence, return to base, Post-Trip and Off Duty.
+- Yard/Spotter Mode is a distinct workflow centered on yard↔dock trailer moves.
+- Samsara is used for GPS by the transportation company, while Amtech contains orders/BOL/customer data; neither integration is required for MVP.
+- Design-partner retention preference is short: one week for movements/Yard Checks and one month for Orders/BOL/photos/deliveries, subject to later production policy review.
+
+See:
+- `follow-up-questionnaire-2026-10-03.md`
+- `design-partner-facilities.md`
