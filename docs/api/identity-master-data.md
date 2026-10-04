@@ -121,7 +121,41 @@ Request:
 
 Role changes are audited.
 
-## 4. Customers
+## 4. Tenant settings
+
+### GET /settings
+
+Capability: `TENANT_SETTINGS_MANAGE` for full configuration; read access may be narrower for operational clients as needed.
+
+Returns only implemented/approved settings.
+
+Initial fields:
+
+```json
+{
+  "staleTrailerThresholdHours": 72,
+  "defaultTimezone": "America/Chicago",
+  "version": 2
+}
+```
+
+### PATCH /settings
+
+Capability: `TENANT_SETTINGS_MANAGE`.
+
+Request:
+
+```json
+{
+  "expectedVersion": 2,
+  "staleTrailerThresholdHours": 72,
+  "defaultTimezone": "America/Chicago"
+}
+```
+
+Do not expose unresolved retention/customer-edit policy settings until those product policies are approved.
+
+## 5. Customers
 
 ### POST /customers
 
@@ -156,7 +190,7 @@ Request:
 
 No hard delete in MVP.
 
-## 5. Sites
+## 6. Sites
 
 ### POST /sites
 ### GET /sites
@@ -186,7 +220,29 @@ Create request:
 
 Coordinates/geofence are optional.
 
-## 6. Operational locations
+## 7. Customer ↔ Site associations
+
+### POST /customers/{customerId}/sites
+
+Capability: `CUSTOMER_EDIT` and appropriate Site access.
+
+Request:
+
+```json
+{
+  "siteId": "uuid"
+}
+```
+
+Creates the explicit customer-site association used by shared-address facilities.
+
+### DELETE /customers/{customerId}/sites/{siteId}
+
+Removes the master-data association only when safe; it must not erase historical Order/Trip site snapshots or operational history.
+
+This is one of the few safe DELETE-style association endpoints because it removes a current association rather than deleting the underlying Customer/Site.
+
+## 8. Operational locations
 
 ### POST /sites/{siteId}/locations
 ### GET /sites/{siteId}/locations
@@ -205,7 +261,7 @@ Request:
 
 The API supports multiple Customer contexts under one Physical Site.
 
-## 7. Drivers
+## 9. Drivers
 
 ### POST /drivers
 ### GET /drivers
@@ -226,7 +282,26 @@ Create:
 
 Optional account linking/invitation is a separate identity workflow.
 
-## 8. Tractors
+### POST /drivers/{driverId}/user-link
+
+Capability: `DRIVER_EDIT`.
+
+Request:
+
+```json
+{
+  "userId": "uuid",
+  "expectedVersion": 3
+}
+```
+
+Links an existing authenticated User to the Driver record after invitation/account creation. The server validates the User has appropriate active Tenant membership and that no conflicting Driver link exists.
+
+### DELETE /drivers/{driverId}/user-link
+
+Unlinks the current login identity from the Driver profile without deleting either historical entity.
+
+## 10. Tractors
 
 ### POST /tractors
 ### GET /tractors
@@ -235,7 +310,7 @@ Optional account linking/invitation is a separate identity workflow.
 
 Capabilities: `TRACTOR_CREATE`, `TRACTOR_EDIT`.
 
-## 9. Trailers
+## 11. Trailers
 
 ### POST /trailers
 ### GET /trailers
@@ -327,7 +402,21 @@ Response preserves:
 - lastSeenAt;
 - lastDriver.
 
-## 10. Trailer QR resolution
+## 12. Trailer QR
+
+### GET /trailers/{trailerId}/qr-identities
+
+Admin/authorized equipment management view of active/revoked QR identities.
+
+### POST /trailers/{trailerId}/qr-identities
+
+Issues a new non-guessable QR identity.
+
+### POST /trailers/{trailerId}/qr-identities/{qrId}/revocation
+
+Revokes a compromised/replaced QR identity.
+
+QR issuance/revocation is audited.
 
 ### GET /trailer-qr/{publicToken}
 
@@ -336,3 +425,7 @@ Requires authenticated Tenant context.
 Returns a Trailer scan summary if the Trailer belongs to the active Tenant and caller has permission.
 
 The token is an identifier, not an authorization secret.
+
+### GET /trailers/{trailerId}/timeline
+
+Returns cursor-paginated customer/role-authorized movement history suitable for Trailer detail screens.
