@@ -1,6 +1,6 @@
 # Relational Data Model v1.0
 
-**Status:** Proposed for freeze  
+**Status:** Accepted v1.0  
 **Date:** 2026-10-04  
 **Database:** PostgreSQL 18  
 **Related ADRs:** ADR-003, ADR-006, ADR-011  
