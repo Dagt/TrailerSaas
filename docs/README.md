@@ -25,21 +25,26 @@ These files describe the current real-world operation. They are evidence, not ne
 
 - [Domain model](domain/domain-model.md)
 
-## 4. Workflows
+## 4. Data Model
+
+- [Relational data model v0.1](data-model/schema-v0.1.md)
+
+## 5. Workflows
 
 - [Core workflows](workflows/core-workflows.md)
 
-## 5. Architecture
+## 6. Architecture
 
 - [Non-functional requirements](architecture/non-functional-requirements.md)
 
-## 6. Security
+## 7. Security
 
 - [Tenancy and authorization](security/tenancy-and-authorization.md)
+- [Permission capabilities](security/permission-capabilities.md)
 
 Technology selection is intentionally deferred until product behavior is sufficiently stable.
 
-## 7. Decisions
+## 8. Decisions
 
 - [ADR index](decisions/README.md)
 - [ADR template](decisions/ADR-000-template.md)
