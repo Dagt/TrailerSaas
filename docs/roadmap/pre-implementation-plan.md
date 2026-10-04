@@ -114,7 +114,7 @@ Current status: API conventions, identity/master data, Orders/dispatch, Driver m
 
 ## Phase 5 — Mobile Offline Sync Protocol
 
-**Progress: Draft complete — protocol, local data model and ADR-012 created; pending acceptance.**
+**Progress: Accepted v0.1 on 2026-10-04.**
 
 Define:
 
@@ -130,9 +130,11 @@ Define:
 
 Offline behavior is deterministic before mobile coding begins.
 
-Current status: `docs/mobile/offline-sync-protocol.md`, `docs/mobile/local-offline-data-model.md` and proposed `ADR-012` define the complete MVP approach.
+Current status: `docs/mobile/offline-sync-protocol.md`, `docs/mobile/local-offline-data-model.md` and ADR-012 are Accepted. Phase 5 is closed.
 
 ## Phase 6 — Architecture Completion
+
+**Progress: Active.**
 
 Finalize remaining ADRs:
 
