@@ -92,7 +92,7 @@ Current status: schema v1.0 is Accepted and migration-ready. Phase 3 is closed.
 
 ## Phase 4 — API Contracts
 
-**Progress: Active.**
+**Progress: Draft complete — markdown contracts and initial OpenAPI skeleton created; pending acceptance.**
 
 Define REST API contract before implementation.
 
@@ -109,6 +109,8 @@ Document:
 - mobile sync endpoints.
 
 OpenAPI should become part of the implementation contract.
+
+Current status: API conventions, identity/master data, Orders/dispatch, Driver mobile, Yard, documents/evidence, alerts/audit and the consolidated endpoint catalog are documented under `docs/api/`. An initial `openapi-v1-draft.yaml` skeleton is also present. After acceptance, expand/finalize the OpenAPI schemas and mark Phase 4 closed.
 
 ## Phase 5 — Mobile Offline Sync Protocol
 
