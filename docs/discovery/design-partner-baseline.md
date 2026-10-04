@@ -233,7 +233,7 @@ The second discovery round established several additional facts that supersede e
 - Orders, trips and trailers do not have a one-to-one relationship.
 - Multiple orders can travel in one trailer, and one order can require multiple trailers.
 - One trip can contain multiple delivery stops.
-- Displayed trailer numbers are not globally unique across the operation.
+- Earlier discovery created ambiguity about visible trailer-number uniqueness; the final round clarified that trailer numbers do not repeat in the current design-partner operation and are assigned/designated to customers.
 - Wrong-trailer substitution requires dispatcher authorization.
 - Continuous route history is not needed; arrival/departure events are sufficient.
 - Arrival may be geofence-assisted and driver-confirmed; departure is manual.
@@ -248,3 +248,25 @@ The second discovery round established several additional facts that supersede e
 See:
 - `follow-up-questionnaire-2026-10-03.md`
 - `design-partner-facilities.md`
+
+
+## Final discovery additions — 2026-10-04
+
+The third/final requirements round clarified:
+
+- Hood Container/customer-side dispatch creates Orders, defines Stops, assigns trailers, cancels Orders and authorizes alternate trailers.
+- 2 Fast Logistics assigns tractors and shares driver/destination/completion responsibilities.
+- Normal customer modification is expected before driver departure; in-transit changes are exceptional.
+- Off Duty is the end of the driver's workday, not the completion of every delivery.
+- Active cancellation can send the driver back to base or to a changed destination.
+- MVP cargo details include product description, quantity, pallet count, weight, Order/PO/BOL.
+- Pre-Trip requires odometer + front/rear/driver-side/passenger-side photos + checklist.
+- Post-Trip captures final mileage, damages, failures and comments.
+- Fuel event requires odometer + receipt photo.
+- If nobody can sign the BOL, the accepted evidence flow is No receiver available + BOL photo + delivery photo + comment.
+- One common POD rule is sufficient for MVP.
+- Trailer designation to a customer persists until Administration changes it.
+- Final clarification states visible trailer numbers do not repeat within the current operation.
+- Missing trailer triggers Administration alert, becomes Location Unknown, and retains last known location / last seen / last driver.
+
+See `final-questionnaire-2026-10-04.md`.
