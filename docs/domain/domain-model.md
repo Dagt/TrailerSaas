@@ -1,74 +1,103 @@
 # Domain Model
 
-**Status:** Draft conceptual model. Not a database schema.
+**Status:** Draft conceptual model refined after second discovery round  
+**Important:** This is not a database schema.
 
-## Core principle
+## Core principles
 
-Do **not** model the current spreadsheet's single “status” column as one enum.
-
-Discovery mixes at least four distinct dimensions:
-
-1. load state;
-2. operational state;
-3. location;
-4. usage/purpose.
-
-These must remain separate.
+1. Do **not** copy the current spreadsheet as the domain model.
+2. Do **not** assume `Order = Trip = Trailer = Delivery`.
+3. Separate:
+   - customer order;
+   - driver trip/run;
+   - stop;
+   - trailer;
+   - load/manifest;
+   - movement events.
+4. Keep trailer load state, operational state, physical location and usage/purpose independent.
+5. Preserve operational history through events and auditable corrections.
 
 ## Tenant
 
-Represents one subscribing transportation company.
+One subscribing transportation company.
 
-Key relationships:
+Owns or scopes:
 
-- has users;
-- has drivers;
-- has tractors;
-- has trailers;
-- has customers;
-- has locations;
-- has jobs/orders;
-- owns configuration and audit scope.
+- users;
+- drivers;
+- tractors;
+- trailers;
+- customers;
+- sites/locations;
+- orders;
+- trips;
+- documents;
+- alerts;
+- audit history.
 
 ## Customer
 
-A company served by the tenant.
+A manufacturing/company customer served by the tenant.
 
 A customer may:
 
-- own or be assigned trailer inventory;
-- have multiple customer users;
-- have multiple locations;
-- request jobs;
-- view only authorized operational data.
+- have multiple users;
+- have multiple sites;
+- create orders/deliveries through customer-side dispatch users;
+- have designated trailer inventory;
+- view only its authorized data.
 
-## Location
+## User / Role
 
-A known operational place.
+Candidate operational roles:
+
+- Tenant Administrator
+- Transport Operations / Shipping
+- Customer Dispatcher / Shipping
+- Yard / Spotter
+- Driver
+- External Recipient (usually no persistent account)
+
+Authorization remains tenant-scoped and, for customer users, customer-scoped.
+
+## Physical Site
+
+Represents a real street-address-level facility.
+
+Fields/concepts:
+
+- name;
+- address;
+- timezone;
+- coordinates;
+- optional geofence.
+
+A physical site is **not necessarily unique to one customer context**. Discovery confirmed that different customers may operate at the same street address with different dock ranges.
+
+## Operational Location
+
+Represents an operational sublocation within or associated with a physical site.
 
 Candidate types:
 
 - BASE
 - YARD
-- CUSTOMER_SITE
+- DOCK
+- CUSTOMER_AREA
 - SHOP
 - OTHER
+- UNKNOWN
 
-Candidate fields:
+Examples:
 
-- name;
-- address;
-- timezone;
-- latitude/longitude;
-- geofence radius;
-- active flag;
-- tenant/customer relationship.
+- Hood Container yard
+- Dock 17
+- Black Hawk Dock 5
+- Stanfast yard
 
-Exact dock tracking is not an MVP priority, but optional dock metadata may exist later.
+This separation allows one physical site to contain multiple customer/dock contexts.
 
 ## Driver
-
-Operational person executing work.
 
 Known fields:
 
@@ -77,38 +106,63 @@ Known fields:
 - medical certificate expiration;
 - active status.
 
-Possible later fields require additional discovery.
+Operational relationships:
+
+- shifts;
+- trips;
+- inspections;
+- trailer movement events.
+
+## Shift
+
+Represents driver operational duty window.
+
+MVP requirement:
+
+- on-duty timestamp;
+- off-duty timestamp.
+
+Not a payroll calculation object.
 
 ## Tractor
 
-Powered vehicle used for movement.
+Known concepts:
 
-Known requirements:
+- tenant-scoped operational number;
+- optional/default driver association;
+- tractor used for a trip/movement;
+- odometer/mileage observations from pre/post-trip or fuel events.
 
-- unique tenant-scoped number;
-- relationship to movement/job;
-- optional current/default driver assignment.
-
-Continuous tractor GPS is not required in the initial product model.
+Continuous tractor GPS is not required by TrailerSaaS MVP.
 
 ## Trailer
 
-Primary tracked asset.
+Primary tracked non-powered asset.
 
-Known fields/concepts:
+### Identity
 
-- unique identifier within tenant;
-- designated customer if applicable;
+Displayed trailer numbers are **not guaranteed globally unique** across the tenant.
+
+Therefore each Trailer requires:
+
+- internal immutable unique ID;
+- displayed operational identifier;
+- customer/fleet namespace or association where needed;
+- QR identity that resolves to the internal trailer ID.
+
+### Trailer attributes
+
+- operational identifier;
+- customer/designation where applicable;
 - type/size;
-- heavy-load capability or other restrictions;
-- current operational status;
+- heavy-load/special capability;
 - current load state;
-- current location;
-- out-of-service/damage state;
-- current/last associated order or content where meaningful;
+- current operational state;
+- current operational location;
+- OOS/damage state;
 - QR identity.
 
-### Trailer load state
+### Load state
 
 Candidate values:
 
@@ -116,21 +170,24 @@ Candidate values:
 - LOADED
 - UNKNOWN
 
-### Trailer operational state
+### Operational state
 
 Candidate values:
 
 - AVAILABLE
 - ASSIGNED
 - LOADING
+- UNLOADING
 - IN_TRANSIT
 - AT_CUSTOMER
-- UNLOADING
+- IN_YARD
+- AT_DOCK
 - OUT_OF_SERVICE
+- LOCATION_UNKNOWN
 
-Exact state machine must be validated before implementation.
+Final state machine still requires specification.
 
-### Trailer usage/purpose
+### Usage/purpose
 
 Candidate values:
 
@@ -140,162 +197,268 @@ Candidate values:
 - TOOLING_STORAGE
 - OTHER
 
-Purpose should not overwrite load state or location.
+Purpose must not replace load state or location.
 
 ## Order
 
-Represents the commercial/customer request and identifiers received from shipping.
+Represents a customer shipping/commercial request.
 
-Candidate fields:
+Known information may include:
 
 - order number;
 - PO;
 - shipment number;
+- BOL;
 - customer;
-- requested delivery date/time;
-- references/documents.
+- appointment/date requirements;
+- origin/destination references.
 
-One order may need one or more operational jobs/movements. Cardinality must be validated.
+### Cardinality
 
-## Job / Movement
+Confirmed:
 
-Operational unit assigned to a driver.
+- one Order may require multiple trailers;
+- one Trailer/load may carry multiple Orders;
+- multiple Orders may belong to the same or different customers.
 
-Candidate relationships:
+Therefore Order ↔ Trailer is **many-to-many through load/manifest allocation**, not a direct one-to-one relationship.
 
-- tenant;
-- order;
-- driver;
-- tractor;
-- origin;
-- destination;
-- appointment;
-- trailer assignment(s);
-- status.
+## Trip / Run
 
-Candidate status:
+Represents the driver's operational execution unit.
 
-- CREATED
+A Trip may:
+
+- use one driver at a time;
+- use one tractor at a time, subject to reassignment/recovery;
+- contain multiple stops;
+- carry/serve multiple orders;
+- change trailer during drop & hook;
+- include a return to base.
+
+Discovery indicates the described driver task/run is considered finished when the driver returns to base.
+
+### Candidate trip states
+
+- PLANNED
 - ASSIGNED
-- STARTED
-- AT_ORIGIN
+- PRE_TRIP
+- ACTIVE
 - IN_TRANSIT
-- AT_DESTINATION
+- AT_STOP
+- RETURNING_TO_BASE
+- POST_TRIP
 - COMPLETED
 - CANCELLED
 - EXCEPTION
 
-The final state machine remains open.
+## Stop
+
+Represents a visit within a Trip.
+
+Candidate stop types:
+
+- BASE_DEPARTURE
+- PICKUP
+- DELIVERY
+- LIVE_LOAD
+- LIVE_UNLOAD
+- DROP_HOOK
+- FUEL
+- BASE_RETURN
+- OTHER
+
+A Trip may contain multiple delivery stops.
+
+Stop data can include:
+
+- physical site;
+- operational location/dock if known;
+- scheduled appointment;
+- arrival time;
+- departure time;
+- service type;
+- related orders;
+- evidence.
+
+## Load Manifest / Order Allocation
+
+Represents what a trailer is carrying for a segment of a trip.
+
+Must support:
+
+- one or more orders;
+- PO;
+- BOL;
+- weight;
+- optional description;
+- optional quantity/pallet information;
+- trailer;
+- trip/segment context.
+
+This prevents “contents” from becoming a single free-text field.
+
+## Trailer Assignment / Coupling Segment
+
+Conceptual relationship describing which trailer is coupled to which tractor/driver during a time interval.
+
+It can be derived from HOOKED/DROPPED events but may also be maintained as current derived state for efficient queries.
 
 ## Trailer Movement Event
 
-Immutable/auditable fact about a trailer movement.
+Immutable/auditable operational fact.
 
-Examples:
+Candidate event types:
 
 - HOOKED
 - DROPPED
 - ARRIVED_LOCATION
 - DEPARTED_LOCATION
 - MOVED_WITHIN_YARD
+- LOCATION_CONFIRMED
+- LOCATION_CORRECTED
+- LOCATION_MARKED_UNKNOWN
 - MARKED_OOS
 - RETURNED_TO_SERVICE
-- LOCATION_CORRECTED
+- LOAD_STATE_CHANGED
 
-Candidate metadata:
+Metadata:
 
+- tenant;
 - trailer;
-- job;
+- trip;
+- stop;
 - driver;
 - tractor;
 - location;
-- timestamp;
-- source (driver, dispatcher, geofence, yard check, integration);
-- actor;
+- occurrence timestamp;
+- sync timestamp where relevant;
+- actor/source;
 - evidence;
 - correction relationship.
 
-## Shift
+## Inspection
 
-Represents driver shift start/end if included in MVP.
+Minimal MVP concept for driver pre/post-trip workflow.
 
-It should not become a payroll engine.
+Candidate fields:
+
+- type: PRE_TRIP / POST_TRIP;
+- driver;
+- tractor;
+- trip/shift;
+- odometer/mileage;
+- photos;
+- timestamp;
+- notes/exceptions.
+
+This is not yet a DOT inspection/compliance subsystem unless separately specified.
+
+## Fuel Event
+
+Optional driver action discovered in the ideal-day workflow.
+
+Candidate fields:
+
+- driver;
+- tractor;
+- trip;
+- odometer/mileage;
+- timestamp;
+- fuel quantity/cost fields pending clarification.
+
+Full fuel management remains out of scope.
 
 ## Document / Evidence
 
 Examples:
 
 - BOL;
-- signed BOL;
-- POD;
+- signed BOL photo;
+- POD photo;
 - trailer damage photo;
-- delivery photo.
+- inspection photo.
 
-Needs storage metadata, uploader, tenant scope and entity relationship.
+Must preserve:
+
+- tenant scope;
+- related entity;
+- uploader/source;
+- timestamp.
+
+Standalone digital signature is not required for MVP.
 
 ## Yard Check
 
-Represents an inventory reconciliation session for a location.
+Inventory reconciliation session for an operational yard/site.
+
+Expected set is based on trailers currently recorded in:
+
+- the yard; and/or
+- associated docks.
 
 Contains:
 
-- expected trailer set/snapshot;
+- expected snapshot;
 - scanned/found trailers;
 - missing trailers;
 - unexpected trailers;
 - actor;
-- start/end timestamps.
+- timestamps.
+
+A discrepancy does not silently rewrite history.
 
 ## Alert
 
-Represents operational attention required.
-
 Initial candidate:
 
-- trailer inactive/no movement for configured period.
-
-Future alerts may include appointment risk, mismatch or yard reconciliation exceptions.
+- trailer has not moved for configured threshold (discovery baseline: 3 days).
 
 ## Audit Event
 
-Tracks meaningful administrative changes that are not already represented as immutable operational events.
+Tracks meaningful administrative changes that are not already fully represented by immutable operational events.
 
 Examples:
 
-- user changed customer assignment;
-- dispatcher corrected location;
-- job reassigned;
-- master-data change.
+- destination changed;
+- trailer assignment changed;
+- location corrected;
+- customer/master data changed;
+- trip reassigned.
 
 ## Conceptual relationship sketch
 
 ```text
 Tenant
- ├── Users
- ├── Drivers
+ ├── Users / Roles
+ ├── Drivers ── Shifts
  ├── Tractors
  ├── Trailers
  ├── Customers
- │    ├── CustomerUsers
- │    └── Locations
+ │    ├── Customer Users / Dispatchers
+ │    └── Physical Sites
+ │         └── Operational Locations / Docks / Yards
  ├── Orders
- │    └── Jobs/Movements
- │         ├── Driver
- │         ├── Tractor
- │         ├── Origin/Destination
- │         ├── Trailer Movement Events
- │         └── Documents/Evidence
- ├── YardChecks
+ │    └── Load Manifest / Order Allocations
+ ├── Trips / Runs
+ │    ├── Stops
+ │    ├── Driver / Tractor
+ │    ├── Trailer Movement Events
+ │    ├── Inspections
+ │    ├── Fuel Events
+ │    └── Documents / Evidence
+ ├── Yard Checks
  ├── Alerts
- └── AuditEvents
+ └── Audit Events
 ```
 
-## Important unresolved modeling questions
+## Remaining modeling questions
 
-- Can one job contain multiple customer stops?
-- Can one order produce multiple jobs?
-- Can a job change trailers more than once?
-- How should live-load differ from drop-and-hook in the state machine?
-- How should in-yard moves relate to jobs?
-- Is “content” structured line-item data or free-form/order metadata?
-- Are trailer identifiers unique per tenant or only unique per customer prefix?
+See `docs/product/open-questions.md`, especially:
+
+- exact customer-order modification cutoff;
+- exact cancellation state machine;
+- customer trailer designation/ownership semantics;
+- evidence rules by customer;
+- retention/compliance policy;
+- precise inspection/fuel fields.
