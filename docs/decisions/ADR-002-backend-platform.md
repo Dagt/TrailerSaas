@@ -1,6 +1,6 @@
 # ADR-002 — Backend Platform: Java 25 + Spring Boot 4
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
