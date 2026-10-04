@@ -1,6 +1,6 @@
 # ADR-013 — PostgreSQL Row Level Security for Tenant Defense-in-Depth
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
