@@ -1,6 +1,6 @@
 # ADR-006 — Persistence Access: JPA-First with Explicit Read Queries
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
