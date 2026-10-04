@@ -1,6 +1,6 @@
 # ADR-015 — Observability and Operational Diagnostics
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
