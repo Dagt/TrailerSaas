@@ -1,6 +1,6 @@
 # MVP Endpoint Catalog v0.1
 
-**Status:** Proposed
+**Status:** Accepted v0.1
 
 This is the consolidated implementation checklist for Phase 4.
 
