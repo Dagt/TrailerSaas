@@ -1,6 +1,6 @@
 # ADR-005 — Mobile Platform: Flutter with Local Offline Queue
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
