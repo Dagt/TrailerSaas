@@ -1,6 +1,6 @@
 # Documents and Evidence API v0.1
 
-**Status:** Proposed
+**Status:** Accepted v0.1
 
 Base:
 
