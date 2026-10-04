@@ -1,6 +1,6 @@
 # ADR-012 — Mobile Offline Synchronization Architecture
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
