@@ -1,6 +1,6 @@
 # Product Vision
 
-**Status:** Proposed product definition based on confirmed discovery
+**Status:** Accepted product definition v0.1 on 2026-10-04
 
 ## Working product statement
 
