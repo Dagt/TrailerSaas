@@ -1,6 +1,6 @@
 # Domain Model
 
-**Status:** Draft conceptual model refined after second discovery round  
+**Status:** Draft conceptual model refined after final discovery round  
 **Important:** This is not a database schema.
 
 ## Core principles
@@ -141,14 +141,18 @@ Primary tracked non-powered asset.
 
 ### Identity
 
-Displayed trailer numbers are **not guaranteed globally unique** across the tenant.
+The final design-partner clarification states that displayed trailer numbers do **not repeat within the current 2 Fast Logistics operation** and are assigned to customers.
 
-Therefore each Trailer requires:
+TrailerSaaS must nevertheless avoid using a human-readable trailer number as the database identity because uniqueness is not guaranteed across all SaaS tenants.
 
-- internal immutable unique ID;
+Each Trailer therefore requires:
+
+- internal immutable unique ID/UUID;
 - displayed operational identifier;
-- customer/fleet namespace or association where needed;
+- persistent designated customer association;
 - QR identity that resolves to the internal trailer ID.
+
+For the initial design partner, the displayed operational identifier can be treated as tenant-unique.
 
 ### Trailer attributes
 
@@ -236,7 +240,13 @@ A Trip may:
 - change trailer during drop & hook;
 - include a return to base.
 
-Discovery indicates the described driver task/run is considered finished when the driver returns to base.
+Lifecycle concepts must be separate:
+
+- a Delivery/Stop can be completed when service is finished and POD/BOL evidence is recorded;
+- a Trip/Run can continue across multiple Stops and may include return to base;
+- a Shift ends only when the driver marks Off Duty at the end of the workday.
+
+Off Duty must never implicitly complete every delivery/trip in the shift.
 
 ### Candidate trip states
 
@@ -290,11 +300,14 @@ Must support:
 - one or more orders;
 - PO;
 - BOL;
+- product description;
+- quantity;
+- pallet count;
 - weight;
-- optional description;
-- optional quantity/pallet information;
 - trailer;
 - trip/segment context.
+
+A generic “units” field is not required by the design partner for MVP.
 
 This prevents “contents” from becoming a single free-text field.
 
@@ -348,24 +361,41 @@ Candidate fields:
 - tractor;
 - trip/shift;
 - odometer/mileage;
-- photos;
 - timestamp;
 - notes/exceptions.
 
-This is not yet a DOT inspection/compliance subsystem unless separately specified.
+### Pre-Trip baseline
+
+- odometer/mileage;
+- front photo;
+- rear photo;
+- driver-side photo;
+- passenger-side photo;
+- structured checklist.
+
+### Post-Trip baseline
+
+- final odometer/mileage;
+- damages;
+- failures/problems;
+- comments.
+
+This is an operational inspection record, not a complete DOT compliance subsystem unless separately specified.
 
 ## Fuel Event
 
 Optional driver action discovered in the ideal-day workflow.
 
-Candidate fields:
+MVP fields:
 
 - driver;
 - tractor;
 - trip;
 - odometer/mileage;
-- timestamp;
-- fuel quantity/cost fields pending clarification.
+- receipt photo;
+- timestamp.
+
+Gallons, price-per-gallon and total paid are not required by the current design partner.
 
 Full fuel management remains out of scope.
 
@@ -462,3 +492,28 @@ See `docs/product/open-questions.md`, especially:
 - evidence rules by customer;
 - retention/compliance policy;
 - precise inspection/fuel fields.
+
+
+## Customer designation of trailers
+
+For the initial design partner:
+
+- a trailer is designated to a customer;
+- the designation remains in effect until Administration changes it;
+- reassignment to another customer requires administrative authorization.
+
+This designation is separate from current location, current load and current Order.
+
+## Missing trailer state
+
+When a Yard Check cannot locate an expected trailer:
+
+- current location can become `LOCATION_UNKNOWN`;
+- Administration receives an alert;
+- Administration owns investigation;
+- the system preserves:
+  - last known location;
+  - last seen timestamp;
+  - last driver.
+
+`LOCATION_UNKNOWN` must not erase last-known-location history.
