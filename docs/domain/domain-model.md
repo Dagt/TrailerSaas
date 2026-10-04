@@ -1,6 +1,6 @@
 # Domain Model
 
-**Status:** Draft conceptual model refined after final discovery round  
+**Status:** Accepted conceptual model v0.1 on 2026-10-04  
 **Important:** This is not a database schema.
 
 ## Core principles
