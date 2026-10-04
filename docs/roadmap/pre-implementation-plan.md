@@ -37,7 +37,7 @@ Current status: the v0.1 machines are documented and Accepted under `docs/state-
 
 ## Phase 2 — UX / User Flows
 
-**Progress: Draft complete. All five MVP actor flows documented; pending acceptance.**
+**Progress: Accepted v0.1 on 2026-10-04.**
 
 Define screen-level flows for:
 
@@ -64,11 +64,13 @@ For each flow define:
 
 All MVP workflows have a deterministic UI flow.
 
-Current status: Tenant Admin Web, Transport Operations Web, Customer Dispatcher Web, Road Driver Mobile and Yard / Spotter Mobile are all documented under `docs/ux/`. After review/acceptance, Phase 2 can close and Phase 3 (freeze relational schema) becomes active.
+Current status: Tenant Admin Web, Transport Operations Web, Customer Dispatcher Web, Road Driver Mobile and Yard / Spotter Mobile are Accepted v0.1 under `docs/ux/`. Phase 2 is closed.
 
 ## Phase 3 — Freeze Relational Schema
 
-Refine `schema-v0.1.md` into a migration-ready schema.
+**Progress: In progress. Migration-ready `schema-v1.0.md` drafted for freeze.**
+
+Refine the relational model into a migration-ready schema.
 
 Define:
 
