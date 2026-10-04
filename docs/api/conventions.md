@@ -1,6 +1,6 @@
 # API Conventions v0.1
 
-**Status:** Proposed
+**Status:** Accepted v0.1
 
 ## 1. Authentication
 
