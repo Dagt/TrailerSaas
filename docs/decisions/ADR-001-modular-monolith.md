@@ -1,6 +1,6 @@
 # ADR-001 — Modular Monolith Architecture
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
