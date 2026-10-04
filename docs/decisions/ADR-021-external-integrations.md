@@ -1,6 +1,6 @@
 # ADR-021 — External Integration Boundary for Samsara and Amtech
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
