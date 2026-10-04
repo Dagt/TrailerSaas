@@ -134,7 +134,7 @@ Current status: `docs/mobile/offline-sync-protocol.md`, `docs/mobile/local-offli
 
 ## Phase 6 — Architecture Completion
 
-**Progress: Active.**
+**Progress: Draft complete — ADR-013 through ADR-022 created; pending acceptance.**
 
 Finalize remaining ADRs:
 
@@ -143,10 +143,16 @@ Finalize remaining ADRs:
 - geofence implementation;
 - observability;
 - CI/CD;
-- API conventions;
+- API conventions/versioning;
 - QR format;
 - backups/restore;
-- secrets/environments.
+- secrets/environments;
+- external integration boundary;
+- durable background jobs/outbox.
+
+### Current status
+
+ADR-012 is Accepted. ADR-013 through ADR-022 form the proposed architecture-completion package. Once accepted, Phase 6 closes and Phase 7 becomes active.
 
 ## Phase 7 — Implementation Backlog
 
