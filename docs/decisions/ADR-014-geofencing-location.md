@@ -1,6 +1,6 @@
 # ADR-014 — Geofence-Assisted Arrival Without Continuous Tracking
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
