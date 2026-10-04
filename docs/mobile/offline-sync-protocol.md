@@ -1,6 +1,6 @@
 # Mobile Offline Sync Protocol v0.1
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04  
 **Applies to:** Road Driver Mobile, Yard / Spotter Mobile  
 **Related:** API v0.1, schema v1.0, Driver/Yard UX flows
