@@ -37,6 +37,8 @@ Current status: the v0.1 machines are documented and Accepted under `docs/state-
 
 ## Phase 2 — UX / User Flows
 
+**Progress: In progress. Transport Operations Web and Road Driver Mobile drafted.**
+
 Define screen-level flows for:
 
 ### Web
@@ -61,6 +63,8 @@ For each flow define:
 ### Exit criteria
 
 All MVP workflows have a deterministic UI flow.
+
+Current status: priority flows for Transport Operations Web and Road Driver Mobile are documented under `docs/ux/`. Remaining Phase 2 flows: Tenant Admin Web, Customer Dispatcher Web, Yard / Spotter Mobile.
 
 ## Phase 3 — Freeze Relational Schema
 
