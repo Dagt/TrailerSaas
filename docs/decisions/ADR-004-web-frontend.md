@@ -1,6 +1,6 @@
 # ADR-004 — Web Frontend: React + TypeScript + Vite
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
