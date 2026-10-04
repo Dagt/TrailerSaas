@@ -37,6 +37,7 @@ Request:
       "sequenceNumber": 1,
       "siteId": "uuid",
       "locationId": null,
+      "siteSnapshot": null,
       "stopType": "DELIVERY",
       "scheduledAt": "2026-10-05T15:00:00Z",
       "instructions": "..."
@@ -46,7 +47,9 @@ Request:
 }
 ```
 
-`plannedTrailerId` is accepted only when caller has the corresponding assignment capability/customer scope. Internally it may become planning/allocation data rather than a direct Order column.
+`plannedTrailerId` is accepted only when caller has the corresponding assignment capability/customer scope. Internally the service persists this through the approved planning/manifest relationship rather than inventing a direct Order foreign key.
+
+For a requested Stop, either a normalized `siteId` or an approved `siteSnapshot` may be supplied. `siteSnapshot` is used when the operational destination has not yet been normalized into reusable master Site data and is preserved for historical accuracy.
 
 Response: `201` Order detail.
 
@@ -140,6 +143,7 @@ Request:
       "stopType": "PICKUP",
       "siteId": "uuid",
       "locationId": "uuid",
+      "siteSnapshot": null,
       "scheduledAt": "...",
       "orderIds": ["uuid"],
       "instructions": "..."
@@ -148,6 +152,7 @@ Request:
       "sequenceNumber": 2,
       "stopType": "DELIVERY",
       "siteId": "uuid",
+      "siteSnapshot": null,
       "scheduledAt": "...",
       "orderIds": ["uuid"]
     }
