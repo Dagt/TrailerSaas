@@ -1,6 +1,6 @@
 # ADR-016 — CI/CD and Release Workflow
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
