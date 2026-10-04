@@ -1,6 +1,6 @@
 # Trailer State Model
 
-**Status:** Proposed v0.1
+**Status:** Accepted v0.1
 
 ## Principle
 
