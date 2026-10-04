@@ -54,18 +54,25 @@ These files describe the current real-world operation. They are evidence, not ne
 
 - [Core workflows](workflows/core-workflows.md)
 
-## 8. Architecture
+## 8. API
+
+- [API contract index](api/README.md)
+- [API conventions](api/conventions.md)
+- [Endpoint catalog](api/endpoint-catalog.md)
+- [OpenAPI v1 draft](api/openapi-v1-draft.yaml)
+
+## 9. Architecture
 
 - [Non-functional requirements](architecture/non-functional-requirements.md)
 
-## 9. Security
+## 10. Security
 
 - [Tenancy and authorization](security/tenancy-and-authorization.md)
 - [Permission capabilities](security/permission-capabilities.md)
 
-Technology selection is intentionally deferred until product behavior is sufficiently stable.
+Baseline technology and architecture decisions are accepted under `docs/decisions/`; remaining architecture items are tracked in the pre-implementation roadmap.
 
-## 10. Decisions
+## 11. Decisions
 
 - [ADR index](decisions/README.md)
 - [ADR template](decisions/ADR-000-template.md)
