@@ -7,7 +7,7 @@ This roadmap describes the remaining work before Codex begins implementation.
 
 ## Phase 1 — State Machines
 
-**Progress: Drafted — pending review/acceptance.**
+**Progress: Accepted v0.1 on 2026-10-04.**
 
 Explicit lifecycle/state transitions have been documented for:
 
@@ -33,7 +33,7 @@ Each state machine must define:
 
 No major entity should rely on informal status changes.
 
-Current status: the v0.1 machines are documented under `docs/state-machines/`. After approval, mark them Accepted and begin Phase 2 UX/User Flows.
+Current status: the v0.1 machines are documented and Accepted under `docs/state-machines/`. Phase 2 UX/User Flows is now the active next phase.
 
 ## Phase 2 — UX / User Flows
 
