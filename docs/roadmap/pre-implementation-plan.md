@@ -33,7 +33,7 @@ Each state machine must define:
 
 No major entity should rely on informal status changes.
 
-Current status: the v0.1 machines are documented and Accepted under `docs/state-machines/`. Phase 2 UX/User Flows is now the active next phase.
+Current status: the v0.1 machines are documented and Accepted under `docs/state-machines/`. Phase 1 is closed.
 
 ## Phase 2 — UX / User Flows
 
@@ -134,7 +134,7 @@ Current status: `docs/mobile/offline-sync-protocol.md`, `docs/mobile/local-offli
 
 ## Phase 6 — Architecture Completion
 
-**Progress: Draft complete — ADR-013 through ADR-022 created; pending acceptance.**
+**Progress: Accepted on 2026-10-04.**
 
 Finalize remaining ADRs:
 
@@ -152,9 +152,11 @@ Finalize remaining ADRs:
 
 ### Current status
 
-ADR-012 is Accepted. ADR-013 through ADR-022 form the proposed architecture-completion package. Once accepted, Phase 6 closes and Phase 7 becomes active.
+ADR-012 through ADR-022 are Accepted. Phase 6 is closed.
 
 ## Phase 7 — Implementation Backlog
+
+**Progress: Active.**
 
 Convert approved specification into:
 
