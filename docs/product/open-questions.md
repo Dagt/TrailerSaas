@@ -1,241 +1,137 @@
 # Open Questions
 
-**Status:** Active after second discovery round  
+**Status:** Functional discovery complete; remaining items are product-policy / implementation decisions  
 **Convention:** `OQ-###`
 
-Most first-round blocking questions are now resolved. This file contains only issues still requiring product/technical clarification.
+No further broad operational questionnaire is planned. The three discovery rounds provide enough information to freeze the core workflows and move into UX/architecture.
 
-## Orders, trips and customer permissions
+## Product-policy decisions still open
 
-### OQ-031 — Customer edit/cancel cutoff — BLOCKING
-Discovery says customer dispatcher can modify/cancel “before delivery.”
+### OQ-050 — In-transit customer changes
+Discovery says normal edits are allowed before departure, changes while driving are not normal, but changes before final arrival can occur.
 
-Which exact system state is the cutoff?
+Recommended product behavior:
 
-Possible interpretations:
+- direct customer self-service edits before departure;
+- after departure, create an audited change/reroute request/instruction handled by authorized operations.
 
-- before driver accepts/starts;
-- before departure;
-- before arrival at destination;
-- any time before POD/delivery completion.
+This is a product decision to formalize in the state machine, not a missing discovery fact.
 
-### OQ-032 — Customer dispatcher vs transport dispatcher — BLOCKING
-Which actions belong to manufacturing/customer dispatch versus transportation-company operations?
+### OQ-051 — Exact Trip/Run completion event
+We now distinguish:
 
-Specifically:
+- Delivery/Stop completion;
+- Trip/Run completion;
+- Shift/Off Duty completion.
 
-- who plans stop sequence?
-- who assigns driver?
-- who assigns tractor?
-- who assigns trailer?
-- who can change appointment/destination?
-- who can correct trailer data?
+Need to choose the exact Trip completion rule for the product state machine (for example return-to-base, final stop departure, dispatcher close, or run-specific behavior).
 
-### OQ-033 — Trip completion semantics
-Discovery describes return to base as task completion.
+### OQ-052 — Pre-Trip checklist content
+Pre-Trip definitely requires:
 
-Should system distinguish:
+- odometer;
+- front/rear/driver-side/passenger-side photos;
+- checklist.
 
-- **Delivery completed** at POD/service completion;
-- **Trip completed** at return to base/Post-Trip?
+Exact checklist questions/items remain to be authored during UX/specification.
 
-This is the recommended interpretation but should be explicitly approved.
+### OQ-053 — Unsigned-BOL alert
+“No receiver available” workflow is defined as:
 
-### OQ-034 — Cancellation after trip start
-Current behavior is “contact shipping.”
+- reason/status;
+- BOL photo;
+- delivery photo;
+- comment.
 
-Define:
+The interview did not answer whether this should also trigger an immediate Dispatcher alert.
 
-- who authorizes cancellation;
-- resulting Trip/Order status;
-- what happens to active trailer/load;
-- whether return-to-base is automatically created.
+This is non-blocking; default product behavior can be decided during alert design.
 
-## Manifest / cargo
+### OQ-054 — OOS → Available authority
+Damage/OOS capture is defined, but final authority for returning trailer to service is not yet confirmed.
 
-### OQ-035 — Detailed cargo fields
-Confirmed minimum includes Order, PO, BOL, weight and multiple orders.
+Candidate roles:
 
-Are any of these required in MVP?
+- Administrator;
+- Shipping/Supervisor;
+- future Maintenance role.
 
-- product description;
-- quantity;
-- pallet count;
-- units;
-- hazardous/material classification.
+### OQ-055 — Return-to-yard exact location
+When a driver returns to base with a trailer, should the system immediately set it to the base Yard, or require exact Yard/Dock confirmation?
 
-## Driver inspections and fuel
+Recommended: base Yard by default, with Yard/Spotter moves recording subsequent Dock placement.
 
-### OQ-036 — Pre/Post-trip detail — BLOCKING for UX
-The ideal workflow requires Pre-Trip/Post-Trip, truck photos and mileage.
+### OQ-056 — Official timekeeping usage
+On Duty / Off Duty is required, but the product still needs a business/legal decision on whether these timestamps are:
 
-Define:
+- operational records only; or
+- official payroll/timekeeping records.
 
-- required photo count/types;
-- whether checklist items are needed;
-- whether defects must create an exception;
-- whether Post-Trip also requires photos/mileage.
+If official, correction/approval and retention requirements need compliance review.
 
-### OQ-037 — Fuel event fields
-The ideal workflow includes optional fuel logging.
-
-Clarify whether “total de la carga” means:
-
-- gallons/liters;
-- dollar total;
-- both;
-- receipt photo;
-- other.
-
-## Delivery evidence
-
-### OQ-038 — No receiver available
-When nobody is available to sign BOL:
-
-- what evidence is mandatory?
-- must driver select a reason?
-- is an unsigned BOL photo enough?
-- should dispatch be alerted?
-
-### OQ-039 — Customer-specific POD rules
-Discovery says requirements may vary by customer.
-
-Does MVP need configurable evidence rules per customer, or can MVP use one standard rule plus exception?
-
-## Trailer/customer relationship
-
-### OQ-040 — Trailer designation/ownership semantics — BLOCKING
-Discovery says trailers are company-controlled/mostly leased and often designated to customers.
-
-Is customer assignment:
-
-- permanent until manually changed;
-- temporary allocation;
-- inferred from current order;
-- separate “home customer” plus temporary operational assignment?
-
-This affects inventory scoping.
-
-### OQ-041 — Duplicate visible trailer IDs
-Displayed numbers are not globally unique.
-
-What exact namespace disambiguates them operationally?
-
-Examples:
-
-- customer + trailer number;
-- fleet prefix + trailer number;
-- ownership group + number.
-
-QR will remain internally unique regardless.
-
-## Yard and locations
-
-### OQ-042 — Shared address / customer dock context
-Stanfast and Black Hawk share 710 Kimberly Dr but have separate dock ranges.
-
-Should one PhysicalSite contain:
-
-- multiple customer OperationalAreas; and
-- docks assigned to each area?
-
-Recommended: yes, but confirm operational expectations.
-
-### OQ-043 — Location Unknown workflow
-When Yard Check misses a trailer and it becomes LOCATION_UNKNOWN:
-
-- should an alert be created?
-- who resolves it?
-- does prior recorded location remain visible as “last known location”?
-
-### OQ-044 — Return-to-yard inference
-When driver marks arrival back at base, should the currently hooked trailer automatically be located in the base yard, or should driver/yard user confirm the exact yard/dock?
-
-## OOS
-
-### OQ-045 — Return to service
-MVP damage flow is OOS + photos/comment.
-
-Who is allowed to change OOS → available?
-
-- admin;
-- shipping;
-- yard spotter;
-- maintenance/supervisor role.
-
-## Retention / compliance
-
-### OQ-046 — Production retention policy — BLOCKING before production
-Design partner wants:
+### OQ-057 — Production retention policy — BLOCKING before production
+The design partner wants short operational retention:
 
 - movements: 1 week;
-- yard checks: 1 week;
+- Yard Checks: 1 week;
 - Orders/BOL/photos/deliveries: 1 month.
 
-Before implementing destructive deletion, validate U.S. contractual/legal/audit needs and whether product retention should be longer/configurable.
+Before destructive deletion is implemented, validate U.S. legal, contractual, insurance and audit requirements. The architecture should support configurable retention.
 
-### OQ-047 — Timekeeping reliance
-On/Off Duty is requested, without payroll calculation.
+### OQ-058 — Shared-address location model
+Discovery confirms Stanfast and Black Hawk can share a physical address but use different dock ranges.
 
-Will these timestamps be:
+Recommended model is:
 
-- operational only; or
-- used as official payroll/time records?
+- Physical Site;
+- Customer/Operational Area;
+- Yard/Docks.
 
-If official, correction/approval and compliance requirements must be defined.
+This should be accepted formally when the data model is frozen.
 
-## Configurability and commercial
+### OQ-059 — Tenant-level configurability
+For MVP, customer-specific POD rules are **not** required. Still decide which settings are tenant-configurable from day one:
 
-### OQ-048 — Tenant/customer configurability
-Which behaviors need configuration in MVP?
-
-Candidates:
-
-- POD evidence requirements;
 - stale-trailer threshold;
+- alert recipients;
 - retention;
-- allowed customer edits;
-- inspection fields;
-- alert recipients.
+- location/geofence settings;
+- inspection checklist;
+- customer edit permissions.
 
-### OQ-049 — Initial SaaS billing metric
-Should pricing primarily depend on:
+### OQ-060 — Initial SaaS billing metric
+Commercial billing remains tenant-level. Mobile/web apps are free for end users.
+
+Still choose future plan dimensions:
 
 - trailer count;
 - driver count;
-- movements;
-- locations;
+- movement volume;
 - plan tier;
-- hybrid model.
+- hybrid.
 
-This does not block core implementation but affects entitlements.
+This does not block core implementation.
 
-## Resolved in second discovery round
+## Resolved by final discovery round
 
-The following first-round topics are considered resolved enough for product design:
+The final round resolved:
 
-- many-to-many Order/Trailer relationships;
-- multi-stop trips;
-- Drop & Hook semantics;
-- Live Load/Unload semantics;
-- wrong-trailer requires dispatch authorization;
-- visible trailer numbers are not globally unique;
-- continuous route tracking not required;
-- arrival can be geofence-assisted/confirmed;
-- departure is manual;
-- always-on personal-phone location should not be required;
-- customer dispatcher can create Orders directly;
-- mid-task driver changes are dispatch-controlled exceptions;
-- signed BOL photo is sufficient primary POD;
-- standalone digital signature is not required;
-- Yard Check expected inventory comes from recorded yard/dock state;
-- discrepancy correction requires warning/confirmation;
-- driver does not have unrestricted location correction;
-- shift tracking is On/Off Duty only;
-- no wage calculation in MVP;
-- Samsara integration is not an MVP dependency;
-- Amtech integration is not an MVP dependency;
-- dispatcher authorizes destination changes;
-- destination changes are auditable;
-- OOS MVP is flag + photos/comment;
-- Road Mode and Yard/Spotter Mode require distinct workflows.
+- customer vs 2 Fast Logistics operational responsibilities;
+- normal edit/cancel window;
+- delivery vs shift completion distinction;
+- active-order cancellation behavior;
+- required cargo/manifest fields;
+- Pre-Trip capture;
+- Post-Trip capture;
+- lightweight fuel fields;
+- no-receiver POD exception;
+- common POD rule for MVP;
+- persistent customer designation of trailers;
+- current design-partner trailer-number uniqueness;
+- missing-trailer alert ownership and last-known-location display.
+
+## Important correction from earlier discovery
+
+An earlier answer suggested displayed trailer numbers might not be unique. The final clarification states that, in the current design-partner operation, **trailer numbers do not repeat and are assigned to customers**.
+
+The SaaS should still use internal UUIDs and must not assume those human-readable identifiers are globally unique across all tenants.
