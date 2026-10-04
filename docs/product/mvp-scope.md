@@ -1,154 +1,206 @@
 # MVP Scope v0.1
 
-**Status:** Draft for approval
+**Status:** Draft for approval after second discovery round
 
-The MVP should prove that TrailerSaaS can create a trustworthy operational record of trailer location, state, content/order association and movement while reducing spreadsheet/message dependency.
+The MVP should prove that TrailerSaaS can maintain trustworthy trailer inventory/location and coordinate customer orders, driver trips, stops and delivery evidence without relying on spreadsheets and message reconstruction.
 
 ## In scope
 
-### A. Authentication and tenant isolation
+### A. Authentication and tenancy
 
-- Tenant/company
-- Users
-- Roles/permissions
-- Customer-scoped access
+- Multi-tenant company model
+- Internal users and roles
+- Customer-scoped users
+- Server-side authorization
+- Audit attribution
 
 ### B. Master data
 
 - Customers
-- Customer contacts/users
+- Customer users/dispatchers
 - Drivers
 - Tractors
 - Trailers
-- Locations
-- Trailer QR identity
+- Physical sites
+- Yards/docks/operational sublocations
+- QR identity
 
-### C. Orders and dispatch
+### C. Orders, trips and stops
 
-- Create order/job
-- Order/PO/shipment/BOL references
-- Origin and destination
-- Appointment date/time
-- Assign driver
-- Assign tractor
-- Assign/reassign trailer when known
-- Active/pending/completed/cancelled job visibility
+- Customer-side order creation
+- Order number / PO / shipment / BOL references
+- Multiple orders in one trailer/trip
+- One order spanning multiple trailers
+- Multi-stop trips
+- Appointment information
+- Driver assignment
+- Tractor assignment
+- Trailer assignment when known
+- Dispatch-authorized trailer substitution
+- Destination change with audit
+- Cancellation/exception support
 
-### D. Driver mobile workflow
+### D. Driver mobile — Road Mode
 
 - Sign in
-- Start/end shift
-- View assignments
-- Start job
-- Hook trailer via QR
-- Drop trailer via QR
-- Confirm arrival/departure
-- Upload evidence/photos/BOL
-- Report basic exception/delay/damage
+- On Duty / Off Duty
+- Pre-trip
+- Tractor photos
+- Odometer/mileage
+- View assigned trips/orders/stops
+- Scan trailer QR
+- Manual departure
+- Geofence-assisted + confirmed arrival with manual fallback
+- Loading / unloading
+- Drop & Hook
+- Multi-stop execution
+- BOL/POD photo upload
+- Return to base
+- Post-trip
+- Basic delay/damage/exception reporting
 - Temporary offline queue/retry for critical actions
 
-### E. Trailer inventory and history
+### E. Lightweight fuel event
 
-- Search by trailer ID
+- Optional fuel action during active trip
+- Odometer/mileage
+- Fuel total/details once final fields are confirmed
+
+This is not full fuel management.
+
+### F. Yard / Spotter Mode
+
+- On/Off Duty
+- Pre/Post-trip
+- Yard moves
+- Yard ↔ dock movement
+- Dock ↔ yard movement
+- QR trailer identification
+- Authorized trailer state/location updates
+- Auditable movement history
+
+### G. Trailer inventory and history
+
+- Internal unique trailer identity
+- Non-unique visible trailer numbers supported
+- Search/disambiguation by trailer/customer context
 - Current location
 - Load state
 - Operational state
-- Time at current location
-- Current/last related order
+- Time at location
+- Current load manifest / orders
 - Last driver
 - Last tractor
 - Movement history
-- OOS/damage flag
+- OOS + photos
 - Auditable corrections
 
-### F. Yard check
+### H. Yard check
 
-- Select yard
-- Snapshot expected trailers
-- QR scan found trailers
+- Select site/yard
+- Expected inventory snapshot from recorded yard/dock state
+- QR scan
 - Missing list
 - Unexpected list
-- Completion history
+- Location-discrepancy warning
+- Confirmed correction workflow
+- Location Unknown handling
 
-### G. Alerts
+### I. Alerts
 
-Initial required candidate:
+Initial required alert:
 
-- no trailer movement for configurable period, with 3 days as discovery baseline.
+- trailer has not moved for configured period (design-partner baseline: 3 days).
 
-Additional alert types should not delay MVP unless validated as blocking.
-
-### H. Customer portal
+### J. Customer portal / customer dispatcher
 
 - Customer user accounts
 - Customer-scoped trailer inventory
-- Customer-scoped job/order visibility
-- Current trailer location/status/content
-- Request movement (subject to final approval workflow)
-- View allowed documents/evidence
+- Customer-scoped order/delivery visibility
+- Direct order/delivery creation
+- Modify/cancel before allowed cutoff
+- View location/status/content
+- View permitted BOL/POD/evidence
+- No access to unrelated customers
 
-### I. Auditability
+### K. Auditability
 
-- who performed important action;
-- when action occurred;
-- correction history;
-- assignment/reassignment history.
+- assignment/reassignment history
+- destination changes
+- trailer substitutions
+- location corrections
+- actor/timestamp/reason
+- original value retained
 
-## Candidate MVP geolocation behavior
+## MVP geolocation behavior
 
-- Store known location coordinates/geofence.
-- Use geofence-assisted arrival/departure where mobile OS behavior allows.
-- Allow explicit confirmation/fallback.
-- Do not require continuous route recording.
+- Known sites may have geofences.
+- Geofence can suggest probable arrival.
+- Driver confirms arrival.
+- Manual arrival remains available.
+- Departure is manual.
+- Continuous route history is not required.
+- Always-on background tracking is not an MVP dependency.
 
-This remains subject to technical validation and privacy policy.
+## Design-partner retention preferences
+
+Current requested operational retention:
+
+- trailer movements: 1 week;
+- yard checks: 1 week;
+- orders: 1 month;
+- BOL/photos/deliveries: 1 month.
+
+These values must remain configurable/policy-driven until product/legal retention review is complete.
 
 ## Out of scope for MVP
 
-Unless scope is explicitly changed:
-
-- full payroll;
-- wage calculation;
+- full payroll/wage calculation;
+- break/lunch/overtime payroll rules;
 - accounting/invoicing;
-- ELD/HOS;
-- continuous live fleet map;
+- ELD/HOS replacement;
+- continuous live route tracking;
 - route optimization;
-- fuel management;
-- full preventive-maintenance system;
+- full fuel-management system;
+- full preventive-maintenance/work-order system;
+- repair cost/vendor management;
 - RFID/NFC hardware;
 - custom telematics hardware;
-- deep Samsara integration;
+- Samsara integration;
 - Amtech integration;
 - AI optimization;
 - customer billing;
-- marketplace/load-board features.
+- marketplace/load-board features;
+- standalone digital signature capture.
 
 ## Future candidates
 
 - Samsara integration
 - Amtech integration
 - richer maintenance
-- analytics and efficiency KPIs
+- analytics/KPIs
 - route/ETA intelligence
-- configurable customer workflows
+- configurable customer evidence rules
 - webhooks/API
 - bulk imports
 - advanced reporting
 - RFID/NFC
-- automated POD extraction/OCR if justified
 - payroll export
+- configurable retention by plan/customer
 
 ## MVP exit criteria — proposed
 
-Before calling the MVP operationally successful:
-
-1. A dispatcher can create and assign a job.
-2. A driver can complete a representative drop-and-hook workflow using mobile.
-3. Hook/drop establishes a trustworthy driver/tractor/trailer relationship.
-4. Trailer search returns a useful current state and history.
-5. Yard check detects missing/unexpected trailers.
-6. Delivery evidence can be attached and retrieved.
-7. Customer user can see only its own data.
-8. Corrections are auditable.
-9. Critical driver actions can survive temporary connectivity loss.
-10. Tenant data cannot be accessed across tenants in authorization tests.
+1. Customer dispatcher can create an order that appears in operations.
+2. Operations can plan a multi-stop Trip and assign driver/tractor/trailer.
+3. Driver can complete On Duty → Pre-Trip → Trip → Return → Post-Trip → Off Duty.
+4. Driver can complete Drop & Hook by QR.
+5. Wrong-trailer scan requires dispatcher-controlled substitution.
+6. Multi-order/multi-stop relationships remain traceable.
+7. Trailer search returns trustworthy current state and history.
+8. Yard/Spotter can perform yard moves.
+9. Yard Check detects missing/unexpected/discrepant trailers.
+10. POD/BOL evidence can be captured.
+11. Customer user can see only customer-scoped data.
+12. Corrections/destination changes are auditable.
+13. Critical mobile actions survive temporary connectivity loss.
+14. Cross-tenant authorization tests prevent data leakage.
