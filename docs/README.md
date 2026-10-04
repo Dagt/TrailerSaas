@@ -27,7 +27,8 @@ These files describe the current real-world operation. They are evidence, not ne
 
 ## 4. Data Model
 
-- [Relational data model v0.1](data-model/schema-v0.1.md)
+- [Relational data model v0.1](data-model/schema-v0.1.md) — legacy draft
+- [Relational data model v1.0](data-model/schema-v1.0.md) — proposed freeze
 
 ## 5. State Machines
 
