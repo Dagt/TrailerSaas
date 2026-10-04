@@ -9,6 +9,11 @@ Architecture choices that materially affect the system are recorded here.
 - [ADR-003 — PostgreSQL as Primary Database](ADR-003-primary-database.md)
 - [ADR-004 — Web Frontend: React + TypeScript + Vite](ADR-004-web-frontend.md)
 - [ADR-005 — Mobile Platform: Flutter with Local Offline Queue](ADR-005-mobile-platform.md)
+- [ADR-006 — Persistence Access: JPA-First with Explicit Read Queries](ADR-006-persistence-access.md)
+- [ADR-007 — Authentication: Firebase Authentication, Authorization in TrailerSaaS](ADR-007-authentication.md)
+- [ADR-008 — Object Storage: Cloudflare R2](ADR-008-object-storage.md)
+- [ADR-009 — Initial Deployment: Railway + Cloudflare](ADR-009-initial-deployment.md)
+- [ADR-010 — Push Notifications: Firebase Cloud Messaging](ADR-010-notifications.md)
 
 These are currently **Proposed**, not yet marked Accepted. The intent is to review them against the final product requirements before implementation begins.
 
@@ -16,14 +21,9 @@ These are currently **Proposed**, not yet marked Accepted. The intent is to revi
 
 Likely next ADRs:
 
-- persistence/query strategy (JPA vs jOOQ vs hybrid);
-- authentication / identity provider;
 - multi-tenant enforcement and PostgreSQL RLS;
-- object/file storage;
 - offline synchronization protocol;
 - geofencing/background location implementation;
-- hosting/deployment;
-- push notifications;
 - observability;
 - CI/CD;
 - QR format/identity approach;
