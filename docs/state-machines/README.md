@@ -1,6 +1,6 @@
 # State Machines
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Date:** 2026-10-04
 
 These state machines convert the approved discovery/business rules into explicit lifecycle behavior before API and UI implementation.
