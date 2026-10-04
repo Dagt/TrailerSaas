@@ -1,6 +1,6 @@
 # ADR-019 — Backup, Restore and Disaster Recovery Baseline
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
