@@ -5,16 +5,15 @@
 
 This section translates approved requirements and state machines into deterministic screen-level behavior before API and UI implementation.
 
-## Initial priority flows
+## MVP flows
 
+- [Tenant Admin Web](tenant-admin-web.md)
 - [Transport Operations Web](transport-operations-web.md)
+- [Customer Dispatcher Web](customer-dispatcher-web.md)
 - [Road Driver Mobile](road-driver-mobile.md)
+- [Yard / Spotter Mobile](yard-spotter-mobile.md)
 
-## Later flows
-
-- Tenant Admin Web
-- Customer Dispatcher Web
-- Yard / Spotter Mobile
+All five MVP actor flows are now drafted at screen-flow level.
 
 ## UX principles
 
