@@ -1,13 +1,13 @@
 # Business Rules
 
-**Status:** Draft refined after second discovery round  
+**Status:** Draft refined after final discovery round  
 **Convention:** `BR-###`
 
 ## Identity and tenancy
 
 - **BR-001** — Every operational record belongs to exactly one tenant.
 - **BR-002** — Customer users can access only authorized data for their customer within the tenant.
-- **BR-003** — Displayed trailer numbers are not assumed unique across the tenant.
+- **BR-003** — For the initial design partner, displayed trailer numbers are unique within the tenant; internal asset identity must nevertheless use an immutable system ID/UUID.
 - **BR-004** — Each trailer has an internal unique identity independent of displayed identifier.
 - **BR-005** — QR identity resolves to the internal trailer asset.
 
@@ -19,7 +19,7 @@
 - **BR-013** — A Trip may service multiple Orders.
 - **BR-014** — The data model must not enforce a one-to-one Order↔Trip↔Trailer relationship.
 - **BR-015** — Customer-side authorized dispatcher may create an Order directly into the operational queue.
-- **BR-016** — Customer modification/cancellation is allowed only before the configured/defined delivery cutoff; exact state rule remains open.
+- **BR-016** — Normal customer self-service modification/cancellation is allowed before driver departure; changes after departure are operational exceptions and must be audited/controlled.
 
 ## Trailer state
 
@@ -79,8 +79,8 @@ Exact distinction between tenant shipping and customer shipping remains part of 
 
 - **BR-080** — Signed BOL photo/file is accepted POD evidence when signature is available.
 - **BR-081** — Standalone on-screen digital signature is not required for MVP.
-- **BR-082** — Delivery may require an exception path when no receiver is available to sign.
-- **BR-083** — Evidence requirements may vary by customer; configuration depth is still open.
+- **BR-082** — If no receiver is available, the driver records No receiver available + BOL photo + delivery photo + comment.
+- **BR-083** — MVP uses one common POD rule for all customers; customer-specific POD configuration is deferred.
 
 ## Destination changes
 
@@ -113,3 +113,41 @@ Design-partner operational preferences:
 
 - **BR-130** — These values are not yet a universal SaaS retention policy.
 - **BR-131** — Destructive retention must not be implemented before product/legal/contractual review.
+
+
+## Trailer customer designation
+
+- **BR-132** — A trailer's designated customer persists until changed by Administration.
+- **BR-133** — Customer designation is independent from current location, load and Order.
+- **BR-134** — Trailer reassignment to another customer requires administrative authorization and audit.
+
+## Driver inspection
+
+- **BR-140** — Pre-Trip requires odometer, four standard exterior photos and a checklist.
+- **BR-141** — Post-Trip records final odometer, damages, failures/problems and comments.
+- **BR-142** — These records are operational workflow evidence, not by themselves a complete regulatory/DOT compliance system.
+
+## Fuel event
+
+- **BR-150** — MVP Fuel Event requires odometer/mileage and receipt photo only.
+- **BR-151** — Gallons, price-per-gallon and total paid are not required for the initial workflow.
+
+## Lifecycle separation
+
+- **BR-160** — Delivery/Stop completion, Trip/Run completion and Shift completion are distinct.
+- **BR-161** — Off Duty means end of driver's workday and must not implicitly complete every Trip/Delivery.
+- **BR-162** — POD/BOL can complete a Delivery/Stop while the Trip or Shift continues.
+
+## Cancellation / reroute
+
+- **BR-170** — Hood Container/customer authority can cancel an active Order in the design-partner workflow.
+- **BR-171** — After departure, cancellation/change produces instructions rather than destructive deletion.
+- **BR-172** — Driver may return to base or be redirected.
+- **BR-173** — Original destination/instruction must remain auditable.
+
+## Missing trailer
+
+- **BR-180** — Confirmed missing trailer may transition to LOCATION_UNKNOWN.
+- **BR-181** — LOCATION_UNKNOWN triggers an Administration alert.
+- **BR-182** — Administration owns investigation.
+- **BR-183** — Last known location, last seen time and last driver remain visible.
