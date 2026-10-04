@@ -1,6 +1,6 @@
 # Identity and Master Data API v0.1
 
-**Status:** Proposed
+**Status:** Accepted v0.1
 
 All Tenant-owned paths use:
 
