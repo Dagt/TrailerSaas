@@ -29,22 +29,33 @@ These files describe the current real-world operation. They are evidence, not ne
 
 - [Relational data model v0.1](data-model/schema-v0.1.md)
 
-## 5. Workflows
+## 5. State Machines
+
+- [State machine index](state-machines/README.md)
+- [Order](state-machines/order.md)
+- [Trip / Run](state-machines/trip.md)
+- [Stop / Delivery](state-machines/stop.md)
+- [Trailer](state-machines/trailer.md)
+- [Driver Shift](state-machines/shift.md)
+- [Yard Check](state-machines/yard-check.md)
+- [Alert](state-machines/alert.md)
+
+## 6. Workflows
 
 - [Core workflows](workflows/core-workflows.md)
 
-## 6. Architecture
+## 7. Architecture
 
 - [Non-functional requirements](architecture/non-functional-requirements.md)
 
-## 7. Security
+## 8. Security
 
 - [Tenancy and authorization](security/tenancy-and-authorization.md)
 - [Permission capabilities](security/permission-capabilities.md)
 
 Technology selection is intentionally deferred until product behavior is sufficiently stable.
 
-## 8. Decisions
+## 9. Decisions
 
 - [ADR index](decisions/README.md)
 - [ADR template](decisions/ADR-000-template.md)
