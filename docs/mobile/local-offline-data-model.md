@@ -1,6 +1,6 @@
 # Mobile Local Offline Data Model v0.1
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Storage:** SQLite via Drift  
 **Related:** offline-sync-protocol.md
 
