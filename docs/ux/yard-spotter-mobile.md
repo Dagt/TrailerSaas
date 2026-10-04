@@ -1,6 +1,6 @@
 # Yard / Spotter Mobile — UX Flow v0.1
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Primary actor:** YARD_SPOTTER  
 **Related requirements:** FR-050–055, FR-090–103, FR-120–136, FR-170–174  
 **Related state machines:** Shift, Trailer, Yard Check, Alert
