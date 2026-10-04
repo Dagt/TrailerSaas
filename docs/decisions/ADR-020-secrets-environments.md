@@ -1,6 +1,6 @@
 # ADR-020 — Environment Isolation and Secrets Management
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
