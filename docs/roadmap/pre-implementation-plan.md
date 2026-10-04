@@ -68,7 +68,7 @@ Current status: Tenant Admin Web, Transport Operations Web, Customer Dispatcher 
 
 ## Phase 3 — Freeze Relational Schema
 
-**Progress: In progress. Migration-ready `schema-v1.0.md` drafted for freeze.**
+**Progress: Accepted v1.0 on 2026-10-04.**
 
 Refine the relational model into a migration-ready schema.
 
@@ -88,7 +88,11 @@ Define:
 
 Ready to generate Flyway migrations.
 
+Current status: schema v1.0 is Accepted and migration-ready. Phase 3 is closed.
+
 ## Phase 4 — API Contracts
+
+**Progress: Active.**
 
 Define REST API contract before implementation.
 
