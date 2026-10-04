@@ -6,7 +6,7 @@ This file defines the working rules for Codex and any automated coding agent ope
 
 ## Current project phase
 
-The repository is currently in **pre-implementation specification**. Discovery, baseline architecture, state machines, UX flows, relational schema and API contracts are accepted. Do not implement yet unless an implementation issue/task explicitly authorizes it, and do not infer that an undocumented feature is approved simply because it seems useful.
+The repository is ready for **issue-driven implementation**. Discovery, ADR-001 through ADR-022, state machines, UX flows, schema v1.0, API v0.1 and mobile offline sync are accepted. The MVP implementation backlog is tracked in GitHub issues #1–#66. Implement only from a bounded child Issue and do not infer that an undocumented feature is approved simply because it seems useful.
 
 Before implementing a feature, read:
 
@@ -21,6 +21,7 @@ Before implementing a feature, read:
 9. accepted UX flows under `docs/ux/`
 10. accepted schema/API contracts under `docs/data-model/` and `docs/api/`
 11. mobile sync specification under `docs/mobile/` when working on mobile behavior
+12. `docs/backlog/README.md` and the specific GitHub Issue being implemented
 
 ## Source-of-truth priority
 
@@ -51,9 +52,9 @@ Do not silently resolve contradictions. Surface them.
 
 ## Coding phase checklist
 
-When implementation begins:
+For every implementation Issue:
 
-- work from a GitHub issue or implementation task;
+- work from a child GitHub Issue (#15–#65), not directly from an Epic;
 - include requirement IDs in PR descriptions where practical;
 - add or update tests with behavior changes;
 - update documentation when business behavior changes;
@@ -69,6 +70,10 @@ When implementation begins:
 - Business rules: `BR-###`
 - Open questions: `OQ-###`
 - Architecture decisions: `ADR-###`
+
+## Branch / PR workflow
+
+Follow `docs/backlog/codex-workflow.md`. Keep one bounded Issue per branch/PR unless the Issue explicitly requires otherwise.
 
 ## Important
 
