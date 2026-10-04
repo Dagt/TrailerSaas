@@ -1,6 +1,6 @@
 # Functional Requirements Catalog
 
-**Status:** Draft derived from three completed discovery rounds  
+**Status:** Accepted v0.1 on 2026-10-04  
 **Convention:** `FR-###`
 
 ## Tenant, identity and access
