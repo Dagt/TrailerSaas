@@ -61,18 +61,23 @@ These files describe the current real-world operation. They are evidence, not ne
 - [Endpoint catalog](api/endpoint-catalog.md)
 - [OpenAPI v1 draft](api/openapi-v1-draft.yaml)
 
-## 9. Architecture
+## 9. Mobile
+
+- [Offline sync protocol](mobile/offline-sync-protocol.md)
+- [Local offline data model](mobile/local-offline-data-model.md)
+
+## 10. Architecture
 
 - [Non-functional requirements](architecture/non-functional-requirements.md)
 
-## 10. Security
+## 11. Security
 
 - [Tenancy and authorization](security/tenancy-and-authorization.md)
 - [Permission capabilities](security/permission-capabilities.md)
 
 Baseline technology and architecture decisions are accepted under `docs/decisions/`; remaining architecture items are tracked in the pre-implementation roadmap.
 
-## 11. Decisions
+## 12. Decisions
 
 - [ADR index](decisions/README.md)
 - [ADR template](decisions/ADR-000-template.md)
