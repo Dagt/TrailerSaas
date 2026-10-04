@@ -6,7 +6,7 @@ This file defines the working rules for Codex and any automated coding agent ope
 
 ## Current project phase
 
-The repository is currently in **discovery / product-definition**. Do not infer that an undocumented feature is approved simply because it seems useful.
+The repository is currently in **pre-implementation specification**. Discovery, baseline architecture, state machines, UX flows, relational schema and API contracts are accepted. Do not implement yet unless an implementation issue/task explicitly authorizes it, and do not infer that an undocumented feature is approved simply because it seems useful.
 
 Before implementing a feature, read:
 
@@ -17,6 +17,10 @@ Before implementing a feature, read:
 5. `docs/product/business-rules.md`
 6. `docs/product/open-questions.md`
 7. relevant ADRs under `docs/decisions/`
+8. accepted state machines under `docs/state-machines/`
+9. accepted UX flows under `docs/ux/`
+10. accepted schema/API contracts under `docs/data-model/` and `docs/api/`
+11. mobile sync specification under `docs/mobile/` when working on mobile behavior
 
 ## Source-of-truth priority
 
