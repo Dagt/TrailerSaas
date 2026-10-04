@@ -1,6 +1,6 @@
 # ADR-017 — REST API Versioning and Compatibility
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
