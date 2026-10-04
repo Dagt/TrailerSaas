@@ -7,15 +7,13 @@ No further broad operational questionnaire is planned. The three discovery round
 
 ## Product-policy decisions still open
 
-### OQ-050 — In-transit customer changes
-Discovery says normal edits are allowed before departure, changes while driving are not normal, but changes before final arrival can occur.
-
-Recommended product behavior:
+### OQ-050 — In-transit customer changes — RESOLVED
+Accepted behavior:
 
 - direct customer self-service edits before departure;
-- after departure, create an audited change/reroute request/instruction handled by authorized operations.
+- after departure, use an audited reroute/change or active-cancellation workflow handled under the accepted capability/state rules.
 
-This is a product decision to formalize in the state machine, not a missing discovery fact.
+This behavior is now reflected in the Accepted state machines, UX flows and API contracts.
 
 ### OQ-051 — Exact Trip/Run completion event — RESOLVED IN STATE MACHINE v0.1
 The proposed Trip machine resolves this by making completion depend on the Trip's required Stops:
@@ -78,16 +76,14 @@ The design partner wants short operational retention:
 
 Before destructive deletion is implemented, validate U.S. legal, contractual, insurance and audit requirements. The architecture should support configurable retention.
 
-### OQ-058 — Shared-address location model
-Discovery confirms Stanfast and Black Hawk can share a physical address but use different dock ranges.
-
-Recommended model is:
+### OQ-058 — Shared-address location model — RESOLVED
+Accepted schema v1.0 uses:
 
 - Physical Site;
-- Customer/Operational Area;
-- Yard/Docks.
+- Customer↔Site association;
+- customer-aware Operational Locations such as Yard/Dock/Customer Area.
 
-This should be accepted formally when the data model is frozen.
+This supports multiple Customer operational contexts at the same street address without duplicating the physical Site.
 
 ### OQ-059 — Tenant-level configurability
 For MVP, customer-specific POD rules are **not** required. Still decide which settings are tenant-configurable from day one:
