@@ -33,9 +33,13 @@ These files describe the current real-world operation. They are evidence, not ne
 
 - [Non-functional requirements](architecture/non-functional-requirements.md)
 
+## 6. Security
+
+- [Tenancy and authorization](security/tenancy-and-authorization.md)
+
 Technology selection is intentionally deferred until product behavior is sufficiently stable.
 
-## 6. Decisions
+## 7. Decisions
 
 - [ADR index](decisions/README.md)
 - [ADR template](decisions/ADR-000-template.md)
