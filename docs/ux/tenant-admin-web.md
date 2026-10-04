@@ -1,6 +1,6 @@
 # Tenant Admin Web — UX Flow v0.1
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Primary actor:** TENANT_ADMIN  
 **Related requirements:** FR-001–021, FR-090–103, FR-160–174, FR-180–186  
 **Related security docs:** ADR-011, tenancy-and-authorization, permission-capabilities
