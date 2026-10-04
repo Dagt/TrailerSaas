@@ -1,6 +1,6 @@
 # ADR-003 — PostgreSQL as Primary Database
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
