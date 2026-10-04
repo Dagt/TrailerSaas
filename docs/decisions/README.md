@@ -15,22 +15,22 @@ Architecture choices that materially affect the system are recorded here.
 - [ADR-009 — Initial Deployment: Railway + Cloudflare](ADR-009-initial-deployment.md)
 - [ADR-010 — Push Notifications: Firebase Cloud Messaging](ADR-010-notifications.md)
 - [ADR-011 — Multi-Tenancy, Memberships and Authorization](ADR-011-tenancy-and-authorization.md)
-- [ADR-012 — Mobile Offline Synchronization Architecture](ADR-012-mobile-offline-sync.md) — Proposed
+- [ADR-012 — Mobile Offline Synchronization Architecture](ADR-012-mobile-offline-sync.md)
 
-These decisions were reviewed and **Accepted** on 2026-10-04 as the baseline architecture for TrailerSaaS. Future changes must be recorded through new or superseding ADRs.
+## Phase 6 proposed decisions
 
-## Architecture decisions still to make
+- [ADR-013 — PostgreSQL Row Level Security for Tenant Defense-in-Depth](ADR-013-postgresql-rls.md)
+- [ADR-014 — Geofence-Assisted Arrival Without Continuous Tracking](ADR-014-geofencing-location.md)
+- [ADR-015 — Observability and Operational Diagnostics](ADR-015-observability.md)
+- [ADR-016 — CI/CD and Release Workflow](ADR-016-ci-cd.md)
+- [ADR-017 — REST API Versioning and Compatibility](ADR-017-api-versioning.md)
+- [ADR-018 — Trailer QR Identity and Resolution](ADR-018-qr-identity.md)
+- [ADR-019 — Backup, Restore and Disaster Recovery Baseline](ADR-019-backup-recovery.md)
+- [ADR-020 — Environment Isolation and Secrets Management](ADR-020-secrets-environments.md)
+- [ADR-021 — External Integration Boundary for Samsara and Amtech](ADR-021-external-integrations.md)
+- [ADR-022 — PostgreSQL-Backed Outbox and Background Jobs](ADR-022-postgresql-outbox-jobs.md)
 
-Likely next ADRs:
-
-- multi-tenant enforcement and PostgreSQL RLS;
-- offline synchronization protocol;
-- geofencing/background location implementation;
-- observability;
-- CI/CD;
-- QR format/identity approach;
-- API conventions and versioning;
-- integration boundary for Samsara/Amtech.
+ADR-013 through ADR-022 are currently **Proposed** as the Phase 6 architecture-completion package. They should be reviewed together before being marked Accepted.
 
 ## File naming
 
@@ -56,3 +56,5 @@ An ADR must distinguish:
 - follow-up.
 
 Do not label a technology as chosen in implementation documentation until the corresponding ADR is Accepted.
+
+Future changes to an Accepted baseline require a new or superseding ADR.
