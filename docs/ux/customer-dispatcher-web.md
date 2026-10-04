@@ -1,6 +1,6 @@
 # Customer Dispatcher Web — UX Flow v0.1
 
-**Status:** Proposed v0.1  
+**Status:** Accepted v0.1  
 **Primary actor:** CUSTOMER_DISPATCHER  
 **Scope:** One or more explicitly assigned Customers inside a Tenant  
 **Related requirements:** FR-030–045, FR-140–155, FR-184–197  
