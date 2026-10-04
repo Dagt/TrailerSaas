@@ -1,138 +1,146 @@
 # Actors and Permissions
 
-**Status:** Draft
+**Status:** Draft refined after second discovery round
 
-Authorization must be tenant-scoped and role-based. Final role names may change.
+Authorization is tenant-scoped and role-based. Customer users additionally require customer scope.
 
 ## Actor 1 — Tenant Administrator
 
-Typical user: company administrator / operations manager.
+Typical user: transportation-company administrator/operations manager.
 
 Candidate capabilities:
 
-- manage tenant settings;
-- create/disable users;
-- manage drivers;
-- manage tractors;
-- manage trailers;
-- manage customers;
-- manage locations;
+- manage tenant/users/roles;
+- manage drivers/tractors/trailers;
+- manage customers/sites;
 - view all tenant operations;
-- correct operational records through auditable actions;
-- view audit history;
+- correct operational data auditably;
 - configure alerts;
-- manage role assignments.
+- view audit history.
 
-## Actor 2 — Dispatcher / Shipping
+## Actor 2 — Transport Operations / Shipping
 
-Typical user: dispatcher, shipping lead or qualified shipping staff.
-
-Candidate capabilities:
-
-- create orders/jobs;
-- edit unstarted work;
-- assign/reassign drivers and tractors;
-- associate trailers;
-- modify active work where business rules allow;
-- create customers/locations where authorized;
-- view trailer inventory and availability;
-- view delivery status;
-- receive/handle exceptions.
-
-Discovery confirms that shipping/dispatch currently assigns drivers and can change assignments.
-
-## Actor 3 — Yard / Spotter
-
-Typical user: yard spotter or shipping/receiving staff performing yard inventory.
+Typical user: transportation-company shipping/operations/dispatcher personnel.
 
 Candidate capabilities:
 
-- start/complete yard checks;
-- scan trailer QR codes;
-- record in-yard movement;
-- flag damage/OOS;
-- see missing/unexpected trailers for authorized yards;
-- propose/carry out location correction according to permissions.
+- view customer-created Orders;
+- plan Trips and Stops;
+- assign driver/tractor/trailer;
+- authorize trailer substitution;
+- authorize destination change;
+- reassign exceptional driver/tractor;
+- monitor active operations;
+- handle exceptions.
 
-This role should **not automatically have unrestricted administrative correction power**.
+Some responsibilities may overlap with customer-side shipping in the design partner and require final permission matrix validation.
 
-## Actor 4 — Driver
+## Actor 3 — Customer Dispatcher / Shipping
 
-Mobile-first role.
+Belongs to a manufacturing/customer company.
 
-Candidate capabilities:
+Confirmed design-partner behavior:
 
-- start/end shift;
-- view assigned jobs;
-- accept/start job;
-- scan trailer on hook/drop;
-- confirm arrival/departure;
-- upload photos/BOL/POD;
-- report delay/problem/damage;
-- view current work and limited recent history;
-- hand off work if approved workflow supports it.
+- can create Orders/deliveries directly;
+- created work appears in operational queue automatically;
+- can view its customer-scoped trailer inventory;
+- can view own Orders/deliveries;
+- can modify/cancel before permitted cutoff;
+- can view permitted BOL/POD evidence.
 
-Drivers should not manage master data.
+Must never access another customer.
 
-## Actor 5 — Customer User
+## Actor 4 — Yard / Spotter
 
-Belongs to a customer account within a tenant.
+Mobile-first yard role.
 
-Candidate capabilities:
+Capabilities:
 
-- view only own company's permitted trailers;
-- view current location/status/content;
-- view own jobs/orders;
-- request a movement if enabled;
-- view permitted documents/evidence;
-- support multiple contacts/users.
+- On Duty / Off Duty;
+- Pre/Post-trip;
+- Yard Mode;
+- yard↔dock moves;
+- QR scans;
+- yard checks;
+- view missing/unexpected trailers;
+- correct permitted trailer location/state with audit;
+- mark/report OOS/damage as permitted.
 
-Customer users must never see another customer's operational data.
+Design-partner explicitly selected Yard Spotter as a role allowed to correct trailer location.
+
+## Actor 5 — Driver — Road Mode
+
+Mobile-first.
+
+Capabilities:
+
+- On Duty / Off Duty;
+- Pre/Post-trip;
+- tractor photos/odometer;
+- view assigned Trip;
+- scan trailer;
+- depart;
+- confirm arrival;
+- Loading/Unloading;
+- Drop & Hook;
+- multi-stop execution;
+- BOL/POD photo;
+- optional fuel event;
+- report exception/damage.
+
+Restrictions:
+
+- cannot silently substitute trailer;
+- does not have unrestricted location correction;
+- mid-task handoff/reassignment is controlled by dispatch.
 
 ## Actor 6 — External Recipient
 
-A third-party delivery recipient generally does not need a persistent account in the initial design.
+Usually no persistent account.
 
-If later required, confirmation may be handled through:
+May participate through:
 
-- driver-captured evidence;
-- signed BOL;
-- a one-time confirmation flow.
+- physical BOL signature;
+- receiver interaction captured by driver;
+- future one-time confirmation if later required.
 
-This is unresolved and should not be implemented without validation.
+Standalone account/digital signature is not required for MVP.
 
-## Permission matrix — initial draft
+## Permission matrix — revised draft
 
-| Capability | Admin | Dispatcher/Shipping | Yard/Spotter | Driver | Customer |
+| Capability | Admin | Transport Ops | Customer Dispatcher | Yard/Spotter | Driver |
 |---|---:|---:|---:|---:|---:|
-| Manage users | ✓ | — | — | — | — |
+| Manage users/roles | ✓ | — | customer contacts TBD | — | — |
 | Manage drivers | ✓ | limited/TBD | — | — | — |
-| Manage trailers | ✓ | read/TBD | limited | — | read scoped |
-| Manage tractors | ✓ | read/TBD | — | read assigned | — |
-| Manage customers | ✓ | ✓ | — | — | — |
-| Manage locations | ✓ | ✓ | limited/TBD | — | read scoped |
-| Create job | ✓ | ✓ | — | — | request only |
-| Assign/reassign job | ✓ | ✓ | — | — | — |
-| Start/execute job | — | monitor | — | ✓ | — |
-| Hook/drop scan | — | override | ✓ in yard | ✓ | — |
-| Upload POD | view | view | — | ✓ | view scoped |
-| Yard check | view | view | ✓ | — | optional scoped |
-| Correct operational data | ✓ auditable | limited auditable | limited | — | — |
-| View audit history | ✓ | scoped/TBD | — | own/TBD | — |
+| Manage tractors | ✓ | ✓/TBD | — | read assigned | read assigned |
+| Manage trailers | ✓ | ✓/TBD | scoped read | limited operational | scan/read |
+| Create customer | ✓ | ✓/TBD | — | — | — |
+| Manage sites | ✓ | ✓/TBD | customer-scoped TBD | limited | read assigned |
+| Create Order | ✓ | ✓ | ✓ scoped | — | — |
+| Plan/assign Trip | ✓ | ✓ | — unless later allowed | — | — |
+| Authorize trailer substitution | ✓ | ✓ | — | — | — |
+| Execute Road Trip | — | monitor | view scoped | — | ✓ |
+| Yard move | — | override | — | ✓ | — |
+| Yard Check | view | view | scoped/TBD | ✓ | — |
+| Upload POD | view | view | view scoped | — | ✓ |
+| Correct trailer location | ✓ | shipping/TBD | scoped shipping TBD | ✓ | — |
+| Destination change authorization | ✓ | ✓ | request/edit until cutoff | — | — |
+| View audit history | ✓ | scoped | own/scoped TBD | limited | own actions TBD |
 
 ## Authorization rules
 
-1. Every protected entity must belong directly or indirectly to a tenant.
-2. Customer-user access requires both tenant match and customer scope.
-3. A user ID supplied by the client cannot be trusted as authorization.
-4. Administrative corrections must preserve prior history.
-5. Role checks should be enforced server-side.
-6. Cross-tenant identifiers should not leak existence through error behavior where practical.
+1. Every protected entity belongs directly or indirectly to one tenant.
+2. Customer access requires tenant + customer scope.
+3. Server must enforce permissions.
+4. Client-supplied actor/customer/tenant IDs are not authorization.
+5. Corrections/reassignments/substitutions remain auditable.
+6. Cross-tenant/customer identifiers must not leak unrelated records.
 
-## Open permission questions
+## Remaining permission questions
 
-See:
+See `open-questions.md` for:
 
-- OQ-011 — who can correct trailer location?
-- OQ-012 — customer request approval workflow
-- OQ-013 — driver handoff permissions
+- exact distinction between customer shipping and tenant shipping correction authority;
+- exact customer edit/cancel cutoff;
+- who may return OOS trailer to service;
+- whether customer dispatch can ever assign driver/trip directly.
