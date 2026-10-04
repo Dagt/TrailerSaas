@@ -16,6 +16,7 @@ This section translates the Accepted requirements, state machines, UX flows and 
 - [Documents and evidence](documents.md)
 - [Alerts and audit](alerts-audit.md)
 - [Endpoint catalog](endpoint-catalog.md)
+- [OpenAPI v1 draft skeleton](openapi-v1-draft.yaml)
 
 ## Contract principles
 
@@ -42,4 +43,4 @@ Tenant-owned resources use:
 
 ## Current phase
 
-The markdown contracts are the first Phase 4 deliverable. Once accepted, they should be converted into the authoritative OpenAPI document and DTO definitions.
+The markdown contracts and initial OpenAPI skeleton are the Phase 4 draft. After review/acceptance, the OpenAPI document should be expanded into the authoritative implementation contract with operation-specific request/response schemas.
