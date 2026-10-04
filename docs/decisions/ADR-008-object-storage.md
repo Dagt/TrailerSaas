@@ -1,6 +1,6 @@
 # ADR-008 — Object Storage: Cloudflare R2
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-10-04
 
 ## Context
