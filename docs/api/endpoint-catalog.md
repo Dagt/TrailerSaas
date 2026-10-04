@@ -17,6 +17,8 @@ Base Tenant path:
 - `GET /memberships`
 - `PATCH /memberships/{id}`
 - `PUT /memberships/{id}/roles`
+- `GET /settings`
+- `PATCH /settings`
 
 ## Customers / locations
 
@@ -24,6 +26,8 @@ Base Tenant path:
 - `GET /customers`
 - `GET /customers/{id}`
 - `PATCH /customers/{id}`
+- `POST /customers/{customerId}/sites`
+- `DELETE /customers/{customerId}/sites/{siteId}`
 - `POST /sites`
 - `GET /sites`
 - `GET /sites/{id}`
@@ -38,6 +42,8 @@ Base Tenant path:
 - `GET /drivers`
 - `GET /drivers/{id}`
 - `PATCH /drivers/{id}`
+- `POST /drivers/{driverId}/user-link`
+- `DELETE /drivers/{driverId}/user-link`
 - `POST /tractors`
 - `GET /tractors`
 - `GET /tractors/{id}`
@@ -52,7 +58,11 @@ Base Tenant path:
 - `POST /trailers/{id}/location-corrections`
 - `POST /trailers/{id}/mark-location-unknown`
 - `POST /trailers/{id}/load-state-changes`
+- `GET /trailers/{id}/qr-identities`
+- `POST /trailers/{id}/qr-identities`
+- `POST /trailers/{id}/qr-identities/{qrId}/revocation`
 - `GET /trailer-qr/{publicToken}`
+- `GET /trailers/{id}/timeline`
 
 ## Orders
 
