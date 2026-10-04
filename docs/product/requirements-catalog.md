@@ -1,134 +1,169 @@
 # Functional Requirements Catalog
 
-**Status:** Draft derived from discovery  
+**Status:** Draft derived from two discovery rounds  
 **Convention:** `FR-###`
-
-This catalog is intentionally behavior-focused. It is not an API specification.
 
 ## Tenant, identity and access
 
-- **FR-001** — The system shall support multiple tenant companies.
-- **FR-002** — The system shall isolate data between tenants.
-- **FR-003** — A tenant shall support multiple internal users with role-based permissions.
-- **FR-004** — A tenant shall support customer users scoped to one customer account.
-- **FR-005** — Customer users shall not access other customers' trailers/jobs/documents.
+- **FR-001** — The system shall support multiple tenant transportation companies.
+- **FR-002** — Tenant data shall be isolated.
+- **FR-003** — A tenant shall support role-based internal users.
+- **FR-004** — A tenant shall support customer users scoped to a customer account.
+- **FR-005** — Customer users shall not access unrelated customer data.
+- **FR-006** — Customer-side Dispatcher/Shipping shall be representable as a distinct authorization role.
 
-## Master data
+## Master data and locations
 
-- **FR-010** — Authorized users shall create and manage drivers.
-- **FR-011** — Driver records shall support name, license number and medical certificate expiration.
-- **FR-012** — Authorized users shall create and manage tractors.
-- **FR-013** — Authorized users shall create and manage trailers.
-- **FR-014** — Trailer records shall support tenant-scoped unique operational identifiers.
-- **FR-015** — Trailer records shall support type/size and capability metadata.
-- **FR-016** — Trailers shall be associable with a designated customer where applicable.
-- **FR-017** — Authorized users shall create and manage customers.
-- **FR-018** — Customers shall support multiple users/contacts.
-- **FR-019** — Authorized users shall create and manage known operational locations.
-- **FR-020** — Locations shall support address and geofence metadata.
+- **FR-010** — Authorized users shall manage drivers.
+- **FR-011** — Driver records shall support name, license number and medical-certificate expiration.
+- **FR-012** — Authorized users shall manage tractors.
+- **FR-013** — Authorized users shall manage trailers.
+- **FR-014** — Each trailer shall have an internal unique ID independent of its displayed trailer number.
+- **FR-015** — Displayed trailer identifiers may be duplicated across customer/fleet contexts.
+- **FR-016** — Trailer shall support type/size/capability metadata.
+- **FR-017** — Authorized users shall manage customers and customer users.
+- **FR-018** — Authorized users shall manage physical sites.
+- **FR-019** — A physical site shall support multiple operational sublocations such as yards and docks.
+- **FR-020** — Multiple customer contexts may exist at the same street address.
+- **FR-021** — Known sites may store geofence metadata.
 
-## Orders and jobs
+## Orders, trips, stops and manifests
 
-- **FR-030** — Authorized users shall create an order/job from customer shipping information.
-- **FR-031** — Orders/jobs shall support order number, PO, shipment number and BOL references as applicable.
-- **FR-032** — Jobs shall support origin, destination and appointment date/time.
-- **FR-033** — Jobs shall be assignable to a driver.
-- **FR-034** — Jobs shall be assignable to a tractor.
-- **FR-035** — Jobs shall support trailer assignment when known.
-- **FR-036** — A job may exist before the trailer is known.
-- **FR-037** — Authorized users shall reassign work according to job state.
-- **FR-038** — Reassignment shall be auditable.
-- **FR-039** — Jobs shall support cancellation/exception handling.
-- **FR-040** — The exact multi-stop/multi-order cardinality is pending validation and shall not be assumed.
+- **FR-030** — Authorized customer-side users shall create Orders.
+- **FR-031** — Orders shall support order number, PO, shipment number and BOL references.
+- **FR-032** — The operational model shall support multiple Orders in one Trip/trailer load.
+- **FR-033** — One Order may be allocated across multiple trailers.
+- **FR-034** — A Trip shall support multiple Stops.
+- **FR-035** — Stops shall support origin/destination/site, appointment and service type.
+- **FR-036** — A Trip shall be assignable to a driver.
+- **FR-037** — A Trip shall be assignable to a tractor.
+- **FR-038** — Trailer assignment may be unknown until pickup.
+- **FR-039** — The system shall represent a load/manifest containing one or more Orders.
+- **FR-040** — Manifest/order allocation shall support at least order, PO, BOL and weight when available.
+- **FR-041** — Reassignment shall be auditable.
+- **FR-042** — Destination changes shall preserve original/new destination, actor and timestamp.
+- **FR-043** — Customer-created Orders shall enter operations automatically in the design-partner workflow.
+- **FR-044** — Customer users shall be able to modify/cancel before the final allowed cutoff.
+- **FR-045** — Trips/Orders shall support cancellation and exception states.
 
-## Driver mobile
+## Driver mobile — duty and inspection
 
-- **FR-050** — Drivers shall view assigned work on mobile.
-- **FR-051** — Drivers shall start an assigned job.
-- **FR-052** — Drivers shall start/end a work shift if shift tracking remains in MVP.
-- **FR-053** — Drivers shall record trailer hook by scanning trailer QR.
-- **FR-054** — Drivers shall record trailer drop by scanning trailer QR.
-- **FR-055** — Hook events shall associate trailer, driver, tractor, job and timestamp.
-- **FR-056** — Drop events shall associate trailer, job, location and timestamp.
-- **FR-057** — Drivers shall record/confirm arrival.
-- **FR-058** — Drivers shall record/confirm departure.
-- **FR-059** — Drivers shall upload photos/documents as delivery evidence.
-- **FR-060** — Drivers shall report at least basic delay, damage or operational exception.
-- **FR-061** — Critical driver actions shall support temporary offline capture and later synchronization.
-- **FR-062** — Offline synchronization shall avoid duplicate business events.
+- **FR-050** — Driver shall mark On Duty.
+- **FR-051** — Driver shall mark Off Duty.
+- **FR-052** — Driver shall complete a Pre-Trip workflow.
+- **FR-053** — Pre-Trip shall support tractor photos.
+- **FR-054** — Pre-Trip shall support odometer/mileage.
+- **FR-055** — Driver shall complete a Post-Trip workflow.
+- **FR-056** — The system shall not calculate driver wages in MVP.
 
-## QR and trailer identity
+## Driver mobile — trip execution
 
-- **FR-070** — Each operational trailer shall be assignable a durable QR identity.
-- **FR-071** — QR scan shall resolve to a trailer within the current tenant context.
-- **FR-072** — A mismatched trailer scan shall not silently overwrite the planned assignment.
-- **FR-073** — The mismatch resolution policy is pending business validation.
+- **FR-060** — Driver shall view assigned Trips and Stops.
+- **FR-061** — Driver shall start/execute an assigned Trip.
+- **FR-062** — Driver shall record trailer hook by QR scan.
+- **FR-063** — Driver shall record trailer drop by QR scan.
+- **FR-064** — Hook shall associate trailer, driver, tractor, trip and timestamp.
+- **FR-065** — Drop shall associate trailer, trip, stop/location and timestamp.
+- **FR-066** — Driver shall record manual departure.
+- **FR-067** — Driver shall confirm arrival, with optional geofence assistance.
+- **FR-068** — Manual arrival fallback shall always exist.
+- **FR-069** — Driver shall record loading/unloading state where relevant.
+- **FR-070** — Driver shall execute Drop & Hook with old-trailer drop and replacement-trailer hook.
+- **FR-071** — Driver shall support Live Load/Live Unload with same trailer.
+- **FR-072** — Driver shall execute multiple Stops within one Trip.
+- **FR-073** — Driver shall upload BOL/POD photos/documents.
+- **FR-074** — Driver shall record basic delay/damage/operational exception.
+- **FR-075** — Critical mobile actions shall support temporary offline capture and later synchronization.
+- **FR-076** — Offline synchronization shall be idempotent.
+- **FR-077** — Driver shall mark return to base.
+- **FR-078** — Driver may record an optional Fuel Event during an active Trip.
+
+## QR and trailer mismatch
+
+- **FR-080** — Each trailer shall be assignable a durable QR identity.
+- **FR-081** — QR shall resolve to the internal unique trailer asset.
+- **FR-082** — Scanning a different trailer from the planned assignment shall not silently replace it.
+- **FR-083** — Wrong-trailer substitution shall require dispatcher authorization.
+- **FR-084** — Authorized substitution shall be audited.
 
 ## Trailer state and history
 
-- **FR-080** — The system shall store trailer load state separately from operational state.
-- **FR-081** — The system shall store trailer location separately from load/operational state.
-- **FR-082** — The system shall support an out-of-service/damage condition.
-- **FR-083** — The system shall preserve trailer movement history.
-- **FR-084** — Users shall search trailers by operational identifier.
-- **FR-085** — Trailer detail shall show current location.
-- **FR-086** — Trailer detail shall show time/dwell at current location when derivable.
-- **FR-087** — Trailer detail shall show last movement.
-- **FR-088** — Trailer detail shall show last driver.
-- **FR-089** — Trailer detail shall show last tractor where applicable.
-- **FR-090** — Trailer detail shall show current/last relevant order/content.
-- **FR-091** — Authorized corrections shall preserve who, when and what changed.
+- **FR-090** — Load state shall be separate from operational state.
+- **FR-091** — Location shall be separate from load/operational state.
+- **FR-092** — Trailer purpose/usage shall be separate from load state and location.
+- **FR-093** — Trailer may be marked OOS.
+- **FR-094** — OOS workflow shall support photos and comment/context.
+- **FR-095** — System shall preserve trailer movement history for configured retention.
+- **FR-096** — Trailer search shall support duplicate displayed identifiers through customer/fleet disambiguation.
+- **FR-097** — Trailer detail shall show current location and dwell time.
+- **FR-098** — Trailer detail shall show last driver and tractor.
+- **FR-099** — Trailer detail shall show related manifest/orders and evidence.
+- **FR-100** — Authorized corrections shall preserve previous value, new value, actor, timestamp and reason.
+- **FR-101** — Missing trailer may be marked LOCATION_UNKNOWN through reconciliation flow.
 
 ## Geolocation
 
-- **FR-100** — Known locations may define geofences.
-- **FR-101** — Mobile may use geofence events to assist arrival detection.
-- **FR-102** — Mobile may use geofence events to assist departure detection.
-- **FR-103** — The system shall provide a manual fallback/confirmation path when geofence behavior is unavailable or incorrect.
-- **FR-104** — Continuous route tracking is not an MVP requirement.
+- **FR-110** — Known sites may define geofences.
+- **FR-111** — Geofence may suggest probable arrival.
+- **FR-112** — Driver confirmation shall be supported for detected arrival.
+- **FR-113** — Departure shall be manually recordable and is the design-partner preferred behavior.
+- **FR-114** — Continuous route tracking is not an MVP requirement.
+- **FR-115** — MVP shall not depend on always-on background tracking of drivers' personal devices.
+
+## Yard / Spotter
+
+- **FR-120** — Yard/Spotter shall have a role/mode-specific mobile workflow.
+- **FR-121** — Yard/Spotter shall record yard-to-dock and dock-to-yard moves.
+- **FR-122** — Yard moves shall use trailer QR where practical.
+- **FR-123** — Yard moves shall create auditable movement events.
+- **FR-124** — Authorized yard users may update permitted trailer state/location data.
 
 ## Yard check
 
-- **FR-110** — Authorized users shall start a yard check for a location.
-- **FR-111** — The system shall establish an expected trailer set for the yard check.
-- **FR-112** — Users shall scan trailers by QR during a yard check.
-- **FR-113** — The system shall identify expected trailers not found.
-- **FR-114** — The system shall identify unexpected trailers found.
-- **FR-115** — Yard-check completion shall be historized.
-- **FR-116** — Reconciliation/correction after a yard check shall be auditable.
+- **FR-130** — Authorized user shall start a Yard Check for a facility/yard.
+- **FR-131** — Expected set shall be based on trailers currently recorded in the yard/associated docks.
+- **FR-132** — User shall scan found trailers.
+- **FR-133** — System shall identify missing and unexpected trailers.
+- **FR-134** — Location discrepancies shall show warning and require confirmation before correction.
+- **FR-135** — Reconciliation correction shall be auditable.
+- **FR-136** — Yard Check history shall follow configured retention.
 
-## Alerts
+## Delivery evidence
 
-- **FR-120** — The system shall detect trailers without movement beyond a configured threshold.
-- **FR-121** — Administration shall receive an in-app stale-trailer alert.
-- **FR-122** — A default/example threshold of three days comes from discovery; final configuration policy remains to be approved.
+- **FR-140** — Signed BOL photo/file shall be supported as primary POD evidence.
+- **FR-141** — Standalone signature-on-screen is not required for MVP.
+- **FR-142** — Delivery flow shall support an exception when no receiver is available to sign.
+- **FR-143** — Evidence requirements may vary by customer in a later/configurable policy.
+- **FR-144** — Evidence shall retain uploader/source, timestamp and related Order/Stop/Trip.
 
 ## Customer portal
 
-- **FR-130** — Customer users shall view authorized trailer inventory.
-- **FR-131** — Customer users shall view current trailer location/status/content within their scope.
-- **FR-132** — Customer users shall view their own jobs/orders.
-- **FR-133** — Customer users shall view permitted delivery evidence/documents.
-- **FR-134** — Customer users shall be able to request a movement if the final approval workflow includes this capability.
-- **FR-135** — Customer requests shall not become executable work without whatever approval rule is ultimately adopted.
+- **FR-150** — Customer users shall view authorized trailer inventory.
+- **FR-151** — Customer users shall view current location/status/content.
+- **FR-152** — Customer users shall view their own Orders/deliveries.
+- **FR-153** — Customer users shall view permitted evidence/documents.
+- **FR-154** — Authorized customer dispatcher shall create Orders directly.
+- **FR-155** — Customer modification/cancellation shall be restricted by state and audit rules.
 
-## Documents and evidence
+## Alerts and dashboard
 
-- **FR-140** — Jobs/orders shall support BOL-related documents.
-- **FR-141** — Delivery evidence shall support photos.
-- **FR-142** — Evidence shall retain uploader, timestamp and related business entity.
-- **FR-143** — Signed BOL shall be supported as evidence.
-- **FR-144** — Standalone digital-signature capture is not confirmed.
+- **FR-160** — System shall expose pending Orders and undelivered work.
+- **FR-161** — System shall expose inventory views for empty, loaded, customer-located, in-transit, yard and stale trailers where derivable.
+- **FR-162** — System shall detect trailers without movement beyond configured threshold.
+- **FR-163** — Administration shall receive in-app stale-trailer alert.
+- **FR-164** — Discovery baseline for stale threshold is 3 days, not a hard-coded global constant.
 
 ## Audit
 
-- **FR-150** — Important administrative changes shall be auditable.
-- **FR-151** — Audit records shall identify actor and timestamp.
-- **FR-152** — Operational corrections shall not erase the original event/history.
-- **FR-153** — System-generated/geofence/integration events shall identify their source.
+- **FR-170** — Important administrative changes shall be auditable.
+- **FR-171** — Audit shall identify actor and timestamp.
+- **FR-172** — Operational corrections shall not erase original history.
+- **FR-173** — Event source shall distinguish user, mobile/geofence, system and integration.
+- **FR-174** — Driver reassignment shall preserve which driver performed each segment.
 
-## Reporting
+## Retention
 
-- **FR-160** — The system shall expose pending orders and undelivered loads to authorized operations users.
-- **FR-161** — The system shall expose inventory views for empty, loaded, customer-located, in-transit and stale trailers when those states can be derived.
-- **FR-162** — Advanced daily/weekly/monthly reports remain to be defined.
+- **FR-180** — Retention shall be policy/configuration driven rather than hard-coded into domain logic.
+- **FR-181** — Design-partner requested movement and Yard Check retention is 1 week.
+- **FR-182** — Design-partner requested Order/BOL/photo/delivery retention is 1 month.
+- **FR-183** — Production retention remains subject to legal/contractual/product review.
