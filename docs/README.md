@@ -69,6 +69,7 @@ These files describe the current real-world operation. They are evidence, not ne
 ## 10. Architecture
 
 - [Non-functional requirements](architecture/non-functional-requirements.md)
+- [CI quality gates and local reproduction](development/ci.md)
 
 ## 11. Security
 

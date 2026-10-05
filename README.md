@@ -84,7 +84,7 @@ lists can be added when later issues introduce actual interactions.
 verification and local-profile startup with real HTTP health/probe requests on a
 random port. Future module tests belong under their matching capability package.
 The scaffold contains no business features, authentication or persistence;
-PostgreSQL/Flyway/Testcontainers are deferred to #19 and CI quality gates to #18.
+PostgreSQL/Flyway/Testcontainers are deferred to #19.
 
 ## Web local development
 
@@ -122,6 +122,14 @@ See [mobile/README.md](mobile/README.md) for code generation, API environment,
 Android/iOS prerequisites, build commands and current validation limitations.
 Platform capabilities are interfaces only; no authentication, operational
 workflows, API calls, offline queues or GPS tracking are implemented.
+
+## CI quality gates
+
+Issue #18 adds GitHub Actions checks for PRs to `main` and pushes to `main`:
+Backend, Web, Mobile and OpenAPI. They require no Production secrets or external
+services and perform no deployments. See [CI quality gates](docs/development/ci.md)
+for local commands, tool versions, safe dependency caches and validation scope.
+Native Android/iOS builds and release signing are deferred.
 
 ## Current phase
 

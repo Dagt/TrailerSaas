@@ -1,0 +1,5 @@
+# Validate the accepted draft, without imposing new API design/style rules.
+extends: []
+rules:
+  struct: error
+  no-unresolved-refs: error

@@ -1,0 +1,16 @@
+{
+  "name": "trailersaas-openapi-checks",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "validate": "redocly lint ../../docs/api/openapi-v1-draft.yaml --config redocly.yaml",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.58.1"
+  }
+}

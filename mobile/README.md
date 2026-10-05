@@ -23,8 +23,8 @@ flutter run -d <device-id> --dart-define=APP_ENV=development
 Use `flutter devices` to select a device. Android requires the Android SDK,
 its accepted licenses and a device/emulator. iOS requires macOS and Xcode.
 Stop the development run with `q`. A running API is not required by this scaffold.
-These analyze/test commands are non-interactive and ready for the later CI issue;
-no CI workflow is added here.
+These analyze/test commands are non-interactive and run in the Mobile job of
+[CI quality gates](../docs/development/ci.md). Native builds remain deferred.
 
 Build commands on a suitably configured host:
 
