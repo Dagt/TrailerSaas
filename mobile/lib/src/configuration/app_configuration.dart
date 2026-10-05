@@ -4,6 +4,7 @@ class AppConfiguration {
   const AppConfiguration._({
     required this.environment,
     required this.apiBaseUrl,
+    this.sentryDsn,
   });
 
   factory AppConfiguration.fromEnvironment() {
@@ -13,12 +14,16 @@ class AppConfiguration {
         defaultValue: 'development',
       ),
       apiBaseUrl: const String.fromEnvironment('API_BASE_URL'),
+      sentryDsn: const String.fromEnvironment('SENTRY_DSN'),
+      sentryEnvironment: const String.fromEnvironment('SENTRY_ENVIRONMENT'),
     );
   }
 
   factory AppConfiguration.fromValues({
     String environment = 'development',
     String apiBaseUrl = '',
+    String sentryDsn = '',
+    String sentryEnvironment = '',
   }) {
     final parsedEnvironment = AppEnvironment.values.where(
       (value) => value.name == environment,
@@ -29,6 +34,23 @@ class AppConfiguration {
       );
     }
     final selectedEnvironment = parsedEnvironment.single;
+    if (sentryEnvironment.isNotEmpty && sentryEnvironment != environment) {
+      throw ArgumentError('SENTRY_ENVIRONMENT must match APP_ENV.');
+    }
+    if (sentryDsn.isNotEmpty) {
+      final dsn = Uri.tryParse(sentryDsn);
+      if (dsn == null ||
+          dsn.scheme != 'https' ||
+          dsn.host.isEmpty ||
+          !RegExp(r'^[a-zA-Z0-9]+$').hasMatch(dsn.userInfo) ||
+          dsn.hasQuery ||
+          dsn.hasFragment ||
+          !RegExp(r'/[0-9]+$').hasMatch(dsn.path)) {
+        throw ArgumentError(
+          'SENTRY_DSN must be an HTTPS ingestion DSN with a public key and project ID.',
+        );
+      }
+    }
     if (apiBaseUrl.isEmpty &&
         selectedEnvironment != AppEnvironment.development) {
       throw ArgumentError(
@@ -58,9 +80,11 @@ class AppConfiguration {
     return AppConfiguration._(
       environment: selectedEnvironment,
       apiBaseUrl: uri,
+      sentryDsn: sentryDsn.isEmpty ? null : sentryDsn,
     );
   }
 
   final AppEnvironment environment;
   final Uri apiBaseUrl;
+  final String? sentryDsn;
 }

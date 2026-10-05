@@ -72,8 +72,11 @@ Remove-Item Env:VITE_API_BASE_URL
 Never put credentials or secrets in `VITE_*` variables: Vite embeds them in
 browser assets. `.env*` files are ignored except reviewed examples. Restart/rebuild
 after changes. A normal optimized build still targets Development unless the
-application environment is selected explicitly. No future Firebase/Sentry config
-is required. See the [central environment catalog](../docs/development/environment-configuration.md)
+application environment is selected explicitly. No Firebase config is required.
+Issue #21 optionally enables Sentry using `VITE_SENTRY_DSN`; empty/absent disables
+the SDK. `VITE_SENTRY_ENVIRONMENT` must match the selected app environment.
+See [observability/privacy](../docs/development/observability.md) and the
+[central environment catalog](../docs/development/environment-configuration.md)
 for Production selection, templates, variable classifications and resource isolation.
 
 `src/shared/api/client.ts` exposes immutable base-URL configuration only.
@@ -92,6 +95,7 @@ src/
   shared/
     api/                   API client placeholder
     config/                typed, validated environment
+    observability/         optional Sentry initialization and privacy boundary
   test/                    Testing Library setup
   main.tsx                 browser entry point
   styles.css               minimal layout, not the final design system
