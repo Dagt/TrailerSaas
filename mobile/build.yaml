@@ -1,0 +1,7 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # The empty scaffold has no tables for a generated manager API.
+          generate_manager: false

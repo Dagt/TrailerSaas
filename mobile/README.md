@@ -1,0 +1,140 @@
+# TrailerSaaS Mobile
+
+Issue #17 supplies one Flutter app for Android and iOS, following
+ADR-005/012/014. The two modes are navigable placeholders only.
+
+## Toolchain and commands
+
+Use Flutter stable 3.47.6 / Dart 3.13.5, recorded in `.flutter-version`.
+The app lockfile and generated Drift code are committed.
+
+From the repository root:
+
+```sh
+cd mobile
+flutter pub get --enforce-lockfile
+dart run build_runner build
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze --fatal-infos
+flutter test --reporter expanded
+flutter run -d <device-id> --dart-define=APP_ENV=development
+```
+
+Use `flutter devices` to select a device. Android requires the Android SDK,
+its accepted licenses and a device/emulator. iOS requires macOS and Xcode.
+Stop the development run with `q`. A running API is not required by this scaffold.
+These analyze/test commands are non-interactive and ready for the later CI issue;
+no CI workflow is added here.
+
+Build commands on a suitably configured host:
+
+```sh
+flutter build apk --debug --dart-define=APP_ENV=development
+# macOS/Xcode only; unsigned validation build:
+flutter build ios --no-codesign --dart-define=APP_ENV=development
+```
+
+Android keeps Flutter's generated debug signing configuration, including its
+template release fallback. Production signing and deployment are not implemented.
+The app IDs are the generated `com.trailersaas.trailersaas_mobile` identifiers.
+
+## Configuration
+
+Compile-time public configuration uses `--dart-define`:
+
+- `APP_ENV`: `development` (default), `staging`, or `production`.
+- `API_BASE_URL`: an absolute HTTP(S) URL including the accepted `/api/v1` prefix.
+
+Development defaults to `http://localhost:8080/api/v1`. On an Android emulator,
+the host computer is usually reached through `10.0.2.2`, so use:
+
+```sh
+flutter run -d <android-device-id> --dart-define=APP_ENV=development --dart-define=API_BASE_URL=http://10.0.2.2:8080/api/v1
+```
+
+On a physical device supply a reachable development-host URL instead.
+Staging and production require an explicit API URL:
+
+```sh
+flutter build apk --dart-define=APP_ENV=staging --dart-define=API_BASE_URL=https://api.example.test/api/v1
+```
+
+Configuration rejects unknown environments and invalid URLs, embedded
+credentials, query strings and fragments. Define values are compiled into the
+app: never use them for tokens or secrets. No HTTP client or requests exist yet.
+Native HTTP/security policy remains at the Flutter template defaults.
+
+## Structure
+
+```text
+android/                  generated Android application
+ios/                      generated iOS application
+lib/
+  main.dart               entry point, configuration and database creation
+  src/
+    app/                  app bootstrap, database lifetime and loading/error state
+      navigation/         shared two-mode shell
+    configuration/        validated compile-time environment
+    persistence/          Drift database and generated code
+    platform/             secure storage, connectivity, camera, QR, arrival contracts
+    road_mode/            Road Mode placeholder
+    yard_mode/            Yard Mode placeholder
+test/
+  app/                    startup and mode-navigation widget tests
+  configuration/          environment unit tests
+  persistence/            real SQLite open/schema/reopen tests
+```
+
+Road is the initial scaffold tab, not a role/permission decision. Future identity
+issues determine authorized modes. The shell is not an authorization boundary.
+No state-management framework, domain repositories or new offline architecture
+are introduced.
+
+## Local persistence
+
+Drift/SQLite opens `trailersaas.sqlite` through `drift_flutter` in the
+application-support directory. Schema version 1 has **zero application tables**.
+Its initial migration calls `createAll()` over an empty schema; SQLite stores
+the version in `PRAGMA user_version`. Startup executes `SELECT 1` to force a
+real open, handles failure with a generic error/retry state, and closes the
+database when the app root is disposed.
+
+Tests inject native SQLite executors and check the actual schema and file reopen.
+Manager API generation is disabled in `build.yaml` while no tables exist.
+Later schema versions must introduce explicit migrations and migration tests.
+The accepted command/media/cache tables are deliberately deferred; there are
+no queues, cached Trips, tenant context, media files or synchronization.
+
+## Platform boundaries
+
+Secure storage and connectivity are Dart interfaces only, with no concrete
+adapter, insecure in-memory production fallback or background listener.
+Camera, QR and location/geofence are also interfaces only. No capability plugin
+or permission is added for them.
+
+Arrival location is a one-shot best-effort contract returning null when
+unavailable. It defines no location stream, route history, background service
+or automatic arrival transition. Future callers must supply an explicitly active
+arrival context and preserve manual fallback under ADR-014.
+
+No Firebase, login, tenant selection, operational workflows, Yard Check,
+uploads, API calls, command/media queue or continuous GPS tracking are included.
+
+## Validation environment
+
+Implemented on Windows with Flutter 3.47.6 / Dart 3.13.5.
+Validation performed for this scaffold:
+
+- `flutter pub get --enforce-lockfile`: passed.
+- Drift code generation: passed.
+- Dart format check: passed, no changes required.
+- `flutter analyze --fatal-infos`: passed, no issues.
+- `flutter test --reporter expanded`: passed, 16 unit/widget tests.
+- Android debug build: attempted; stopped with `No Android SDK found`.
+- iOS build and native device startup: not executed on this Windows host.
+
+The Android SDK is absent according to `flutter doctor`; Android packaging and
+on-device execution require another configured host. iOS builds/device runs
+require macOS/Xcode and cannot be executed here. Host widget tests exercise the
+real app root/navigation with native SQLite; they do not replace device testing
+of the application-support path or native platform integration.

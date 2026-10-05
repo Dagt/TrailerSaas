@@ -104,6 +104,25 @@ For all checks run `npm run typecheck`, `npm run lint`, `npm test` and
 PowerShell equivalents, the route structure and deployment notes.
 The scaffold has no authentication, business screens or API calls.
 
+## Mobile local development
+
+The Issue #17 scaffold lives in `mobile/`: one Flutter Android/iOS application
+with Road/Yard placeholders and an empty Drift/SQLite schema, following
+ADR-005/012/014. Use Flutter 3.47.6 / Dart 3.13.5:
+
+```sh
+cd mobile
+flutter pub get --enforce-lockfile
+flutter analyze --fatal-infos
+flutter test --reporter expanded
+flutter run -d <device-id> --dart-define=APP_ENV=development
+```
+
+See [mobile/README.md](mobile/README.md) for code generation, API environment,
+Android/iOS prerequisites, build commands and current validation limitations.
+Platform capabilities are interfaces only; no authentication, operational
+workflows, API calls, offline queues or GPS tracking are implemented.
+
 ## Current phase
 
 ### Current implementation readiness
