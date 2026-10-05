@@ -2,10 +2,14 @@
 
 Status: Proposed v1.0.1 hardening amendment
 
-**Date:** 2026-10-05  
-**Issue:** [#74](https://github.com/Dagt/TrailerSaas/issues/74)  
-**Tracking:** [#66](https://github.com/Dagt/TrailerSaas/issues/66)  
-**Baseline:** [Accepted schema v1.0](schema-v1.0.md)  
+**Date:** 2026-10-05
+
+**Issue:** [#74](https://github.com/Dagt/TrailerSaas/issues/74)
+
+**Tracking:** [#66](https://github.com/Dagt/TrailerSaas/issues/66)
+
+**Baseline:** [Accepted schema v1.0](schema-v1.0.md)
+
 **Database:** PostgreSQL 18; PostgreSQL 17 remains the temporary fallback allowed by ADR-003.
 
 This is a documentation-only amendment, not a replacement Accepted schema, DDL,
