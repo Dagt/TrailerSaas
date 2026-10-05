@@ -31,7 +31,9 @@ logs carry native fields and MDC when inside the observed request scope.
 Missing/invalid values are replaced with a server UUID. A client ID is untrusted
 diagnostic input, never authentication or authorization. Request dispatches reuse
 the request attribute, return the header, and restore the outer MDC in finally,
-including exceptions and async/error redispatches. Async redispatch completion
+including exceptions and async/error redispatches. Error dispatches retain the
+original technical IDs even after the observation scope closes; a request emits
+only one completion record. Async redispatch completion
 uses its dispatch duration; end-to-end HTTP duration comes from Micrometer.
 
 The correlation filter runs inside Spring's HTTP observation filter.

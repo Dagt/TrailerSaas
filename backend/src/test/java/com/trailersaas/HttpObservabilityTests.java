@@ -6,6 +6,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
 
 import com.jayway.jsonpath.JsonPath;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTracing
@@ -72,8 +74,11 @@ class HttpObservabilityTests extends PostgresIntegrationTest {
     void recordsStandardHttpMetricsAndTracingWithoutExporters() throws Exception {
         get("/test/ok", "metrics-test");
         assertThat(tracer).isNotNull();
-        assertThat(meters.find("http.server.requests").tag("uri", "/test/ok").timer()).isNotNull();
-        assertThat(meters.find("http.server.requests").tag("uri", "/test/ok").timer().count()).isPositive();
+        // The client can receive the body before the server closes its outer observation.
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(meters.find("http.server.requests").tag("uri", "/test/ok").timer()).isNotNull();
+            assertThat(meters.find("http.server.requests").tag("uri", "/test/ok").timer().count()).isPositive();
+        });
         assertThat(meters.find("jvm.memory.used").meters()).isNotEmpty();
     }
 
@@ -81,7 +86,14 @@ class HttpObservabilityTests extends PostgresIntegrationTest {
     void errorDispatcherUsesSafeProblemDetails(CapturedOutput output) throws Exception {
         var response = get("/test/send-error", "dispatcher-error");
         assertThat(response.statusCode()).isEqualTo(503);
-        assertThat(JsonPath.<String>read(response.body(), "$.traceId")).isNotBlank();
+        String traceId = JsonPath.read(response.body(), "$.traceId");
+        assertThat(traceId).matches("[a-f0-9]{32}");
+        List<Map<String, Object>> logs = output.getOut().lines()
+                .filter(line -> line.startsWith("{") && line.contains("HTTP request completed")
+                        && line.contains("\"requestId\":\"dispatcher-error\""))
+                .map(line -> JsonPath.<Map<String, Object>>read(line, "$")).toList();
+        assertThat(logs).hasSize(1);
+        assertThat(logs.getFirst()).containsEntry("traceId", traceId);
         assertThat(response.body()).doesNotContain("synthetic-secret-token");
         assertThat(output.getOut()).doesNotContain("synthetic-secret-token");
     }

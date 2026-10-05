@@ -21,6 +21,28 @@ class RequestCorrelationFilterTests {
     private final RequestCorrelationFilter filter = new RequestCorrelationFilter();
 
     @Test
+    void errorRedispatchRetainsOriginalTraceAfterOuterScopeClosed() throws Exception {
+        var request = new MockHttpServletRequest("GET", "/test");
+        var response = new MockHttpServletResponse();
+        MDC.put("traceId", "original-technical-trace");
+        MDC.put("spanId", "original-span");
+        try {
+            filter.doFilter(request, response, (req, res) -> {});
+        } finally {
+            MDC.clear();
+        }
+        String requestId = response.getHeader(RequestCorrelationFilter.HEADER);
+        request.setDispatcherType(jakarta.servlet.DispatcherType.ERROR);
+        request.setAttribute(jakarta.servlet.RequestDispatcher.ERROR_REQUEST_URI, "/test");
+        filter.doFilter(request, response, (req, res) -> {
+            assertThat(MDC.get("requestId")).isEqualTo(requestId);
+            assertThat(MDC.get("traceId")).isEqualTo("original-technical-trace");
+            assertThat(MDC.get("spanId")).isEqualTo("original-span");
+        });
+        assertThat(MDC.getCopyOfContextMap()).isNullOrEmpty();
+    }
+
+    @Test
     void validRequestIdIsReturnedAndScopedToRequest() throws Exception {
         var request = new MockHttpServletRequest("GET", "/test");
         request.addHeader(RequestCorrelationFilter.HEADER, "client_request-123");
