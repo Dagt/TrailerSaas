@@ -153,7 +153,7 @@ void main() {
     expect(sanitized.exceptions!.single.stackTrace!.frames.single.lineNo, 12);
     expect(
       sanitized.exceptions!.single.stackTrace!.frames.single.fileName,
-      startsWith('https://web.example.test/app.dart'),
+      'https://web.example.test/app.dart',
     );
   });
 }

@@ -5,11 +5,11 @@ import type { readWebEnvironment } from '../config/environment'
 function safeUrl(value: string | undefined): string | undefined {
   if (!value) return undefined
   try {
-    const url = new URL(value)
+    const url = new URL(value, 'https://relative.example.invalid')
     if (!['https:', 'http:'].includes(url.protocol)) return undefined
-    return url.origin + url.pathname
+    return (/^(https?:)?\/\//.test(value) ? url.origin : '') + url.pathname
   } catch {
-    return value.split(/[?#]/)[0]
+    return undefined
   }
 }
 

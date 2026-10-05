@@ -44,8 +44,17 @@ Future<void> runWithObservability(
 String? _safeCodeUrl(String? value) {
   if (value == null) return null;
   final uri = Uri.tryParse(value);
-  if (uri == null) return null;
-  return uri.replace(userInfo: '', query: '', fragment: '').toString();
+  if (uri == null ||
+      (uri.scheme.isNotEmpty &&
+          !const ['http', 'https', 'package', 'file'].contains(uri.scheme))) {
+    return null;
+  }
+  return Uri(
+    scheme: uri.scheme,
+    host: uri.hasAuthority ? uri.host : null,
+    port: uri.hasPort ? uri.port : null,
+    path: uri.path,
+  ).toString();
 }
 
 // Construct a new event: payloads, arbitrary messages, contexts and attachments never cross this boundary.

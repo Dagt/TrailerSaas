@@ -109,4 +109,16 @@ describe('optional, privacy-preserving Sentry', () => {
     expect(sanitized.user).toBeUndefined()
     expect(sanitized.contexts).toBeUndefined()
   })
+
+  it('strips credentials from protocol-relative URLs and drops unsupported schemes', () => {
+    const event: Sentry.ErrorEvent = {
+      type: undefined,
+      request: { url: '//user:synthetic-secret-token@api.example.test/path?signature=secret#private' },
+    }
+    expect(sanitizeSentryEvent(event).request?.url).toBe('https://api.example.test/path')
+    expect(sanitizeSentryEvent({ type: undefined, request: { url: '/path?token=secret#private' } })
+      .request?.url).toBe('/path')
+    expect(sanitizeSentryEvent({ type: undefined, request: { url: 'data:text/plain,synthetic-secret-token' } })
+      .request?.url).toBeUndefined()
+  })
 })
