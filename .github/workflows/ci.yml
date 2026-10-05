@@ -31,7 +31,9 @@ jobs:
           java-version: '25'
           cache: maven
           cache-dependency-path: backend/pom.xml
-      - name: Compile, test and verify module boundaries
+      - name: Verify Docker for PostgreSQL integration tests
+        run: docker info
+      - name: Compile, test PostgreSQL and verify module boundaries
         run: ./mvnw -B -ntp clean verify
 
   web:

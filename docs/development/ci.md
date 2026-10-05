@@ -10,7 +10,7 @@ same ref.
 
 | Check name | Runtime | Checks |
 | --- | --- | --- |
-| Backend | Temurin Java 25, Maven Wrapper 3.9.11 | `clean verify`, including startup/health tests and Spring Modulith boundaries |
+| Backend | Temurin Java 25, Maven Wrapper 3.9.11, Docker | `clean verify`, including PostgreSQL 18/Flyway/JPA integration, startup/health tests and Spring Modulith boundaries |
 | Web | Node 24 | `npm ci`, typecheck, lint, tests, production build |
 | Mobile | Flutter from `mobile/.flutter-version`, bundled Dart | locked pub install, Drift generation consistency, format, analyze, unit/widget tests |
 | OpenAPI | Node 24, locked Redocly CLI | YAML parsing, OpenAPI structure, reference resolution, validator regression tests |
@@ -26,7 +26,8 @@ maintainers must require them on `main` after verifying the initial run.
 
 ## Reproduce Locally
 
-From the repository root, with JDK 25, Node 24 and the project's Flutter version:
+From the repository root, with JDK 25, a working Docker daemon, Node 24 and
+the project's Flutter version:
 
 ```sh
 cd backend
@@ -56,7 +57,11 @@ in a POSIX shell) to reproduce CI's telemetry setting.
 
 Drift code is committed; regeneration must not change it. Review and commit
 intentional schema/code changes together before running that diff check.
-No API server, external database or cloud service is required.
+No API server, external database or cloud service is required. Backend tests
+start a disposable PostgreSQL 18 container with generated test-only credentials
+using the Docker daemon. Missing Docker fails the job instead of skipping tests.
+See [backend persistence](../../backend/README.md) for local database variables,
+Flyway conventions and the runtime/migration role separation.
 
 ## OpenAPI Tooling
 
@@ -93,8 +98,10 @@ here; those can be added when the contracts/clients evolve under ADR-017.
 - No repository/Production secrets, GitHub Environments, deployments, external
   resource changes or Railway/Cloudflare/Firebase/R2/database credentials are used.
   Fork PRs can run subject to GitHub's normal contributor-approval policy.
-- Current backend checks have no PostgreSQL/Flyway/Testcontainers; #19 owns that
-  baseline. Environments/secrets and observability remain #20/#21.
+- Issue #19 adds PostgreSQL/Flyway/Testcontainers to the Backend check using the
+  runner's Docker, with no PostgreSQL service or external database credentials.
+  Domain schema/RLS is not introduced. Environments/secrets and observability
+  remain #20/#21.
 
 Web's existing lockfile required a metadata/placement correction for ESLint's
 transitive `ajv` dependency so `npm ci` could run cleanly. No declared
