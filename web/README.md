@@ -44,28 +44,37 @@ that build locally.
 
 ## Environment / API boundary
 
-`VITE_API_BASE_URL` is public build-time configuration validated with Zod.
-Use an absolute HTTP(S) API URL including `/api/v1`, for example
-`http://127.0.0.1:8080/api/v1` locally. Without an override, the value is
-`/api/v1` for a same-origin deployment. A later deployment must route that
-prefix to the backend or supply its explicit URL; this scaffold adds no proxy.
-Vite loads `.env.local` and mode-specific files; restart the dev server after
-changing them and rebuild for deployment. For example:
+`VITE_APP_ENV` explicitly selects `development` (default), `staging` or
+`production`, independently of Vite mode. The default API is loopback:
+`http://127.0.0.1:8080/api/v1`. Staging/Production require an explicit absolute
+HTTPS `VITE_API_BASE_URL`; missing or invalid settings never silently fall back.
+URL credentials, query strings and fragments are rejected. Zod validates during
+Vite startup/build and client initialization. There are no same-origin fallbacks.
+
+`.env.example`, `.env.staging.example` and `.env.production.example` contain only
+public placeholders. Vite loads the corresponding ignored local files, or process
+variables (which take precedence). For an explicitly configured staging build:
 
 ```sh
-VITE_API_BASE_URL=https://api.example.test/api/v1 npm run build
+VITE_APP_ENV=staging VITE_API_BASE_URL=https://api.staging.example.test/api/v1 npm run build -- --mode staging
 ```
 
 PowerShell equivalent:
 
 ```powershell
-$env:VITE_API_BASE_URL = "https://api.example.test/api/v1"
-npm.cmd run build
+$env:VITE_APP_ENV = "staging"
+$env:VITE_API_BASE_URL = "https://api.staging.example.test/api/v1"
+npm.cmd run build -- --mode staging
+Remove-Item Env:VITE_APP_ENV
 Remove-Item Env:VITE_API_BASE_URL
 ```
 
 Never put credentials or secrets in `VITE_*` variables: Vite embeds them in
-browser assets. `.env*` files are ignored except the example.
+browser assets. `.env*` files are ignored except reviewed examples. Restart/rebuild
+after changes. A normal optimized build still targets Development unless the
+application environment is selected explicitly. No future Firebase/Sentry config
+is required. See the [central environment catalog](../docs/development/environment-configuration.md)
+for Production selection, templates, variable classifications and resource isolation.
 
 `src/shared/api/client.ts` exposes immutable base-URL configuration only.
 It performs no requests and does not implement token handling, endpoints,

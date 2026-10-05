@@ -2,5 +2,35 @@
 /web/node_modules/
 /web/dist/
 /web/coverage/
-/web/.env*
-!/web/.env.example
+# Local environment files anywhere; safe examples are explicitly versioned.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Private local credentials and native signing material.
+.secrets/
+secrets.local/
+credentials.local.*
+*service-account*.json
+*service_account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+credentials.json
+google-services.json
+GoogleService-Info.plist
+key.properties
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.p8
+*.mobileprovision
+*.pem
+*.key
+*.cer
+*.crt
+
+# Flutter compile-time configs: only reviewed, public examples belong in Git.
+/mobile/config/*.json
+!/mobile/config/*.example.json

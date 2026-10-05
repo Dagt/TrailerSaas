@@ -53,16 +53,26 @@ flutter run -d <android-device-id> --dart-define=APP_ENV=development --dart-defi
 ```
 
 On a physical device supply a reachable development-host URL instead.
-Staging and production require an explicit API URL:
+Staging and production require an explicit HTTPS API URL, with no fallback:
 
 ```sh
-flutter build apk --dart-define=APP_ENV=staging --dart-define=API_BASE_URL=https://api.example.test/api/v1
+flutter build apk --dart-define=APP_ENV=staging --dart-define=API_BASE_URL=https://api.staging.example.test/api/v1
 ```
 
 Configuration rejects unknown environments and invalid URLs, embedded
 credentials, query strings and fragments. Define values are compiled into the
 app: never use them for tokens or secrets. No HTTP client or requests exist yet.
 Native HTTP/security policy remains at the Flutter template defaults.
+
+Issue #20 also provides public-only `config/development.example.json`,
+`config/staging.example.json` and `config/production.example.json`. Copy the
+matching example to an ignored `config/<environment>.json`, replace its public
+URL and pass `--dart-define-from-file=config/<environment>.json` explicitly.
+Flutter does not automatically load these or `.env` files. Production selection
+is always explicit; build/release mode alone never changes the environment.
+No Firebase/R2/Sentry integration or provider requirement is added. See the
+[central environment catalog](../docs/development/environment-configuration.md)
+for commands, future public config, secret storage and isolated resources.
 
 ## Structure
 

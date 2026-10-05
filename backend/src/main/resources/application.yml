@@ -1,6 +1,8 @@
 spring:
   application:
     name: trailersaas-backend
+  profiles:
+    default: local
   datasource:
     url: ${DB_RUNTIME_JDBC_URL}
     username: ${DB_RUNTIME_USERNAME}

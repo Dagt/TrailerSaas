@@ -22,11 +22,38 @@ void main() {
     });
   }
 
+  test('compile-time defaults never select production or future providers', () {
+    final configuration = AppConfiguration.fromEnvironment();
+    expect(configuration.environment, AppEnvironment.development);
+    expect(configuration.apiBaseUrl.toString(), 'http://localhost:8080/api/v1');
+  });
+
   for (final environment in ['staging', 'production']) {
     test('$environment requires an explicit API URL', () {
       expect(
         () => AppConfiguration.fromValues(environment: environment),
-        throwsArgumentError,
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.message,
+            'message',
+            contains('API_BASE_URL is required'),
+          ),
+        ),
+      );
+    });
+    test('$environment rejects insecure API without a fallback', () {
+      expect(
+        () => AppConfiguration.fromValues(
+          environment: environment,
+          apiBaseUrl: 'http://api.example.test/api/v1',
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.message,
+            'message',
+            contains('must use HTTPS'),
+          ),
+        ),
       );
     });
   }
