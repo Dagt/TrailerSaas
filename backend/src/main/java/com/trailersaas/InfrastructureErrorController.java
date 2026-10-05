@@ -14,6 +14,7 @@ public class InfrastructureErrorController implements ErrorController {
     ProblemDetail error(HttpServletRequest request) {
         Object code = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
         HttpStatus status = code instanceof Integer value ? HttpStatus.resolve(value) : null;
-        return ProblemDetailsConfiguration.problem(status == null ? HttpStatus.INTERNAL_SERVER_ERROR : status);
+        return ProblemDetailsConfiguration.safeInfrastructureProblem(
+                status == null ? HttpStatus.INTERNAL_SERVER_ERROR : status);
     }
 }

@@ -24,9 +24,14 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -46,6 +51,7 @@ class HttpObservabilityTests extends PostgresIntegrationTest {
     @ParameterizedTest
     @CsvSource({"/test/failure,500", "/test/parameter,400", "/not-found,404", "/actuator/metrics,404",
             "/test/parameter?value=bad,400", "/test/error-response,422",
+            "/test/parameter?value=synthetic-secret-token,400",
             "/test/failure?signature=synthetic-secret-token,500"})
     void httpErrorsUseRealTraceAndSafeProblemDetails(String path, int status, CapturedOutput output) throws Exception {
         String requestId = "http-error-" + status;
@@ -67,6 +73,28 @@ class HttpObservabilityTests extends PostgresIntegrationTest {
                     .containsEntry("http.status", status);
             assertThat(log.get("spanId")).asString().matches("[a-f0-9]{16}");
         });
+        assertThat(output.getOut()).doesNotContain("synthetic-secret-token");
+    }
+
+    @Test
+    void domainAdviceWinsAndItsProblemDetailsRemainCorrelated(CapturedOutput output) throws Exception {
+        var response = get("/test/domain-error", "domain-error");
+        assertThat(response.statusCode()).isEqualTo(409);
+        assertThat(response.headers().firstValue("Content-Type").orElseThrow())
+                .startsWith("application/problem+json");
+        Map<String, Object> problem = JsonPath.read(response.body(), "$");
+        assertThat(problem).containsEntry("type", "https://api.trailersaas.example/problems/test-domain-error")
+                .containsEntry("title", "Test domain error").containsEntry("status", 409)
+                .containsEntry("detail", "Safe domain detail").containsEntry("code", "TEST_DOMAIN_ERROR")
+                .containsEntry("errors", List.of(Map.of("field", "exampleField", "message", "safe validation message")));
+        String traceId = (String) problem.get("traceId");
+        assertThat(traceId).matches("[a-f0-9]{32}");
+        assertThat(output.getOut().lines()
+                .filter(line -> line.startsWith("{") && line.contains("HTTP request completed"))
+                .map(line -> JsonPath.<Map<String, Object>>read(line, "$")))
+                .anySatisfy(log -> assertThat(log).containsEntry("requestId", "domain-error")
+                        .containsEntry("traceId", traceId).containsEntry("http.status", 409));
+        assertThat(response.body()).doesNotContain("synthetic-secret-token");
         assertThat(output.getOut()).doesNotContain("synthetic-secret-token");
     }
 
@@ -111,6 +139,25 @@ class HttpObservabilityTests extends PostgresIntegrationTest {
     static class TestEndpoints {
         @Bean
         Controller testController() { return new Controller(); }
+        @Bean
+        DomainAdvice testDomainAdvice() { return new DomainAdvice(); }
+    }
+
+    static class TestDomainException extends RuntimeException {}
+
+    @RestControllerAdvice
+    @Order(0)
+    @org.springframework.boot.test.context.TestComponent
+    static class DomainAdvice {
+        @ExceptionHandler(TestDomainException.class)
+        ProblemDetail domainError(TestDomainException exception) {
+            var problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Safe domain detail");
+            problem.setType(URI.create("https://api.trailersaas.example/problems/test-domain-error"));
+            problem.setTitle("Test domain error");
+            problem.setProperty("code", "TEST_DOMAIN_ERROR");
+            problem.setProperty("errors", List.of(Map.of("field", "exampleField", "message", "safe validation message")));
+            return problem;
+        }
     }
 
     @RestController
@@ -118,6 +165,8 @@ class HttpObservabilityTests extends PostgresIntegrationTest {
     static class Controller {
         @GetMapping("/test/ok")
         String ok() { return "ok"; }
+        @GetMapping("/test/domain-error")
+        String domainError() { throw new TestDomainException(); }
         @GetMapping("/test/failure")
         String failure() { throw new IllegalStateException("SQL password=synthetic-secret-token"); }
         @GetMapping("/test/parameter")

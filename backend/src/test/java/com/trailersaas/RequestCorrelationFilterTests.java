@@ -99,24 +99,56 @@ class RequestCorrelationFilterTests {
     }
 
     @Test
-    void infrastructureProblemsAreSafeAndCorrelatable() {
+    void infrastructureProblemsAreSafeAndCorrelatable() throws Exception {
         MDC.put("requestId", "fallback-request");
         try {
-            var interceptors = new ArrayList<ErrorResponse.Interceptor>();
-            new ProblemDetailsConfiguration().addErrorResponseInterceptors(interceptors);
-            var problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "SQL password=synthetic-secret-token");
-            problem.setProperty("body", "synthetic-secret-token");
-            problem.setType(java.net.URI.create("https://example.test/error?secret=synthetic-secret-token"));
-            problem.setInstance(java.net.URI.create("https://example.test/path?secret=synthetic-secret-token"));
-            interceptors.getFirst().handleError(problem, null);
+            var exception = new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "SQL password=synthetic-secret-token");
+            exception.getBody().setProperty("body", "synthetic-secret-token");
+            exception.getBody().setType(java.net.URI.create("https://example.test/error?secret=synthetic-secret-token"));
+            exception.getBody().setInstance(java.net.URI.create("https://example.test/path?secret=synthetic-secret-token"));
+            var response = new InfrastructureExceptionHandler().handleException(exception,
+                    new org.springframework.web.context.request.ServletWebRequest(new MockHttpServletRequest()));
+            var problem = (ProblemDetail) response.getBody();
             assertThat(problem.getDetail()).doesNotContain("synthetic-secret-token", "SQL");
             assertThat(problem.getType().toString()).isEqualTo("about:blank");
             assertThat(problem.getInstance()).isNull();
             assertThat(problem.getProperties()).containsOnlyKeys("traceId")
                     .containsEntry("traceId", "fallback-request");
+        } finally {
+            MDC.clear();
+        }
+    }
+
+    @Test
+    void correlationInterceptorPreservesApprovedProblemSemanticsAndExtensions() {
+        MDC.put("requestId", "fallback-request");
+        try {
+            var interceptors = new ArrayList<ErrorResponse.Interceptor>();
+            new ProblemDetailsConfiguration().addErrorResponseInterceptors(interceptors);
+            var problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Safe domain detail");
+            var type = java.net.URI.create("https://api.trailersaas.example/problems/test-domain-error");
+            var instance = java.net.URI.create("/safe-instance");
+            problem.setType(type);
+            problem.setInstance(instance);
+            problem.setTitle("Test domain error");
+            problem.setProperty("code", "TEST_DOMAIN_ERROR");
+            var errors = java.util.List.of(java.util.Map.of("field", "exampleField", "message", "safe validation message"));
+            problem.setProperty("errors", errors);
+            problem.setProperty("safeExtension", "safe metadata");
+            problem.setProperty("traceId", "stale-trace");
+            interceptors.getFirst().handleError(problem, null);
+            assertThat(problem.getProperties()).containsEntry("traceId", "fallback-request");
             MDC.put("traceId", "real-trace");
             interceptors.getFirst().handleError(problem, null);
-            assertThat(problem.getProperties()).containsEntry("traceId", "real-trace");
+            assertThat(problem.getType()).isEqualTo(type);
+            assertThat(problem.getInstance()).isEqualTo(instance);
+            assertThat(problem.getTitle()).isEqualTo("Test domain error");
+            assertThat(problem.getStatus()).isEqualTo(409);
+            assertThat(problem.getDetail()).isEqualTo("Safe domain detail");
+            assertThat(problem.getProperties()).containsOnlyKeys("code", "errors", "safeExtension", "traceId")
+                    .containsEntry("code", "TEST_DOMAIN_ERROR").containsEntry("errors", errors)
+                    .containsEntry("safeExtension", "safe metadata").containsEntry("traceId", "real-trace");
         } finally {
             MDC.clear();
         }

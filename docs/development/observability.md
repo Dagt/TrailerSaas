@@ -55,9 +55,15 @@ Actuator's MeterRegistry records standard JVM/application/HTTP meters, including
 `http.server.requests`. No public metrics, environment, loggers or trace endpoint
 is exposed. Exporters and domain/job metrics belong to later bounded issues.
 
-Spring 7's central ErrorResponse interceptor sanitizes infrastructure
-ProblemDetails. MVC exceptions and the existing servlet error dispatch use
-`application/problem+json`, standard status/title/detail and `traceId`.
+Spring 7's central ErrorResponse interceptor only adds/updates `traceId`,
+preserving approved problem types, titles, safe details and extensions such as
+`code` and `errors`. Domain handlers must construct safe public ProblemDetails
+and use an explicit order higher than the infrastructure fallback.
+The infrastructure advice runs at `Ordered.LOWEST_PRECEDENCE`. Its shared MVC
+exception path constructs a fresh generic problem rather than forwarding
+untrusted framework bodies/reasons; unexpected exceptions and servlet error
+dispatch use the same `safeInfrastructureProblem` factory.
+These responses use `application/problem+json`, standard status/title/detail and `traceId`.
 Unexpected exceptions return a generic 500. Messages do not copy exception
 classes, SQL, local paths, input values, credentials or stack traces.
 When tracing exists, the response traceId matches request log traceId; otherwise

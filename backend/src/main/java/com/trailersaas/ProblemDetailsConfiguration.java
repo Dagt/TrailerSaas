@@ -1,8 +1,8 @@
 package com.trailersaas;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
-import java.net.URI;
 
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Configuration;
@@ -16,24 +16,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class ProblemDetailsConfiguration implements WebMvcConfigurer {
     @Override
     public void addErrorResponseInterceptors(List<ErrorResponse.Interceptor> interceptors) {
-        interceptors.add((body, error) -> sanitize(body));
+        interceptors.add((body, error) -> addCorrelation(body));
     }
 
-    static ProblemDetail problem(HttpStatusCode status) {
+    static ProblemDetail safeInfrastructureProblem(HttpStatusCode status) {
         ProblemDetail body = ProblemDetail.forStatus(status);
-        sanitize(body);
-        return body;
-    }
-
-    private static void sanitize(ProblemDetail body) {
-        HttpStatus status = HttpStatus.resolve(body.getStatus());
         body.setType(URI.create("about:blank"));
-        body.setInstance(null);
-        body.setTitle(status == null ? "HTTP error" : status.getReasonPhrase());
+        HttpStatus standardStatus = HttpStatus.resolve(body.getStatus());
+        body.setTitle(standardStatus == null ? "HTTP error" : standardStatus.getReasonPhrase());
         body.setDetail(body.getStatus() >= 500
                 ? "The server could not complete the request."
                 : "The request could not be completed.");
-        body.setProperties(null);
+        addCorrelation(body);
+        return body;
+    }
+
+    static void addCorrelation(ProblemDetail body) {
         String traceId = MDC.get("traceId");
         if (traceId == null) {
             traceId = MDC.get("requestId");
