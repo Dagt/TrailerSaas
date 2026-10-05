@@ -6,21 +6,104 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+import javax.sql.DataSource;
+import jakarta.persistence.EntityManagerFactory;
+
 import com.jayway.jsonpath.JsonPath;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @ActiveProfiles("local")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class TrailerSaasApplicationTests {
+class TrailerSaasApplicationTests extends PostgresIntegrationTest {
+
+    @Autowired
+    private DataSource dataSource;
+
+    @Autowired
+    private Flyway flyway;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+
+    @Autowired
+    private Environment environment;
 
     @Value("${local.server.port}")
     private int port;
+
+    @Test
+    void connectsToRealPostgres18WithRestrictedRuntimeCredentials() throws Exception {
+        assertThatExceptionOfType(ClassNotFoundException.class)
+                .isThrownBy(() -> Class.forName("org.h2.Driver"));
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement()) {
+            var metadata = connection.getMetaData();
+            assertThat(metadata.getDatabaseProductName()).isEqualTo("PostgreSQL");
+            assertThat(metadata.getDatabaseMajorVersion()).isEqualTo(18);
+            assertThat(metadata.getUserName()).isEqualTo(RUNTIME_USERNAME);
+            try (var roles = statement.executeQuery(
+                    "SELECT rolsuper, rolbypassrls, has_schema_privilege(current_user, 'public', 'CREATE') "
+                            + "FROM pg_roles WHERE rolname = current_user")) {
+                assertThat(roles.next()).isTrue();
+                assertThat(roles.getBoolean(1)).isFalse();
+                assertThat(roles.getBoolean(2)).isFalse();
+                assertThat(roles.getBoolean(3)).isFalse();
+            }
+        }
+    }
+
+    @Test
+    void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
+        flyway.validate();
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("technical baseline");
+        try (var connection = flyway.getConfiguration().getDataSource().getConnection();
+                var statement = connection.createStatement()) {
+            assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
+                    .isNotEqualTo(RUNTIME_USERNAME);
+            assertThat(connection.getMetaData().getURL())
+                    .isEqualTo(environment.getProperty("spring.datasource.url"));
+            try (var history = statement.executeQuery(
+                    "SELECT installed_by, success FROM flyway_schema_history WHERE version = '1'")) {
+                assertThat(history.next()).isTrue();
+                assertThat(history.getString(1)).isEqualTo(POSTGRES.getUsername());
+                assertThat(history.getBoolean(2)).isTrue();
+                assertThat(history.next()).isFalse();
+            }
+        }
+    }
+
+    @Test
+    void jpaStartsWithoutGeneratingAnyDomainSchema() throws Exception {
+        assertThat(entityManagerFactory.isOpen()).isTrue();
+        assertThat(entityManagerFactory.getMetamodel().getEntities()).isEmpty();
+        assertThat(entityManagerFactory.getProperties())
+                .containsEntry("hibernate.hbm2ddl.auto", "validate");
+        assertThat(environment.getProperty("spring.sql.init.mode")).isEqualTo("never");
+        try (var entityManager = entityManagerFactory.createEntityManager()) {
+            assertThat(entityManager.createNativeQuery("SELECT current_user").getSingleResult())
+                    .isEqualTo(RUNTIME_USERNAME);
+        }
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement();
+                var tables = statement.executeQuery(
+                        "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'")) {
+            assertThat(tables.next()).isTrue();
+            assertThat(tables.getString(1)).isEqualTo("flyway_schema_history");
+            assertThat(tables.next()).isFalse();
+        }
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness"})

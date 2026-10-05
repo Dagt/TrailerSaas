@@ -46,6 +46,10 @@ The Issue #15 scaffold lives in `backend/`: one Maven project and one deployable
 Spring Boot application, following ADR-001/002/006. Install JDK 25 and make
 `java` available on PATH (or set `JAVA_HOME` to the JDK). The Maven Wrapper pins
 Maven 3.9.11; its first run requires network access to download Maven/dependencies.
+Issue #19 adds PostgreSQL 18, Flyway and JPA. Configure the separate runtime and
+migration credentials as documented in [backend/README.md](backend/README.md)
+before starting the app. Tests provision their own PostgreSQL with Testcontainers
+and require Docker; they do not use those local credentials.
 
 From the repository root, on Windows PowerShell:
 
@@ -66,9 +70,9 @@ cd backend
 The local profile listens on `127.0.0.1:8080`. Stop with Ctrl+C.
 Health is available at `http://127.0.0.1:8080/actuator/health`, with
 `/liveness` and `/readiness` subpaths. Only health is exposed over HTTP;
-responses omit component details. No external services or credentials are
-required. Readiness currently reflects application lifecycle only; PostgreSQL
-dependency checks belong to the later persistence baseline.
+responses omit component details. Overall health includes the standard datasource
+check; liveness/readiness still reflect application lifecycle only. Local startup
+requires PostgreSQL and the documented database variables, not Production secrets.
 
 `src/main/java/com/trailersaas` contains the application entry point and twelve
 module packages declared through `package-info.java`: `identity`, `customers`,
@@ -83,8 +87,8 @@ lists can be added when later issues introduce actual interactions.
 `src/test/java/com/trailersaas` provides JUnit tests for module discovery/boundary
 verification and local-profile startup with real HTTP health/probe requests on a
 random port. Future module tests belong under their matching capability package.
-The scaffold contains no business features, authentication or persistence;
-PostgreSQL/Flyway/Testcontainers are deferred to #19.
+The scaffold contains no business features or authentication. Persistence has only
+an infrastructure baseline: Flyway history, no domain tables/entities/repositories.
 
 ## Web local development
 
