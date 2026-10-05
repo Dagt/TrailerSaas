@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Compile, test and verify module boundaries
+        run: ./mvnw -B -ntp clean verify
+
+  web:
+    name: Web
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  mobile:
+    name: Mobile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Read project Flutter version
+        id: flutter-version
+        shell: bash
+        run: |
+          version="$(tr -d '\r\n' < .flutter-version)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          cache: true
+          pub-cache-key: flutter-pub-:os:-:channel:-:version:-:arch:-${{ hashFiles('mobile/pubspec.lock') }}
+      - name: Install locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Verify generated Drift code
+        run: |
+          dart run build_runner build
+          git diff --exit-code -- lib/src/persistence/app_database.g.dart
+      - name: Check format
+        run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze --fatal-infos
+      - run: flutter test --reporter expanded
+
+  openapi:
+    name: OpenAPI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/openapi
+    env:
+      REDOCLY_TELEMETRY: 'off'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tools/openapi/package-lock.json
+      - run: npm ci
+      - name: Validate accepted OpenAPI contract
+        run: npm run validate
+      - name: Verify invalid contracts fail validation
+        run: npm test

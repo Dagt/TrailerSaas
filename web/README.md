@@ -26,7 +26,8 @@ Stop with Ctrl+C. The scaffold does not require a running backend.
 
 ## Checks
 
-These commands are non-interactive and ready for later CI integration (#18):
+These commands are non-interactive and run in the Web job of
+[CI quality gates](../docs/development/ci.md):
 
 ```sh
 npm run typecheck
