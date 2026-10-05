@@ -1,9 +1,9 @@
 # Environment Configuration and Secret Templates
 
 Issue #20 implements ADR-020, using the hosting boundaries accepted in
-ADR-009/016. Only PostgreSQL and API configuration are active. There are no
-provider SDKs, real provider IDs, cloud resources, deployment workflows or
-Production credentials in this issue.
+ADR-009/016. PostgreSQL and API configuration are active; Issue #21 adds optional
+Sentry Web/Mobile configuration. There are no real provider IDs, cloud resources,
+deployment workflows or Production credentials in the repository.
 
 ## Selection and Safe Defaults
 
@@ -69,6 +69,10 @@ Required now is distinct from expected future requirements.
 | `VITE_API_BASE_URL` | Web | Absolute API base URL | D/S/P | Yes S/P, optional D | Public bundle config | Active #16/#20 |
 | `APP_ENV` | Mobile | Compile-time application environment | D/S/P | Explicit S/P, optional D | Public app config | Active #17 |
 | `API_BASE_URL` | Mobile | Absolute API base URL | D/S/P | Yes S/P, optional D | Public app config | Active #17/#20 |
+| `VITE_SENTRY_DSN` | Web | HTTPS ingestion DSN; empty/absent disables SDK | D/S/P | No | Public bundle config, not an admin credential | Active #21 |
+| `VITE_SENTRY_ENVIRONMENT` | Web | Must match VITE_APP_ENV; defaults to its value | D/S/P | No | Public bundle config | Active #21 |
+| `SENTRY_DSN` | Mobile | Compile-time HTTPS ingestion DSN; empty/absent disables SDK | D/S/P | No | Public app config, not an admin credential | Active #21 |
+| `SENTRY_ENVIRONMENT` | Mobile | Must match APP_ENV; defaults to its value | D/S/P | No | Public app config | Active #21 |
 
 Examples of API base URLs: local `http://localhost:8080/api/v1`, Staging
 `https://api.staging.example.test/api/v1`, Production
@@ -112,11 +116,9 @@ integration; no actual client IDs or service-account file is committed.
 | `R2_ACCESS_KEY_ID` | Backend | Restricted storage credential | D/S/P | No | Secret | Reserved #52 |
 | `R2_SECRET_ACCESS_KEY` | Backend | Storage secret | D/S/P | No | Secret | Reserved #52 |
 | `R2_PUBLIC_BASE_URL` | Backend / generated public links if approved | Optional public asset URL; not private evidence access | D/S/P | No | Public config if used | Reserved #52 |
-| `SENTRY_ENVIRONMENT` | Backend / Mobile | Explicit telemetry environment | D/S/P | No | Config, public when compiled | Reserved #21 |
-| `SENTRY_DSN` | Backend / Mobile | Event-ingestion endpoint | D/S/P | No | Ingestion config, public when compiled; restrict server config | Reserved #21 |
-| `VITE_SENTRY_ENVIRONMENT` | Web | Explicit telemetry environment | D/S/P | No | Public bundle config | Reserved #21 |
-| `VITE_SENTRY_DSN` | Web | Client ingestion endpoint | D/S/P | No | Public bundle config, not admin credential | Reserved #21 |
-| `SENTRY_AUTH_TOKEN` | Future release tooling only | Source-map/release administration | D/S/P | No | Secret, never client config | Reserved #21/#64 |
+| `SENTRY_ENVIRONMENT` | Backend only | Optional future server Sentry environment | D/S/P | No | Restricted server config | Reserved; not implemented in #21 |
+| `SENTRY_DSN` | Backend only | Optional future server ingestion endpoint | D/S/P | No | Restricted server ingestion config | Reserved; not implemented in #21 |
+| `SENTRY_AUTH_TOKEN` | Future release tooling only | Source-map/release administration | D/S/P | No | Secret, never client config | Reserved #64 |
 | `RAILWAY_TOKEN` | Future deployment tooling only | Backend deployment authorization | S/P | No | Secret | Reserved #64 |
 | `CLOUDFLARE_API_TOKEN` | Future deployment tooling only | Web deployment authorization | S/P | No | Secret | Reserved #64 |
 
@@ -124,6 +126,14 @@ An ingestion DSN is not an [administrative token](https://docs.sentry.io/api/aut
 from abuse by future provider settings. Never put `SENTRY_AUTH_TOKEN`, R2 keys,
 DB passwords or Firebase service credentials under `VITE_*` or Dart defines.
 All values distributed inside browser/mobile clients can be extracted.
+
+See [observability setup and privacy](observability.md) for the optional client
+SDKs. Empty DSNs in all templates keep them disabled. Explicit Sentry environment
+mismatches fail even when no DSN is provided; this catches stale environment files.
+Ingestion DSNs require HTTPS, an alphanumeric public key, a numeric project ID,
+and no secret-key/password, query or fragment. Validation cannot prove a DSN
+belongs to the selected environment: operators must keep projects isolated.
+No Sentry setting is required for backend startup.
 
 ## Supplying Configuration
 

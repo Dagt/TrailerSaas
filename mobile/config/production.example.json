@@ -1,4 +1,6 @@
 {
   "APP_ENV": "production",
-  "API_BASE_URL": "https://api.production.example.test/api/v1"
+  "API_BASE_URL": "https://api.production.example.test/api/v1",
+  "SENTRY_ENVIRONMENT": "production",
+  "SENTRY_DSN": ""
 }

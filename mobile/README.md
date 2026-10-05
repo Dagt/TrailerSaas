@@ -70,7 +70,10 @@ matching example to an ignored `config/<environment>.json`, replace its public
 URL and pass `--dart-define-from-file=config/<environment>.json` explicitly.
 Flutter does not automatically load these or `.env` files. Production selection
 is always explicit; build/release mode alone never changes the environment.
-No Firebase/R2/Sentry integration or provider requirement is added. See the
+No Firebase/R2 provider requirement is added. Issue #21 optionally enables
+`sentry_flutter` using `SENTRY_DSN`; empty/absent disables the SDK.
+`SENTRY_ENVIRONMENT` must match APP_ENV. Public example JSONs keep DSNs empty.
+See [observability/privacy](../docs/development/observability.md) and the
 [central environment catalog](../docs/development/environment-configuration.md)
 for commands, future public config, secret storage and isolated resources.
 
@@ -85,6 +88,7 @@ lib/
     app/                  app bootstrap, database lifetime and loading/error state
       navigation/         shared two-mode shell
     configuration/        validated compile-time environment
+    observability/        optional Sentry bootstrap and privacy boundary
     persistence/          Drift database and generated code
     platform/             secure storage, connectivity, camera, QR, arrival contracts
     road_mode/            Road Mode placeholder

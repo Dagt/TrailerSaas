@@ -4,9 +4,10 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import { AppProviders } from './app/AppProviders'
 import { appRoutes } from './app/routes'
 import { readWebEnvironment } from './shared/config/environment'
+import { initializeObservability } from './shared/observability/sentry'
 import './styles.css'
 
-readWebEnvironment(import.meta.env)
+const rootOptions = await initializeObservability(readWebEnvironment(import.meta.env))
 
 const rootElement = document.getElementById('root')
 
@@ -16,7 +17,7 @@ if (!rootElement) {
 
 const router = createBrowserRouter(appRoutes)
 
-createRoot(rootElement).render(
+createRoot(rootElement, rootOptions).render(
   <StrictMode>
     <AppProviders>
       <RouterProvider router={router} />

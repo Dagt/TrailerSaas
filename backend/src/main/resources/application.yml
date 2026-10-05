@@ -1,6 +1,11 @@
 spring:
   application:
     name: trailersaas-backend
+  main:
+    banner-mode: off
+  mvc:
+    problemdetails:
+      enabled: true
   profiles:
     default: local
   datasource:
@@ -32,5 +37,25 @@ management:
   endpoint:
     health:
       show-details: never
+      show-components: never
       probes:
         enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+  tracing:
+    export:
+      enabled: false
+    baggage:
+      enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
+
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    org.springframework.web: WARN

@@ -91,10 +91,12 @@ PostgreSQL 18 data is mounted at `/var/lib/postgresql`, not the older data mount
 To stop/start this local instance use `docker stop trailersaas-postgres` /
 `docker start trailersaas-postgres`; stopping preserves the named volume.
 
-Local HTTP remains `127.0.0.1:8080`. Overall `/actuator/health` now includes
-Spring Boot's standard datasource health check. The existing liveness/readiness
-groups retain their lifecycle-only behavior; no extra observability is added.
-Health details remain hidden.
+Local HTTP remains `127.0.0.1:8080`. Issue #21 keeps liveness lifecycle-only,
+and includes PostgreSQL in readiness as well as aggregate health. Health details
+and components remain hidden. Native JSON logs, safe X-Request-Id, ProblemDetails,
+Micrometer and non-exporting OTel tracing are documented in
+[baseline observability](../docs/development/observability.md). No external
+observability services or credentials are required.
 
 ## Flyway / JPA
 

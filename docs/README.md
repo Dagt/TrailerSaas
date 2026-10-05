@@ -71,6 +71,7 @@ These files describe the current real-world operation. They are evidence, not ne
 - [Non-functional requirements](architecture/non-functional-requirements.md)
 - [CI quality gates and local reproduction](development/ci.md)
 - [Environment configuration and secret templates](development/environment-configuration.md)
+- [Baseline observability and correlation](development/observability.md)
 
 ## 11. Security
 
