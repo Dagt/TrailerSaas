@@ -24,6 +24,12 @@ Exit: all applications build/test and the database/test/config foundations exist
 
 ## Wave 1 — Security boundary
 
+Gate: **Schema v1.0.1 hardening approval before first domain Flyway migrations**
+([#74](https://github.com/Dagt/TrailerSaas/issues/74),
+[proposed amendment](../data-model/schema-v1.0.1-hardening.md)). Applies to the
+first identity/domain migrations in #22/#23 onward. Accepted v1.0 and the
+existing technical V1 remain unchanged pending explicit amendment approval.
+
 - #22 Firebase/internal User
 - #23 Tenant membership/roles
 - #24 capability/customer scope
