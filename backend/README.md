@@ -5,6 +5,19 @@ Boot application (ADR-003/006/013). Use JDK 25 and the Maven Wrapper.
 
 ## Configuration
 
+Issue #20 uses Spring profiles `local` (safe default), `staging` and `production`.
+Use `SPRING_PROFILES_ACTIVE` to explicitly select one non-local profile; unknown,
+mixed profiles and non-local default profiles are rejected before opening a DB.
+Local HTTP binds to loopback and both local JDBC URLs must use loopback hosts.
+Required/invalid DB configuration fails startup with variable names, not values.
+No Firebase/R2/Sentry configuration is read or required yet.
+
+[`backend/.env.example`](.env.example) lists safe placeholders only. Spring does
+not load it automatically; supply variables to the process using secure OS/IDE
+configuration. Never source the example as a script or commit populated copies.
+See the [central environment catalog](../docs/development/environment-configuration.md)
+for selection commands, secret classifications, reserved integrations and isolation.
+
 Supply these variables to the backend process in every profile, including local:
 
 | Variable | Purpose |
@@ -128,7 +141,10 @@ The existing HTTP health/startup tests now run against that real container.
 Additional assertions prove PostgreSQL major 18, separate JDBC connection users,
 Flyway migration history/validation, JPA startup/native query, no H2 driver,
 no runtime schema CREATE/BYPASSRLS/superuser permissions and no domain tables.
-Module-boundary tests continue unchanged. Tests fail, rather than skip or mock,
+Configuration context tests also cover explicit/default profiles, required values,
+invalid JDBC URLs, local remote-DB rejection and sanitized failures, without DB
+connections or future provider requirements. Module-boundary tests continue
+unchanged. Tests fail, rather than skip or mock,
 when Docker is unavailable.
 
 GitHub Actions uses the runner's local Docker daemon, not a PostgreSQL service

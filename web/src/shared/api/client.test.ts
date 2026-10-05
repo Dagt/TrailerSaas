@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 afterEach(() => {
   vi.unstubAllEnvs()
   vi.resetModules()
+  vi.stubEnv('VITE_APP_ENV', 'staging')
 })
 
 it('initializes the placeholder from environment without making requests', async () => {

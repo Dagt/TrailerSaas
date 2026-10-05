@@ -135,6 +135,12 @@ services and perform no deployments. See [CI quality gates](docs/development/ci.
 for local commands, tool versions, safe dependency caches and validation scope.
 Native Android/iOS builds and release signing are deferred.
 
+Issue #20 defines safe Development defaults and explicit Staging/Production
+selection. See the [environment catalog](docs/development/environment-configuration.md)
+for each application's variables, public/secret classifications, ignored local
+templates and reserved future integrations. No real providers or secrets are
+configured, and normal development requires no Production access.
+
 ## Current phase
 
 ### Current implementation readiness

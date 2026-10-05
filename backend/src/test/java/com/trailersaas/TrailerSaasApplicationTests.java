@@ -18,12 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-@ActiveProfiles("local")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TrailerSaasApplicationTests extends PostgresIntegrationTest {
 
@@ -41,6 +39,13 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
 
     @Value("${local.server.port}")
     private int port;
+
+    @Test
+    void defaultsToLocalWithoutFutureIntegrationSecrets() {
+        assertThat(environment.getActiveProfiles()).isEmpty();
+        assertThat(environment.getDefaultProfiles()).containsExactly("local");
+        assertThat(environment.getProperty("server.address")).isEqualTo("127.0.0.1");
+    }
 
     @Test
     void connectsToRealPostgres18WithRestrictedRuntimeCredentials() throws Exception {

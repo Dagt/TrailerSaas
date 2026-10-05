@@ -100,8 +100,9 @@ here; those can be added when the contracts/clients evolve under ADR-017.
   Fork PRs can run subject to GitHub's normal contributor-approval policy.
 - Issue #19 adds PostgreSQL/Flyway/Testcontainers to the Backend check using the
   runner's Docker, with no PostgreSQL service or external database credentials.
-  Domain schema/RLS is not introduced. Environments/secrets and observability
-  remain #20/#21.
+  Domain schema/RLS is not introduced. Issue #20 adds configuration tests and
+  [safe environment templates](environment-configuration.md); no CI secrets or
+  provider requirements are added. Observability remains #21.
 
 Web's existing lockfile required a metadata/placement correction for ESLint's
 transitive `ajv` dependency so `npm ci` could run cleanly. No declared

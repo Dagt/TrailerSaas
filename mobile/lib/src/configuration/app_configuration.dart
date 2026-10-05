@@ -29,6 +29,12 @@ class AppConfiguration {
       );
     }
     final selectedEnvironment = parsedEnvironment.single;
+    if (apiBaseUrl.isEmpty &&
+        selectedEnvironment != AppEnvironment.development) {
+      throw ArgumentError(
+        'API_BASE_URL is required for staging and production.',
+      );
+    }
     final effectiveUrl =
         apiBaseUrl.isEmpty && selectedEnvironment == AppEnvironment.development
         ? 'http://localhost:8080/api/v1'
@@ -42,6 +48,12 @@ class AppConfiguration {
         uri.hasQuery ||
         uri.hasFragment) {
       throw ArgumentError('API_BASE_URL must be an absolute HTTP(S) API URL.');
+    }
+    if (selectedEnvironment != AppEnvironment.development &&
+        uri.scheme != 'https') {
+      throw ArgumentError(
+        'API_BASE_URL must use HTTPS for staging and production.',
+      );
     }
     return AppConfiguration._(
       environment: selectedEnvironment,
