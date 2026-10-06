@@ -7,6 +7,7 @@ import com.trailersaas.InfrastructureExceptionHandler;
 import com.trailersaas.ProblemDetailsConfiguration;
 import com.trailersaas.RequestCorrelationFilter;
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
+import com.trailersaas.identity.TenantContext;
 import com.trailersaas.identity.FirebaseTokenVerifier;
 import com.trailersaas.identity.VerifiedFirebaseIdentity;
 import com.trailersaas.orders.AuthorizationConsumerFixture;
@@ -88,6 +89,7 @@ class AuthorizationHttpTests {
             ProblemDetailsConfiguration.class, InfrastructureExceptionHandler.class, AuthorizationConsumerFixture.class})
     static class Configuration {
         @Bean ActiveMembershipRepository repository() { return mock(ActiveMembershipRepository.class); }
+        @Bean TenantContext tenantContext() { return mock(TenantContext.class); }
         @Bean FirebaseTokenVerifier verifier() { return mock(FirebaseTokenVerifier.class); }
         @Bean InternalUserResolver resolver() { return mock(InternalUserResolver.class); }
         @Bean JsonMapper mapper() {

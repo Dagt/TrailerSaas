@@ -29,12 +29,12 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     void fixtures() { fixtures = new IdentityFixtures(flyway); }
 
     @Test
-    void flywayV3CreatesOnlyAcceptedIdentityTablesAndLeavesUserColumnsIntact() throws Exception {
+    void flywayV4PreservesAcceptedIdentityTablesAndUserColumns() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
         // Flyway history is migrator-owned; runtime deliberately has no grant.
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3");
+                .containsExactly("1", "2", "3", "4");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
@@ -72,8 +72,14 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
         rejects("23505", () -> fixtures.membership(tenant, user, "ACTIVE"));
         try (var connection = database.getConnection(); var query = connection.prepareStatement(
                 "SELECT count(*) FROM tenant_memberships WHERE user_id=?")) {
+            connection.setAutoCommit(false);
+            try (var context = connection.prepareStatement("SELECT set_config('app.current_user_id', ?, true)")) {
+                context.setString(1, user.toString());
+                context.executeQuery().close();
+            }
             query.setObject(1, user);
             try (var rows = query.executeQuery()) { rows.next(); assertThat(rows.getInt(1)).isEqualTo(2); }
+            connection.rollback();
         }
     }
 
@@ -155,7 +161,7 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"tenants", "tenant_memberships", "role_assignments"})
-    void runtimeHasOnlySelectIsNotOwnerAndHasNoRlsOrAdministrativePrivileges(String table) throws Exception {
+    void runtimeHasOnlySelectIsNotOwnerAndIsProtectedByRlsWithoutAdministrativePrivileges(String table) throws Exception {
         // table comes exclusively from the fixed test annotation, not configuration/input.
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             try (var query = connection.prepareStatement("""
@@ -175,7 +181,9 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
                     assertThat(rows.getString(1)).isNotEqualTo(RUNTIME_USERNAME);
                     assertThat(rows.getString(2)).isEqualTo(RUNTIME_USERNAME);
                     assertThat(rows.getBoolean(3)).isTrue();
-                    for (int column = 4; column <= 11; column++) { assertThat(rows.getBoolean(column)).isFalse(); }
+                    for (int column = 4; column <= 9; column++) { assertThat(rows.getBoolean(column)).isFalse(); }
+                    assertThat(rows.getBoolean(10)).isTrue();
+                    assertThat(rows.getBoolean(11)).isFalse();
                 }
             }
             statement.executeQuery("SELECT * FROM " + table).close();

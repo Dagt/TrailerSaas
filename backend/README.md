@@ -43,7 +43,7 @@ The runtime role must not be superuser or have BYPASSRLS, own future domain
 tables, or have schema CREATE privileges. The migrator can own migrated objects.
 Production roles remain operator-provisioned. V2 grants only SELECT/INSERT on users
 to the configured runtime role. V3 grants SELECT only on tenants, tenant_memberships
-and role_assignments; RLS and TenantContext remain deferred to #26.
+and role_assignments. V4 adds RLS without changing these grants.
 
 ## Local PostgreSQL
 
@@ -121,6 +121,8 @@ hardening amendment merged in #75. #23 reuses users; it must not recreate or
 silently redefine it when adding Tenant/membership/roles. No seed data is added.
 `V3__identity_tenants_memberships_roles.sql` creates only tenants,
 tenant_memberships and role_assignments. V1/V2 remain unchanged.
+`V4__identity_tenant_rls.sql` adds policies to those three tables without
+creating tables or changing V1/V2/V3 or their runtime grants.
 
 Flyway is the only schema authority. Hibernate uses `ddl-auto=validate`,
 Open EntityManager in View is disabled and Spring SQL initialization is
@@ -132,7 +134,8 @@ V2's quoted runtimeRole Flyway placeholder comes from DB_RUNTIME_USERNAME.
 Startup validates `[A-Za-z_][A-Za-z0-9_]{0,62}` (1–63 ASCII identifier characters)
 and equality with the runtime datasource username before migration. This blocks
 SQL injection/configuration overrides while allowing independent environment role
-names. V3 reuses exactly this placeholder for SELECT-only grants. No role is created,
+names. V3 reuses exactly this placeholder for SELECT-only grants and V4 for
+runtime-targeted policies. No role is created,
 no privileges go to PUBLIC, and runtime remains without
 ownership, schema CREATE, SUPERUSER or BYPASSRLS.
 
@@ -154,7 +157,7 @@ FirebaseTokenVerifier returns only verified UID/email/displayName. Spring builds
 typed AuthenticatedUserPrincipal with internal User ID and UID and **no authorities**.
 Custom role/Tenant/Customer/capability claims never grant business access. User alone
 does not grant Tenant access. #24 adds fresh capability/scope authorization;
-TenantContext remains deferred to #26.
+#26 adds transaction-local RLS as defense-in-depth, not authorization.
 
 GET /api/v1/me returns userId, email, displayName and that User's persisted
 memberships, each with tenantId, tenantName, status and roles
@@ -173,7 +176,7 @@ stay public without exposing extra Actuator. Non-API missing paths remain 404.
 Missing/malformed/invalid/expired credentials return generic 401 Problem Details
 with AUTHENTICATION_REQUIRED and the existing requestId/traceId correlation.
 Authorization, token claims, provider messages and credential contents are never
-copied into logs or public errors. #25/#26 remain unimplemented.
+copied into logs or public errors. #25 remains unimplemented.
 
 References: [official Firebase setup/ADC](https://firebase.google.com/docs/admin/setup),
 [ID-token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens).
@@ -207,8 +210,9 @@ index supports its join across both scopes; partial uniqueness indexes alone
 require scope predicates and cannot cover this unfiltered join.
 A read-only transaction uses the
 ordinary runtime datasource; there is no admin connection or BYPASSRLS.
-#26 must supply the User-limited bootstrap RLS strategy separately from normal
-TenantContext lookups. No generic findAll/findById tenant repository is exposed.
+#26 establishes the authenticated internal User's bootstrap RLS context before
+this query, separately from normal TenantContext lookups. No generic
+findAll/findById tenant repository is exposed.
 
 User alone grants no Tenant access; membership existence does not grant capabilities.
 ACTIVE/SUSPENDED/DISABLED entries describe persisted status in /me, without granting
@@ -229,7 +233,8 @@ Each call queries current PostgreSQL data by **internal userId + requested tenan
 resolving only ACTIVE memberships and their current role assignments. A left join
 distinguishes an ACTIVE roleless membership from no active membership. The narrow,
 read-only repository uses ordinary runtime SELECT grants; no authorization cache,
-admin connection, principal enrichment or schema change is introduced. Tenant.status
+admin connection or principal enrichment is introduced. Before reading roles,
+authorization pins the requested Tenant in the same transaction. Tenant.status
 is deliberately not an authorization rule.
 
 - `requireTenantCapability(principal, tenantId, capability)`: only TENANT-scoped
@@ -262,9 +267,61 @@ contents do not authorize protected actions. Role deletion or membership suspens
 takes effect on the next authorization with the same token. Firebase custom claims
 still cannot grant capabilities and Spring authorities remain empty.
 
-No Customer table/FK, Driver/Trip lookup, domain-state rules, invitations, mutation
-endpoints, RLS or TenantContext are implemented here. All synthetic consumers and
+No Customer table/FK, Driver/Trip lookup, domain-state rules, invitations or mutation
+endpoints are implemented here. All synthetic consumers and
 HTTP endpoints demonstrating this integration live exclusively in test sources.
+
+## Transaction-local PostgreSQL RLS (#26)
+
+`TenantContext` is a small public identity boundary backed by the current JPA
+transaction's physical connection, not a ThreadLocal scope or a separate
+transaction. It requires an active, joined, non-autocommit transaction and uses
+prepared `set_config(..., ?, true)` calls:
+
+| Mode | app.current_tenant_id | app.current_user_id |
+| --- | --- | --- |
+| Tenant | Requested Tenant UUID | Empty |
+| Bootstrap /me | Empty | Authenticated internal User UUID |
+
+Repeating the same context is allowed. Switching Tenant/User or mixing modes
+throws a programming/security error without changing settings. No context
+returns no rows from `tenants`, `tenant_memberships` or `role_assignments`.
+The policies also reject mixed modes. Commit/rollback clears the local values;
+the connection may return empty settings, handled with `NULLIF(..., '')`.
+
+V4 enables RLS on memberships and roles with Tenant `USING` and `WITH CHECK`.
+Their bootstrap policies are **SELECT-only**, restricted to the User's own
+memberships and those memberships' roles. Tenant SELECT is restricted to the
+current Tenant or the bootstrap User's membership Tenants, including all three
+membership statuses. Global `users` stays outside RLS: verified UID resolution
+happens before Tenant selection using narrow repositories. No role-based or
+Customer-level SQL policy is introduced.
+
+Runtime remains non-owner, non-SUPERUSER, non-BYPASSRLS, without schema CREATE,
+and SELECT-only on V3 tables. `ENABLE ROW LEVEL SECURITY` already protects it;
+`FORCE` is deliberately deferred to preserve the separate owner/migrator
+administrative path, not to give runtime a bypass. Future Tenant-owned tables
+must receive their own RLS policies in the migration that creates them.
+
+Authorization retains its REQUIRED transaction propagation. Future commands
+open an outer transaction, authorize, then use repositories in that same
+transaction; the setting remains in force throughout:
+
+```java
+@Transactional
+public void command(AuthenticatedUserPrincipal principal, UUID tenantId) {
+    authorization.requireTenantCapability(principal, tenantId, Capability.ORDER_EDIT);
+    // Tenant-scoped repository reads/writes and domain-state validation follow.
+}
+```
+
+`TenantTransactionExecutor.execute(tenantId, callback)` is the background
+extension point: one Tenant per transaction using the normal runtime role.
+It rejects ambient/nested transactions, so a callback cannot switch Tenant by
+calling the executor again. For an existing application transaction, use
+authorization/`TenantContext`, not this executor. It grants no capabilities;
+future workers must enforce their own server-side authorization/work contract.
+No actual job is implemented.
 
 ## Tests
 
@@ -299,7 +356,7 @@ PostgreSQL tests cover V2/grants/UID uniqueness, duplicate emails, concurrent fi
 logins and real HTTP authentication-to-users with a test-only verifier. No FirebaseApp,
 ADC or external Firebase/Google/emulator call is made in CI. V3 tests exercise
 membership status/uniqueness, the composite Tenant FK, all role/scope combinations,
-partial role uniqueness, read-only runtime grants, preserved history and absent RLS/
+partial role uniqueness, read-only runtime grants, preserved history and absent
 Customer/invitation tables. Real HTTP tests cover multi-Tenant User isolation,
 ignored claim/header/User-ID hints, roleless memberships, Customer-scoped roles,
 stable ordering and fresh status/role reads; original 401/stateless tests remain.
@@ -307,8 +364,15 @@ stable ordering and fresh status/role reads; original 401/stateless tests remain
 resolution, deny-by-default, multiple roles, Customer A/B isolation, assigned-work
 constraints and bypass prevention. Real HTTP/PostgreSQL tests prove same-token
 revocation, ignored malicious claims, safe correlated 401/403 responses and the
-difference between membership visibility and authorization. Flyway remains V3;
-the existing schema/grant/RLS-absence assertions remain unchanged.
+difference between membership visibility and authorization. Flyway now ends at V4;
+existing table/column and runtime grant assertions remain, with RLS enabled.
+V4 tests deliberately omit Tenant predicates and verify isolation in PostgreSQL,
+bootstrap privacy, context conflicts, and outer-transaction authorization.
+A one-connection Hikari pool proves physical reuse by PostgreSQL backend PID
+after both commit and rollback, for Tenant and bootstrap modes. Temporary
+test-only INSERT/UPDATE/DELETE grants demonstrate cross-Tenant WITH CHECK
+rejection and bootstrap SELECT-only behavior, then REVOKE in finally; V4 adds
+no write grant. Background execution is exercised for successive Tenants.
 Module-boundary tests continue
 unchanged. Tests fail, rather than skip or mock,
 when Docker is unavailable.

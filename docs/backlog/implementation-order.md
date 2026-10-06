@@ -40,6 +40,10 @@ explicit #29/#32/#55 and optional Mobile deviceId deferments do not block #22.
 - #25 invitation/onboarding
 - #26 TenantContext/RLS
 
+Current safe security sequence: **#22 -> #23 -> #24 -> #26**.
+Customer-scoped onboarding in #25 will follow #27, which materializes Customers
+and their tenant-safe FK. #25 is not completed; its functional scope is unchanged.
+
 Exit: every later Tenant-owned feature has an enforceable security foundation.
 
 ## Wave 2 — Shared operational foundations

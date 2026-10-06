@@ -8,6 +8,7 @@ import com.trailersaas.PostgresIntegrationTest;
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
 import com.trailersaas.identity.Capability;
 import com.trailersaas.identity.TenantAuthorization;
+import com.trailersaas.identity.TenantTransactionExecutor;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 class AuthorizationPostgresTests extends PostgresIntegrationTest {
     @Autowired TenantAuthorization authorization;
+    @Autowired TenantTransactionExecutor transactions;
     @Autowired ActiveMembershipRepository repository;
     @Autowired DataSource database;
     @Autowired Flyway flyway;
@@ -51,7 +53,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
         var tenant = fixtures.tenant("Non-active");
         var membership = fixtures.membership(tenant, user.userId(), status);
         fixtures.role(tenant, membership, "TENANT_ADMIN", "TENANT", null);
-        assertThat(repository.forActiveUserInTenant(user.userId(), tenant)).isEmpty();
+        assertThat(transactions.execute(tenant, () -> repository.forActiveUserInTenant(user.userId(), tenant))).isEmpty();
         denied(() -> authorization.requireTenantCapability(user, tenant, Capability.USER_INVITE), TENANT_ACCESS_DENIED);
         denied(() -> authorization.requireCustomerCapability(user, tenant, UUID.randomUUID(), Capability.ORDER_EDIT),
                 TENANT_ACCESS_DENIED);
@@ -78,7 +80,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
         var user = principal(fixtures.user());
         var tenant = fixtures.tenant("Aggregate");
         var membership = fixtures.membership(tenant, user.userId(), "ACTIVE");
-        assertThat(repository.forActiveUserInTenant(user.userId(), tenant)).containsExactly(
+        assertThat(transactions.execute(tenant, () -> repository.forActiveUserInTenant(user.userId(), tenant))).containsExactly(
                 new AuthorizationRoleRow(membership, null, null, null));
         denied(() -> authorization.requireTenantCapability(user, tenant, Capability.TRIP_PLAN), CAPABILITY_DENIED);
         fixtures.role(tenant, membership, "TRANSPORT_OPERATIONS", "TENANT", null);
@@ -145,10 +147,10 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
     }
 
     @Test
-    void resolverRunsWithUnchangedV3SchemaAndSelectOnlyRuntimeGrants() throws Exception {
+    void resolverRunsWithV4RlsAndUnchangedV3SchemaAndRuntimeGrants() throws Exception {
         flyway.validate();
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3");
+                .containsExactly("1", "2", "3", "4");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getDatabaseProductName()).isEqualTo("PostgreSQL");
             assertThat(connection.getMetaData().getDatabaseMajorVersion()).isEqualTo(18);
@@ -168,7 +170,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
                         rows.next();
                         assertThat(rows.getBoolean(1)).isTrue();
                         assertThat(rows.getBoolean(2)).isFalse();
-                        assertThat(rows.getBoolean(3)).isFalse();
+                        assertThat(rows.getBoolean(3)).isTrue();
                         assertThat(rows.getBoolean(4)).isFalse();
                     }
                 }

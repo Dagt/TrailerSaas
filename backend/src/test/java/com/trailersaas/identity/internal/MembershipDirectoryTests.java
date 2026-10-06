@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
+import com.trailersaas.identity.TenantContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.repository.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +14,8 @@ import static org.mockito.Mockito.*;
 
 class MembershipDirectoryTests {
     final MembershipDirectoryRepository repository = mock(MembershipDirectoryRepository.class);
-    final MembershipDirectory directory = new MembershipDirectory(repository);
+    final TenantContext context = mock(TenantContext.class);
+    final MembershipDirectory directory = new MembershipDirectory(repository, context);
     final UUID userId = UUID.randomUUID();
     final AuthenticatedUserPrincipal user = new AuthenticatedUserPrincipal(userId, "uid", null, null);
 
@@ -21,7 +23,9 @@ class MembershipDirectoryTests {
     void bootstrapRequiresAuthenticatedPrincipalAndPassesOnlyItsInternalUserId() {
         when(repository.forUser(userId)).thenReturn(List.of());
         assertThat(directory.forUser(user)).isEmpty();
-        verify(repository).forUser(userId);
+        var ordered = inOrder(context, repository);
+        ordered.verify(context).establishBootstrapUser(user);
+        ordered.verify(repository).forUser(userId);
         verifyNoMoreInteractions(repository);
         assertThatNullPointerException().isThrownBy(() -> directory.forUser(null));
     }
