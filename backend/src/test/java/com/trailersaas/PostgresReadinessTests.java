@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.hikari.validation-timeout=500",
         "spring.datasource.hikari.minimum-idle=0"})
 @Testcontainers
+@Import(TestFirebaseConfiguration.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class PostgresReadinessTests {
     // Dedicated lifecycle: stopping this fixture cannot destroy another class's database.
@@ -40,6 +42,7 @@ class PostgresReadinessTests {
         registry.add("DB_RUNTIME_PASSWORD", POSTGRES::getPassword);
         registry.add("DB_MIGRATION_USERNAME", POSTGRES::getUsername);
         registry.add("DB_MIGRATION_PASSWORD", POSTGRES::getPassword);
+        registry.add("FIREBASE_PROJECT_ID", () -> "test-only-project");
     }
 
     @Value("${local.server.port}")

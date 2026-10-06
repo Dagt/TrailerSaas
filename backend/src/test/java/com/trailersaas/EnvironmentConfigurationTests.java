@@ -16,10 +16,11 @@ class EnvironmentConfigurationTests {
             .withPropertyValues(
                     "DB_RUNTIME_JDBC_URL=jdbc:postgresql://localhost:5432/test_only",
                     "DB_RUNTIME_USERNAME=test_runtime", "DB_RUNTIME_PASSWORD=test-only",
-                    "DB_MIGRATION_USERNAME=test_migration", "DB_MIGRATION_PASSWORD=test-only");
+                    "DB_MIGRATION_USERNAME=test_migration", "DB_MIGRATION_PASSWORD=test-only",
+                    "FIREBASE_PROJECT_ID=test-only-project");
 
     @Test
-    void defaultsToLoopbackLocalWithoutProviderSecrets() {
+    void defaultsToLoopbackLocalWithProjectConfigurationWithoutReadingProviderSecrets() {
         runner.run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context.getEnvironment().getActiveProfiles()).isEmpty();
@@ -27,6 +28,32 @@ class EnvironmentConfigurationTests {
             assertThat(context.getEnvironment().getProperty("server.address")).isEqualTo("127.0.0.1");
             assertThat(context.getEnvironment().getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "bad\"; GRANT ALL TO PUBLIC;--", "has space", "a.b", "a-b", "é", "runtime'"})
+    void rejectsUnsafeRoleIdentifiersWithoutEchoingThem(String role) {
+        runner.withPropertyValues("DB_RUNTIME_USERNAME=" + role).run(context -> {
+            assertThat(context).hasFailed().getFailure().hasMessageContaining("DB_RUNTIME_USERNAME");
+            if (!role.isEmpty()) {
+                assertThat(context.getStartupFailure()).hasMessageNotContaining(role);
+            }
+        });
+    }
+
+    @Test
+    void rejectsOverriddenFlywayGrantRole() {
+        runner.withPropertyValues("spring.flyway.placeholders.runtimeRole=other_role").run(context ->
+                assertThat(context).hasFailed().getFailure().hasMessageContaining("must match"));
+    }
+
+    @Test
+    void requiresFirebaseProjectAndSanitizesInvalidConfiguration() {
+        runner.withPropertyValues("FIREBASE_PROJECT_ID=").run(context ->
+                assertThat(context).hasFailed().getFailure().hasMessageContaining("FIREBASE_PROJECT_ID"));
+        runner.withPropertyValues("FIREBASE_PROJECT_ID=synthetic-secret-firebase-token!").run(context ->
+                assertThat(context).hasFailed().getFailure().hasMessageContaining("FIREBASE_PROJECT_ID")
+                        .hasMessageNotContaining("synthetic-secret-firebase-token"));
     }
 
     @ParameterizedTest

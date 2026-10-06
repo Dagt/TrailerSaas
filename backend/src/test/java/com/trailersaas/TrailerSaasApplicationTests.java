@@ -41,7 +41,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     private int port;
 
     @Test
-    void defaultsToLocalWithoutFutureIntegrationSecrets() {
+    void defaultsToLocalWithTestOnlyFirebaseBoundary() {
         assertThat(environment.getActiveProfiles()).isEmpty();
         assertThat(environment.getDefaultProfiles()).containsExactly("local");
         assertThat(environment.getProperty("server.address")).isEqualTo("127.0.0.1");
@@ -71,8 +71,8 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
-        assertThat(flyway.info().current().getDescription()).isEqualTo("technical baseline");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("identity users");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
@@ -90,9 +90,9 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     }
 
     @Test
-    void jpaStartsWithoutGeneratingAnyDomainSchema() throws Exception {
+    void jpaValidatesOnlyTheFlywayCreatedUserEntity() throws Exception {
         assertThat(entityManagerFactory.isOpen()).isTrue();
-        assertThat(entityManagerFactory.getMetamodel().getEntities()).isEmpty();
+        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(1);
         assertThat(entityManagerFactory.getProperties())
                 .containsEntry("hibernate.hbm2ddl.auto", "validate");
         assertThat(environment.getProperty("spring.sql.init.mode")).isEqualTo("never");
@@ -104,9 +104,9 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
                 var statement = connection.createStatement();
                 var tables = statement.executeQuery(
                         "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'")) {
-            assertThat(tables.next()).isTrue();
-            assertThat(tables.getString(1)).isEqualTo("flyway_schema_history");
-            assertThat(tables.next()).isFalse();
+            var names = new java.util.ArrayList<String>();
+            while (tables.next()) { names.add(tables.getString(1)); }
+            assertThat(names).containsExactlyInAnyOrder("flyway_schema_history", "users");
         }
     }
 

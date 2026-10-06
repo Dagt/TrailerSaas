@@ -47,7 +47,8 @@ Spring Boot application, following ADR-001/002/006. Install JDK 25 and make
 `java` available on PATH (or set `JAVA_HOME` to the JDK). The Maven Wrapper pins
 Maven 3.9.11; its first run requires network access to download Maven/dependencies.
 Issue #19 adds PostgreSQL 18, Flyway and JPA. Configure the separate runtime and
-migration credentials as documented in [backend/README.md](backend/README.md)
+migration credentials plus the backend Firebase project/official ADC introduced
+by #22 as documented in [backend/README.md](backend/README.md)
 before starting the app. Tests provision their own PostgreSQL with Testcontainers
 and require Docker; they do not use those local credentials.
 
@@ -71,8 +72,9 @@ The local profile listens on `127.0.0.1:8080`. Stop with Ctrl+C.
 Health is available at `http://127.0.0.1:8080/actuator/health`, with
 `/liveness` and `/readiness` subpaths. Only health is exposed over HTTP;
 responses omit component details. Overall health includes the standard datasource
-check; liveness/readiness still reflect application lifecycle only. Local startup
-requires PostgreSQL and the documented database variables, not Production secrets.
+check; liveness is lifecycle-only and readiness also checks PostgreSQL. Local startup
+requires PostgreSQL, the documented DB variables and non-production Firebase/ADC
+configuration. Readiness includes PostgreSQL; liveness remains lifecycle-only.
 
 `src/main/java/com/trailersaas` contains the application entry point and twelve
 module packages declared through `package-info.java`: `identity`, `customers`,
@@ -87,8 +89,9 @@ lists can be added when later issues introduce actual interactions.
 `src/test/java/com/trailersaas` provides JUnit tests for module discovery/boundary
 verification and local-profile startup with real HTTP health/probe requests on a
 random port. Future module tests belong under their matching capability package.
-The scaffold contains no business features or authentication. Persistence has only
-an infrastructure baseline: Flyway history, no domain tables/entities/repositories.
+Issue #22 adds backend bearer authentication, global users (V2) and `/api/v1/me`.
+Its response has no memberships until #23. Other modules remain scaffolds; no
+Tenant access, business roles or client Firebase login is implemented yet.
 
 ## Web local development
 
