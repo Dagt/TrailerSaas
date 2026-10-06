@@ -1,8 +1,10 @@
-# Relational schema v1.0.1 hardening candidate
+# Relational schema v1.0.1 hardening amendment
 
-Status: Proposed v1.0.1 hardening amendment
+Status: Accepted v1.0.1 hardening amendment
 
-**Date:** 2026-10-05
+**Accepted date:** 2026-10-06
+
+**Approval:** Explicit owner approval incorporated in [PR #75](https://github.com/Dagt/TrailerSaas/pull/75), following the [owner review](https://github.com/Dagt/TrailerSaas/pull/75#pullrequestreview-5421750407).
 
 **Issue:** [#74](https://github.com/Dagt/TrailerSaas/issues/74)
 
@@ -12,13 +14,14 @@ Status: Proposed v1.0.1 hardening amendment
 
 **Database:** PostgreSQL 18; PostgreSQL 17 remains the temporary fallback allowed by ADR-003.
 
-This is a documentation-only amendment, not a replacement Accepted schema, DDL,
-migration or implementation instruction. Read v1.0 plus the proposed deltas below
-as the v1.0.1 candidate; all unmentioned columns, relationships and invariants
-remain unchanged. Accepted v1.0 remains authoritative until explicit review and
-approval. A merge of a proposal alone must not be interpreted as acceptance.
+The Accepted schema baseline for implementation is schema-v1.0.md plus this
+amendment. Where they conflict, this v1.0.1 amendment supersedes only the explicitly
+listed sections below; all unmentioned columns, relationships and invariants
+remain unchanged. The original Accepted v1.0 file remains physically intact.
+This is documentation only: no DDL, migration or functional code is delivered.
 The existing technical V1 migration is outside this amendment and remains intact.
-Do not start #22 or freeze identity/domain migrations from unresolved proposals.
+The hardening gate is satisfied upon merge of #75; no #22 implementation is part
+of this PR. The explicit implementation deferments below do not block #22.
 
 ## Sources and interpretation
 
@@ -31,14 +34,17 @@ Do not start #22 or freeze identity/domain migrations from unresolved proposals.
   [ADR-022](../decisions/ADR-022-postgresql-outbox-jobs.md).
 - Authorization: [tenancy](../security/tenancy-and-authorization.md) and
   [capabilities](../security/permission-capabilities.md). The latter still labels
-  its matrix Draft and includes TBD permissions; no new role mapping is accepted here.
+  its capability matrix Draft and includes TBD permissions; A fixes the existing
+  MVP role/scope matrix without granting unresolved capabilities.
 - Contracts: [conventions](../api/conventions.md),
+  [endpoint catalog](../api/endpoint-catalog.md),
   [identity/master data](../api/identity-master-data.md),
   [mobile execution](../api/mobile-execution.md),
   [orders/dispatch](../api/orders-dispatch.md), [yard](../api/yard.md),
   [alerts/devices/audit](../api/alerts-audit.md).
 - Offline: [sync protocol](../mobile/offline-sync-protocol.md) and
   [local model](../mobile/local-offline-data-model.md).
+- Auditability: [non-functional requirements](../architecture/non-functional-requirements.md), especially NFR-041.
 - Domain: [conceptual model](../domain/domain-model.md),
   [workflows](../workflows/core-workflows.md),
   [Order](../state-machines/order.md), [Trip](../state-machines/trip.md),
@@ -57,29 +63,30 @@ state machines. No future code is used as design evidence.
 ## Changes from v1.0
 
 Mechanical hardening means an unambiguous technical repair of accepted intent.
-Recommended amendment means a concrete option still requiring human acceptance.
-Still open means the available sources do not support a complete decision.
-Even mechanical deltas remain proposals until this amendment is approved.
+Accepted amendment means the owner has explicitly approved the design choice.
+Explicit deferral means additional implementation/product detail is excluded
+from this baseline and assigned to a later bounded Issue. No approval remains
+pending for the schema decisions in A–Q.
 
-| Item | Classification | Proposed change and reason |
+| Item | Classification / disposition | Accepted change and reason |
 |---|---|---|
 | A | Mechanical hardening | Partial role uniqueness indexes cover nullable Customer scope; mirror for intended invitation roles. |
-| B | Recommended amendment | Global User-owned installation registry; Tenant context belongs to notification authorization, not device identity. |
-| C | Recommended amendment | Unique executable Stop/Order pair; optional requested Stop reference does not define identity. Confirm cardinality before removing the fourth unique-key column. |
-| D | Recommended amendment | Nullable result before observation; retain the four accepted result values and assign MISSING only on completion. |
-| E | Recommended amendment | Nullable audit actor membership with a tenant/user-consistent historical FK. |
-| F | Still open | Preserve supported type/capability metadata; do not invent structured ownership or size categories. |
+| B | Accepted amendment | Global User device registrations with immutable User binding; Tenant context belongs to notification authorization. |
+| C | Mechanical hardening | Four-column UNIQUE NULLS NOT DISTINCT rejects duplicate generic/specific mappings while preserving multiple requested Stops. |
+| D | Accepted amendment | Nullable result before observation; retain the four accepted result values and assign MISSING only on completion. |
+| E | Accepted amendment | Nullable audit actor membership with a tenant/user-consistent historical FK. |
+| F | Explicit deferral (#29) | Preserve trailer_type/capability_notes; structured ownership/size is excluded from v1.0.1. |
 | G | Mechanical hardening | Separate delivered_at, completed_at and cancelled_at milestone timestamps from accepted Order transitions. |
-| H | Recommended amendment | Propose minimal OPEN/CLOSED manifest lifecycle for review; no approved manifest state machine exists. |
-| I | Recommended amendment | Generated normalized equipment number and Tenant-scoped uniqueness; original display value retained. |
-| J | Recommended amendment | Normalized invitation email, one PENDING invitation per Tenant/email, authenticated verified-email matching. |
+| H | Accepted amendment; operational policy deferred (#32) | OPEN/CLOSED allocation-period lifecycle, no reopen; exact authority/edit/closure policy is deferred. |
+| I | Accepted amendment | Conservative ASCII-space/case generated key, reject controls, preserve original display and Tenant uniqueness. |
+| J | Accepted amendment | Trim + lowercase whole invitation email, one PENDING per Tenant/email, verified Firebase email matching without provider aliases. |
 | K | Mechanical hardening | Parent-first FK dependency order; no reverse mutable coupling pointer; add optional event FKs after both endpoints exist. |
-| L | Recommended amendment | Transaction-local PROCESSING claim plus unique key; business effect and terminal replay result commit atomically. |
-| M | Recommended amendment | Separate responsible actor from causal source; keep coarse accepted values and explicit mobile arrival provenance. |
-| N | Recommended amendment | SQL location/Site/Order consistency plus application snapshot and Customer-scope validation. |
-| O | Recommended amendment | device_id references the global installation UUID, never an FCM token or hardware identifier; registration transport needs explicit approval. |
-| P | Mechanical hardening | Confirm OQ-058 resolved; link its existing resolution to Accepted schema/API and this proposal. |
-| Q | Recommended amendment | Adopt ADR-022 outbox_jobs with bounded retries, lease recovery and Tenant-safe claiming. |
+| L | Accepted amendment | Transaction-local PROCESSING claim plus unique key; business effect and terminal replay result commit atomically. |
+| M | Accepted amendment | Three actor types and four causal source types explicitly satisfy NFR-041, including mobile automation. |
+| N | Accepted amendment | SQL Site/location consistency and server-side scope validation; normalize ad-hoc destinations before physical transitions requiring OperationalLocation. |
+| O | Accepted amendment; optional transport deferred | device_id references a User registration with composite User FK, never FCM/hardware identity or an idempotency key. |
+| P | Mechanical hardening | Confirm OQ-058 resolved; link its existing resolution to Accepted schema/API and this amendment. |
+| Q | Accepted amendment; numeric/type policy deferred (#55) | ADR-022 outbox_jobs with bounded retries, fenced leases/recovery and Tenant-safe claiming. |
 
 ### A. RoleAssignment nullable uniqueness
 
@@ -102,6 +109,19 @@ remain tenant-wide except CUSTOMER_DISPATCHER, which requires Customer scope;
 the same closed role/scope matrix can be enforced in SQL without granting new
 capabilities. Multiple different Customer assignments remain permitted.
 
+The closed MVP role/scope matrix applies to both role_assignments and
+invitation_role_assignments:
+
+| Role | Scope |
+|---|---|
+| CUSTOMER_DISPATCHER | CUSTOMER |
+| TENANT_ADMIN | TENANT |
+| TRANSPORT_OPERATIONS | TENANT |
+| YARD_SPOTTER | TENANT |
+| DRIVER | TENANT |
+
+Future location scope for Yard Spotter is outside this amendment/MVP schema.
+
 Apply the same two indexes and scope checks to invitation_role_assignments,
 substituting invitation_id for membership_id. This prevents duplication when
 the intended set is materialized on acceptance. PostgreSQL NULLS NOT DISTINCT
@@ -111,13 +131,13 @@ replaces it. No schema objects are created by this document.
 
 ### B. Global user_devices, Tenant-scoped notifications
 
-ADR-011 makes User global and permits multiple memberships. Recommend removing
-tenant_id from user_devices rather than duplicating one installation for every
-Tenant. Proposed replacement shape (subject to B/O approval):
+ADR-011 makes User global and permits multiple memberships. Remove tenant_id
+from user_devices: a registration belongs globally to one User, not one Tenant.
+Its User binding is historical and immutable. Accepted replacement shape:
 
 ```text
-id                 uuid PK -- the one technical installation/device identity
-user_id            uuid FK users NOT NULL -- current authenticated owner binding
+id                 uuid PK -- User device registration identity
+user_id            uuid FK users NOT NULL -- immutable authenticated User binding
 platform           varchar NOT NULL -- IOS / ANDROID; WEB only if separately required
 fcm_token          varchar NULL -- mutable transport registration, not identity
 active             boolean NOT NULL
@@ -125,19 +145,26 @@ last_seen_at       timestamptz NOT NULL
 created_at         timestamptz NOT NULL
 updated_at         timestamptz NOT NULL
 
+UNIQUE (id, user_id)
 UNIQUE (fcm_token) WHERE fcm_token IS NOT NULL
 INDEX (user_id, active)
 ```
 
-A global installation can exist before push permission/token registration;
-NULL token therefore does not invalidate offline attribution. Rotation updates
-the token on the same UUID. active refers to a usable owner registration, not
-proof of current Tenant membership. Logout deactivates and clears the token;
-rebind on an account switch only after authenticating the new owner and verifying
-the installation binding. Preserve the UUID for the same installation; reinstall
-or reset creates a new UUID. Historical ledger user_id remains immutable and is
-not inferred from the current registry owner. Rebinding policy/transport is an
-approval decision, not a new accepted security protocol.
+A registration can exist without push permission/token; NULL token does not
+invalidate offline attribution. Token rotation for the same User registration
+keeps its UUID. active indicates registration availability, not Tenant membership.
+Logout deactivates the registration and removes/invalidates its FCM token.
+Another User signing in on the same installation creates a new registration
+with a new UUID; never update the old row's user_id. If Firebase reuses the same
+FCM token, transfer/rotate it atomically to the new registration and deactivate
+the previous registration/remove its token. The unique token index prevents
+simultaneous ownership. Retain old registration rows for historical provenance;
+do not reconstruct a ledger actor from a different account's current session.
+
+The accepted authenticated global endpoints are POST /devices and
+DELETE /devices/{id}, as listed in the endpoint catalog. They are not Tenant paths.
+Deactivation cuts push on that registration across all Tenants of its User;
+it does not remove the User or its memberships.
 
 Tenant ownership remains on alerts, alert_recipients and tenant-owned outbox
 jobs. Resolve a recipient through current active membership and Customer/resource
@@ -151,13 +178,14 @@ Global registration access is User-authorized. It must not blindly use the
 tenant_id RLS template. Only a controlled registry lookup may resolve delivery
 tokens; neither arbitrary Tenant queries nor a BYPASSRLS worker are justified.
 
-### C. Executable Stop/Order identity
+### C. Executable Stop/Order/requested Stop identity
 
-Recommend replacing the current four-column UNIQUE with:
+Mechanical hardening: preserve the four-column mapping cardinality and replace
+ordinary UNIQUE with PostgreSQL 18 NULLS NOT DISTINCT:
 
 ```text
 trip_stop_orders:
-  UNIQUE (tenant_id, trip_stop_id, order_id)
+  UNIQUE NULLS NOT DISTINCT (tenant_id, trip_stop_id, order_id, order_stop_id)
   FK (tenant_id, trip_stop_id) -> trip_stops (tenant_id, id)
   FK (tenant_id, order_id) -> orders (tenant_id, id)
 order_stops:
@@ -168,17 +196,23 @@ trip_stop_orders:
 
 order_stop_id stays nullable using default MATCH SIMPLE: a missing optional
 reference is legal, but a supplied reference must belong to that exact Order,
-not just the Tenant. This blocks duplicate associations with NULL or different
-requested Stop IDs. Orders-dispatch exposes orderIds per executable Stop and
-does not define multiple requested-Stop mappings for the same Order at one visit.
-Approval must confirm that one optional requested Stop is sufficient. If one
-visit must consolidate several requested Stops for one Order, that cardinality
-is Still open and requires an explicit design decision; do not silently discard
-the extra reference or create a second business association.
+not just the Tenant. A generic Order/Stop mapping with NULL cannot be duplicated;
+the same specific requested Stop cannot be duplicated either. Different requested
+Stops of the same Order may map to the same executable Stop. Do not impose
+UNIQUE (tenant_id, trip_stop_id, order_id) on the whole table: that would silently
+restrict the accepted flexibility. The API's orderIds remains an Order-level view,
+not an additional mapping-cardinality restriction.
+
+NULLS NOT DISTINCT is supported by both PostgreSQL 18 and the ADR-003 temporary
+17 fallback. Two equivalent partial indexes would be valid if needed:
+unique (tenant_id, trip_stop_id, order_id) WHERE order_stop_id IS NULL, and
+unique (tenant_id, trip_stop_id, order_id, order_stop_id) WHERE order_stop_id IS NOT NULL.
+No reason to choose that alternative is identified; the accepted preference is
+the single NULLS NOT DISTINCT constraint.
 
 ### D. Yard Check pending observation
 
-Recommend changing only result nullability to varchar NULL. No new PENDING
+Change only result nullability to varchar NULL. No new PENDING
 result enum is introduced. In the expected snapshot initialize expected = true,
 found = false, result = NULL, scanned_at/scanned_by_user_id = NULL. Expected
 membership and expected_location_id never change during scanning.
@@ -198,13 +232,13 @@ immutable. A cancelled check may retain unobserved NULL items without declaring
 them missing. Cross-table lifecycle rules are not CHECK subqueries.
 
 This follows WF-014 and the Yard Check state machine: absence of a scan during
-IN_PROGRESS is not yet a missing finding. API/local cached results need a defined
-nullable representation for snapshot reads, which is part of explicit D approval;
+IN_PROGRESS is not yet a missing finding. API/local cache must represent result
+as nullable for unobserved snapshot reads;
 no accepted scan-response enum changes here.
 
 ### E. Historical authorization context for audit
 
-Recommend adding actor_membership_id uuid NULL to audit_events. Retain the global
+Add actor_membership_id uuid NULL to audit_events. Retain the global
 actor_user_id and actor_type. Add a parent unique key and composite FK:
 
 ```text
@@ -237,16 +271,16 @@ Keep these fields and do not reinterpret designated_customer_id as ownership.
 
 The answer matrix says company-controlled, mostly leased. This is evidence of
 control and lease arrangements, not mutually exclusive generic ownership enums.
-The user's third-party case must remain a proposal: the reviewed accepted
+The third-party case is not a defined structured category: the reviewed accepted
 requirements do not specify its taxonomy, permissions or relationship to control.
 Do not add OWNED/LEASED/THIRD_PARTY or a boolean owner shortcut by assumption.
 Do not add VIN, plates, axle counts, heights, payload ratings or lease accounting.
 
-Still open: whether structured size is needed beyond trailer_type; if so, the
-dimension/unit/nullability and mapping to existing API must be approved. Ownership
-also needs separate definitions of legal ownership versus operational control,
-allowed values and scope. These unresolved fields are excluded from the candidate
-column set; F cannot be called resolved by inventing a classification.
+Explicit deferral: structured ownership and structured size metadata are excluded
+from MVP schema v1.0.1. Retain only trailer_type and capability_notes for this
+metadata. #29 may reopen additional metadata only with an approved operational
+requirement defining dimensions/units/categories and scope. This accepted deferral
+does not block #22 and does not invent a classification.
 
 ### G. Order milestone timestamps
 
@@ -271,37 +305,43 @@ occurrence, not raw device clocks. Record server receipt separately in existing
 event history when relevant; do not lose offline occurredAt or trust it blindly.
 No request/response field is made mandatory by adding persistence milestones.
 
-### H. Load manifest lifecycle gap
+### H. Load manifest lifecycle
 
 v1.0 requires load_manifests.status but declares no values or transitions. The
 conceptual manifest, WF-008/011 and #32 allocation intent establish grouping,
 Trailer association and history, but not a complete lifecycle.
 
-Recommended amendment for explicit approval only: OPEN means an operational
+Accepted minimum lifecycle: OPEN means an operational
 allocation period is still in use; CLOSED means its allocation period has ended
-and it is retained as history. Proposed transitions are create -> OPEN and
-explicit validated closure -> CLOSED, without reopening. These are not synonyms
-for Trailer LOADED/EMPTY, Order DELIVERED/COMPLETED or Trip COMPLETED. No automatic
+and it is retained as history. Transitions are create -> OPEN and
+OPEN -> CLOSED, without reopening. These are not synonyms
+for Trailer LOADED/EMPTY, Order DELIVERED/COMPLETED, Trip COMPLETED or Shift Off Duty. No automatic
 closure on Hook, Drop, departure or Off Duty is assumed.
 
-Still open within H: exact closure trigger/authority and handling of partial
-unloading, returns, cancelled remainder and allocation edits once execution starts.
-Until those are approved, do not create a status CHECK or introduce new manifest
-commands. No new timestamps/closed state semantics are Accepted here. Removing
-the field rather than defining it would also require explicit review.
+The OPEN/CLOSED schema status set is approved. Exact closure trigger/authority,
+allocation-edit policy, partial unloading, returns and cancelled remainder are
+explicitly deferred to #32 before manifest commands are implemented. #32 must
+also review whether load_manifests needs optimistic version and/or closed_at;
+neither field nor new API commands are added by this amendment. The operational
+deferment does not block earlier identity/domain migrations.
 
 ### I. Human equipment identifier normalization
 
-Keep operational_number unchanged for display. Recommend a STORED generated
+Keep operational_number unchanged for display. Use a STORED generated
 operational_number_normalized column on tractors and trailers with Tenant-scoped
 UNIQUE (tenant_id, operational_number_normalized), replacing raw-number identity
-uniqueness as the authoritative duplicate barrier. Proposed canonicalization:
+uniqueness as the authoritative duplicate barrier. Accepted canonicalization:
 
-1. Trim leading/trailing ASCII whitespace, including tabs/newlines.
-2. Collapse internal ASCII whitespace runs to one ordinary space.
+1. Trim leading/trailing ordinary ASCII spaces (U+0020) only.
+2. Collapse internal runs of ordinary ASCII spaces to one ordinary space.
 3. Fold ASCII a-z to A-Z with a deterministic immutable expression/collation.
 4. Require a nonempty result. Retain punctuation, leading zeros and internal
-   separators; do not strip all spaces or rewrite BH T# as BHT#.
+   separators and non-ASCII characters without broad Unicode equivalences;
+   do not strip all spaces or rewrite BH T# as BHT#.
+
+Reject tabs, newlines and control characters as invalid input; do not normalize
+them into spaces or silently remove them. Application validation and SQL input
+constraints must preserve this rule when the equipment schema is implemented.
 
 Examples: ` t114 ` and `T114` collide; `bh  t114` and `BH T114` collide;
 `T-114`, `T114` and `T0114` remain distinct. A generated expression plus index
@@ -309,18 +349,17 @@ prevents application bypass/drift. PostgreSQL expression functions must be immut
 and equality deterministic; document the exact expression/collation in the later
 approved migration review. No new extension is needed.
 
-The equivalence policy needs human approval because Accepted tenant uniqueness
-does not specify case, separators or non-ASCII rules. Unicode equivalences and
-punctuation removal remain Still open, not default assumptions. Normalize search
-input using the same rule; UUID/QR identity and the displayed value remain unchanged.
+The owner approves this conservative equivalence policy. Wider Unicode
+equivalences and punctuation removal are excluded. Normalize valid search input
+using the same rule; UUID/QR identity and the displayed value remain unchanged.
 
 ### J. Invitation email, active uniqueness and linking
 
-Recommend adding email_normalized varchar NOT NULL generated from email using
-a documented trim/case-fold rule, retaining email for display. Do not remove dots,
-plus suffixes or apply provider-specific aliases. Local-part case and international
-email normalization policy need explicit review rather than assuming all identities
-are interchangeable.
+Add email_normalized varchar NOT NULL derived from email by trim followed by
+lowercase of the whole email, retaining the original email for display. The
+lowercase rule includes the local part. Do not remove dots or plus suffixes,
+or apply Gmail/provider-specific aliases. Use the same rule for invited and
+Firebase-authenticated email comparison.
 
 ```text
 membership_invitations:
@@ -331,22 +370,21 @@ membership_invitations:
 
 Define active for this index as PENDING, not expires_at > now(). Time-dependent
 predicates are unsuitable for immutable index membership. On re-invitation,
-transactionally mark stale PENDING invitations EXPIRED or explicitly revoke/replace
-them before inserting another; retain history and their intended role sets. One
+transactionally mark a stale expired PENDING invitation EXPIRED before inserting
+another; retain history and its intended role sets. One
 pending invitation carries multiple roles/Customer scopes (A), not one invitation
 per role. Accepted/revoked/expired invitations may coexist historically.
 
 Acceptance in #25 must validate token hash, status, expiry, and authenticated
-Firebase UID/email through server-validated identity. Recommend requiring the
-authenticated email to be verified and to match the normalized invited email
+Firebase UID/email from the token verified by the backend. Require
+email_verified = true and normalized Firebase email to match the invited email
 before binding accepted_by_user_id, membership and roles. Client email or a token
 alone is insufficient; mismatch/unverified/missing email never silently links an
 account. Consume atomically under row lock; UNIQUE (tenant_id, user_id) continues
 to protect membership creation and retries must not duplicate roles.
 
-ADR-007 leaves email-verification policy open and the API leaves acceptance UX
-unfinalized: verified-email requirement and pending-invitation policy are explicit
-amendments for approval, not implementation of Firebase or onboarding.
+This approved amendment resolves ADR-007's invitation email-verification follow-up.
+It implements neither Firebase nor invitation acceptance; #25 owns implementation.
 
 ### K. Couplings and FK construction order
 
@@ -376,8 +414,8 @@ Dependency groups, not migration filenames or version numbers:
 2. Global users and tenants; tenant_settings and tenant_memberships.
 3. Customers, physical_sites, customer_sites, operational_locations; then invitations
    and roles with their membership/Customer FKs.
-4. Drivers/tractors/trailers and QR identities; proposed global user_devices after users.
-5. Orders/order_stops/cargo; manifests and allocations after their parents, with H unresolved.
+4. Drivers/tractors/trailers and QR identities; global user_devices after users.
+5. Orders/order_stops/cargo; manifests and allocations after their parents, with H's approved status set.
 6. Trips/trip_stops, trip_stop_orders and assignment/Stop events.
 7. Trailer movement events, then couplings with event references.
 8. Shifts/corrections, inspections/fuel; documents/links and delivery_evidence.
@@ -392,7 +430,7 @@ not overwrite existing technical V1 or be copied as an actual future numbering p
 
 ### L. Concurrent offline replay
 
-Recommend an uncommitted PROCESSING row as a transaction-local key claim:
+Use an uncommitted PROCESSING row as a transaction-local key claim:
 
 ```text
 processed_client_operations:
@@ -429,43 +467,48 @@ DB/network/server failures roll back the claim and remain retryable, not REJECTE
 Bounded lock timeout must remain a retryable infrastructure response under the
 accepted 408/429/5xx policy, not an invented permanent 409 conflict or a 202 API.
 
-An equivalent transaction advisory-lock + terminal-only insert can also serialize
-keys, but must be separately reviewed; the recommended candidate uses unique-index
-claiming, not process-local mutexes. Keep semantic physical-command preconditions
+The accepted algorithm uses insert/unique-index arbitration, never a process-local
+mutex. Keep semantic physical-command preconditions
 from ADR-012; this does not silently make mobile expectedVersion strict.
 
 ### M. actor_type versus source_type
 
-Recommend consistently documenting actor_type as the responsible principal:
-HUMAN_USER, SYSTEM or INTEGRATION. source_type records the causal origin of the
-fact/evidence with the same coarse existing values where available; it is not an
-authorization role or a fourth principal called MOBILE. The same value set does
-not make the two fields interchangeable.
+actor_type is the responsible principal/authority of the action:
+HUMAN_USER | SYSTEM | INTEGRATION.
 
-Examples: a human confirmation has actor HUMAN_USER/source HUMAN_USER; a system
-projection derived from a human command may have actor SYSTEM/source HUMAN_USER
-with causal command context; a scheduled detector has SYSTEM/SYSTEM. Future
-integration provenance is INTEGRATION, without a fake human membership.
+source_type is the causal mechanism/origin of the event:
+USER_ACTION | MOBILE_AUTOMATION | SYSTEM_PROCESS | EXTERNAL_INTEGRATION.
 
-Preserve API arrival source MANUAL or GEOFENCE_CONFIRMED in structured event
-metadata (arrivalSource); use an origin field WEB or MOBILE when known. A geofence
-suggestion is not a completed arrival: confirmation remains a human command,
-even if a mobile component automated the suggestion. These origin metadata keys
-are recommended names for approval, not new accepted API enum values. No continuous
-GPS or unconfirmed automatic arrival is introduced.
+The distinct source values explicitly satisfy NFR-041. They are not roles or
+authorization claims and do not replace actor_type.
 
-Retain documents.uploaded_by_user_id for human uploads and source_type for coarse
-provenance. Retain movement source_type; recommend adding actor_type there and
-source_type to audit_events/trip_stop_events so API audit source can be populated
-without guessing. Each human-attributed row needs its User reference; non-human
-records may leave it NULL. Audit membership follows E. Source/client fields cannot
-grant permissions: the server validates provenance and derives the principal.
-Review these column/metadata semantics explicitly; v1.0 defines different subsets
-on different event tables and its audit API already expects source type.
+| Example | actor_type | source_type | Additional provenance |
+|---|---|---|---|
+| Manual Web/Mobile action | HUMAN_USER | USER_ACTION | Optional WEB/MOBILE channel |
+| Driver-confirmed geofence suggestion | HUMAN_USER | MOBILE_AUTOMATION | arrivalSource = GEOFENCE_CONFIRMED |
+| Scheduled detector | SYSTEM | SYSTEM_PROCESS | Detector/job reference when applicable |
+| External integration | INTEGRATION | EXTERNAL_INTEGRATION | Integration reference when applicable |
+
+The API's existing arrival source MANUAL/GEOFENCE_CONFIRMED is retained and
+recorded as arrivalSource event metadata; it is distinct from source_type.
+A geofence suggestion alone never produces Arrival. Confirmation remains a
+Driver command. WEB/MOBILE may be diagnostic channel/origin metadata but never
+substitute for source_type. No continuous GPS or unconfirmed arrival is introduced.
+
+Use this source_type set consistently in trailer_movement_events and documents.
+Add actor_type to movement events and source_type to audit_events/trip_stop_events
+so event/audit provenance can be recorded without guessing. Retain documents'
+uploaded_by_user_id for human uploads; non-human evidence never gets a fabricated
+human uploader. Where an actor is recorded, use the actor_type set above and its
+actual principal. HUMAN_USER requires the corresponding User reference;
+SYSTEM/INTEGRATION can leave human references NULL. Audit membership follows E.
+The server derives the principal and validates provenance; client source fields
+cannot grant permission. These are schema/provenance decisions, not endpoint or
+request-enum changes.
 
 ### N. Master-data and ad-hoc Stop invariants
 
-Apply to trip_stops and the equivalent order_stops shape. Recommended SQL:
+Apply to trip_stops and the equivalent order_stops shape. Accepted SQL invariants:
 
 ```text
 operational_locations: UNIQUE (tenant_id, site_id, id)
@@ -493,7 +536,7 @@ known dock into a free-text snapshot. Validate associations and resource access
 server-side, not by string-equality of addresses.
 
 For shared Sites, a customer_id on operational_locations is optional context,
-not exclusive ownership of the physical address. Recommend verifying the matching
+not exclusive ownership of the physical address. Verify the matching
 customer_sites association at location creation/use under the same transaction,
 along with each linked Order's Customer scope. Do not impose a permanent FK from
 historical Stops to a mutable customer_sites association: the Accepted API allows
@@ -506,42 +549,54 @@ Trip membership or Trailer designation alone is not authorization. FK C ensures
 requested Stop belongs to the linked Order. These dynamic capability/customer
 rules belong in application validation; tenant/Site/parent identity belongs in SQL.
 
-Potential contract limitation already present: ad-hoc Trip destinations can be
-represented, but Trailer AT_LOCATION requires a real Operational Location and Drop
-requires locationId. Do not create a fake location or relax that accepted invariant.
-Arrival/service at an ad-hoc Stop and eventual physical Trailer projection must
-be reconciled explicitly if no authorized reusable location exists. Whether to
-normalize such a destination before those physical commands remains Still open
-for N approval; this document adds no alternate location model or API shortcut.
+An ad-hoc Order/Trip Stop may exist and execute with its frozen snapshot. Before
+any Trailer state transition requiring an OperationalLocation, especially Drop
+or ending in AT_LOCATION, Transport Operations must select, normalize or create
+a real authorized Physical Site/Operational Location. Validate its Tenant,
+Customer compatibility and operational suitability before the physical command.
+Do not relax Trailer invariants, create a fake LOCATION_UNKNOWN location, or
+implicitly create a Location without validation. Arrival/service with a snapshot
+does not authorize a location-less physical Trailer projection. This rule is
+Accepted; the corresponding UX/API detail belongs to the bounded Orders/Trips/
+Trailer implementation Issues and creates no unresolved schema gate.
 
-### O. One device identity across ledger, installation and FCM
+### O. User registration identity across ledger, installation and FCM
 
-Under B, user_devices.id is the stable UUID of an app installation, not its
-Tenant membership, push token, local command row ID, OS advertising/hardware ID,
-or Firebase UID. processed_client_operations.device_id uuid NULL becomes a FK
-to that global id. Keep the ledger's tenant_id/user_id as immutable command
-attribution. Check ownership against the authenticated User when a device claim
-is present; after account rebinding never infer old actor identity from the current
-registry user_id. A composite FK tying historical user_id to the mutable current
-binding would prevent safe rebinding, so it is deliberately not proposed.
+Under B, user_devices.id is the UUID of a global User device registration.
+An installation may have successive registrations for different authenticated
+Users; each registration's user_id is immutable. The UUID is not a permanent
+cross-account installation identity, Tenant membership, FCM token, local command
+row ID, hardware identifier or Firebase UID.
 
-Recommend an installation-generated UUID registered/validated by the server before
-it is used for offline provenance. The optional registration input/receipt and
-command transport carrying it require a reviewed API amendment: the accepted
-POST /devices example has platform/fcmToken/deviceName but no installation UUID,
-and the accepted local model has command/media UUIDs, not an installation registry.
-No required new field/header or token-as-ID fallback is silently introduced.
-Legacy requests lacking a device claim continue to have NULL device_id; idempotency
-is still fully enforced by Tenant + clientOperationId.
+processed_client_operations.device_id uuid NULL identifies that registration:
 
-Keep the tenant path on existing registration/deactivation APIs until separately
-approved; interpret it as current authorization context, never physical device
-ownership. Approve semantics that deactivation affects the User's global registration,
-including other Tenant notifications, or choose an explicit different routing
-design. Do not silently change DELETE behavior to per-Tenant subscription removal.
-FCM rotation keeps the installation UUID; account switch revokes the old binding
-and isolates cached queues/media per the accepted local model. Device identity
-is provenance, never an authorization credential or a new idempotency key.
+```text
+user_devices: UNIQUE (id, user_id)
+processed_client_operations:
+  FK (user_id) -> users (id)
+  FK (device_id, user_id) -> user_devices (id, user_id)
+```
+
+Default MATCH SIMPLE permits absent device provenance. A supplied device_id must
+belong to the same User who executed the command. Preserve ledger tenant_id/user_id
+and registration rows with non-destructive FKs; disabling a registration does not
+erase historical provenance. Check current authenticated ownership at submission,
+never rebind a historical row to a different User. Rotation for the same
+registration retains its UUID; account switch creates a new row and isolates
+cached queues/media under the accepted local model.
+
+POST /devices and DELETE /devices/{id} are authenticated global endpoints,
+not Tenant paths. Notification authorization remains Tenant-scoped: resolve an
+authorized recipient in the Tenant, obtain that User's active registrations,
+then send only the permitted Tenant payload. Global deactivation cuts push for
+all that User's Tenants on the registration, as accepted in B.
+
+Mobile transport of optional deviceId (registration receipt/input and command
+provenance) is deferred to registration/offline implementation. The current API
+example has platform/fcmToken/deviceName; this amendment adds no required field,
+header or installation identifier to it. Requests without device provenance keep
+NULL device_id. Tenant + clientOperationId still provides full idempotency.
+Device ID is provenance only, never authorization or an idempotency key.
 
 ### P. OQ-058 resolved, no location redesign
 
@@ -554,8 +609,8 @@ consistency around this model, not its cardinality.
 
 ### Q. Durable outbox/jobs
 
-ADR-022 already accepts durable PostgreSQL work. Recommend its one-table model,
-not separate new event-bus/scheduler frameworks. Candidate technical table:
+ADR-022 already accepts durable PostgreSQL work. Adopt its one-table model,
+without new event-bus/scheduler frameworks. Accepted technical table design:
 
 ```text
 outbox_jobs
@@ -625,74 +680,75 @@ USING/WITH CHECK must cover tenant-owned jobs. NULL-Tenant maintenance follows a
 separate controlled administrative path with distinct access/policy; deny runtime
 access to those rows by default. Never implement `tenant_id IS NULL OR ...` as a
 blanket permissive tenant policy. Lease design, global access and retry storage
-are technical recommendations requiring approval; no worker/policy is implemented.
+are Accepted. Numeric retry/backoff and job-type policy are explicitly deferred
+to #55; no worker/policy is implemented.
 
 ## Contradictions and gaps surfaced
 
 1. v1.0 section 19 calls RLS a candidate needing a separate ADR; Accepted ADR-013
-   has already made the decision. Candidate clarification: RLS is approved for
+   has already made the decision. Accepted clarification: RLS is approved for
    tenant-owned production tables, implemented/tested later in #26; this document
    does not activate it. Global tables need separate User/access-pattern policies.
 2. ADR-022 accepts durable outbox but its follow-up says add schema during scaffold;
-   v1.0 omits it and #55 owns worker implementation. Q proposes the schema now;
+   v1.0 omits it and #55 owns worker implementation. Q accepts the schema design now;
    no retroactive scaffold migration or worker is silently added.
 3. Authorization baseline lists suggested INVITED membership while v1.0 separates
    invitation state. Preserve the dedicated invitation table; do not add INVITED
-   or silently rewrite that older suggestion. Explicit review should confirm this
+   or silently rewrite that older suggestion. Owner approval confirms this
    already-accepted schema/API interpretation.
 4. Capability document remains Draft/TBD; conceptual domain still includes candidate
    UNKNOWN locations and older Trip/Stop states. Accepted state machines/schema
    define the persisted lifecycle, including no fake LOCATION_UNKNOWN location row
    and Fuel as an event. This amendment grants no unresolved permissions or new states.
-5. Device registration says User/Tenant membership context, while a User may have
-   many Tenants. B/O expose the global-registry interpretation and contract effects
-   for approval; they do not assert that tenant-path DELETE already has global scope.
+5. The alerts/audit document has a Tenant base heading and mentions User/Tenant
+   membership context, but its devices section and the endpoint catalog list
+   authenticated POST /devices and DELETE /devices/{id}. The owner explicitly
+   confirms these are global endpoints. B/O supersede the ambiguous device-ownership
+   wording with global immutable User registrations and global deactivation;
+   Tenant scoping applies to notification authorization, not the device path.
 6. v1.0's nullable uniqueness, missing Yard pending representation, unspecified
    manifest status and terminal-only idempotency description leave concrete gaps;
-   A/C/D/H/L make them reviewable, not silently Accepted.
+   A/C/D/H/L resolve them under explicit owner approval recorded above.
 7. Mobile Hook carries expectedTrailerVersion while ADR-012 favors semantic
    preconditions; the accepted offline protocol already flags this for finalization.
    Preserve the field and record the existing review obligation, not a contract edit.
-8. Ad-hoc destinations versus mandatory Trailer AT_LOCATION/Drop location references
-   need the N decision before implementing that combination; no invented projection.
+8. N resolves ad-hoc destinations versus mandatory Trailer AT_LOCATION/Drop location
+   references: normalize/select a real authorized Site/Operational Location before
+   physical transitions requiring it; no invented projection or fake location.
+9. v1.0 section 1.7's coarse provenance values do not satisfy NFR-041 if reused
+   as source_type. M explicitly separates three principal types from four causal
+   source types, retaining confirmed geofence Arrival semantics.
+
+These discrepancies are documented and resolved by this accepted amendment or
+the existing higher-priority ADRs. No remaining contradiction blocks #22 after
+merge of #75. The existing physical-command version follow-up in item 7 belongs
+to later Mobile command implementation, not this identity migration gate.
 
 ## Compatibility review
 
-| Boundary | Candidate compatibility and explicit review impact |
+| Boundary | Accepted compatibility and implementation impact |
 |---|---|
 | Identity/master data | A/E preserve role DTOs, multi-role membership and historical User identity. I changes duplicate-equivalence validation, not original display numbers. F adds no unsupported fields. J leaves invitation acceptance unimplemented. |
-| Devices/push | B/O require approval of global registration and deactivation semantics plus optional installation ID transport. Existing tenant paths and fcmToken stay unchanged in this PR. |
-| Orders/dispatch | G follows exact accepted transitions; C assumes one Order association per executable Stop, requiring cardinality confirmation. H is not an approved new manifest API. |
-| Yard/local model | D preserves snapshot immutability and scan enums; nullable unobserved results need documented DTO/cache handling on approval. P retains shared-address structure. |
+| Devices/push | B/O use immutable global User registrations and global authenticated device endpoints. Token transfer is atomic; optional deviceId transport is deferred without making it mandatory. |
+| Orders/dispatch | G follows exact accepted transitions; C preserves multiple requested Stops for the same Order/visit and removes NULL duplicates. H accepts OPEN/CLOSED schema status but adds no manifest API. |
+| Yard/local model | D preserves snapshot immutability and scan enums; unobserved result is nullable in API/local cache. P retains shared-address structure. |
 | Mobile/idempotency | L keeps Idempotency-Key UUID and terminal replay semantics; PROCESSING is internal only. Media finalization and dependency sequencing remain unchanged. O device UUID is optional provenance, not command UUID. |
 | Tenant/Customer scope | Composite FKs enforce tenant/Site/Order consistency; current membership/capability/customer checks remain mandatory. A/E/N do not authorize from client IDs. |
-| State machines | No Order/Trip/Stop/Shift/Trailer/Yard lifecycle is redefined. H is explicitly an unapproved manifest lifecycle; M geofence arrival still requires confirmation. |
+| State machines | No Order/Trip/Stop/Shift/Trailer/Yard lifecycle is redefined. H accepts only minimal manifest allocation-period OPEN/CLOSED; M geofence arrival still requires confirmation. N preserves physical Trailer location invariants. |
 | Future RLS | ADR-013 governs tenant rows including ledger/outbox; global users/devices and NULL-Tenant jobs need separate controlled policy/access design. No RLS activation here. |
 | Durable work | Q follows ADR-022 atomic outbox and at-least-once delivery; L transaction-local claim and Q durable lease have deliberately different crash semantics. |
 
-## Decisions requiring explicit approval
+## Deferred implementation decisions
 
-This is the exact amendment decision register; unresolved policy details must
-either be answered or explicitly excluded/deferred before the migration gate opens.
+The owner has explicitly approved A–Q, including the following bounded
+deferments. No schema approval remains pending and none of these blocks #22.
 
-| Decision | Required human answer |
+| Item | Deferred detail / owner Issue |
 |---|---|
-| B/O | Approve global User installation registry, nullable/rotating FCM token, owner rebinding, historical actor snapshots, optional installation UUID registration/command transport, and global effect of device deactivation. Agree separate global-registry authorization policy. |
-| C | Approve one Order per executable Stop association and one optional requested Stop reference, or define the missing multiple-requested-Stop cardinality. |
-| D | Approve NULL until observed/completed and nullable snapshot result representation in API/local cache; no new PENDING enum. |
-| E | Approve nullable historical actor membership and tenant/user composite FK; preserve SYSTEM/INTEGRATION attribution. |
-| F | Decide whether structured size/ownership is needed, its precise dimensions/units/categories/control meaning and API effect, or explicitly defer those fields. No unsupported enum is proposed as Accepted. |
-| H | Approve/reject OPEN/CLOSED recommendation and define closure authority/trigger, partial unload/return/cancel behavior and allocation-edit rules, or explicitly defer the manifest status freeze. |
-| I | Approve ASCII trim/whitespace collapse/case-fold equivalence, preserved punctuation/leading zeros, deterministic generated key; resolve/defer wider Unicode/formats. |
-| J | Approve exact email normalization, one PENDING per Tenant/email, stale invitation replacement, and verified Firebase email match before binding. |
-| L | Approve transaction-local PROCESSING claim, mandatory logical request hash, atomic terminal commit and retryable lock timeout behavior. |
-| M | Approve actor/source distinction, coarse provenance and mobile arrival metadata mapping, and the specified event/audit column additions. |
-| N | Approve SQL Site/location constraints, coexisting historical snapshots, snapshot validation and association use/removal checks; resolve/defer the ad-hoc destination/physical projection gap without relaxing Accepted Trailer invariants. |
-| Q | Approve one outbox table, persisted attempt limit, lease/fencing/recovery, indexes, payload/reference strategy and isolated global-job path; numeric retry policy remains #55. |
-
-Review also acknowledges the RLS/outbox supersession and older INVITED/candidate
-wording above. Mechanical A/G/K/P do not create additional product decisions, but
-are included in the overall amendment approval. No acceptance claim is made here.
+| F | Structured trailer ownership/size excluded from v1.0.1; #29 may reopen only against an approved operational requirement. |
+| H | Exact manifest authority, closure trigger and edit/partial unload/return/cancelled-remainder policy before commands in #32; implementation review of optimistic version and/or closed_at, neither added here. |
+| Q | Numeric bounded retry/backoff settings and job-type policy in #55. |
+| O | Optional deviceId registration/offline provenance UX/API transport in the later Mobile/offline implementation Issue; no mandatory transport added here. |
 
 ## Documentation validation and later implementation evidence
 
@@ -701,7 +757,7 @@ path checks and all four existing CI jobs (Backend, Web, Mobile, OpenAPI). Compa
 the Accepted v1.0 file and technical V1 against main to prove they are unchanged.
 No executable SQL, policy, worker, migration, entity or repository is delivered.
 
-After approval, later bounded implementation issues should demonstrate with real
+After merge of #75, later bounded implementation issues should demonstrate with real
 PostgreSQL tests: role/invitation NULL duplicate rejection; normalized collisions;
 global device/token rotation and account isolation; cross-Tenant/Site/Order FK
 rejection; Yard unobserved versus completed results; distinct Order milestones;
@@ -709,7 +765,7 @@ audit membership consistency; two simultaneous idempotency requests, rollback an
 lost-response retry; and outbox claim/lease-expiry/crash/duplicate-effect safety.
 Those are future verification obligations, not tests or code added by this PR.
 
-PostgreSQL technical references used to check this proposal:
+PostgreSQL technical references used to check this amendment:
 [unique NULL behavior](https://www.postgresql.org/docs/18/indexes-unique.html),
 [constraints and composite FKs](https://www.postgresql.org/docs/18/ddl-constraints.html),
 [locking and SKIP LOCKED](https://www.postgresql.org/docs/18/sql-select.html).

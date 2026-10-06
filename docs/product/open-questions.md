@@ -87,8 +87,8 @@ This supports multiple Customer operational contexts at the same street address 
 
 Confirmed by [Accepted schema v1.0](../data-model/schema-v1.0.md) and
 [Accepted identity/master-data API](../api/identity-master-data.md), sections 7–8.
-[Proposed hardening #74](../data-model/schema-v1.0.1-hardening.md) item P confirms
-this resolution; item N proposes consistency checks without reopening or redesigning
+[Accepted hardening #74](../data-model/schema-v1.0.1-hardening.md) item P confirms
+this resolution; item N accepts consistency checks without reopening or redesigning
 the shared-address model.
 
 ### OQ-059 — Tenant-level configurability

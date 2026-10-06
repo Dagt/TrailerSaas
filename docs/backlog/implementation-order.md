@@ -26,9 +26,13 @@ Exit: all applications build/test and the database/test/config foundations exist
 
 Gate: **Schema v1.0.1 hardening approval before first domain Flyway migrations**
 ([#74](https://github.com/Dagt/TrailerSaas/issues/74),
-[proposed amendment](../data-model/schema-v1.0.1-hardening.md)). Applies to the
-first identity/domain migrations in #22/#23 onward. Accepted v1.0 and the
-existing technical V1 remain unchanged pending explicit amendment approval.
+[Accepted amendment](../data-model/schema-v1.0.1-hardening.md)).
+**Schema v1.0.1 hardening gate satisfied upon merge of
+[#75](https://github.com/Dagt/TrailerSaas/pull/75); first identity/domain migrations
+may then proceed (#22/#23 onward).** The gate is not satisfied before merge.
+Implementation baseline: Accepted v1.0 plus the v1.0.1 amendment; the original
+v1.0 file and existing technical V1 remain physically unchanged. The amendment's
+explicit #29/#32/#55 and optional Mobile deviceId deferments do not block #22.
 
 - #22 Firebase/internal User
 - #23 Tenant membership/roles
