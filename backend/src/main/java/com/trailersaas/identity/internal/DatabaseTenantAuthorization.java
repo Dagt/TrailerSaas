@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
 import com.trailersaas.identity.Capability;
 import com.trailersaas.identity.TenantAuthorization;
+import com.trailersaas.identity.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,8 +16,12 @@ import static com.trailersaas.identity.internal.AuthorizationDeniedException.Rea
 @Transactional(readOnly = true)
 class DatabaseTenantAuthorization implements TenantAuthorization {
     private final ActiveMembershipRepository memberships;
+    private final TenantContext context;
 
-    DatabaseTenantAuthorization(ActiveMembershipRepository memberships) { this.memberships = memberships; }
+    DatabaseTenantAuthorization(ActiveMembershipRepository memberships, TenantContext context) {
+        this.memberships = memberships;
+        this.context = context;
+    }
 
     @Override
     public void requireTenantCapability(AuthenticatedUserPrincipal principal, UUID tenantId, Capability capability) {
@@ -56,6 +61,7 @@ class DatabaseTenantAuthorization implements TenantAuthorization {
         if (principal == null || principal.userId() == null || tenantId == null) {
             throw new AuthorizationDeniedException(TENANT_ACCESS_DENIED);
         }
+        context.establishTenant(tenantId);
         var roles = memberships.forActiveUserInTenant(principal.userId(), tenantId);
         if (roles.isEmpty()) { throw new AuthorizationDeniedException(TENANT_ACCESS_DENIED); }
         return roles;

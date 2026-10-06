@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
 import com.trailersaas.identity.Capability;
+import com.trailersaas.identity.TenantContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,7 +19,8 @@ import static org.mockito.Mockito.*;
 
 class TenantAuthorizationTests {
     final ActiveMembershipRepository repository = mock(ActiveMembershipRepository.class);
-    final DatabaseTenantAuthorization authorization = new DatabaseTenantAuthorization(repository);
+    final TenantContext context = mock(TenantContext.class);
+    final DatabaseTenantAuthorization authorization = new DatabaseTenantAuthorization(repository, context);
     final UUID tenant = UUID.randomUUID();
     final UUID customer = UUID.randomUUID();
     final AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(UUID.randomUUID(), "uid", null, null);
@@ -99,6 +101,15 @@ class TenantAuthorizationTests {
         when(repository.forActiveUserInTenant(principal.userId(), tenant)).thenReturn(List.of());
         denied(() -> authorization.requireTenantCapability(principal, tenant, Capability.USER_INVITE), TENANT_ACCESS_DENIED);
         verify(repository, times(3)).forActiveUserInTenant(principal.userId(), tenant);
+    }
+
+    @Test
+    void establishesTenantOnEveryCheckBeforeReadingRoles() {
+        grant(RoleCode.TENANT_ADMIN, RoleScopeType.TENANT, null);
+        authorization.requireTenantCapability(principal, tenant, Capability.USER_INVITE);
+        var ordered = inOrder(context, repository);
+        ordered.verify(context).establishTenant(tenant);
+        ordered.verify(repository).forActiveUserInTenant(principal.userId(), tenant);
     }
 
     private void grant(RoleCode role, RoleScopeType scope, UUID target) {

@@ -7,24 +7,29 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
+import com.trailersaas.identity.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Identity/bootstrap exception for /me, restricted to the authenticated global User.
- * Uses the normal runtime connection. #26 must provide a dedicated User-limited
- * RLS bootstrap strategy; this is never a global tenant browse or admin bypass.
+ * Uses User-limited RLS on the normal runtime connection, never an admin bypass.
  * Directory entries describe persisted data, not permission to use a Tenant.
  */
 @Service
 class MembershipDirectory {
     private final MembershipDirectoryRepository repository;
+    private final TenantContext context;
 
-    MembershipDirectory(MembershipDirectoryRepository repository) { this.repository = repository; }
+    MembershipDirectory(MembershipDirectoryRepository repository, TenantContext context) {
+        this.repository = repository;
+        this.context = context;
+    }
 
     @Transactional(readOnly = true)
     public List<MembershipSummary> forUser(AuthenticatedUserPrincipal user) {
         Objects.requireNonNull(user, "Authenticated User is required");
+        context.establishBootstrapUser(user);
         // One statement gives a consistent snapshot of memberships and their role sets.
         var rows = repository.forUser(user.userId());
         var memberships = new LinkedHashMap<UUID, MembershipDirectoryRow>();
