@@ -40,12 +40,14 @@ class IdentitySecurityTests {
     @Autowired WebApplicationContext context;
     @Autowired FirebaseTokenVerifier verifier;
     @Autowired InternalUserResolver resolver;
+    @Autowired MembershipDirectory directory;
     MockMvc mvc;
     final UUID userId = UUID.randomUUID();
 
     @BeforeEach
     void setup() {
-        reset(verifier, resolver);
+        reset(verifier, resolver, directory);
+        when(directory.forUser(any())).thenReturn(java.util.List.of());
         mvc = MockMvcBuilders.webAppContextSetup(context)
                 .addFilters(new RequestCorrelationFilter()).apply(springSecurity()).build();
     }
@@ -59,7 +61,7 @@ class IdentitySecurityTests {
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"))
                 .andExpect(jsonPath("$.traceId").value("missing-token"))
                 .andExpect(jsonPath("$.detail").value("A valid authentication token is required."));
-        verifyNoInteractions(verifier, resolver);
+        verifyNoInteractions(verifier, resolver, directory);
         assertThat(output.getAll()).doesNotContain("synthetic-secret-firebase-token");
     }
 
@@ -76,7 +78,7 @@ class IdentitySecurityTests {
                 .andReturn().getResponse();
         assertThat(response.getContentAsString()).doesNotContain("synthetic-secret-firebase-token", "Exception", "certificate");
         assertThat(output.getAll()).doesNotContain("synthetic-secret-firebase-token");
-        verifyNoInteractions(resolver);
+        verifyNoInteractions(resolver, directory);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
@@ -98,6 +100,7 @@ class IdentitySecurityTests {
                 .andExpect(jsonPath("$.displayName").value("Name"))
                 .andExpect(jsonPath("$.memberships").isEmpty()).andExpect(header().doesNotExist("Set-Cookie"));
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(directory).forUser(new AuthenticatedUserPrincipal(userId, identity.uid(), identity.email(), identity.displayName()));
         mvc.perform(get("/api/v1/me")).andExpect(status().isUnauthorized());
         assertThat(output.getAll()).doesNotContain("synthetic-secret-firebase-token");
     }
@@ -135,6 +138,7 @@ class IdentitySecurityTests {
     static class Configuration {
         @Bean FirebaseTokenVerifier verifier() { return mock(FirebaseTokenVerifier.class); }
         @Bean InternalUserResolver resolver() { return mock(InternalUserResolver.class); }
+        @Bean MembershipDirectory directory() { return mock(MembershipDirectory.class); }
         @Bean JsonMapper mapper() {
             return JsonMapper.builder().addMixIn(org.springframework.http.ProblemDetail.class,
                     org.springframework.http.converter.json.ProblemDetailJacksonMixin.class).build();

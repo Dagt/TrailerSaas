@@ -71,8 +71,8 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
-        assertThat(flyway.info().current().getDescription()).isEqualTo("identity users");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("identity tenants memberships roles");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
@@ -90,9 +90,9 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     }
 
     @Test
-    void jpaValidatesOnlyTheFlywayCreatedUserEntity() throws Exception {
+    void jpaValidatesOnlyTheFlywayCreatedIdentityEntities() throws Exception {
         assertThat(entityManagerFactory.isOpen()).isTrue();
-        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(1);
+        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(4);
         assertThat(entityManagerFactory.getProperties())
                 .containsEntry("hibernate.hbm2ddl.auto", "validate");
         assertThat(environment.getProperty("spring.sql.init.mode")).isEqualTo("never");
@@ -106,7 +106,8 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
                         "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'")) {
             var names = new java.util.ArrayList<String>();
             while (tables.next()) { names.add(tables.getString(1)); }
-            assertThat(names).containsExactlyInAnyOrder("flyway_schema_history", "users");
+            assertThat(names).containsExactlyInAnyOrder("flyway_schema_history", "users",
+                    "tenants", "tenant_memberships", "role_assignments");
         }
     }
 

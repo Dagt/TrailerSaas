@@ -34,7 +34,8 @@ paths:
       operationId: getCurrentUserContext
       description: >
         Firebase ID-token authentication resolves the global internal User.
-        Memberships is an empty array in Issue #22, until #23 supplies real memberships.
+        Lists only that User's persisted memberships and roles from PostgreSQL.
+        This bootstrap directory does not grant Tenant access or capabilities.
       responses:
         '200':
           description: Current authenticated User and memberships
@@ -573,6 +574,26 @@ components:
           type: array
           items:
             type: object
+            required: [tenantId, tenantName, status, roles]
+            properties:
+              tenantId: { type: string, format: uuid }
+              tenantName: { type: string }
+              status:
+                type: string
+                enum: [ACTIVE, SUSPENDED, DISABLED]
+              roles:
+                type: array
+                items:
+                  type: object
+                  required: [roleCode, scopeType, customerId]
+                  properties:
+                    roleCode:
+                      type: string
+                      enum: [TENANT_ADMIN, TRANSPORT_OPERATIONS, CUSTOMER_DISPATCHER, YARD_SPOTTER, DRIVER]
+                    scopeType:
+                      type: string
+                      enum: [TENANT, CUSTOMER]
+                    customerId: { type: [string, "null"], format: uuid }
 
     TenantSettings:
       type: object
