@@ -149,7 +149,8 @@ class AuthorizationHttpPostgresTests extends PostgresIntegrationTest {
         when(token.getUid()).thenReturn("fixture-" + user);
         when(token.getClaims()).thenReturn(Map.of("role", "TENANT_ADMIN", "tenantId", foreignTenant.toString(),
                 "customerId", b.toString(), "isAdmin", true, "capabilities", List.of("USER_INVITE", "ORDER_EDIT")));
-        when(verifier.verify(TOKEN)).thenReturn(FirebaseAdminTokenVerifier.identity(token));
+        var verifiedIdentity = FirebaseAdminTokenVerifier.identity(token);
+        when(verifier.verify(TOKEN)).thenReturn(verifiedIdentity);
         assertThat(request(edit(tenant, a), TOKEN).statusCode()).isEqualTo(200);
         problem(request(edit(tenant, b), TOKEN), 403, "CUSTOMER_SCOPE_DENIED", output);
         problem(request(invite(tenant), TOKEN), 403, "CAPABILITY_DENIED", output);
