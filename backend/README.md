@@ -42,7 +42,8 @@ different connectivity options to that same database, not unrelated databases.
 The runtime role must not be superuser or have BYPASSRLS, own future domain
 tables, or have schema CREATE privileges. The migrator can own migrated objects.
 Production roles remain operator-provisioned. V2 grants only SELECT/INSERT on users
-to the configured runtime role; Tenant grants/RLS and TenantContext remain deferred.
+to the configured runtime role. V3 grants SELECT only on tenants, tenant_memberships
+and role_assignments; RLS and TenantContext remain deferred to #26.
 
 ## Local PostgreSQL
 
@@ -118,18 +119,21 @@ table it creates indirectly is Flyway's own `flyway_schema_history`.
 no tenant_id. Its baseline is Accepted schema v1.0 plus the Accepted v1.0.1
 hardening amendment merged in #75. #23 reuses users; it must not recreate or
 silently redefine it when adding Tenant/membership/roles. No seed data is added.
+`V3__identity_tenants_memberships_roles.sql` creates only tenants,
+tenant_memberships and role_assignments. V1/V2 remain unchanged.
 
 Flyway is the only schema authority. Hibernate uses `ddl-auto=validate`,
 Open EntityManager in View is disabled and Spring SQL initialization is
 `never`. Do not replace those values with `update`, `create`, `create-drop`,
-`schema.sql` or `data.sql`. Identity has one JPA entity/repository; no jOOQ or H2.
+`schema.sql` or `data.sql`. Identity has four JPA persistence models; no jOOQ or H2.
 Runtime grants for future tables must accompany later approved migrations.
 
 V2's quoted runtimeRole Flyway placeholder comes from DB_RUNTIME_USERNAME.
 Startup validates `[A-Za-z_][A-Za-z0-9_]{0,62}` (1–63 ASCII identifier characters)
 and equality with the runtime datasource username before migration. This blocks
 SQL injection/configuration overrides while allowing independent environment role
-names. No role is created, no privileges go to PUBLIC, and runtime remains without
+names. V3 reuses exactly this placeholder for SELECT-only grants. No role is created,
+no privileges go to PUBLIC, and runtime remains without
 ownership, schema CREATE, SUPERUSER or BYPASSRLS.
 
 ## Firebase authentication (#22)
@@ -149,9 +153,11 @@ Firebase SDK types remain internal to identity infrastructure. A small
 FirebaseTokenVerifier returns only verified UID/email/displayName. Spring builds a
 typed AuthenticatedUserPrincipal with internal User ID and UID and **no authorities**.
 Custom role/Tenant/Customer/capability claims never grant business access. User alone
-does not grant Tenant access; no Tenant context or membership lookup exists yet.
+does not grant Tenant access; no Tenant context or capability authorization exists yet.
 
-GET /api/v1/me returns userId, email, displayName and memberships: [] until #23.
+GET /api/v1/me returns userId, email, displayName and that User's persisted
+memberships, each with tenantId, tenantName, status and roles
+(roleCode/scopeType/customerId). A User with none still receives memberships: [].
 Valid first authentication inserts users by UID with PostgreSQL ON CONFLICT DO
 NOTHING, then separately reads the winner under READ COMMITTED. UNIQUE(firebase_uid)
 arbitrates concurrent first logins; both callers resolve the same UUID. UUIDs are
@@ -166,10 +172,48 @@ stay public without exposing extra Actuator. Non-API missing paths remain 404.
 Missing/malformed/invalid/expired credentials return generic 401 Problem Details
 with AUTHENTICATION_REQUIRED and the existing requestId/traceId correlation.
 Authorization, token claims, provider messages and credential contents are never
-copied into logs or public errors. #23–#26 remain unimplemented.
+copied into logs or public errors. #24–#26 remain unimplemented.
 
 References: [official Firebase setup/ADC](https://firebase.google.com/docs/admin/setup),
 [ID-token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens).
+
+## Membership persistence and bootstrap directory (#23)
+
+User → TenantMembership → RoleAssignment links the global identity to Tenants.
+Membership status is ACTIVE/SUSPENDED/DISABLED with SQL checks; invitation state
+is separate and reserved for #25. Tenant status remains an unconstrained, required
+varchar because its vocabulary is still candidate. No Tenant status edit API exists.
+Multiple roles are allowed. SQL enforces the accepted role/scope matrix:
+CUSTOMER_DISPATCHER requires CUSTOMER and a customer_id; TENANT_ADMIN,
+TRANSPORT_OPERATIONS, YARD_SPOTTER and DRIVER require TENANT and no customer_id.
+Partial unique indexes prevent duplicate roles per membership/Customer; the
+composite membership FK prevents cross-Tenant role references. FKs have no
+destructive delete cascades.
+
+Customers do not exist yet. V3 retains the accepted customer_id and scope checks;
+#27 must add the tenant-safe Customer FK when it creates customers, before
+Customer-scoped assignment writes are exposed. Only test migrator fixtures
+insert structural Customer UUIDs now. No production Tenant/membership/role write
+commands or Admin endpoints are implemented. Runtime has only SELECT on the
+three V3 tables, retaining V2's existing SELECT/INSERT on global users.
+
+MembershipDirectory is an internal identity/bootstrap boundary for /me. Its input
+is AuthenticatedUserPrincipal, never an arbitrary User ID supplied by HTTP.
+The narrow repository performs one User-filtered join, with tenant-safe role
+joining and stable Tenant name/id and roleCode/scopeType/customerId ordering.
+The user_id index supports this real lookup. The (tenant_id, membership_id) role
+index supports its join across both scopes; partial uniqueness indexes alone
+require scope predicates and cannot cover this unfiltered join.
+A read-only transaction uses the
+ordinary runtime datasource; there is no admin connection or BYPASSRLS.
+#26 must supply the User-limited bootstrap RLS strategy separately from normal
+TenantContext lookups. No generic findAll/findById tenant repository is exposed.
+
+User alone grants no Tenant access; membership existence does not grant capabilities.
+ACTIVE/SUSPENDED/DISABLED entries describe persisted status in /me, without granting
+permission to act. Roles remain DB data, never Spring authorities or Firebase custom
+claims. Principal/authorities stay identity-only and empty respectively; memberships
+and roles are freshly read for every request, without token/SecurityContext caching.
 
 ## Tests
 
@@ -194,14 +238,21 @@ pointing to a stopped container in later subclasses. Container reuse is disabled
 The existing HTTP health/startup tests now run against that real container.
 Additional assertions prove PostgreSQL major 18, separate JDBC connection users,
 Flyway migration history/validation, JPA startup/native query, no H2 driver,
-no runtime schema CREATE/BYPASSRLS/superuser permissions and only users plus Flyway history.
+no runtime schema CREATE/BYPASSRLS/superuser permissions and only the four identity
+tables plus Flyway history.
 Configuration context tests also cover explicit/default profiles, required values,
 invalid JDBC URLs, local remote-DB rejection and sanitized failures, without DB
 connections or real provider requirements. Security/adapter tests cover safe 401,
 typed principals, ignored custom claims, stateless context cleanup and token privacy.
 PostgreSQL tests cover V2/grants/UID uniqueness, duplicate emails, concurrent first
 logins and real HTTP authentication-to-users with a test-only verifier. No FirebaseApp,
-ADC or external Firebase/Google/emulator call is made in CI. Module-boundary tests continue
+ADC or external Firebase/Google/emulator call is made in CI. V3 tests exercise
+membership status/uniqueness, the composite Tenant FK, all role/scope combinations,
+partial role uniqueness, read-only runtime grants, preserved history and absent RLS/
+Customer/invitation tables. Real HTTP tests cover multi-Tenant User isolation,
+ignored claim/header/User-ID hints, roleless memberships, Customer-scoped roles,
+stable ordering and fresh status/role reads; original 401/stateless tests remain.
+Module-boundary tests continue
 unchanged. Tests fail, rather than skip or mock,
 when Docker is unavailable.
 
