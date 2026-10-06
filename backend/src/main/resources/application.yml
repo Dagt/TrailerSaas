@@ -21,6 +21,8 @@ spring:
     validate-on-migrate: true
     baseline-on-migrate: false
     clean-disabled: true
+    placeholders:
+      runtimeRole: ${DB_RUNTIME_USERNAME}
   jpa:
     open-in-view: false
     hibernate:
@@ -59,3 +61,7 @@ logging:
       console: logstash
   level:
     org.springframework.web: WARN
+
+trailersaas:
+  firebase:
+    project-id: ${FIREBASE_PROJECT_ID}

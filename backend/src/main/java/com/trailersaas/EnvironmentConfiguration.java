@@ -32,12 +32,20 @@ class EnvironmentConfiguration {
         boolean local = "local".equals(profiles[0]);
         validateJdbc(required(environment, "spring.datasource.url", "DB_RUNTIME_JDBC_URL"),
                 "DB_RUNTIME_JDBC_URL", local);
-        required(environment, "spring.datasource.username", "DB_RUNTIME_USERNAME");
+        String runtimeRole = required(environment, "spring.datasource.username", "DB_RUNTIME_USERNAME");
+        String grantRole = required(environment, "spring.flyway.placeholders.runtimeRole", "DB_RUNTIME_USERNAME");
+        if (!runtimeRole.matches("[A-Za-z_][A-Za-z0-9_]{0,62}") || !runtimeRole.equals(grantRole)) {
+            throw new IllegalStateException("DB_RUNTIME_USERNAME must be a 1-63 character ASCII role identifier; Flyway grant role must match it.");
+        }
         required(environment, "spring.datasource.password", "DB_RUNTIME_PASSWORD");
         validateJdbc(required(environment, "spring.flyway.url", "DB_MIGRATION_JDBC_URL / DB_RUNTIME_JDBC_URL"),
                 "DB_MIGRATION_JDBC_URL", local);
         required(environment, "spring.flyway.user", "DB_MIGRATION_USERNAME");
         required(environment, "spring.flyway.password", "DB_MIGRATION_PASSWORD");
+        String project = required(environment, "trailersaas.firebase.project-id", "FIREBASE_PROJECT_ID");
+        if (!project.matches("[a-z][a-z0-9-]{4,28}[a-z0-9]")) {
+            throw new IllegalStateException("FIREBASE_PROJECT_ID must be a valid project identifier.");
+        }
     }
 
     private static String required(ConfigurableEnvironment environment, String property, String variable) {

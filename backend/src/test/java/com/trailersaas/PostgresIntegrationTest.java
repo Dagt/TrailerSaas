@@ -7,15 +7,17 @@ import java.util.UUID;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-abstract class PostgresIntegrationTest {
+@Import(TestFirebaseConfiguration.class)
+public abstract class PostgresIntegrationTest {
 
-    static final String RUNTIME_USERNAME = "trailersaas_runtime";
+    protected static final String RUNTIME_USERNAME = "identity_test_runtime";
     private static final String RUNTIME_PASSWORD = UUID.randomUUID().toString();
 
     @Container
@@ -42,5 +44,6 @@ abstract class PostgresIntegrationTest {
         registry.add("DB_RUNTIME_PASSWORD", () -> RUNTIME_PASSWORD);
         registry.add("DB_MIGRATION_USERNAME", POSTGRES::getUsername);
         registry.add("DB_MIGRATION_PASSWORD", POSTGRES::getPassword);
+        registry.add("FIREBASE_PROJECT_ID", () -> "test-only-project");
     }
 }

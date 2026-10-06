@@ -31,7 +31,7 @@ public class ProblemDetailsConfiguration implements WebMvcConfigurer {
         return body;
     }
 
-    static void addCorrelation(ProblemDetail body) {
+    public static void addCorrelation(ProblemDetail body) {
         String traceId = MDC.get("traceId");
         if (traceId == null) {
             traceId = MDC.get("requestId");

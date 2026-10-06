@@ -1,7 +1,8 @@
 # Environment Configuration and Secret Templates
 
 Issue #20 implements ADR-020, using the hosting boundaries accepted in
-ADR-009/016. PostgreSQL and API configuration are active; Issue #21 adds optional
+ADR-009/016. PostgreSQL and API configuration are active; Issue #22 activates
+backend Firebase ID-token verification through official Admin/ADC. Issue #21 adds optional
 Sentry Web/Mobile configuration. There are no real provider IDs, cloud resources,
 deployment workflows or Production credentials in the repository.
 
@@ -9,7 +10,7 @@ deployment workflows or Production credentials in the repository.
 
 | Application | Explicit selector | Default | Active requirements |
 | --- | --- | --- | --- |
-| Backend | `SPRING_PROFILES_ACTIVE=local`, `staging` or `production` | `local`, loopback HTTP | Five DB variables below; optional separate migration URL |
+| Backend | `SPRING_PROFILES_ACTIVE=local`, `staging` or `production` | `local`, loopback HTTP | Five DB variables, Firebase project/official ADC; optional separate migration URL |
 | Web | `VITE_APP_ENV=development`, `staging` or `production` | `development`, `http://127.0.0.1:8080/api/v1` | Explicit absolute HTTPS API URL outside Development |
 | Mobile | `APP_ENV=development`, `staging` or `production` | `development`, `http://localhost:8080/api/v1` | Explicit absolute HTTPS API URL outside Development |
 
@@ -29,7 +30,7 @@ duplicated YAML or automatic provider configuration. No profile supplies DB
 password defaults. A BeanFactoryPostProcessor validates effective configuration
 before datasource beans open; failures name required variables, never values.
 Flyway remains the schema authority, runtime/migration credentials are separate,
-and Hibernate remains `validate`. No domain migration is added.
+and Hibernate remains `validate`. #22 adds only V2 users; future tenancy is excluded.
 
 Web validates with Zod both at Vite startup/build and at client initialization.
 Its application environment is independent of Vite `mode`/`NODE_ENV`:
@@ -65,6 +66,8 @@ Required now is distinct from expected future requirements.
 | `DB_MIGRATION_JDBC_URL` | Backend | Flyway connection to same database/schema | D/S/P | No, defaults to runtime URL | Server config; no embedded passwords | Active #19 |
 | `DB_MIGRATION_USERNAME` | Backend | Separate migration/admin role | D/S/P | Yes | Restricted server config | Active #19 |
 | `DB_MIGRATION_PASSWORD` | Backend | Migration role password | D/S/P | Yes | Secret | Active #19 |
+| `FIREBASE_PROJECT_ID` | Backend | Explicit expected Firebase ID-token project | D/S/P | Yes | Server config | Active #22 |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Backend | Official ADC path to protected/mounted credentials | D/S/P | For file-based ADC; optional with official ambient ADC | Path is config; contents are secret | Active #22 |
 | `VITE_APP_ENV` | Web | Application environment, independent of build mode | D/S/P | Explicit S/P, optional D | Public bundle config | Active #20 |
 | `VITE_API_BASE_URL` | Web | Absolute API base URL | D/S/P | Yes S/P, optional D | Public bundle config | Active #16/#20 |
 | `APP_ENV` | Mobile | Compile-time application environment | D/S/P | Explicit S/P, optional D | Public app config | Active #17 |
@@ -78,7 +81,7 @@ Examples of API base URLs: local `http://localhost:8080/api/v1`, Staging
 `https://api.staging.example.test/api/v1`, Production
 `https://api.production.example.test/api/v1`. No same-origin Production fallback.
 
-### Reserved Firebase / FCM
+### Reserved Client Firebase / FCM
 
 Client Firebase API keys identify a project; they are not administrative service
 credentials or authorization. Client config is extractable and must use provider
@@ -89,8 +92,6 @@ contents, private keys or administrative credentials in Web/Mobile defines.
 
 | Name | Intended consumer | Purpose | Environments | Required now | Classification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `FIREBASE_PROJECT_ID` | Backend | Expected token issuer/project | D/S/P | No | Server config | Reserved #22/#56 |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Backend | Path to protected/mounted service credential JSON | D/S/P | No | Path is config; file contents are secret | Reserved #22/#56 |
 | `VITE_FIREBASE_API_KEY` | Web | Firebase client project API key | D/S/P | No | Public client config | Reserved #22 |
 | `VITE_FIREBASE_AUTH_DOMAIN` | Web | Client auth domain | D/S/P | No | Public client config | Reserved #22 |
 | `VITE_FIREBASE_PROJECT_ID` | Web | Client project | D/S/P | No | Public client config | Reserved #22 |
@@ -146,7 +147,9 @@ are intentionally not shell-ready credentials. A populated `.env.local` can be
 kept only as an ignored local file and supplied using the developer's own tooling.
 See [backend local PostgreSQL instructions](../../backend/README.md).
 
-For local Development, supply the five DB variables and run
+For local Development, supply the five DB variables, FIREBASE_PROJECT_ID and
+official ADC (usually GOOGLE_APPLICATION_CREDENTIALS pointing to an ignored,
+protected non-production credential file), then run
 `./mvnw spring-boot:run`; `local` is default. For a non-local environment, supply
 its **separate** DB configuration then select exactly one profile explicitly:
 
@@ -228,7 +231,20 @@ Reproduce checks in [CI documentation](ci.md). Config tests check defaults,
 explicit selection, unknown/mixed environments, required values, no fallback,
 safe URL structure and absence of requirements for reserved integrations. Backend
 PostgreSQL/Flyway integration still runs with self-provisioned Testcontainers.
+Backend application tests replace FirebaseTokenVerifier with an explicit test-only
+boundary; no FirebaseApp/ADC/certificate lookup is initialized and no Firebase,
+Google or emulator endpoint is contacted. The production adapter remains real
+Firebase Admin, with no accept-all fallback. FIREBASE_AUTH_EMULATOR_HOST is rejected
+by the production configuration because it bypasses signature verification.
 All four CI jobs require no real providers or Production secrets.
+
+DB_RUNTIME_USERNAME also supplies Flyway's runtimeRole grant placeholder for V2.
+Startup accepts only `[A-Za-z_][A-Za-z0-9_]{0,62}`, requires the placeholder to
+equal the runtime username, and quotes it as an SQL identifier. Quotes, separators,
+spaces and other SQL input are rejected without echoing values. This conservative
+role-name convention is environment-independent; no Production role name is hardcoded.
+Runtime receives only SELECT/INSERT on users, not UPDATE/DELETE, ownership or
+schema CREATE. Roles themselves remain separately provisioned by operators.
 
 Before committing: `git diff --check`, inspect `git ls-files` for private files,
 use `git check-ignore --no-index -v <local-path>` for protected paths, and review
