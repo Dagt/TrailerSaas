@@ -98,7 +98,8 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         when(firebase.getUid()).thenReturn("fixture-" + userA);
         when(firebase.getClaims()).thenReturn(Map.of("tenantId", tenant3.toString(), "role", "TENANT_ADMIN",
                 "customerId", UUID.randomUUID().toString(), "isAdmin", true));
-        when(verifier.verify("claims-attack")).thenReturn(FirebaseAdminTokenVerifier.identity(firebase));
+        var verifiedIdentity = FirebaseAdminTokenVerifier.identity(firebase);
+        when(verifier.verify("claims-attack")).thenReturn(verifiedIdentity);
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port
                     + "/api/v1/me?userId=" + userB + "&tenantId=" + tenant3))

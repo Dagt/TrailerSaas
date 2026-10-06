@@ -32,6 +32,9 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     void flywayV3CreatesOnlyAcceptedIdentityTablesAndLeavesUserColumnsIntact() throws Exception {
         flyway.validate();
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
+        // Flyway history is migrator-owned; runtime deliberately has no grant.
+        assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
+                .containsExactly("1", "2", "3");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
@@ -51,12 +54,6 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
                     try (var rows = query.executeQuery()) { while (rows.next()) { columns.add(rows.getString(1)); } }
                 }
                 assertThat(columns).containsExactlyElementsOf(entry.getValue());
-            }
-            try (var rows = statement.executeQuery(
-                    "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank")) {
-                var versions = new ArrayList<String>();
-                while (rows.next()) { versions.add(rows.getString(1)); }
-                assertThat(versions).containsExactly("1", "2", "3");
             }
             try (var rows = statement.executeQuery(
                     "SELECT count(*) FROM pg_constraint WHERE conrelid='role_assignments'::regclass AND contype='f'")) {
