@@ -153,7 +153,8 @@ Firebase SDK types remain internal to identity infrastructure. A small
 FirebaseTokenVerifier returns only verified UID/email/displayName. Spring builds a
 typed AuthenticatedUserPrincipal with internal User ID and UID and **no authorities**.
 Custom role/Tenant/Customer/capability claims never grant business access. User alone
-does not grant Tenant access; no Tenant context or capability authorization exists yet.
+does not grant Tenant access. #24 adds fresh capability/scope authorization;
+TenantContext remains deferred to #26.
 
 GET /api/v1/me returns userId, email, displayName and that User's persisted
 memberships, each with tenantId, tenantName, status and roles
@@ -172,7 +173,7 @@ stay public without exposing extra Actuator. Non-API missing paths remain 404.
 Missing/malformed/invalid/expired credentials return generic 401 Problem Details
 with AUTHENTICATION_REQUIRED and the existing requestId/traceId correlation.
 Authorization, token claims, provider messages and credential contents are never
-copied into logs or public errors. #24–#26 remain unimplemented.
+copied into logs or public errors. #25/#26 remain unimplemented.
 
 References: [official Firebase setup/ADC](https://firebase.google.com/docs/admin/setup),
 [ID-token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens).
@@ -215,6 +216,56 @@ permission to act. Roles remain DB data, never Spring authorities or Firebase cu
 claims. Principal/authorities stay identity-only and empty respectively; memberships
 and roles are freshly read for every request, without token/SecurityContext caching.
 
+## Capability and scope authorization (#24)
+
+The public identity module API is `Capability` (the 53 documented permissions)
+and `TenantAuthorization`. Consumers request capabilities, never compare role
+names or use Spring role/authority annotations. The only role mapping is internal
+`RoleCapabilities`; its exact conservative grants are documented in
+[permission capabilities](../docs/security/permission-capabilities.md#implemented-conservative-mapping-24).
+TBD/limited/override grants remain denied, not inferred from that draft matrix.
+
+Each call queries current PostgreSQL data by **internal userId + requested tenantId**,
+resolving only ACTIVE memberships and their current role assignments. A left join
+distinguishes an ACTIVE roleless membership from no active membership. The narrow,
+read-only repository uses ordinary runtime SELECT grants; no authorization cache,
+admin connection, principal enrichment or schema change is introduced. Tenant.status
+is deliberately not an authorization rule.
+
+- `requireTenantCapability(principal, tenantId, capability)`: only TENANT-scoped
+  grants qualify; a Customer-scoped role never grants Tenant-wide access.
+- `requireCustomerCapability(principal, tenantId, customerId, capability)`: a
+  TENANT grant or matching CUSTOMER grant qualifies. The target is mandatory.
+  Consumers must derive it from tenant-safe resource data, not trust a request hint.
+- `requireAssignedWorkCapability(principal, tenantId, capability, assignmentSatisfied)`:
+  only TRIP_VIEW_ASSIGNED/TRIP_EXECUTE_ASSIGNED qualify, with a grant and a
+  server-derived assignment condition. False denies. The other methods cannot
+  authorize these two capabilities. Future Driver/Trip services must compute the
+  condition from persisted assignment data; no client boolean is trusted.
+
+Example future service integration:
+
+```java
+authorization.requireCustomerCapability(principal, tenantId, resource.customerId(), Capability.ORDER_EDIT);
+// Then validate domain state before executing the command.
+```
+
+Missing/SUSPENDED/DISABLED memberships produce 403 TENANT_ACCESS_DENIED. Missing
+grants or failed assignment constraints produce CAPABILITY_DENIED; a potential
+Customer grant outside the target (or missing target) produces CUSTOMER_SCOPE_DENIED.
+The identity advice precedes the generic infrastructure fallback. Problem Details
+have generic public details and preserve automatic traceId/X-Request-Id correlation,
+without exposing internal grants or authorized Customer IDs.
+
+`/api/v1/me` remains a bootstrap directory of all three membership statuses; its
+contents do not authorize protected actions. Role deletion or membership suspension
+takes effect on the next authorization with the same token. Firebase custom claims
+still cannot grant capabilities and Spring authorities remain empty.
+
+No Customer table/FK, Driver/Trip lookup, domain-state rules, invitations, mutation
+endpoints, RLS or TenantContext are implemented here. All synthetic consumers and
+HTTP endpoints demonstrating this integration live exclusively in test sources.
+
 ## Tests
 
 With a working Docker daemon in Linux-container mode:
@@ -252,6 +303,12 @@ partial role uniqueness, read-only runtime grants, preserved history and absent 
 Customer/invitation tables. Real HTTP tests cover multi-Tenant User isolation,
 ignored claim/header/User-ID hints, roleless memberships, Customer-scoped roles,
 stable ordering and fresh status/role reads; original 401/stateless tests remain.
+#24 tests cover the exact five-role mapping across all capabilities, scoped ACTIVE
+resolution, deny-by-default, multiple roles, Customer A/B isolation, assigned-work
+constraints and bypass prevention. Real HTTP/PostgreSQL tests prove same-token
+revocation, ignored malicious claims, safe correlated 401/403 responses and the
+difference between membership visibility and authorization. Flyway remains V3;
+the existing schema/grant/RLS-absence assertions remain unchanged.
 Module-boundary tests continue
 unchanged. Tests fail, rather than skip or mock,
 when Docker is unavailable.
