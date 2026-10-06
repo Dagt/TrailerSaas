@@ -54,7 +54,7 @@ Do not silently resolve contradictions. Surface them.
 
 For every implementation Issue:
 
-- work from a child GitHub Issue (#15–#65), not directly from an Epic;
+- work from a bounded implementation/amendment GitHub Issue, not directly from an Epic;
 - include requirement IDs in PR descriptions where practical;
 - add or update tests with behavior changes;
 - update documentation when business behavior changes;

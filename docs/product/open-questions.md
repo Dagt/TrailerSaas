@@ -85,6 +85,12 @@ Accepted schema v1.0 uses:
 
 This supports multiple Customer operational contexts at the same street address without duplicating the physical Site.
 
+Confirmed by [Accepted schema v1.0](../data-model/schema-v1.0.md) and
+[Accepted identity/master-data API](../api/identity-master-data.md), sections 7–8.
+[Accepted hardening #74](../data-model/schema-v1.0.1-hardening.md) item P confirms
+this resolution; item N accepts consistency checks without reopening or redesigning
+the shared-address model.
+
 ### OQ-059 — Tenant-level configurability
 For MVP, customer-specific POD rules are **not** required. Still decide which settings are tenant-configurable from day one:
 
