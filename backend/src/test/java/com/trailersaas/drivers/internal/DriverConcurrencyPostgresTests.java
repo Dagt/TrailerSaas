@@ -57,4 +57,3 @@ class DriverConcurrencyPostgresTests extends PostgresIntegrationTest {
         assertThat(fixtures.value("SELECT version FROM drivers WHERE id=?",id)).isEqualTo(1L);
     }
 }
-

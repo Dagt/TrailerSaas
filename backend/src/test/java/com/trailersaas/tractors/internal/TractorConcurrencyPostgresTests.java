@@ -57,4 +57,3 @@ class TractorConcurrencyPostgresTests extends PostgresIntegrationTest {
         assertThat(fixtures.value("SELECT version FROM tractors WHERE id=?",id)).isEqualTo(1L);
     }
 }
-

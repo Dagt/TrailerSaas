@@ -48,4 +48,3 @@ class DriverBoundaryTests {
         assertThatThrownBy(()->DriverValidation.userId("1-1-1-1-1")).isInstanceOf(DriverFailure.class);
     }
 }
-

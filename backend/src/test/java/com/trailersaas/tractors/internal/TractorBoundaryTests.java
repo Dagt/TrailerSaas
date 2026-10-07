@@ -48,4 +48,3 @@ class TractorBoundaryTests {
         assertThatThrownBy(()->TractorValidation.number(value)).isInstanceOf(TractorFailure.class);
     }
 }
-
