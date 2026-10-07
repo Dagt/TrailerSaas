@@ -203,7 +203,12 @@ class MasterDataHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(items(get("/customers"))).extracting(x -> x.get("id")).containsExactly(own.get("id"));
         var denied = get("/customers/" + foreignCustomer);
         problem(denied, 403, "CUSTOMER_SCOPE_DENIED");
-        assertThat(denied.body()).doesNotContain("foreign-secret", foreignCustomer.toString(), "CUSTOMER_DISPATCHER");
+        assertThat(denied.body()).doesNotContain("foreign-secret", "CUSTOMER_DISPATCHER", (String) own.get("id"));
+        // RFC Problem instance repeats the caller's own request URI, not discovered metadata.
+        assertThat(body(denied)).containsEntry("instance", "/api/v1/tenants/" + tenant + "/customers/" + foreignCustomer);
+        var publicFields = new java.util.HashMap<>(body(denied));
+        publicFields.remove("instance");
+        assertThat(publicFields.toString()).doesNotContain(foreignCustomer.toString(), (String) own.get("id"), foreignTenant.toString());
         assertThat(output.getAll()).doesNotContain(TOKEN);
     }
 

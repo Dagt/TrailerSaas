@@ -30,7 +30,7 @@ class MasterDataRepository {
         var query = em.createQuery("""
                 select s from PhysicalSiteEntity s where s.tenantId=:tenant
                 """ + (id == null ? "" : " and s.id=:id")
-                + (scope.tenantWide() ? "" : """
+                + (scope.tenantWide() ? "" : " " + """
                     and exists (select a.id from CustomerSiteEntity a where a.tenantId=:tenant
                         and a.siteId=s.id and a.customerId in :customers)
                     """) + " order by s.name, s.id", PhysicalSiteEntity.class).setParameter("tenant", tenant);
