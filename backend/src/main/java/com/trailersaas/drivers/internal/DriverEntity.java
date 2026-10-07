@@ -20,8 +20,8 @@ class DriverEntity {
     protected DriverEntity() {}
     void initialize(UUID tenant, String value) {
         id=UUID.randomUUID(); tenantId=tenant; name=value;
-        createdAt=updatedAt=Instant.now();
+        createdAt=updatedAt=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
     }
-    @PreUpdate void updated() { updatedAt=Instant.now(); }
+    @PreUpdate void updated() { updatedAt=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS); }
     void requireVersion(long expected) { if(version!=expected) { throw DriverFailure.stale(); } }
 }
