@@ -190,10 +190,12 @@ class InvitationHttpPostgresTests extends PostgresIntegrationTest {
         var user = users.resolve(new VerifiedFirebaseIdentity(uid, "rollback@example.com", null, true));
         when(verifier.verify("invitee-token")).thenReturn(new VerifiedFirebaseIdentity(uid, "rollback@example.com", null, true));
         var invitation = body(create("rollback@example.com", List.of(role("DRIVER", null), role("YARD_SPOTTER", null))));
-        // Test-only migrator trigger forces a DB failure after membership/first role INSERT.
+        // Test-only migrator trigger forces an integrity rejection after membership/first role INSERT.
         fixtures.execute("""
                 CREATE FUNCTION test_invitation_role_failure() RETURNS trigger LANGUAGE plpgsql AS $$
-                BEGIN IF NEW.role_code='YARD_SPOTTER' THEN RAISE EXCEPTION 'controlled fixture failure'; END IF; RETURN NEW; END $$
+                BEGIN IF NEW.role_code='YARD_SPOTTER' THEN
+                    RAISE EXCEPTION 'controlled fixture failure' USING ERRCODE='23514';
+                END IF; RETURN NEW; END $$
                 """);
         fixtures.execute("CREATE TRIGGER test_invitation_role_failure BEFORE INSERT ON role_assignments FOR EACH ROW EXECUTE FUNCTION test_invitation_role_failure()");
         try {
@@ -205,6 +207,47 @@ class InvitationHttpPostgresTests extends PostgresIntegrationTest {
         } finally {
             fixtures.execute("DROP TRIGGER test_invitation_role_failure ON role_assignments");
             fixtures.execute("DROP FUNCTION test_invitation_role_failure()");
+        }
+    }
+    @ParameterizedTest @ValueSource(strings = {"08006", "57014", "P0001"})
+    void acceptanceConnectionTimeoutAndGenericDbFailuresRemainSafe500AndRollback(String state) throws Exception {
+        var uid = "infra-" + UUID.randomUUID();
+        var user = users.resolve(new VerifiedFirebaseIdentity(uid, "infra@example.com", null, true));
+        when(verifier.verify("invitee-token")).thenReturn(new VerifiedFirebaseIdentity(uid, "infra@example.com", null, true));
+        var invitation = body(create("infra@example.com", List.of(role("DRIVER", null), role("YARD_SPOTTER", null))));
+        // Real PostgreSQL error signals, only in test fixtures; no production failure hook.
+        fixtures.execute("""
+                CREATE FUNCTION test_invitation_infrastructure_failure() RETURNS trigger LANGUAGE plpgsql AS $$
+                BEGIN IF NEW.role_code='YARD_SPOTTER' THEN
+                    RAISE EXCEPTION 'synthetic private DB detail' USING ERRCODE='%s';
+                END IF; RETURN NEW; END $$
+                """.formatted(state));
+        fixtures.execute("CREATE TRIGGER test_invitation_infrastructure_failure BEFORE INSERT ON role_assignments FOR EACH ROW EXECUTE FUNCTION test_invitation_infrastructure_failure()");
+        try {
+            var raw = (String) invitation.get("acceptanceToken");
+            infrastructureProblem(accept(raw, "invitee-token"));
+            assertThat(adminValue("SELECT status FROM membership_invitations WHERE id=?", uuid(invitation, "id"))).isEqualTo("PENDING");
+            assertThat(adminValue("SELECT accepted_at FROM membership_invitations WHERE id=?", uuid(invitation, "id"))).isNull();
+            assertThat(number("SELECT count(*) FROM tenant_memberships WHERE tenant_id=? AND user_id=?", tenant, user.userId())).isZero();
+            assertThat(number("SELECT count(*) FROM role_assignments WHERE tenant_id=? AND membership_id<>?", tenant, adminMembership)).isZero();
+        } finally {
+            fixtures.execute("DROP TRIGGER test_invitation_infrastructure_failure ON role_assignments");
+            fixtures.execute("DROP FUNCTION test_invitation_infrastructure_failure()");
+        }
+    }
+    @ParameterizedTest @ValueSource(strings = {"08006", "57014", "P0001"})
+    void creationConnectionTimeoutAndGenericDbFailuresRemainSafe500(String state) throws Exception {
+        fixtures.execute("""
+                CREATE FUNCTION test_invitation_create_failure() RETURNS trigger LANGUAGE plpgsql AS $$
+                BEGIN RAISE EXCEPTION 'synthetic private DB detail' USING ERRCODE='%s'; END $$
+                """.formatted(state));
+        fixtures.execute("CREATE TRIGGER test_invitation_create_failure BEFORE INSERT ON membership_invitations FOR EACH ROW EXECUTE FUNCTION test_invitation_create_failure()");
+        try {
+            infrastructureProblem(create("infra-create@example.com", List.of(role("DRIVER", null))));
+            assertThat(number("SELECT count(*) FROM membership_invitations WHERE tenant_id=?", tenant)).isZero();
+        } finally {
+            fixtures.execute("DROP TRIGGER test_invitation_create_failure ON membership_invitations");
+            fixtures.execute("DROP FUNCTION test_invitation_create_failure()");
         }
     }
     @Test void revokeIsIdempotentPreservesRolesAndCannotRevokeAccepted() throws Exception {
@@ -292,6 +335,13 @@ class InvitationHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/problem+json");
         assertThat(response.headers().firstValue("X-Request-Id")).contains("invitation-test");
         assertThat(body(response)).containsEntry("code", code).containsKey("traceId");
+    }
+    private void infrastructureProblem(HttpResponse<String> response) {
+        assertThat(response.statusCode()).as("safe response %s", response.body()).isEqualTo(500);
+        assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/problem+json");
+        assertThat(response.headers().firstValue("X-Request-Id")).contains("invitation-test");
+        assertThat(body(response)).containsKey("traceId").containsEntry("detail", "The server could not complete the request.");
+        assertThat(response.body()).doesNotContain("synthetic private DB detail", "constraint", "SQL", "test_invitation", "RESOURCE_CONFLICT", "INVITATION_NOT_ACCEPTABLE");
     }
     private Object adminValue(String sql, Object... parameters) throws Exception {
         try (var c = flyway.getConfiguration().getDataSource().getConnection(); var q = c.prepareStatement(sql)) {

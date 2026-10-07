@@ -55,13 +55,14 @@ CREATE POLICY invitation_tenant ON membership_invitations TO "${runtimeRole}"
     WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
         AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL);
 
--- Hash-only onboarding can SELECT/FOR UPDATE its one invitation, not INSERT.
+-- Hash-only onboarding can SELECT/FOR UPDATE its one invitation, not INSERT/UPDATE.
 -- Bootstrap /me remains excluded. After validation the service pins its Tenant.
 CREATE POLICY invitation_acceptance_read ON membership_invitations FOR SELECT TO "${runtimeRole}"
     USING (token_hash = NULLIF(current_setting('app.current_invitation_hash', true), '')
         AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL
         AND (NULLIF(current_setting('app.current_tenant_id', true), '') IS NULL
             OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid));
+-- UPDATE USING also governs FOR UPDATE visibility; WITH CHECK guards actual changes.
 CREATE POLICY invitation_acceptance_update ON membership_invitations FOR UPDATE TO "${runtimeRole}"
     USING (token_hash = NULLIF(current_setting('app.current_invitation_hash', true), '')
         AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL
@@ -69,8 +70,8 @@ CREATE POLICY invitation_acceptance_update ON membership_invitations FOR UPDATE 
             OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid))
     WITH CHECK (token_hash = NULLIF(current_setting('app.current_invitation_hash', true), '')
         AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL
-        AND (NULLIF(current_setting('app.current_tenant_id', true), '') IS NULL
-            OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid));
+        AND NULLIF(current_setting('app.current_tenant_id', true), '') IS NOT NULL
+        AND tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
 
 CREATE POLICY invitation_role_tenant ON invitation_role_assignments TO "${runtimeRole}"
     USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid

@@ -125,6 +125,51 @@ class InvitationPostgresTests extends PostgresIntegrationTest {
             noRows(); return null;
         });
     }
+    @Test void hashOnlyCanReadAndLockExactlyItsInvitationAndIntendedRoles() {
+        tx(() -> {
+            onboarding.establish(hashA);
+            assertThat(ids("SELECT id FROM membership_invitations")).containsExactly(invitationA);
+            assertThat(ids("SELECT id FROM membership_invitations FOR UPDATE")).containsExactly(invitationA);
+            assertThat(ids("SELECT invitation_id FROM invitation_role_assignments")).containsExactly(invitationA);
+            return null;
+        });
+    }
+    @ParameterizedTest @ValueSource(strings = {"status='REVOKED'", "email='changed@example.com'", "display_name='changed'"})
+    void hashOnlyCannotUpdateEvenItsLockedInvitation(String assignment) {
+        assertThatThrownBy(() -> tx(() -> {
+            onboarding.establish(hashA);
+            assertThat(ids("SELECT id FROM membership_invitations FOR UPDATE")).containsExactly(invitationA);
+            updateInvitation(assignment);
+            return null;
+        })).rootCause().isInstanceOf(SQLException.class).extracting("SQLState").isEqualTo("42501");
+        tx(() -> {
+            assertThat(manager.createNativeQuery("SELECT NULLIF(current_setting('app.current_invitation_hash',true),'')").getSingleResult()).isNull();
+            assertThat(manager.createNativeQuery("SELECT NULLIF(current_setting('app.current_tenant_id',true),'')").getSingleResult()).isNull();
+            tenants.establishTenant(a); assertThat(invitationStatus()).isEqualTo("PENDING"); return null;
+        });
+    }
+    @Test void hashAndMatchingLockedInvitationTenantCanUpdate() {
+        tx(() -> {
+            onboarding.establish(hashA);
+            UUID derivedTenant = (UUID) manager.createNativeQuery("SELECT tenant_id FROM membership_invitations WHERE id=:id FOR UPDATE", UUID.class)
+                    .setParameter("id", invitationA).getSingleResult();
+            tenants.establishTenant(derivedTenant);
+            assertThat(updateInvitation("status='REVOKED'")).isEqualTo(1);
+            assertThat(invitationStatus()).isEqualTo("REVOKED");
+            return null;
+        });
+    }
+    @Test void hashAndWrongTenantCannotUpdateExactInvitation() {
+        tx(() -> {
+            onboarding.establish(hashA);
+            assertThat(ids("SELECT id FROM membership_invitations FOR UPDATE")).containsExactly(invitationA);
+            tenants.establishTenant(b);
+            // USING now hides the target; no row can be modified under the wrong Tenant.
+            assertThat(updateInvitation("status='REVOKED'")).isZero();
+            return null;
+        });
+        tx(() -> { tenants.establishTenant(a); assertThat(invitationStatus()).isEqualTo("PENDING"); return null; });
+    }
     @ParameterizedTest @ValueSource(strings = {"membership_invitations", "invitation_role_assignments", "tenant_memberships", "role_assignments"})
     void runtimeHasExactApprovedGrantsAndNoAdministrativePrivileges(String table) {
         tx(() -> {
@@ -158,6 +203,14 @@ class InvitationPostgresTests extends PostgresIntegrationTest {
     private void noRows() {
         assertThat(ids("SELECT id FROM membership_invitations")).isEmpty();
         assertThat(ids("SELECT id FROM invitation_role_assignments")).isEmpty();
+    }
+    private int updateInvitation(String assignment) {
+        return manager.createNativeQuery("UPDATE membership_invitations SET " + assignment + " WHERE id=:id")
+                .setParameter("id", invitationA).executeUpdate();
+    }
+    private Object invitationStatus() {
+        return manager.createNativeQuery("SELECT status FROM membership_invitations WHERE id=:id")
+                .setParameter("id", invitationA).getSingleResult();
     }
     private List<UUID> ids(String sql) { return manager.createNativeQuery(sql, UUID.class).getResultList(); }
     private int number(String sql) { return ((Number) manager.createNativeQuery(sql).getSingleResult()).intValue(); }

@@ -456,7 +456,10 @@ general authentication still does not require verified email. /me is unchanged.
 An internal identity-only context establishes app.current_invitation_hash via
 prepared, transaction-local set_config on the same JPA/Hibernate physical
 connection. Hash-only RLS allows SELECT/FOR UPDATE of that one invitation and
-SELECT of its intended roles, not enumeration/insertion. Tenant policies cover
+SELECT of its intended roles, not enumeration/insertion/update. The acceptance
+UPDATE policy retains hash-only USING for row locking, but WITH CHECK requires
+a matching non-null server-derived Tenant as well as the hash and no bootstrap
+User context. A wrong Tenant cannot update that invitation. Tenant policies cover
 Admin operations; /me bootstrap/no context sees zero invitation rows. Existing
 RLS policies remain unchanged. After locking and validating the invitation, only
 the acceptance service pins its server-derived Tenant in the same transaction.
@@ -487,6 +490,13 @@ INVITATION_NOT_ACCEPTABLE with "The invitation cannot be accepted." No email,
 token/hash, intended roles/Customers, accepted User, SQL or constraint names leak
 in public errors; Problem Details/correlation remain intact. No membership
 mutation API, audit subsystem or #28–#30 implementation is included.
+
+Only expected PostgreSQL UNIQUE (23505), FK (23503) and CHECK (23514) failures
+from invitation writes map to these safe 409 domain errors. Connection failures,
+timeouts, generic JDBC/pool failures, unknown SQLStates and other DB failures
+propagate to the existing safe 5xx Problem Details handler; they are not permanent
+invitation conflicts. Both domain and infrastructure failures roll back all
+membership/role/invitation changes together.
 
 ## Tests
 

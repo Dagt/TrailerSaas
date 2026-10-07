@@ -7,8 +7,8 @@ import com.trailersaas.identity.AuthenticatedUserPrincipal;
 import com.trailersaas.identity.Capability;
 import com.trailersaas.identity.TenantAuthorization;
 import com.trailersaas.identity.TenantContext;
-import jakarta.persistence.PersistenceException;
-import org.springframework.dao.DataAccessException;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +44,10 @@ class InvitationService {
             invitations.create(invitation, user.userId(), InvitationToken.hash(raw), request.roles());
             return new InvitationContracts.Created(invitation.id(), invitation.email(), invitation.displayName(),
                     invitation.status(), invitation.expiresAt(), request.roles(), raw);
-        } catch (DataAccessException | PersistenceException ignored) { throw InvitationFailure.conflict(); }
+        } catch (DataIntegrityViolationException | ConstraintViolationException failure) {
+            if (!InvitationIntegrity.isExpectedRejection(failure)) { throw failure; }
+            throw InvitationFailure.conflict();
+        }
     }
     @Transactional(readOnly = true)
     public InvitationContracts.Invitations list(AuthenticatedUserPrincipal user, UUID tenant, InvitationStatus status) {
@@ -92,7 +95,8 @@ class InvitationService {
         if (roles.isEmpty()) { throw InvitationFailure.notAcceptable(); }
         try {
             return accepted(invitation, invitations.materialize(invitation, user.userId(), now, roles));
-        } catch (DataAccessException | PersistenceException ignored) {
+        } catch (DataIntegrityViolationException | ConstraintViolationException failure) {
+            if (!InvitationIntegrity.isExpectedRejection(failure)) { throw failure; }
             // Throwing rolls back membership, every role and invitation together.
             throw InvitationFailure.notAcceptable();
         }
