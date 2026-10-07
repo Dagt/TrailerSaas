@@ -162,7 +162,7 @@ class AuthorizationHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(authentication.getCredentials()).isNull();
         assertThat(AuthenticatedUserPrincipal.class.getRecordComponents())
                 .extracting(java.lang.reflect.RecordComponent::getName)
-                .containsExactly("userId", "firebaseUid", "email", "displayName");
+                .containsExactly("userId", "firebaseUid", "email", "displayName", "authenticatedEmail", "authenticatedEmailVerified");
     }
 
     private void problem(HttpResponse<String> response, int status, String code, CapturedOutput output) {

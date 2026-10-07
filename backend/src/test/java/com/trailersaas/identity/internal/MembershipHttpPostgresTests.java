@@ -120,7 +120,7 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(authentication.getAuthorities()).isEmpty();
         assertThat(authentication.getPrincipal()).isInstanceOf(AuthenticatedUserPrincipal.class);
         assertThat(AuthenticatedUserPrincipal.class.getRecordComponents()).extracting(java.lang.reflect.RecordComponent::getName)
-                .containsExactly("userId", "firebaseUid", "email", "displayName");
+                .containsExactly("userId", "firebaseUid", "email", "displayName", "authenticatedEmail", "authenticatedEmailVerified");
     }
 
     @Test

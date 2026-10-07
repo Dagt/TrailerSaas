@@ -104,7 +104,7 @@ class IdentityHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(authentication.getPrincipal()).isInstanceOf(com.trailersaas.identity.AuthenticatedUserPrincipal.class);
         assertThat(com.trailersaas.identity.AuthenticatedUserPrincipal.class.getRecordComponents())
                 .extracting(java.lang.reflect.RecordComponent::getName)
-                .containsExactly("userId", "firebaseUid", "email", "displayName");
+                .containsExactly("userId", "firebaseUid", "email", "displayName", "authenticatedEmail", "authenticatedEmailVerified");
     }
 
     private HttpResponse<String> request(String path, String token, String requestId) throws Exception {

@@ -24,6 +24,6 @@ final class FirebaseAdminTokenVerifier implements FirebaseTokenVerifier {
     }
 
     static VerifiedFirebaseIdentity identity(FirebaseToken token) {
-        return new VerifiedFirebaseIdentity(token.getUid(), token.getEmail(), token.getName());
+        return new VerifiedFirebaseIdentity(token.getUid(), token.getEmail(), token.getName(), token.isEmailVerified());
     }
 }

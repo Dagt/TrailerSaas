@@ -43,7 +43,8 @@ The runtime role must not be superuser or have BYPASSRLS, own future domain
 tables, or have schema CREATE privileges. The migrator can own migrated objects.
 Production roles remain operator-provisioned. V2 grants only SELECT/INSERT on users
 to the configured runtime role. V3 grants SELECT only on tenants, tenant_memberships
-and role_assignments. V4 adds RLS without changing these grants.
+and role_assignments. V4 adds RLS without changing these grants. V6 adds only
+onboarding INSERT on memberships/roles; UPDATE/DELETE remain unavailable.
 
 ## Local PostgreSQL
 
@@ -153,7 +154,8 @@ The standard Spring Security bearer filter accepts Authorization: Bearer ID toke
 Firebase Admin Java 9.11.0 verifyIdToken validates signature, issuer, project/audience,
 expiry and structure; Google access tokens/custom tokens are not substitutes.
 Firebase SDK types remain internal to identity infrastructure. A small
-FirebaseTokenVerifier returns only verified UID/email/displayName. Spring builds a
+FirebaseTokenVerifier returns only verified UID/email/displayName and the SDK's
+typed emailVerified field. Spring builds a
 typed AuthenticatedUserPrincipal with internal User ID and UID and **no authorities**.
 Custom role/Tenant/Customer/capability claims never grant business access. User alone
 does not grant Tenant access. #24 adds fresh capability/scope authorization;
@@ -176,7 +178,7 @@ stay public without exposing extra Actuator. Non-API missing paths remain 404.
 Missing/malformed/invalid/expired credentials return generic 401 Problem Details
 with AUTHENTICATION_REQUIRED and the existing requestId/traceId correlation.
 Authorization, token claims, provider messages and credential contents are never
-copied into logs or public errors. #25 remains unimplemented.
+copied into logs or public errors. #25 adds invitation acceptance below.
 
 References: [official Firebase setup/ADC](https://firebase.google.com/docs/admin/setup),
 [ID-token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens).
@@ -197,8 +199,9 @@ destructive delete cascades.
 V5 adds real Customers and the tenant-safe role_assignments Customer FK, preserving
 V3's customer_id and scope checks. Test migrator fixtures now create Customers
 before inserting Customer-scoped roles. No production Tenant/membership/role write
-commands or Admin endpoints are implemented. Runtime has only SELECT on the
-three V3 tables, retaining V2's existing SELECT/INSERT on global users.
+commands or Admin endpoints are implemented. Runtime has SELECT on all three V3
+tables and V6's onboarding INSERT on memberships/roles, retaining V2's existing
+SELECT/INSERT on global users.
 
 MembershipDirectory is an internal identity/bootstrap boundary for /me. Its input
 is AuthenticatedUserPrincipal, never an arbitrary User ID supplied by HTTP.
@@ -232,7 +235,7 @@ Each call queries current PostgreSQL data by **internal userId + requested tenan
 resolving only ACTIVE memberships and their current role assignments. A left join
 distinguishes an ACTIVE roleless membership from no active membership. The narrow,
 read-only repository uses ordinary runtime SELECT grants; no authorization cache,
-admin connection or principal enrichment is introduced. Before reading roles,
+admin connection or authorization enrichment is introduced. Before reading roles,
 authorization pins the requested Tenant in the same transaction. Tenant.status
 is deliberately not an authorization rule.
 
@@ -268,7 +271,8 @@ still cannot grant capabilities and Spring authorities remain empty.
 
 #24's synthetic authorization consumers remain exclusively in test sources.
 #27 adds Customer persistence/FK and production master-data consumers below;
-Driver/Trip lookup, domain-state execution and invitations remain deferred.
+Driver/Trip lookup and domain-state execution remain deferred. #25 consumes
+USER_INVITE without adding capability mappings or Spring authorities.
 
 ## Transaction-local PostgreSQL RLS (#26)
 
@@ -297,7 +301,8 @@ happens before Tenant selection using narrow repositories. No role-based or
 Customer-level SQL policy is introduced.
 
 Runtime remains non-owner, non-SUPERUSER, non-BYPASSRLS, without schema CREATE,
-and SELECT-only on V3 tables. `ENABLE ROW LEVEL SECURITY` already protects it;
+and restricted SELECT/onboarding INSERT on V3 tables. `ENABLE ROW LEVEL SECURITY`
+already protects it;
 `FORCE` is deliberately deferred to preserve the separate owner/migrator
 administrative path, not to give runtime a bypass. Future Tenant-owned tables
 must receive their own RLS policies in the migration that creates them.
@@ -412,8 +417,76 @@ returning SQL/constraint names, internal grants, tokens or foreign metadata.
 
 V5 validates the new FK immediately. Existing databases with orphan Customer
 role UUIDs must be repaired by an administrator before upgrading, not silently
-seeded or migrated with the constraint disabled. No invitations (#25), equipment
-(#28/#29), Web forms (#30), Orders/Trips or audit implementation is included.
+seeded or migrated with the constraint disabled. Equipment (#28/#29), Web forms
+(#30), Orders/Trips and audit remain unimplemented.
+
+## Membership invitation/onboarding (#25)
+
+V6__membership_invitations.sql creates only membership_invitations and
+invitation_role_assignments. V1–V5 and Accepted schema documents stay unchanged.
+SQL enforces four invitation statuses, nonempty normalized email, unique token
+hash, one PENDING Tenant/email, the role/scope matrix and partial role uniqueness.
+Tenant-safe parent/Customer FKs preserve history without CASCADE. List and
+parent-role indexes support actual ordered list/role reads.
+
+POST/GET /api/v1/tenants/{tenantId}/invitations and POST
+/api/v1/tenants/{tenantId}/invitations/{invitationId}/revoke require USER_INVITE
+through fresh PostgreSQL authorization. Lists return items ordered by createdAt
+DESC/id, with optional status only; token/hash are never returned. Creation uses
+server UTC time and exactly seven days. A live PENDING conflicts; an expired
+PENDING is locked and marked EXPIRED before replacement. The unique index
+arbitrates concurrent creation. Revocation is idempotent and preserves roles;
+ACCEPTED cannot become REVOKED.
+
+Java SecureRandom generates 32 random bytes encoded as unpadded Base64 URL-safe.
+Only lowercase-hex SHA-256 is stored. Creation returns acceptanceToken once for
+the Admin to copy. Raw tokens are absent from DB/logs/MDC/errors; token DTOs have
+redacted toString. There is no email provider, outbox, UI or expiry job. Email
+normalization is String.trim + Locale.ROOT lowercase of the complete email,
+without provider aliases/dot/plus transformation. Original email is display data.
+
+POST /api/v1/invitations/accept is globally Firebase-authenticated and accepts
+only {"token":"..."}, with canonical 32-byte encoding. The SDK's isEmailVerified
+and current token email are allowlisted into authenticatedEmail and
+authenticatedEmailVerified, distinctly from persisted first-login email used by
+/me. Missing/unverified/mismatching current email denies acceptance even if
+users.email matches. No arbitrary claim/Firebase role authorizes onboarding;
+general authentication still does not require verified email. /me is unchanged.
+
+An internal identity-only context establishes app.current_invitation_hash via
+prepared, transaction-local set_config on the same JPA/Hibernate physical
+connection. Hash-only RLS allows SELECT/FOR UPDATE of that one invitation and
+SELECT of its intended roles, not enumeration/insertion. Tenant policies cover
+Admin operations; /me bootstrap/no context sees zero invitation rows. Existing
+RLS policies remain unchanged. After locking and validating the invitation, only
+the acceptance service pins its server-derived Tenant in the same transaction.
+No migration/admin datasource, BYPASSRLS, SECURITY DEFINER or general Tenant
+authorization bypass is used.
+
+The narrow repository uses prepared SQL through the current JPA transaction;
+Admin reads include Tenant and the sole onboarding read includes hash. No global
+browse API or dependency on customers.internal exists. Customer integrity uses
+V5's tenant-safe FKs, without an invented ACTIVE Customer requirement. One
+transaction creates an ACTIVE membership, exactly the intended roles and
+ACCEPTED User/time. Existing memberships are never merged. FOR UPDATE serializes
+same-token acceptance; same-User retries return the existing membership without
+reactivating it/changing roles. Any failure rolls back everything. Refresh /me
+to read the new DB membership. Principal remains identity metadata; Spring
+authorities remain empty and User alone grants no Tenant access.
+
+V6 grants SELECT/INSERT/UPDATE on membership_invitations, SELECT/INSERT on
+invitation_role_assignments, and only additional INSERT on tenant_memberships
+and role_assignments. No intended-role UPDATE/DELETE, membership/role mutation
+grant, ownership, schema CREATE, PUBLIC grant or administrative privilege is
+added. The validated runtimeRole placeholder is reused. RLS context clears
+after commit/rollback, including pooled-connection reuse.
+
+Invalid format/request: 400 VALIDATION_FAILED. Admin conflicts: 409
+RESOURCE_CONFLICT. Every syntactically valid but unacceptable invitation: 409
+INVITATION_NOT_ACCEPTABLE with "The invitation cannot be accepted." No email,
+token/hash, intended roles/Customers, accepted User, SQL or constraint names leak
+in public errors; Problem Details/correlation remain intact. No membership
+mutation API, audit subsystem or #28–#30 implementation is included.
 
 ## Tests
 
@@ -448,15 +521,15 @@ PostgreSQL tests cover V2/grants/UID uniqueness, duplicate emails, concurrent fi
 logins and real HTTP authentication-to-users with a test-only verifier. No FirebaseApp,
 ADC or external Firebase/Google/emulator call is made in CI. V3 tests exercise
 membership status/uniqueness, the composite Tenant FK, all role/scope combinations,
-partial role uniqueness, read-only identity runtime grants, preserved history and
-absent invitation tables. Real HTTP tests cover multi-Tenant User isolation,
+partial role uniqueness, restricted identity runtime grants, preserved history and
+the invitation tables added only by V6. Real HTTP tests cover multi-Tenant User isolation,
 ignored claim/header/User-ID hints, roleless memberships, Customer-scoped roles,
 stable ordering and fresh status/role reads; original 401/stateless tests remain.
 #24 tests cover the exact five-role mapping across all capabilities, scoped ACTIVE
 resolution, deny-by-default, multiple roles, Customer A/B isolation, assigned-work
 constraints and bypass prevention. Real HTTP/PostgreSQL tests prove same-token
 revocation, ignored malicious claims, safe correlated 401/403 responses and the
-difference between membership visibility and authorization. Flyway now ends at V5;
+difference between membership visibility and authorization. Flyway now ends at V6;
 existing table/column and runtime grant assertions remain, with RLS enabled.
 V4 tests deliberately omit Tenant predicates and verify isolation in PostgreSQL,
 bootstrap privacy, context conflicts, and outer-transaction authorization.
@@ -472,6 +545,13 @@ scoped shared Sites/neutral Locations, validation, version conflict, fresh
 authorization and safe correlated errors. Concurrent PostgreSQL transactions
 prove @Version conflict detection and Site-lock serialization of association
 removal against Location creation/reactivation.
+V6 tests cover schema/grants/FKs, uniqueness, history, Tenant/hash/bootstrap
+isolation, pool cleanup after commit/rollback, strict token/email/role validation
+and privacy. HTTP tests cover create/re-invite/list/revoke, current verified email
+versus stored snapshot, generic denial, eight concurrent same-token acceptances
+and concurrent creations, exact roles, /me refresh and rollback after a controlled
+test-only DB trigger failure. No production failure hook exists. Firebase tests
+use only the existing fake boundary and SDK mocks, without provider network.
 Module-boundary tests continue
 unchanged. Tests fail, rather than skip or mock,
 when Docker is unavailable.

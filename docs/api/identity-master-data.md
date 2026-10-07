@@ -60,17 +60,47 @@ Request:
 }
 ```
 
-Response: `201` invitation summary.
+Response: `201` invitation summary with `acceptanceToken` returned **once**, only
+at creation. The server generates a 256-bit random URL-safe token, stores only
+SHA-256 (lowercase hex), and sets `expiresAt = createdAt + 7 days`. Clients cannot
+choose/extend expiry. Email normalization is trim plus lowercase of the complete
+email (stable locale), without provider aliases, dot removal or plus removal.
+One live PENDING invitation per Tenant/normalized email; a stale PENDING is
+marked EXPIRED transactionally before re-inviting. History is retained.
+No email delivery or outbox is implemented in #25; the Admin can copy the token.
 
 ### GET /invitations
 
-Admin list with status filter.
+Capability: `USER_INVITE`. Optional `status` filter: PENDING/ACCEPTED/EXPIRED/REVOKED.
+Response: `{"items": [...]}`, with intended roles, ordered by createdAt DESC then id.
+Unsupported query parameters are rejected. List/revoke never return token/hash.
 
 ### POST /invitations/{invitationId}/revoke
 
 Capability: `USER_INVITE`.
 
-Invitation acceptance/auth linking is part of onboarding and will be represented in the eventual OpenAPI after Firebase invitation UX is finalized.
+Revocation preserves the invitation and intended roles. PENDING becomes REVOKED,
+or EXPIRED if already expired; repeated revocation is idempotent. ACCEPTED cannot
+be revoked (`409 RESOURCE_CONFLICT`).
+
+### POST /api/v1/invitations/accept
+
+Global authenticated endpoint: Firebase ID token plus JSON body `{"token":"..."}`.
+No Tenant, email, User or role hints are accepted. Tenant is derived exclusively
+from the stored, locked invitation. The **current cryptographically verified
+Firebase token email** must exist, be verified and normalize to the invited email;
+stored users.email is metadata and is never used for acceptance authorization.
+
+Acceptance atomically creates one ACTIVE membership, copies the exact intended
+roles and marks ACCEPTED with accepted User/time. It does not merge into an
+existing membership. Concurrent/repeated acceptance by the same User returns
+`200 {invitationId, tenantId, membershipId, accepted:true}` without changing roles
+or reactivating access. Refresh `/api/v1/me` to read the new membership.
+
+Invalid request/token encoding: `400 VALIDATION_FAILED`. Any syntactically valid
+but unacceptable invitation: `409 INVITATION_NOT_ACCEPTABLE`, with the same
+generic detail `The invitation cannot be accepted.` No existence, email, role,
+Customer, token/hash or accepted-User information is disclosed.
 
 ## 3. Tenant memberships
 

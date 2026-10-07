@@ -155,13 +155,14 @@ class MasterDataPostgresTests extends PostgresIntegrationTest {
 
     @Test
     void schemaAndClosedCatalogsMatchV5WithoutPrematureDomains() throws Exception {
-        assertThat(flyway.info().applied()).extracting(i -> i.getVersion().getVersion()).containsExactly("1","2","3","4","5");
+        assertThat(flyway.info().applied()).extracting(i -> i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6");
         try (var c = flyway.getConfiguration().getDataSource().getConnection(); var q = c.createStatement()) {
             try (var rows = q.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
                 var names = new java.util.ArrayList<String>();
                 while (rows.next()) { names.add(rows.getString(1)); }
                 assertThat(names).containsExactlyInAnyOrder("flyway_schema_history","users","tenants","tenant_memberships",
-                        "role_assignments","customers","physical_sites","customer_sites","operational_locations");
+                        "role_assignments","customers","physical_sites","customer_sites","operational_locations",
+                        "membership_invitations","invitation_role_assignments");
             }
             try (var rows = q.executeQuery("""
                     SELECT count(*) FROM pg_constraint WHERE conrelid='operational_locations'::regclass

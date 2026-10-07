@@ -14,6 +14,9 @@ Base Tenant path:
 - `POST /invitations`
 - `GET /invitations`
 - `POST /invitations/{id}/revoke`
+- `POST /api/v1/invitations/accept` — global authenticated onboarding, token in
+  body; Tenant derives from the locked invitation, not client input. #25 returns
+  raw acceptanceToken once at Tenant-scoped creation only; no email delivery.
 - `GET /memberships`
 - `PATCH /memberships/{id}`
 - `PUT /memberships/{id}/roles`

@@ -150,7 +150,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
     void resolverRunsWithV4RlsAndUnchangedV3SchemaAndRuntimeGrants() throws Exception {
         flyway.validate();
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5");
+                .containsExactly("1", "2", "3", "4", "5", "6");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getDatabaseProductName()).isEqualTo("PostgreSQL");
             assertThat(connection.getMetaData().getDatabaseMajorVersion()).isEqualTo(18);
@@ -161,7 +161,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
             for (var table : java.util.List.of("tenants", "tenant_memberships", "role_assignments")) {
                 try (var query = connection.prepareStatement("""
                         SELECT has_table_privilege(current_user, ?, 'SELECT'),
-                            has_table_privilege(current_user, ?, 'INSERT,UPDATE,DELETE'),
+                            has_table_privilege(current_user, ?, 'UPDATE,DELETE'),
                             relrowsecurity, relforcerowsecurity
                         FROM pg_class WHERE oid=?::regclass
                         """)) {
@@ -176,7 +176,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
                 }
             }
             try (var rows = statement.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname='public'")) {
-                rows.next(); assertThat(rows.getInt(1)).isEqualTo(9);
+                rows.next(); assertThat(rows.getInt(1)).isEqualTo(11);
             }
         }
     }
