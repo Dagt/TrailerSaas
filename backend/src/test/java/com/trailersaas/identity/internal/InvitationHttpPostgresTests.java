@@ -111,7 +111,8 @@ class InvitationHttpPostgresTests extends PostgresIntegrationTest {
         var token = mock(com.google.firebase.auth.FirebaseToken.class);
         when(token.getUid()).thenReturn("forged-" + UUID.randomUUID());
         when(token.getClaims()).thenReturn(Map.of("role", "TENANT_ADMIN", "tenantId", tenant.toString(), "isAdmin", true, "email_verified", true));
-        when(verifier.verify("forged-token")).thenReturn(FirebaseAdminTokenVerifier.identity(token));
+        var identity = FirebaseAdminTokenVerifier.identity(token);
+        when(verifier.verify("forged-token")).thenReturn(identity);
         problem(request("POST", tenantPath(), "forged-token", jsonCreate("a@example.com", List.of(role("DRIVER", null)))), 403, "TENANT_ACCESS_DENIED");
         verify(token, never()).getClaims();
     }
