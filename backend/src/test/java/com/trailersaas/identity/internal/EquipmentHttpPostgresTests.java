@@ -129,7 +129,8 @@ class EquipmentHttpPostgresTests extends PostgresIntegrationTest {
         var sdk=mock(com.google.firebase.auth.FirebaseToken.class);
         when(sdk.getUid()).thenReturn("fixture-"+target);
         when(sdk.getClaims()).thenReturn(Map.of("role","DRIVER","tenantId",tenant.toString(),"isAdmin",true));
-        when(verifier.verify("forged")).thenReturn(FirebaseAdminTokenVerifier.identity(sdk));
+        var identity=FirebaseAdminTokenVerifier.identity(sdk);
+        when(verifier.verify("forged")).thenReturn(identity);
         assertThat(request("GET","/me",null,"forged").statusCode()).isEqualTo(404); // Tenant path cannot become a bootstrap bypass.
         var driver=created("/drivers","{\"name\":\"Fresh\"}");
         problem(request("POST","/drivers/"+driver.get("id")+"/user-link",linkBody(target,0),TOKEN),409,"RESOURCE_CONFLICT");

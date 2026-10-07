@@ -176,7 +176,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
                 }
             }
             try (var rows = statement.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname='public'")) {
-                rows.next(); assertThat(rows.getInt(1)).isEqualTo(11);
+                rows.next(); assertThat(rows.getInt(1)).isEqualTo(13);
             }
         }
     }
