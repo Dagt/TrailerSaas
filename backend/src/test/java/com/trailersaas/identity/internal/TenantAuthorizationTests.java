@@ -117,6 +117,34 @@ class TenantAuthorizationTests {
                 .thenReturn(List.of(new AuthorizationRoleRow(UUID.randomUUID(), role, scope, target)));
     }
 
+    @Test
+    void queryScopeAggregatesCustomersWithoutExposingRolesAndIsImmutable() {
+        var second = UUID.randomUUID();
+        when(repository.forActiveUserInTenant(principal.userId(), tenant)).thenReturn(List.of(
+                new AuthorizationRoleRow(UUID.randomUUID(), RoleCode.CUSTOMER_DISPATCHER, RoleScopeType.CUSTOMER, customer),
+                new AuthorizationRoleRow(UUID.randomUUID(), RoleCode.CUSTOMER_DISPATCHER, RoleScopeType.CUSTOMER, second)));
+        var scope = authorization.resolveCustomerScope(principal, tenant, Capability.CUSTOMER_VIEW);
+        assertThat(scope.tenantWide()).isFalse();
+        assertThat(scope.customerIds()).containsExactlyInAnyOrder(customer, second);
+        assertThatThrownBy(() -> scope.customerIds().clear()).isInstanceOf(UnsupportedOperationException.class);
+        grant(RoleCode.TRANSPORT_OPERATIONS, RoleScopeType.TENANT, null);
+        assertThat(authorization.resolveCustomerScope(principal, tenant, Capability.SITE_VIEW).tenantWide()).isTrue();
+        assertThat(authorization.resolveCustomerScope(principal, tenant, Capability.SITE_VIEW).customerIds()).isEmpty();
+    }
+
+    @Test
+    void scopeResolutionDeniesMissingGrantAssignmentBypassAndSeesRevocation() {
+        denied(() -> authorization.resolveCustomerScope(principal, tenant, Capability.CUSTOMER_VIEW), CAPABILITY_DENIED);
+        grant(RoleCode.DRIVER, RoleScopeType.TENANT, null);
+        denied(() -> authorization.resolveCustomerScope(principal, tenant, Capability.TRIP_VIEW_ASSIGNED), CAPABILITY_DENIED);
+        grant(RoleCode.TENANT_ADMIN, RoleScopeType.TENANT, null);
+        authorization.resolveCustomerScope(principal, tenant, Capability.CUSTOMER_VIEW);
+        roleless();
+        denied(() -> authorization.resolveCustomerScope(principal, tenant, Capability.CUSTOMER_VIEW), CAPABILITY_DENIED);
+        when(repository.forActiveUserInTenant(principal.userId(), tenant)).thenReturn(List.of());
+        denied(() -> authorization.resolveCustomerScope(principal, tenant, Capability.CUSTOMER_VIEW), TENANT_ACCESS_DENIED);
+    }
+
     static void denied(org.assertj.core.api.ThrowableAssert.ThrowingCallable action,
             AuthorizationDeniedException.Reason reason) {
         assertThatThrownBy(action).isInstanceOfSatisfying(AuthorizationDeniedException.class,

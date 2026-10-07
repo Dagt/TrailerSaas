@@ -92,8 +92,8 @@ class AuthorizationHttpPostgresTests extends PostgresIntegrationTest {
     void customerConsumerUsesCapabilityWithoutRoleChecksAndKeepsOtherScopesPrivate(CapturedOutput output) throws Exception {
         var tenant = fixtures.tenant("Scoped");
         var membership = fixtures.membership(tenant, user, "ACTIVE");
-        var a = UUID.randomUUID();
-        var b = UUID.randomUUID();
+        var a = fixtures.customer(tenant);
+        var b = fixtures.customer(tenant);
         fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", a);
         assertThat(request(edit(tenant, a), TOKEN).statusCode()).isEqualTo(200);
         var response = request(edit(tenant, b), TOKEN);
@@ -139,8 +139,8 @@ class AuthorizationHttpPostgresTests extends PostgresIntegrationTest {
     void maliciousFirebaseBusinessClaimsCannotChangeDatabaseAuthorization(CapturedOutput output) throws Exception {
         var tenant = fixtures.tenant("Actual scope");
         var membership = fixtures.membership(tenant, user, "ACTIVE");
-        var a = UUID.randomUUID();
-        var b = UUID.randomUUID();
+        var a = fixtures.customer(tenant);
+        var b = fixtures.customer(tenant);
         var foreignTenant = fixtures.tenant("Other Tenant");
         var foreignMembership = fixtures.membership(foreignTenant, fixtures.user(), "ACTIVE");
         fixtures.role(foreignTenant, foreignMembership, "TENANT_ADMIN", "TENANT", null);

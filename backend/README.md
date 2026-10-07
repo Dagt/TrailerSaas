@@ -194,10 +194,9 @@ Partial unique indexes prevent duplicate roles per membership/Customer; the
 composite membership FK prevents cross-Tenant role references. FKs have no
 destructive delete cascades.
 
-Customers do not exist yet. V3 retains the accepted customer_id and scope checks;
-#27 must add the tenant-safe Customer FK when it creates customers, before
-Customer-scoped assignment writes are exposed. Only test migrator fixtures
-insert structural Customer UUIDs now. No production Tenant/membership/role write
+V5 adds real Customers and the tenant-safe role_assignments Customer FK, preserving
+V3's customer_id and scope checks. Test migrator fixtures now create Customers
+before inserting Customer-scoped roles. No production Tenant/membership/role write
 commands or Admin endpoints are implemented. Runtime has only SELECT on the
 three V3 tables, retaining V2's existing SELECT/INSERT on global users.
 
@@ -222,7 +221,7 @@ and roles are freshly read for every request, without token/SecurityContext cach
 
 ## Capability and scope authorization (#24)
 
-The public identity module API is `Capability` (the 53 documented permissions)
+The public identity module API is `Capability` (55 permissions after #27)
 and `TenantAuthorization`. Consumers request capabilities, never compare role
 names or use Spring role/authority annotations. The only role mapping is internal
 `RoleCapabilities`; its exact conservative grants are documented in
@@ -267,9 +266,9 @@ contents do not authorize protected actions. Role deletion or membership suspens
 takes effect on the next authorization with the same token. Firebase custom claims
 still cannot grant capabilities and Spring authorities remain empty.
 
-No Customer table/FK, Driver/Trip lookup, domain-state rules, invitations or mutation
-endpoints are implemented here. All synthetic consumers and
-HTTP endpoints demonstrating this integration live exclusively in test sources.
+#24's synthetic authorization consumers remain exclusively in test sources.
+#27 adds Customer persistence/FK and production master-data consumers below;
+Driver/Trip lookup, domain-state execution and invitations remain deferred.
 
 ## Transaction-local PostgreSQL RLS (#26)
 
@@ -323,6 +322,99 @@ authorization/`TenantContext`, not this executor. It grants no capabilities;
 future workers must enforce their own server-side authorization/work contract.
 No actual job is implemented.
 
+## Customers, Sites and Operational Locations (#27)
+
+`V5__customers_sites_locations.sql` creates four Tenant-owned tables:
+`customers`, `physical_sites`, `customer_sites`, `operational_locations`.
+V1-V4 and Accepted schema documents are unchanged. Customer status is
+ACTIVE/INACTIVE; Location types are BASE/YARD/DOCK/CUSTOMER_AREA/SHOP/OTHER.
+All relationships use Tenant-safe composite FKs, including the previously
+deferred `role_assignments(tenant_id, customer_id)` FK. There is no destructive
+CASCADE or fake LOCATION_UNKNOWN row. The Location identity includes amendment
+N's UNIQUE(tenant_id, site_id, id).
+
+All four tables enable RLS with Tenant USING/WITH CHECK and mutually exclusive
+Tenant/bootstrap settings from #26. They have no bootstrap policy: no context,
+or /me bootstrap context, means no master-data rows. Customer filtering remains
+application authorization, not Customer-level RLS. Users remains global.
+Runtime retains its restricted ownership model and existing V2/V3 grants.
+V5 grants SELECT/INSERT/UPDATE on Customers, Sites and Locations, and
+SELECT/INSERT/DELETE (not UPDATE) on customer_sites; no other writes/deletes.
+
+`TenantAuthorization.resolveCustomerScope(principal, tenantId, capability)`
+returns an immutable `CustomerAccessScope`: Tenant-wide or a set of Customer
+UUIDs, never roles. It resolves fresh ACTIVE membership and current DB grants
+in the consumer's transaction. Assignment-scoped capabilities cannot use it.
+CUSTOMER_VIEW/SITE_VIEW are Tenant-wide for Tenant Admin and Transport
+Operations, Customer-scoped for Customer Dispatcher, absent for Driver/Yard
+Spotter. Operations/Dispatcher do not acquire any master-data writes.
+Other ambiguous mapping entries remain deferred/deny-by-default.
+
+One Physical Site can have multiple customer_sites associations: the address is
+not duplicated per Customer. Dispatcher Customer lists filter by permitted IDs;
+Site queries use associations; Location queries filter by permitted customer_id,
+excluding neutral NULL Locations. Tenant-wide readers see neutral Locations.
+Direct Customer access outside scope is 403 CUSTOMER_SCOPE_DENIED; a Site
+not visible through associations returns 404 RESOURCE_NOT_FOUND.
+
+All paths below are relative to `/api/v1/tenants/{tenantId}`:
+
+| Path | Methods / capability |
+| --- | --- |
+| /customers | POST CUSTOMER_CREATE; GET CUSTOMER_VIEW |
+| /customers/{customerId} | GET CUSTOMER_VIEW; PATCH CUSTOMER_EDIT |
+| /sites | POST SITE_CREATE; GET SITE_VIEW |
+| /sites/{siteId} | GET SITE_VIEW; PATCH SITE_EDIT |
+| /customers/{customerId}/sites | POST CUSTOMER_EDIT |
+| /customers/{customerId}/sites/{siteId} | DELETE CUSTOMER_EDIT |
+| /sites/{siteId}/locations | POST SITE_CREATE; GET SITE_VIEW |
+| /locations/{locationId} | PATCH SITE_EDIT |
+
+Writes require Tenant-wide grants. Responses are DTOs, never JPA entities.
+Master-data list responses are `{"items": [...]}`, ordered by name then id,
+without cursor/filter parameters in this baseline; unsupported query parameters
+are rejected. Operational/history cursor pagination remains a later concern.
+OpenAPI documents these shapes and only expands #27 paths/schemas.
+
+Creates default to version 0 and ACTIVE Customer / active Site / active Location.
+PATCH requires a nonnegative integral expectedVersion. @Version protects races
+after comparison; conflicts return 409 STALE_VERSION. No-op PATCH does not
+increment the version. Omitted fields stay unchanged; explicit null clears
+nullable fields. Address objects update supplied subfields, while null clears
+the address. Location siteId is immutable and an attempted PATCH is rejected;
+no move endpoint exists. Coordinates are independently optional and rounded to
+the schema's six decimals; IANA zones, coordinate ranges, positive integer
+radius and two-character country codes are validated without paired-coordinate
+rules.
+
+Customer-specific Location creation, Customer changes and active updates require
+the Customer-Site association in the same transaction. Inactive historical
+Locations can retain a removed association; reactivation requires revalidation.
+Association removal returns 409 RESOURCE_CONFLICT when an active Location
+references that Tenant/Customer/Site; inactive history is retained.
+
+Both operations lock the **parent Physical Site**: FOR SHARE for Location
+validation; FOR UPDATE before association removal and its active-Location check.
+This intentionally serializes association changes within a Site. PostgreSQL
+requires UPDATE privilege for SELECT row locks, even FOR SHARE, so locking
+customer_sites directly would contradict its approved no-UPDATE grant.
+The parent lock uses existing Site UPDATE permission instead; no privileges or
+security-definer shortcuts are added. The association is read after locking
+under the standard READ COMMITTED transaction, so a committed removal is seen.
+Concurrent creates/reactivations and removals follow the same lock protocol.
+No permanent Location-to-association FK prevents retaining inactive history.
+See [PostgreSQL row-lock privileges](https://www.postgresql.org/docs/18/sql-select.html).
+
+Duplicate Customer names/associations map to safe 409 RESOURCE_CONFLICT;
+validation to 400 VALIDATION_FAILED; missing resources to safe 404.
+Problem Details retain code, safe field errors, traceId and X-Request-Id without
+returning SQL/constraint names, internal grants, tokens or foreign metadata.
+
+V5 validates the new FK immediately. Existing databases with orphan Customer
+role UUIDs must be repaired by an administrator before upgrading, not silently
+seeded or migrated with the constraint disabled. No invitations (#25), equipment
+(#28/#29), Web forms (#30), Orders/Trips or audit implementation is included.
+
 ## Tests
 
 With a working Docker daemon in Linux-container mode:
@@ -346,8 +438,8 @@ pointing to a stopped container in later subclasses. Container reuse is disabled
 The existing HTTP health/startup tests now run against that real container.
 Additional assertions prove PostgreSQL major 18, separate JDBC connection users,
 Flyway migration history/validation, JPA startup/native query, no H2 driver,
-no runtime schema CREATE/BYPASSRLS/superuser permissions and only the four identity
-tables plus Flyway history.
+no runtime schema CREATE/BYPASSRLS/superuser permissions and the four identity
+plus four master-data tables and Flyway history.
 Configuration context tests also cover explicit/default profiles, required values,
 invalid JDBC URLs, local remote-DB rejection and sanitized failures, without DB
 connections or real provider requirements. Security/adapter tests cover safe 401,
@@ -356,15 +448,15 @@ PostgreSQL tests cover V2/grants/UID uniqueness, duplicate emails, concurrent fi
 logins and real HTTP authentication-to-users with a test-only verifier. No FirebaseApp,
 ADC or external Firebase/Google/emulator call is made in CI. V3 tests exercise
 membership status/uniqueness, the composite Tenant FK, all role/scope combinations,
-partial role uniqueness, read-only runtime grants, preserved history and absent
-Customer/invitation tables. Real HTTP tests cover multi-Tenant User isolation,
+partial role uniqueness, read-only identity runtime grants, preserved history and
+absent invitation tables. Real HTTP tests cover multi-Tenant User isolation,
 ignored claim/header/User-ID hints, roleless memberships, Customer-scoped roles,
 stable ordering and fresh status/role reads; original 401/stateless tests remain.
 #24 tests cover the exact five-role mapping across all capabilities, scoped ACTIVE
 resolution, deny-by-default, multiple roles, Customer A/B isolation, assigned-work
 constraints and bypass prevention. Real HTTP/PostgreSQL tests prove same-token
 revocation, ignored malicious claims, safe correlated 401/403 responses and the
-difference between membership visibility and authorization. Flyway now ends at V4;
+difference between membership visibility and authorization. Flyway now ends at V5;
 existing table/column and runtime grant assertions remain, with RLS enabled.
 V4 tests deliberately omit Tenant predicates and verify isolation in PostgreSQL,
 bootstrap privacy, context conflicts, and outer-transaction authorization.
@@ -373,6 +465,13 @@ after both commit and rollback, for Tenant and bootstrap modes. Temporary
 test-only INSERT/UPDATE/DELETE grants demonstrate cross-Tenant WITH CHECK
 rejection and bootstrap SELECT-only behavior, then REVOKE in finally; V4 adds
 no write grant. Background execution is exercised for successive Tenants.
+V5 tests verify all new RLS tables with deliberately missing Tenant predicates,
+no-context/bootstrap denial, cross-Tenant INSERT/UPDATE rejection, exact grants,
+closed SQL catalogs, composite FKs and no cascades. HTTP tests exercise CRUD,
+scoped shared Sites/neutral Locations, validation, version conflict, fresh
+authorization and safe correlated errors. Concurrent PostgreSQL transactions
+prove @Version conflict detection and Site-lock serialization of association
+removal against Location creation/reactivation.
 Module-boundary tests continue
 unchanged. Tests fail, rather than skip or mock,
 when Docker is unavailable.

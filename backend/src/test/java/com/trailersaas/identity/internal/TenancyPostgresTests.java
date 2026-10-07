@@ -29,19 +29,19 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     void fixtures() { fixtures = new IdentityFixtures(flyway); }
 
     @Test
-    void flywayV4PreservesAcceptedIdentityTablesAndUserColumns() throws Exception {
+    void flywayV5PreservesAcceptedIdentityColumnsAndAddsCustomerForeignKey() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
         // Flyway history is migrator-owned; runtime deliberately has no grant.
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4");
+                .containsExactly("1", "2", "3", "4", "5");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
                 while (rows.next()) { tables.add(rows.getString(1)); }
             }
             assertThat(tables).containsExactlyInAnyOrder("users", "tenants", "tenant_memberships",
-                    "role_assignments", "flyway_schema_history");
+                    "role_assignments", "flyway_schema_history", "customers", "physical_sites", "customer_sites", "operational_locations");
             for (var entry : java.util.Map.of(
                     "users", List.of("id", "firebase_uid", "email", "display_name", "created_at", "updated_at"),
                     "tenants", List.of("id", "name", "status", "created_at", "updated_at"),
@@ -58,7 +58,7 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
             try (var rows = statement.executeQuery(
                     "SELECT count(*) FROM pg_constraint WHERE conrelid='role_assignments'::regclass AND contype='f'")) {
                 rows.next();
-                assertThat(rows.getInt(1)).isEqualTo(1); // Membership FK only; Customer FK belongs to #27.
+                assertThat(rows.getInt(1)).isEqualTo(2); // Membership and tenant-safe Customer FKs.
             }
         }
     }
@@ -126,12 +126,12 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     }
 
     @Test
-    void dispatcherRequiresCustomerScopeAndSupportsDifferentCustomerIdsWithoutPrematureCustomerTable() throws Exception {
+    void dispatcherRequiresCustomerScopeAndSupportsDifferentRealCustomers() throws Exception {
         var tenant = fixtures.tenant("Dispatcher");
         var membership = fixtures.membership(tenant, fixtures.user(), "ACTIVE");
-        var customer = UUID.randomUUID();
+        var customer = fixtures.customer(tenant);
         fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", customer);
-        fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", UUID.randomUUID());
+        fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", fixtures.customer(tenant));
         rejects("23505", () -> fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", customer));
         rejects("23514", () -> fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", null));
         rejects("23514", () -> fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "TENANT", null));

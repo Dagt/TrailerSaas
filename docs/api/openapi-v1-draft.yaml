@@ -104,9 +104,14 @@ paths:
     get:
       tags: [Customers]
       operationId: listCustomers
+      description: CUSTOMER_VIEW. Ordered by name/id; Customer-scoped readers receive only their Customers. No query filters or cursor in this master-data baseline.
       responses:
         '200':
-          $ref: '#/components/responses/PagedResponse'
+          description: Scoped Customer list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerList'
         default:
           $ref: '#/components/responses/Problem'
     post:
@@ -135,6 +140,7 @@ paths:
     get:
       tags: [Customers]
       operationId: getCustomer
+      description: CUSTOMER_VIEW. A Customer-scoped target outside grants returns CUSTOMER_SCOPE_DENIED without revealing existence.
       responses:
         '200':
           description: Customer
@@ -160,6 +166,180 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+
+  /api/v1/tenants/{tenantId}/sites:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Sites]
+      operationId: listSites
+      description: SITE_VIEW. Tenant-wide readers see all; Customer readers see associated Sites only.
+      responses:
+        '200':
+          description: Scoped master data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalSiteList'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Sites]
+      operationId: createSite
+      description: SITE_CREATE Tenant-wide. Defaults active=true, version=0.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSiteRequest'
+      responses:
+        '201':
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalSite'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/sites/{siteId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/SiteId'
+    get:
+      tags: [Sites]
+      operationId: getSite
+      description: SITE_VIEW. Sites outside Customer scope or Tenant return RESOURCE_NOT_FOUND.
+      responses:
+        '200':
+          description: Scoped master data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalSite'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Sites]
+      operationId: updateSite
+      description: SITE_EDIT Tenant-wide. expectedVersion is required; stale writes return STALE_VERSION.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSiteRequest'
+      responses:
+        '200':
+          description: Updated resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalSite'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/customers/{customerId}/sites:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CustomerId'
+    post:
+      tags: [Sites]
+      operationId: associateCustomerSite
+      description: CUSTOMER_EDIT Tenant-wide. Duplicate association returns RESOURCE_CONFLICT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssociateCustomerSiteRequest'
+      responses:
+        '201':
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSite'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/customers/{customerId}/sites/{siteId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CustomerId'
+      - $ref: '#/components/parameters/SiteId'
+    delete:
+      tags: [Sites]
+      operationId: removeCustomerSiteAssociation
+      description: CUSTOMER_EDIT Tenant-wide. Active Customer Locations prevent removal (RESOURCE_CONFLICT). Inactive history remains.
+      responses:
+        '204':
+          description: Association removed
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/sites/{siteId}/locations:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/SiteId'
+    get:
+      tags: [Sites]
+      operationId: listOperationalLocations
+      description: SITE_VIEW. Customer readers see only their Customer Locations, never neutral Locations.
+      responses:
+        '200':
+          description: Scoped master data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationalLocationList'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Sites]
+      operationId: createOperationalLocation
+      description: SITE_CREATE Tenant-wide. Customer-specific Locations require an existing Customer-Site association.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOperationalLocationRequest'
+      responses:
+        '201':
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationalLocation'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/locations/{locationId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/LocationId'
+    patch:
+      tags: [Sites]
+      operationId: updateOperationalLocation
+      description: SITE_EDIT Tenant-wide. Site is immutable. Reactivation or Customer change revalidates the association.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOperationalLocationRequest'
+      responses:
+        '200':
+          description: Updated resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationalLocation'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -486,6 +666,16 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    SiteId:
+      name: siteId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    LocationId:
+      name: locationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     OrderId:
       name: orderId
       in: path
@@ -606,25 +796,151 @@ components:
       type: object
       required: [name]
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, description: Nonblank Customer name }
 
     UpdateCustomerRequest:
       type: object
+      additionalProperties: false
       required: [expectedVersion]
       properties:
-        expectedVersion: { type: integer, format: int64 }
-        name: { type: string }
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        name: { type: string, minLength: 1 }
         status:
           type: string
           enum: [ACTIVE, INACTIVE]
 
     Customer:
       type: object
+      required: [id, name, status, version, createdAt, updatedAt]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
-        status: { type: string }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
         version: { type: integer, format: int64 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    CustomerList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Customer' }
+
+    SiteAddress:
+      type: [object, "null"]
+      properties:
+        line1: { type: [string, "null"] }
+        line2: { type: [string, "null"] }
+        city: { type: [string, "null"] }
+        stateRegion: { type: [string, "null"] }
+        postalCode: { type: [string, "null"] }
+        countryCode: { type: [string, "null"], minLength: 2, maxLength: 2 }
+
+    CreateSiteRequest:
+      type: object
+      required: [name, timezone]
+      properties:
+        name: { type: string, minLength: 1 }
+        address: { $ref: '#/components/schemas/SiteAddress' }
+        timezone: { type: string, description: Valid IANA timezone }
+        latitude: { type: [number, "null"], minimum: -90, maximum: 90 }
+        longitude: { type: [number, "null"], minimum: -180, maximum: 180 }
+        geofenceRadiusM: { type: [integer, "null"], minimum: 1, maximum: 2147483647 }
+
+    UpdateSiteRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      description: Omitted fields remain unchanged; null clears nullable fields. Address object updates only provided subfields; null clears the whole address.
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        name: { type: string, minLength: 1 }
+        address: { $ref: '#/components/schemas/SiteAddress' }
+        timezone: { type: string, description: Valid IANA timezone }
+        latitude: { type: [number, "null"], minimum: -90, maximum: 90 }
+        longitude: { type: [number, "null"], minimum: -180, maximum: 180 }
+        geofenceRadiusM: { type: [integer, "null"], minimum: 1, maximum: 2147483647 }
+        active: { type: boolean }
+
+    PhysicalSite:
+      allOf:
+        - $ref: '#/components/schemas/CreateSiteRequest'
+        - type: object
+          required: [id, active, version, createdAt, updatedAt]
+          properties:
+            id: { type: string, format: uuid }
+            active: { type: boolean }
+            version: { type: integer, format: int64 }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    PhysicalSiteList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PhysicalSite' }
+
+    AssociateCustomerSiteRequest:
+      type: object
+      required: [siteId]
+      properties:
+        siteId: { type: string, format: uuid }
+
+    CustomerSite:
+      type: object
+      required: [id, customerId, siteId, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+
+    CreateOperationalLocationRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string, minLength: 1 }
+        type: { type: string, enum: [BASE, YARD, DOCK, CUSTOMER_AREA, SHOP, OTHER] }
+        code: { type: [string, "null"] }
+        customerId: { type: [string, "null"], format: uuid }
+
+    UpdateOperationalLocationRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      description: siteId is immutable. Null clears code/customerId; omitted fields stay unchanged.
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        name: { type: string, minLength: 1 }
+        type: { type: string, enum: [BASE, YARD, DOCK, CUSTOMER_AREA, SHOP, OTHER] }
+        code: { type: [string, "null"] }
+        customerId: { type: [string, "null"], format: uuid }
+        active: { type: boolean }
+
+    OperationalLocation:
+      allOf:
+        - $ref: '#/components/schemas/CreateOperationalLocationRequest'
+        - type: object
+          required: [id, siteId, customerId, code, active, version, createdAt, updatedAt]
+          properties:
+            id: { type: string, format: uuid }
+            siteId: { type: string, format: uuid }
+            active: { type: boolean }
+            version: { type: integer, format: int64 }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    OperationalLocationList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OperationalLocation' }
 
     CargoLineInput:
       type: object

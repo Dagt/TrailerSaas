@@ -71,8 +71,8 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
-        assertThat(flyway.info().current().getDescription()).isEqualTo("identity tenant rls");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("customers sites locations");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
@@ -92,7 +92,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void jpaValidatesOnlyTheFlywayCreatedIdentityEntities() throws Exception {
         assertThat(entityManagerFactory.isOpen()).isTrue();
-        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(4);
+        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(8);
         assertThat(entityManagerFactory.getProperties())
                 .containsEntry("hibernate.hbm2ddl.auto", "validate");
         assertThat(environment.getProperty("spring.sql.init.mode")).isEqualTo("never");
@@ -107,7 +107,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
             var names = new java.util.ArrayList<String>();
             while (tables.next()) { names.add(tables.getString(1)); }
             assertThat(names).containsExactlyInAnyOrder("flyway_schema_history", "users",
-                    "tenants", "tenant_memberships", "role_assignments");
+                    "tenants", "tenant_memberships", "role_assignments", "customers", "physical_sites", "customer_sites", "operational_locations");
         }
     }
 

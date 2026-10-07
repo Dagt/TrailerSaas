@@ -7,6 +7,9 @@ import java.util.UUID;
  * decision or a substitute for tenant-safe resource lookup.
  */
 public interface TenantAuthorization {
+    /** Current database scope for filtering resource queries, never cached in the principal. */
+    CustomerAccessScope resolveCustomerScope(AuthenticatedUserPrincipal principal, UUID tenantId, Capability capability);
+
     /** Customer-scoped grants cannot satisfy a Tenant-wide check. */
     void requireTenantCapability(AuthenticatedUserPrincipal principal, UUID tenantId, Capability capability);
 

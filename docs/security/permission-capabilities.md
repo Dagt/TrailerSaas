@@ -21,8 +21,10 @@ Roles map to capabilities centrally. Domain-state rules are evaluated after capa
 
 - `CUSTOMER_CREATE`
 - `CUSTOMER_EDIT`
+- `CUSTOMER_VIEW`
 - `SITE_CREATE`
 - `SITE_EDIT`
+- `SITE_VIEW`
 
 ### Driver / tractor / trailer master data
 
@@ -156,6 +158,32 @@ accept TENANT scope or the matching CUSTOMER UUID. Assignment-scoped Trip
 capabilities require the explicit server-derived assigned-work condition.
 No RLS/TenantContext, Customer existence lookup, schema changes or business
 endpoints are introduced by #24. See [backend integration API](../../backend/README.md#capability-and-scope-authorization-24).
+
+## Approved master-data read mapping (#27)
+
+The owner explicitly approved CUSTOMER_VIEW and SITE_VIEW for #27, extending
+the catalog from 53 to 55. This document remains **Draft baseline**; the #24
+table above is its original conservative mapping, now extended only as follows:
+
+| Role | CUSTOMER_VIEW | SITE_VIEW |
+| --- | --- | --- |
+| TENANT_ADMIN | Tenant-wide | Tenant-wide |
+| TRANSPORT_OPERATIONS | Tenant-wide, read-only | Tenant-wide, read-only |
+| CUSTOMER_DISPATCHER | Assigned Customers only | Associated Sites / own Customer Locations |
+| YARD_SPOTTER | Deny | Deny |
+| DRIVER | Deny | Deny |
+
+CUSTOMER_CREATE, CUSTOMER_EDIT, SITE_CREATE and SITE_EDIT retain the #24
+Admin-only mapping. Operations/Dispatcher writes and all unrelated TBD,
+limited, scoped-audit, Yard-scope and override decisions remain deferred.
+
+Identity exposes fresh `resolveCustomerScope`, returning Tenant-wide or an
+immutable Customer UUID set without exposing role codes. Customers uses this
+boundary to filter database queries. Shared Physical Sites are visible to a
+Dispatcher through customer_sites; Locations require a matching customer_id.
+Neutral NULL Locations are visible only to Tenant-wide readers. Customer-level
+RLS is not introduced; transaction-local Tenant RLS remains defense-in-depth.
+Customer-scoped roles now reference real Customers via the V5 Tenant-safe FK.
 
 ## Future custom roles
 
