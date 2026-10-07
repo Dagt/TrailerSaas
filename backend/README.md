@@ -224,7 +224,7 @@ and roles are freshly read for every request, without token/SecurityContext cach
 
 ## Capability and scope authorization (#24)
 
-The public identity module API is `Capability` (55 permissions after #27)
+The public identity module API is `Capability` (57 permissions after #28)
 and `TenantAuthorization`. Consumers request capabilities, never compare role
 names or use Spring role/authority annotations. The only role mapping is internal
 `RoleCapabilities`; its exact conservative grants are documented in
@@ -420,6 +420,74 @@ role UUIDs must be repaired by an administrator before upgrading, not silently
 seeded or migrated with the constraint disabled. Equipment (#28/#29), Web forms
 (#30), Orders/Trips and audit remain unimplemented.
 
+## Drivers and Tractors master data (#28)
+
+V7__drivers_tractors.sql adds only drivers and tractors, preserving V1–V6.
+Drivers carry optional global user_id, name, nullable license/certificate date,
+active, timestamps and optimistic version. Tractors carry the original display
+number, a private STORED generated normalized key, active, timestamps and version.
+Both use Tenant-safe id uniqueness and non-cascading FKs. Drivers may exist
+without a User. The partial (tenant_id,user_id) index prevents two linked Drivers
+for the same User within one Tenant, while allowing links across Tenants.
+
+Tractor normalization implements amendment I exactly, with deterministic "C"
+collation and no PostgreSQL extension:
+
+```sql
+translate(
+  regexp_replace(btrim(operational_number, ' ') COLLATE "C", ' +', ' ', 'g'),
+  'abcdefghijklmnopqrstuvwxyz',
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+)
+```
+
+Display is never rewritten. SQL rejects empty normalized keys and C0/C1
+controls (PostgreSQL text also rejects NUL); application validation rejects
+all controls before persistence. Punctuation, zeros, separators and non-ASCII
+remain distinct. Uniqueness is enforced by (tenant_id,normalized key).
+
+Runtime grants are exactly SELECT/INSERT/UPDATE on both tables, without DELETE,
+ownership, schema CREATE or bypass privileges. RLS USING and WITH CHECK require
+the transaction-local Tenant and exclude bootstrap-user context. No-context
+and /me-bootstrap queries see zero equipment rows. Existing policies are intact.
+
+Tenant Admin may create/edit via DRIVER_CREATE/EDIT and TRACTOR_CREATE/EDIT.
+The approved DRIVER_VIEW/TRACTOR_VIEW additions extend the exhaustive catalog
+to 57 and grant only Admin and Transport Operations generic Tenant-wide reads.
+Operations receives no writes; Dispatcher/Yard/Driver receives no generic browse.
+
+Identity's public DriverAccountLinkPolicy requires the existing transaction's
+Tenant context and checks fresh ACTIVE membership plus TENANT DRIVER role for
+the target User. It reveals no internal roles, grants no actor capability and
+never establishes arbitrary Tenant access. Drivers uses only this public API;
+actor authorization remains DRIVER_EDIT. Linking locks the Driver and checks
+expectedVersion; an existing link cannot be silently replaced. Linking creates
+no membership/role/invitation. Unlinking preserves User/access/history.
+
+Implemented Tenant-scoped routes:
+
+- POST/GET /drivers; GET/PATCH /drivers/{driverId}
+- POST /drivers/{driverId}/user-link: userId + expectedVersion, 200 Driver
+- DELETE /drivers/{driverId}/user-link: required expectedVersion JSON body, 204
+- POST/GET /tractors; GET/PATCH /tractors/{tractorId}
+
+No general create/PATCH accepts Driver userId. Nullable license/certificate
+fields can be cleared explicitly; expired dates remain valid metadata.
+Lists return items, deterministically ordered by name/id or normalized key/id,
+without filters/pagination. Unknown query/body fields are rejected.
+All mutations require expectedVersion except creation; @Version protects races.
+No-op PATCH and already-null unlink retain version. active supports deactivation/
+reactivation; neither aggregate supports hard delete. Version conflicts return
+STALE_VERSION; expected UNIQUE/FK/CHECK violations return generic RESOURCE_CONFLICT.
+Infrastructure SQL states are not converted to 409 and remain sanitized 5xx.
+
+PostgreSQL 18 tests exercise generated normalization, exact grants, RLS
+unfiltered/cross-Tenant queries, bootstrap/pool cleanup, link uniqueness and fresh
+eligibility. Real HTTP tests cover permissions, nullable patching, link/unlink,
+concurrent links, stale versions and safe infrastructure errors. Concurrent JPA
+transactions prove @Version detects simultaneous Driver/Tractor updates.
+No Trailer, UI, default assignment, Driver Shift, audit or #29/#30 is implemented.
+
 ## Membership invitation/onboarding (#25)
 
 V6__membership_invitations.sql creates only membership_invitations and
@@ -539,7 +607,7 @@ stable ordering and fresh status/role reads; original 401/stateless tests remain
 resolution, deny-by-default, multiple roles, Customer A/B isolation, assigned-work
 constraints and bypass prevention. Real HTTP/PostgreSQL tests prove same-token
 revocation, ignored malicious claims, safe correlated 401/403 responses and the
-difference between membership visibility and authorization. Flyway now ends at V6;
+difference between membership visibility and authorization. Flyway now ends at V7;
 existing table/column and runtime grant assertions remain, with RLS enabled.
 V4 tests deliberately omit Tenant predicates and verify isolation in PostgreSQL,
 bootstrap privacy, context conflicts, and outer-transaction authorization.

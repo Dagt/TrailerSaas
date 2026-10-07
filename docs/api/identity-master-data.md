@@ -298,7 +298,9 @@ The API supports multiple Customer contexts under one Physical Site.
 ### GET /drivers/{driverId}
 ### PATCH /drivers/{driverId}
 
-Capabilities: `DRIVER_CREATE`, `DRIVER_EDIT`.
+Implemented in #28. POST requires DRIVER_CREATE; PATCH requires DRIVER_EDIT.
+Both writes remain Admin-only. GET/list/detail require DRIVER_VIEW, granted
+Tenant-wide only to Tenant Admin and Transport Operations (read-only).
 
 Create:
 
@@ -310,7 +312,21 @@ Create:
 }
 ```
 
-Optional account linking/invitation is a separate identity workflow.
+Server defaults active=true, version=0 and userId=null. userId, active and version
+are not accepted in create. Name must be nonblank; licenseNumber and
+medicalCertificateExpires are nullable. License numbers have no normalization
+or uniqueness rule; expired certificate dates remain valid master data.
+
+Responses contain id, userId, name, licenseNumber, medicalCertificateExpires,
+active, version, createdAt and updatedAt. Lists return `{"items":[]}`, ordered by
+name/id. No filters/pagination; unknown query parameters are rejected.
+
+PATCH requires nonnegative expectedVersion and accepts only name, licenseNumber,
+medicalCertificateExpires and active. Omission preserves a field; explicit null
+clears the two nullable fields. active=false deactivates and active=true
+reactivates. No hard delete or Trip-state rule. No-op PATCH retains version;
+stale versions and concurrent optimistic races return 409 STALE_VERSION.
+userId cannot change through create/PATCH.
 
 ### POST /drivers/{driverId}/user-link
 
@@ -325,11 +341,31 @@ Request:
 }
 ```
 
-Links an existing authenticated User to the Driver record after invitation/account creation. The server validates the User has appropriate active Tenant membership and that no conflicting Driver link exists.
+Returns 200 Driver with incremented version. The server authorizes the actor,
+locks the Tenant-scoped Driver, checks expectedVersion and freshly verifies
+that the target User has a same-Tenant ACTIVE membership plus a TENANT DRIVER
+role with customer_id NULL. The public identity eligibility boundary hides role
+data from Drivers; Firebase claims never influence this validation.
+
+Missing/ineligible User, an already-linked Driver (even to the same User), or
+another Driver linked to that User in this Tenant returns generic 409
+RESOURCE_CONFLICT. Replace only by unlinking first and using the refreshed
+version. A database partial unique index enforces one Driver per User per Tenant;
+the same User may link in different Tenants. Linking creates no membership/roles
+and sends no invitation.
 
 ### DELETE /drivers/{driverId}/user-link
 
-Unlinks the current login identity from the Driver profile without deleting either historical entity.
+Capability: DRIVER_EDIT. Required JSON body:
+
+```json
+{"expectedVersion": 4}
+```
+
+Returns 204. Removes only user_id, preserving User, membership, roles and history.
+An already-null link with matching version is an idempotent 204 without version
+increment; removing an existing link increments version. Unknown fields are
+rejected and stale versions return STALE_VERSION.
 
 ## 10. Tractors
 
@@ -338,7 +374,39 @@ Unlinks the current login identity from the Driver profile without deleting eith
 ### GET /tractors/{tractorId}
 ### PATCH /tractors/{tractorId}
 
-Capabilities: `TRACTOR_CREATE`, `TRACTOR_EDIT`.
+Implemented in #28. POST requires TRACTOR_CREATE and PATCH requires TRACTOR_EDIT,
+both Admin-only. GET/list/detail require TRACTOR_VIEW, granted Tenant-wide only
+to Tenant Admin and Transport Operations (read-only).
+
+Create accepts only operationalNumber:
+
+```json
+{"operationalNumber": " t114 "}
+```
+
+Server defaults active=true and version=0. Responses contain id,
+operationalNumber, active, version, createdAt and updatedAt. The display value
+is preserved exactly; the generated normalized key is never returned.
+
+The Tenant-unique STORED key trims only ASCII U+0020 at either end, collapses
+internal ASCII-space runs, and folds only ASCII a-z to A-Z. Punctuation, leading
+zeros and non-ASCII are preserved. Tabs, CR/LF and C0/C1 controls are rejected;
+an empty normalized key is invalid. Thus " t114 " collides with "T114" and
+"bh  t114" with "BH T114", while "T-114", "T114" and "T0114" remain distinct.
+PostgreSQL enforces this even if application validation is bypassed.
+
+Lists return `{"items":[]}`, ordered by normalized key/id while displaying the
+original number. No filters/pagination; unknown query parameters are rejected.
+PATCH requires expectedVersion and accepts operationalNumber and active only.
+Omitted fields remain unchanged; a no-op retains version. Deactivate/reactivate
+uses active; no hard delete. Number edits revalidate controls and uniqueness.
+Normalized collisions return 409 RESOURCE_CONFLICT; stale versions and
+optimistic races return 409 STALE_VERSION.
+
+For both modules, cross-Tenant/nonexistent resource IDs return 404
+RESOURCE_NOT_FOUND after valid Tenant authorization. All requests use existing
+401/403/correlation and safe Problem Details. Infrastructure failures remain
+5xx; SQL/constraints, internal roles and cross-Tenant metadata are not returned.
 
 ## 11. Trailers
 

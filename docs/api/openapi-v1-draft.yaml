@@ -455,6 +455,210 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/drivers:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Drivers]
+      operationId: listDrivers
+      description: >
+        DRIVER_VIEW. Tenant-wide Admin/Transport Operations reads. Ordered by name/id, without pagination or query filters. Unknown query parameters return VALIDATION_FAILED.
+      responses:
+        '200':
+          description: DriverList
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverList'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Drivers]
+      operationId: createDriver
+      description: >
+        DRIVER_CREATE. Admin-only. Server sets active=true and version=0. A Driver may exist without a User; userId cannot be set here.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDriverRequest'
+      responses:
+        '201':
+          description: Driver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/drivers/{driverId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: driverId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Drivers]
+      operationId: getDriver
+      description: >
+        DRIVER_VIEW. A nonexistent/cross-Tenant resource returns RESOURCE_NOT_FOUND after Tenant authorization.
+      responses:
+        '200':
+          description: Driver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Drivers]
+      operationId: updateDriver
+      description: >
+        DRIVER_EDIT. Admin-only. Omitted fields remain unchanged; no-op PATCH retains version. Stale expectedVersion or optimistic races return STALE_VERSION. active=false deactivates; active=true reactivates. Explicit null clears licenseNumber/medicalCertificateExpires; userId changes only via user-link.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDriverRequest'
+      responses:
+        '200':
+          description: Driver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/drivers/{driverId}/user-link:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: driverId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Drivers]
+      operationId: linkDriverUser
+      description: >
+        DRIVER_EDIT. Requires fresh same-Tenant ACTIVE membership and TENANT DRIVER role for the target User. Existing Driver link, ineligible target, or another Driver linked to this User in the same Tenant returns generic RESOURCE_CONFLICT. Never creates membership/roles or replaces an existing link.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkDriverUserRequest'
+      responses:
+        '200':
+          description: Driver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [Drivers]
+      operationId: unlinkDriverUser
+      description: >
+        DRIVER_EDIT. The JSON request body is required, including expectedVersion. Removes only the operational User link. If already null and the version matches, returns 204 without incrementing version; a removed link increments version. Preserves User/membership/roles/history.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlinkDriverUserRequest'
+      responses:
+        '204':
+          description: Link removed; no content
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/tractors:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Tractors]
+      operationId: listTractors
+      description: >
+        TRACTOR_VIEW. Tenant-wide Admin/Transport Operations reads. Ordered by normalized number/id, without pagination or query filters. Unknown query parameters return VALIDATION_FAILED.
+      responses:
+        '200':
+          description: TractorList
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TractorList'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Tractors]
+      operationId: createTractor
+      description: >
+        TRACTOR_CREATE. Admin-only. Server sets active=true and version=0. Preserves the original display number; tenant-normalized collisions return RESOURCE_CONFLICT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTractorRequest'
+      responses:
+        '201':
+          description: Tractor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tractor'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/tractors/{tractorId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: tractorId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Tractors]
+      operationId: getTractor
+      description: >
+        TRACTOR_VIEW. A nonexistent/cross-Tenant resource returns RESOURCE_NOT_FOUND after Tenant authorization.
+      responses:
+        '200':
+          description: Tractor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tractor'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Tractors]
+      operationId: updateTractor
+      description: >
+        TRACTOR_EDIT. Admin-only. Omitted fields remain unchanged; no-op PATCH retains version. Stale expectedVersion or optimistic races return STALE_VERSION. active=false deactivates; active=true reactivates. Number changes revalidate controls and DB-normalized uniqueness.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTractorRequest'
+      responses:
+        '200':
+          description: Tractor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tractor'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /api/v1/tenants/{tenantId}/orders:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -1136,6 +1340,101 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/OperationalLocation' }
+
+    Driver:
+      type: object
+      additionalProperties: false
+      required: [id, userId, name, licenseNumber, medicalCertificateExpires, active, version, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: [string, "null"], format: uuid }
+        name: { type: string }
+        licenseNumber: { type: [string, "null"] }
+        medicalCertificateExpires: { type: [string, "null"], format: date }
+        active: { type: boolean }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    DriverList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Driver' }
+    CreateDriverRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, pattern: '\S' }
+        licenseNumber: { type: [string, "null"] }
+        medicalCertificateExpires: { type: [string, "null"], format: date }
+    UpdateDriverRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        name: { type: string, minLength: 1, pattern: '\S' }
+        licenseNumber: { type: [string, "null"] }
+        medicalCertificateExpires: { type: [string, "null"], format: date }
+        active: { type: boolean }
+    LinkDriverUserRequest:
+      type: object
+      additionalProperties: false
+      required: [userId, expectedVersion]
+      properties:
+        userId: { type: string, format: uuid }
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+    UnlinkDriverUserRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+    Tractor:
+      type: object
+      additionalProperties: false
+      required: [id, operationalNumber, active, version, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        active: { type: boolean }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    TractorList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Tractor' }
+    CreateTractorRequest:
+      type: object
+      additionalProperties: false
+      required: [operationalNumber]
+      properties:
+        operationalNumber:
+          type: string
+          minLength: 1
+          pattern: '^[^\u0000-\u001f\u007f-\u009f]*[^ \u0000-\u001f\u007f-\u009f][^\u0000-\u001f\u007f-\u009f]*$'
+          description: >
+            Display preserved exactly. Rejects C0/C1 controls and all-ASCII-space values.
+            Uniqueness uses ASCII-space trim/collapse and ASCII a-z to A-Z only;
+            punctuation, leading zeros, separators and non-ASCII are preserved.
+    UpdateTractorRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        operationalNumber:
+          $ref: '#/components/schemas/CreateTractorRequest/properties/operationalNumber'
+        active: { type: boolean }
 
     CargoLineInput:
       type: object

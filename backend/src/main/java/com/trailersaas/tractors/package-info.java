@@ -1,5 +1,5 @@
 /**
- * Tractors module boundary reserved for later implementation issues.
+ * Tractor master data with Tenant-scoped canonical numbers and identity authorization.
  */
-@org.springframework.modulith.ApplicationModule
+@org.springframework.modulith.ApplicationModule(allowedDependencies = "identity")
 package com.trailersaas.tractors;
