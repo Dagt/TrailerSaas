@@ -1,10 +1,13 @@
 package com.trailersaas.identity.internal;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
 import com.trailersaas.identity.Capability;
+import com.trailersaas.identity.CustomerAccessScope;
 import com.trailersaas.identity.TenantAuthorization;
 import com.trailersaas.identity.TenantContext;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,22 @@ class DatabaseTenantAuthorization implements TenantAuthorization {
     DatabaseTenantAuthorization(ActiveMembershipRepository memberships, TenantContext context) {
         this.memberships = memberships;
         this.context = context;
+    }
+
+    @Override
+    public CustomerAccessScope resolveCustomerScope(AuthenticatedUserPrincipal principal, UUID tenantId,
+            Capability capability) {
+        var roles = activeRoles(principal, tenantId);
+        if (RoleCapabilities.requiresAssignment(capability)) {
+            throw new AuthorizationDeniedException(CAPABILITY_DENIED);
+        }
+        if (hasTenantGrant(roles, capability)) { return new CustomerAccessScope(true, Set.of()); }
+        var customers = roles.stream()
+                .filter(role -> role.scopeType() == RoleScopeType.CUSTOMER && role.customerId() != null
+                        && RoleCapabilities.grants(role.roleCode(), capability))
+                .map(AuthorizationRoleRow::customerId).collect(Collectors.toSet());
+        if (customers.isEmpty()) { throw new AuthorizationDeniedException(CAPABILITY_DENIED); }
+        return new CustomerAccessScope(false, customers);
     }
 
     @Override

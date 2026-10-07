@@ -37,6 +37,17 @@ final class IdentityFixtures {
         return id;
     }
 
+    UUID customer(UUID tenant) throws SQLException {
+        var id = UUID.randomUUID();
+        customer(tenant, id);
+        return id;
+    }
+
+    void customer(UUID tenant, UUID id) throws SQLException {
+        execute("INSERT INTO customers VALUES (?, ?, ?, 'ACTIVE', now(), now(), 0)", id,
+                tenant, "Customer-" + id);
+    }
+
     void role(UUID tenant, UUID membership, String role, String scope, UUID customer) throws SQLException {
         execute("INSERT INTO role_assignments VALUES (?, ?, ?, ?, ?, ?, now())",
                 UUID.randomUUID(), tenant, membership, role, scope, customer);

@@ -95,8 +95,8 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
         var user = principal(fixtures.user());
         var tenant = fixtures.tenant("Customer scopes");
         var membership = fixtures.membership(tenant, user.userId(), "ACTIVE");
-        var a = UUID.randomUUID();
-        var b = UUID.randomUUID();
+        var a = fixtures.customer(tenant);
+        var b = fixtures.customer(tenant);
         fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", a);
         authorization.requireCustomerCapability(user, tenant, a, Capability.ORDER_EDIT);
         denied(() -> authorization.requireCustomerCapability(user, tenant, b, Capability.ORDER_EDIT), CUSTOMER_SCOPE_DENIED);
@@ -150,7 +150,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
     void resolverRunsWithV4RlsAndUnchangedV3SchemaAndRuntimeGrants() throws Exception {
         flyway.validate();
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4");
+                .containsExactly("1", "2", "3", "4", "5");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getDatabaseProductName()).isEqualTo("PostgreSQL");
             assertThat(connection.getMetaData().getDatabaseMajorVersion()).isEqualTo(18);
@@ -176,7 +176,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
                 }
             }
             try (var rows = statement.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname='public'")) {
-                rows.next(); assertThat(rows.getInt(1)).isEqualTo(5);
+                rows.next(); assertThat(rows.getInt(1)).isEqualTo(9);
             }
         }
     }

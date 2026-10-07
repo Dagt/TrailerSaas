@@ -69,6 +69,8 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         var membership = fixtures.membership(tenant, user, "ACTIVE");
         var firstCustomer = UUID.fromString("00000000-0000-0000-0000-000000000001");
         var secondCustomer = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        fixtures.customer(tenant, firstCustomer);
+        fixtures.customer(tenant, secondCustomer);
         fixtures.role(tenant, membership, "YARD_SPOTTER", "TENANT", null);
         fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", secondCustomer);
         fixtures.role(tenant, membership, "TRANSPORT_OPERATIONS", "TENANT", null);
