@@ -249,7 +249,7 @@ class TenantRlsPostgresTests extends PostgresIntegrationTest {
     @ValueSource(strings = {"tenant_memberships", "role_assignments"})
     void temporaryWritesProveWithCheckAndBootstrapSelectOnlyWithoutChangingProductionGrants(String table)
             throws Exception {
-        fixtures.execute("GRANT INSERT, UPDATE, DELETE ON " + table + " TO \"" + RUNTIME_USERNAME + "\"");
+        fixtures.execute("GRANT UPDATE, DELETE ON " + table + " TO \"" + RUNTIME_USERNAME + "\"");
         try {
             var newUser = fixtures.user();
             executor.execute(a, () -> {
@@ -296,10 +296,12 @@ class TenantRlsPostgresTests extends PostgresIntegrationTest {
                 return null;
             });
         } finally {
-            fixtures.execute("REVOKE INSERT, UPDATE, DELETE ON " + table + " FROM \"" + RUNTIME_USERNAME + "\"");
+            fixtures.execute("REVOKE UPDATE, DELETE ON " + table + " FROM \"" + RUNTIME_USERNAME + "\"");
         }
         tx(() -> {
-            assertThat(manager.createNativeQuery("SELECT has_table_privilege(current_user, :table, 'INSERT,UPDATE,DELETE')",
+            assertThat(manager.createNativeQuery("SELECT has_table_privilege(current_user, :table, 'INSERT')",
+                    Boolean.class).setParameter("table", table).getSingleResult()).isEqualTo(true);
+            assertThat(manager.createNativeQuery("SELECT has_table_privilege(current_user, :table, 'UPDATE,DELETE')",
                     Boolean.class).setParameter("table", table).getSingleResult()).isEqualTo(false);
             return null;
         });
@@ -308,18 +310,18 @@ class TenantRlsPostgresTests extends PostgresIntegrationTest {
     @Test
     void policiesTargetOnlyRuntimeWithSelectOnlyBootstrapAndNoForce() {
         tx(() -> {
-            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(10);
+            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(15);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='ALL' AND with_check IS NOT NULL"))
-                    .isEqualTo(6);
+                    .isEqualTo(8);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='SELECT' AND with_check IS NULL"))
-                    .isEqualTo(4);
+                    .isEqualTo(6);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND roles::text='{"
-                    + RUNTIME_USERNAME + "}'")).isEqualTo(10);
+                    + RUNTIME_USERNAME + "}'")).isEqualTo(15);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relrowsecurity"))
-                    .isEqualTo(7);
+                    .isEqualTo(9);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relforcerowsecurity"))
                     .isZero();
-            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(9);
+            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(11);
             return null;
         });
     }

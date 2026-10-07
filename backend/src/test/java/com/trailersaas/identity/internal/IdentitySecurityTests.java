@@ -126,7 +126,7 @@ class IdentitySecurityTests {
         assertThat(authentication.getAuthorities()).isEmpty();
         assertThat(authentication.getCredentials()).isNull();
         assertThat(AuthenticatedUserPrincipal.class.getRecordComponents()).extracting(java.lang.reflect.RecordComponent::getName)
-                .containsExactly("userId", "firebaseUid", "email", "displayName");
+                .containsExactly("userId", "firebaseUid", "email", "displayName", "authenticatedEmail", "authenticatedEmailVerified");
         mvc.perform(get("/api/v1/me").header("Authorization", "Bearer claims-attack"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.memberships").isEmpty());
         verify(verified, never()).getClaims();

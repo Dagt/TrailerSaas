@@ -28,7 +28,7 @@ class InternalUserPostgresTests extends PostgresIntegrationTest {
     @Test
     void schemaAndRuntimeGrantsAreMinimal() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var columns = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY ordinal_position")) {
@@ -63,7 +63,10 @@ class InternalUserPostgresTests extends PostgresIntegrationTest {
         String uid = "identity-" + UUID.randomUUID();
         var first = resolver.resolve(new VerifiedFirebaseIdentity(uid, "same@example.test", "First"));
         var again = resolver.resolve(new VerifiedFirebaseIdentity(uid, "changed@example.test", "Changed"));
-        assertThat(again).isEqualTo(first); // Metadata remains the first verified snapshot.
+        assertThat(again.userId()).isEqualTo(first.userId());
+        assertThat(again.email()).isEqualTo(first.email()); // /me retains first snapshot.
+        assertThat(again.displayName()).isEqualTo(first.displayName());
+        assertThat(again.authenticatedEmail()).isEqualTo("changed@example.test");
         var other = resolver.resolve(new VerifiedFirebaseIdentity("identity-" + UUID.randomUUID(), "same@example.test", "Other"));
         assertThat(other.userId()).isNotEqualTo(first.userId());
         assertThat(other.email()).isEqualTo(first.email());

@@ -31,17 +31,18 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     @Test
     void flywayV5PreservesAcceptedIdentityColumnsAndAddsCustomerForeignKey() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
         // Flyway history is migrator-owned; runtime deliberately has no grant.
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5");
+                .containsExactly("1", "2", "3", "4", "5", "6");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
                 while (rows.next()) { tables.add(rows.getString(1)); }
             }
             assertThat(tables).containsExactlyInAnyOrder("users", "tenants", "tenant_memberships",
-                    "role_assignments", "flyway_schema_history", "customers", "physical_sites", "customer_sites", "operational_locations");
+                    "role_assignments", "flyway_schema_history", "customers", "physical_sites", "customer_sites", "operational_locations",
+                    "membership_invitations", "invitation_role_assignments");
             for (var entry : java.util.Map.of(
                     "users", List.of("id", "firebase_uid", "email", "display_name", "created_at", "updated_at"),
                     "tenants", List.of("id", "name", "status", "created_at", "updated_at"),
@@ -181,13 +182,25 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
                     assertThat(rows.getString(1)).isNotEqualTo(RUNTIME_USERNAME);
                     assertThat(rows.getString(2)).isEqualTo(RUNTIME_USERNAME);
                     assertThat(rows.getBoolean(3)).isTrue();
-                    for (int column = 4; column <= 9; column++) { assertThat(rows.getBoolean(column)).isFalse(); }
+                    assertThat(rows.getBoolean(4)).isEqualTo(!table.equals("tenants")); // V6 onboarding INSERT only.
+                    for (int column = 5; column <= 9; column++) { assertThat(rows.getBoolean(column)).isFalse(); }
                     assertThat(rows.getBoolean(10)).isTrue();
                     assertThat(rows.getBoolean(11)).isFalse();
                 }
             }
             statement.executeQuery("SELECT * FROM " + table).close();
-            rejects("42501", () -> statement.executeUpdate("INSERT INTO " + table + " (id) VALUES (NULL)"));
+            if (table.equals("tenants")) {
+                rejects("42501", () -> statement.executeUpdate("INSERT INTO tenants (id) VALUES (NULL)"));
+            } else {
+                var tenant = fixtures.tenant("RLS insert denial");
+                var user = fixtures.user();
+                var membership = fixtures.membership(tenant, user, "ACTIVE");
+                // V6 grants INSERT; valid rows without context must still fail RLS.
+                var insert = table.equals("tenant_memberships")
+                        ? "INSERT INTO tenant_memberships VALUES ('" + UUID.randomUUID() + "','" + tenant + "','" + fixtures.user() + "','ACTIVE',now(),now())"
+                        : "INSERT INTO role_assignments VALUES ('" + UUID.randomUUID() + "','" + tenant + "','" + membership + "','DRIVER','TENANT',NULL,now())";
+                rejects("42501", () -> statement.executeUpdate(insert));
+            }
             rejects("42501", () -> statement.executeUpdate("UPDATE " + table + " SET id=id WHERE false"));
             rejects("42501", () -> statement.executeUpdate("DELETE FROM " + table + " WHERE false"));
             rejects("42501", () -> statement.executeUpdate("CREATE TABLE forbidden_identity_table (id uuid)"));

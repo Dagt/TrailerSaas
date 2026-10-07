@@ -20,6 +20,8 @@ class InternalUserResolver {
         // PostgreSQL unique-index arbitration serializes concurrent first logins.
         // After a competing insert commits, this separate SELECT sees its row.
         users.insertIfAbsent(UUID.randomUUID(), identity.uid(), identity.email(), identity.displayName(), Instant.now());
-        return users.findByFirebaseUid(identity.uid()).orElseThrow().principal();
+        var stored = users.findByFirebaseUid(identity.uid()).orElseThrow().principal();
+        return new AuthenticatedUserPrincipal(stored.userId(), stored.firebaseUid(), stored.email(), stored.displayName(),
+                identity.email(), identity.emailVerified());
     }
 }

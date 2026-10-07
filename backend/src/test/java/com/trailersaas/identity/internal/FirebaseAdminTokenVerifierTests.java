@@ -27,21 +27,25 @@ class FirebaseAdminTokenVerifierTests {
     }
 
     @Test
-    void mapsOnlyVerifiedIdentityNeverBusinessClaimsOrEmailVerificationPolicy() throws Exception {
+    void mapsOfficialEmailVerificationNeverArbitraryClaims() throws Exception {
         var auth = mock(FirebaseAuth.class);
         var token = mock(FirebaseToken.class);
         when(token.getUid()).thenReturn("external-uid");
         when(token.getEmail()).thenReturn("identity@example.test");
         when(token.getName()).thenReturn("Identity Name");
         when(token.getClaims()).thenReturn(Map.of("role", "TENANT_ADMIN", "tenantId", "evil-tenant",
-                "customerId", "evil-customer", "isAdmin", true, "email_verified", false));
+                "customerId", "evil-customer", "isAdmin", true, "email_verified", true));
+        when(token.isEmailVerified()).thenReturn(false);
         when(auth.verifyIdToken("synthetic-secret-firebase-token")).thenReturn(token);
         var identity = new FirebaseAdminTokenVerifier(auth).verify("synthetic-secret-firebase-token");
         assertThat(identity).isEqualTo(new VerifiedFirebaseIdentity("external-uid", "identity@example.test", "Identity Name"));
         verify(token, never()).getClaims();
-        verify(token, never()).isEmailVerified();
+        verify(token).isEmailVerified();
+        assertThat(identity.emailVerified()).isFalse(); // Custom claim cannot substitute for SDK field.
+        when(token.isEmailVerified()).thenReturn(true);
+        assertThat(new FirebaseAdminTokenVerifier(auth).verify("synthetic-secret-firebase-token").emailVerified()).isTrue();
         assertThat(identity.toString()).doesNotContain("external-uid", "identity@example.test");
-        verify(auth).verifyIdToken("synthetic-secret-firebase-token");
+        verify(auth, times(2)).verifyIdToken("synthetic-secret-firebase-token");
     }
 
     @Test
