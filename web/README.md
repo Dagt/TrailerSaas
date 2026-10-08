@@ -147,6 +147,18 @@ and requires **Reload latest** before review/save; no silent version retry.
 Known validation fields appear on inputs; generic conflicts/access/404/safe 5xx
 show no foreign metadata, with traceId as a support reference and read retry.
 
+A CREATE with a 5xx or lost response has an uncertain outcome. Keep the form and
+error, disable resubmission of that creation, and use **Check latest records** to
+refetch the list with GET only. Review the list before opening a new create form;
+there is no POST replay or invented Idempotency-Key. Versioned PATCH retains
+explicit retry; mutations never auto-retry.
+New Sites require an explicitly entered IANA timezone, initially empty. New
+Operational Locations require an explicit type selection, initially a placeholder.
+Neither UTC/YARD nor Tenant settings supply operational form defaults.
+Lists show available Site address/timezone/full-geofence configuration, Driver
+license/certificate/account state, and Trailer designated Customer/states/last seen.
+Customer names come from the existing catalog, without Driver/Location N+1 queries.
+
 Deliberate API/UX gaps: no complete Customer-Site GET directory exists; associate
 explicitly and remove only server-confirmed pairs during the visit. No account
 directory/picker exists; Drivers show linked/unlinked and allow unlink only.

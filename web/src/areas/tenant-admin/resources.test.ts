@@ -22,7 +22,7 @@ it('clears nullable Driver metadata without adding account IDs', () => {
 it.each(['America/Chicago', 'UTC', 'Europe/Madrid'])('accepts IANA timezone %s', zone => expect(timezone.parse(zone)).toBe(zone))
 it.each(['', '+02:00', 'Unknown/Zone'])('rejects unsupported timezone %s', zone => expect(timezone.safeParse(zone).success).toBe(false))
 it('validates Site coordinate/radius/country values independently and permits past certificate dates', () => {
-  expect(requestValues('sites', { ...formValues('sites'), name: 'Site', latitude: '40', longitude: '' }).errors).toEqual({})
+  expect(requestValues('sites', { ...formValues('sites'), name: 'Site', timezone: 'America/Chicago', latitude: '40', longitude: '' }).errors).toEqual({})
   expect(requestValues('sites', { ...formValues('sites'), name: 'Site', latitude: '91', geofenceRadiusM: '0', address_countryCode: 'USA' }).errors).toHaveProperty('latitude')
   expect(requestValues('drivers', { name: 'Driver', medicalCertificateExpires: '2000-01-01', licenseNumber: '' }).errors).toEqual({})
   expect(requestValues('drivers', { name: 'Driver', medicalCertificateExpires: '2026-02-30' }).errors).toHaveProperty('medicalCertificateExpires')

@@ -17,6 +17,7 @@ it.each([
   await user.click(await screen.findByRole('button', { name: button }))
   const create = within(screen.getByRole('form', { name: `Create ${singular}` }))
   await user.type(create.getByLabelText(label), 'New record')
+  if (kind === 'sites') await user.type(create.getByLabelText('Timezone'), 'America/Chicago')
   await user.click(create.getByRole('button', { name: 'Create' }))
   await user.click(await screen.findByRole('link', { name: 'New record' }))
   const edit = within(await screen.findByRole('form', { name: `Edit ${singular}` }))

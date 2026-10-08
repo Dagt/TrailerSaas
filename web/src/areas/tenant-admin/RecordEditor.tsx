@@ -9,8 +9,8 @@ import { definitions, formValues, requestValues, valueAt } from './resources'
 import type { ResourceKind } from './resources'
 import type { Customer } from './contracts'
 
-export function RecordEditor({ kind, path, record, customers = [], reload, created }: {
-  kind: ResourceKind; path: string; record?: object; customers?: Customer[]; reload?: () => Promise<object | undefined>; created?: (record: object) => void
+export function RecordEditor({ kind, path, record, customers = [], reload, created, reconcile }: {
+  kind: ResourceKind; path: string; record?: object; customers?: Customer[]; reload?: () => Promise<object | undefined>; created?: (record: object) => void; reconcile?: () => Promise<unknown>
 }) {
   const { api } = useAuth()
   const { tenantId } = useAdminTenant()
@@ -19,6 +19,8 @@ export function RecordEditor({ kind, path, record, customers = [], reload, creat
   const [baseline, setBaseline] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [reconcileError, setReconcileError] = useState<unknown>()
   const form = useForm<Record<string, string>>({ defaultValues: formValues(kind, baseline) })
   const mutation = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.request<object>(`/tenants/${tenantId}${path}`, { method: baseline ? 'PATCH' : 'POST', body }),
@@ -37,11 +39,18 @@ export function RecordEditor({ kind, path, record, customers = [], reload, creat
     },
   })
   const stale = mutation.error instanceof ApiProblem && mutation.error.problem.code === 'STALE_VERSION'
+  const uncertainCreate = !baseline && mutation.error instanceof ApiProblem && mutation.error.problem.status >= 500
+  const checkLatest = async () => {
+    setChecking(true); setReconcileError(undefined)
+    try { await reconcile?.() } catch (error) { setReconcileError(error) } finally { setChecking(false) }
+  }
   const reloadLatest = async () => {
     const latest = await reload?.()
     if (latest) { setBaseline(latest); form.reset(formValues(kind, latest)); mutation.reset(); setSaved(false) }
   }
   const submit = form.handleSubmit(values => {
+    // A lost creation response may follow a successful commit. Never replay this POST.
+    if (uncertainCreate) return
     const result = requestValues(kind, values, baseline)
     for (const [key, message] of Object.entries(result.errors)) form.setError(key.replace('.', '_'), { message })
     if (Object.keys(result.errors).length === 0) { setSaved(false); mutation.mutate(result.body) }
@@ -52,8 +61,12 @@ export function RecordEditor({ kind, path, record, customers = [], reload, creat
   return <section className="record-editor">
     <h2>{baseline ? `Edit ${definitions[kind].singular}` : `Create ${definitions[kind].singular}`}</h2>
     {mutation.isError && <ErrorBanner error={mutation.error} reload={() => void reloadLatest()}
-      retry={mutation.error instanceof ApiProblem && mutation.error.problem.status >= 500 && mutation.variables
+      retry={baseline && mutation.error instanceof ApiProblem && mutation.error.problem.status >= 500 && mutation.variables
         ? () => mutation.mutate(mutation.variables!) : undefined} />}
+    {uncertainCreate && <div role="status"><p>The creation result is uncertain. Check the latest records below before starting a new create. Your form values have been kept.</p>
+      {reconcile && <button type="button" disabled={checking} onClick={() => void checkLatest()}>{checking ? 'Checking…' : 'Check latest records'}</button>}
+    </div>}
+    {reconcileError !== undefined && <ErrorBanner error={reconcileError} />}
     {saved && <p role="status">Saved.</p>}
     <form onSubmit={submit} noValidate aria-label={`${baseline ? 'Edit' : 'Create'} ${definitions[kind].singular}`}>
       <div className="form-grid">{definitions[kind].fields.filter(field => !(baseline && field.createOnly)).map(field => {
@@ -62,13 +75,13 @@ export function RecordEditor({ kind, path, record, customers = [], reload, creat
         const props = { id, 'aria-required': Boolean(field.required), 'aria-invalid': Boolean(error), 'aria-describedby': error ? `${id}-error` : undefined, ...form.register(field.key.replace('.', '_')) }
         return <FormField key={field.key} id={id} label={field.label} error={error}>
           {field.type === 'select' ? <select {...props}>
-            {!field.required && <option value="">None</option>}
+            <option value="" disabled={field.required}>{field.required ? field.placeholder ?? `Choose ${field.label.toLowerCase()}` : 'None'}</option>
             {(field.reference ? customers.map(customer => ({ value: customer.id, label: customer.name })) : field.choices?.map(choice => ({ value: choice, label: choice })) ?? []).map(option =>
               <option key={option.value} value={option.value}>{option.label}</option>)}
           </select> : field.type === 'textarea' ? <textarea {...props} rows={3} /> : <input {...props} type={field.type ?? 'text'} step={field.type === 'number' ? 'any' : undefined} />}
         </FormField>
       })}</div>
-      <div className="actions"><button disabled={mutation.isPending || stale}>{mutation.isPending ? 'Saving…' : baseline ? 'Save changes' : 'Create'}</button>
+      <div className="actions"><button disabled={mutation.isPending || stale || uncertainCreate}>{mutation.isPending ? 'Saving…' : baseline ? 'Save changes' : 'Create'}</button>
         {baseline && kind !== 'settings' && <button type="button" disabled={mutation.isPending || stale}
           onClick={() => active ? setConfirm(true) : changeActive()}>{active ? 'Deactivate' : 'Reactivate'}</button>}
       </div>

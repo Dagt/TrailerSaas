@@ -5,7 +5,7 @@ export type ResourceKind = 'customers' | 'sites' | 'locations' | 'drivers' | 'tr
 export interface FieldDefinition {
   key: string; label: string; type?: 'text' | 'textarea' | 'number' | 'date' | 'select'
   required?: boolean; choices?: string[]; reference?: 'customers'; validate?: z.ZodType
-  initial?: string; createOnly?: boolean
+  createOnly?: boolean; placeholder?: string
 }
 const nonblank = z.string().refine(v => v.trim().length > 0, 'Enter a nonblank value.')
 export const operationalNumber = z.string().refine(v => /[^ ]/.test(v) && !Array.from(v).some(c => {
@@ -23,13 +23,13 @@ export const definitions: Record<ResourceKind, { title: string; singular: string
   customers: { title: 'Customers', singular: 'Customer', fields: [name] },
   sites: { title: 'Locations', singular: 'Physical Site', fields: [name,
     ...['line1', 'line2', 'city', 'stateRegion', 'postalCode', 'countryCode'].map(key => ({ key: `address.${key}`, label: ({ line1: 'Address line 1', line2: 'Address line 2', city: 'City', stateRegion: 'State / region', postalCode: 'Postal code', countryCode: 'Country code' } as Record<string, string>)[key]!, ...(key === 'countryCode' ? { validate: z.string().length(2, 'Use a two-character country code.') } : {}) })),
-    { key: 'timezone', label: 'Timezone', required: true, validate: timezone, initial: 'UTC' },
+    { key: 'timezone', label: 'Timezone', required: true, validate: timezone },
     { key: 'latitude', label: 'Latitude', type: 'number', validate: z.number().min(-90).max(90) },
     { key: 'longitude', label: 'Longitude', type: 'number', validate: z.number().min(-180).max(180) },
     { key: 'geofenceRadiusM', label: 'Geofence radius (m)', type: 'number', validate: z.number().int().positive().max(2147483647) },
   ] },
   locations: { title: 'Operational Locations', singular: 'Operational Location', fields: [name,
-    { key: 'type', label: 'Location type', type: 'select', required: true, choices: ['BASE', 'YARD', 'DOCK', 'CUSTOMER_AREA', 'SHOP', 'OTHER'], initial: 'YARD' },
+    { key: 'type', label: 'Location type', type: 'select', required: true, choices: ['BASE', 'YARD', 'DOCK', 'CUSTOMER_AREA', 'SHOP', 'OTHER'], placeholder: 'Choose a location type' },
     { key: 'code', label: 'Code' }, customer,
   ] },
   drivers: { title: 'Drivers', singular: 'Driver', fields: [name, { key: 'licenseNumber', label: 'License number' },
@@ -51,7 +51,7 @@ export function valueAt(record: object, key: string): unknown {
 export function recordName(record: MasterRecord) { return 'name' in record ? record.name : record.operationalNumber }
 export function isActive(record: MasterRecord) { return 'status' in record ? record.status === 'ACTIVE' : record.active }
 export function formValues(kind: ResourceKind, record?: object) {
-  return Object.fromEntries(definitions[kind].fields.map(field => [field.key.replace('.', '_'), record ? String(valueAt(record, field.key) ?? '') : field.initial ?? '']))
+  return Object.fromEntries(definitions[kind].fields.map(field => [field.key.replace('.', '_'), record ? String(valueAt(record, field.key) ?? '') : '']))
 }
 /** Explicit request projection; never spread a response DTO into PATCH. */
 export function requestValues(kind: ResourceKind, values: Record<string, string>, record?: object) {

@@ -23,17 +23,25 @@ export function MasterList({ kind }: { kind: Exclude<ResourceKind, 'locations' |
     <button type="button" onClick={() => setCreate(!create)}>{create ? 'Close create form' : `New ${definitions[kind].singular}`}</button>
   </PageHeader>
     {kind === 'trailers' && <TrailerFilters customers={customers.data?.items ?? []} onApply={setFilters} />}
-    {create && <RecordEditor kind={kind} path={`/${kind}`} customers={customers.data?.items ?? []} created={() => setCreate(false)} />}
+    {create && <RecordEditor kind={kind} path={`/${kind}`} customers={customers.data?.items ?? []} created={() => setCreate(false)} reconcile={() => query.refetch({ throwOnError: true })} />}
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorBanner error={query.error} retry={() => void query.refetch()} />
       : !query.data.items.length ? <EmptyState>No {definitions[kind].singular.toLowerCase()} records found.</EmptyState>
-        : <DataTable caption={definitions[kind].title} headings={[kind === 'tractors' || kind === 'trailers' ? 'Operational number' : 'Name', 'Status', ...(kind === 'drivers' ? ['Account', 'Certificate'] : []), ...(kind === 'trailers' ? ['Location', 'Load', 'Serviceability'] : [])]}>
+        : <DataTable caption={definitions[kind].title} headings={[kind === 'tractors' || kind === 'trailers' ? 'Operational number' : 'Name', 'Status', ...(kind === 'sites' ? ['Address', 'Timezone', 'Geofence configured'] : []), ...(kind === 'drivers' ? ['License number', 'Certificate', 'Account'] : []), ...(kind === 'trailers' ? ['Designated Customer', 'Location', 'Load', 'Serviceability', 'Last seen'] : [])]}>
           {query.data.items.map(record => <tr key={record.id}><td><Link to={routeFor(kind, record.id)}>{recordName(record)}</Link></td>
             <td><StatusBadge>{isActive(record) ? 'Active' : 'Inactive'}</StatusBadge></td>
-            {kind === 'drivers' && <><td>{(record as Driver).userId ? 'Linked account' : 'No linked account'}</td><td>{certificate(record as Driver)}</td></>}
-            {kind === 'trailers' && <><td>{(record as Trailer).locationState}</td><td>{(record as Trailer).loadState}</td><td>{(record as Trailer).serviceabilityState}</td></>}
+            {kind === 'sites' && <><td>{addressSummary(record as Site)}</td><td>{(record as Site).timezone}</td><td>{geofenceConfigured(record as Site) ? 'Yes' : 'No'}</td></>}
+            {kind === 'drivers' && <><td>{(record as Driver).licenseNumber ?? 'Not provided'}</td><td>{certificate(record as Driver)}</td><td>{(record as Driver).userId ? 'Linked account' : 'No linked account'}</td></>}
+            {kind === 'trailers' && <><td>{(record as Trailer).designatedCustomerId ? customers.data?.items.find(c => c.id === (record as Trailer).designatedCustomerId)?.name ?? 'Customer details unavailable' : 'None'}</td><td>{(record as Trailer).locationState}</td><td>{(record as Trailer).loadState}</td><td>{(record as Trailer).serviceabilityState}</td><td>{(record as Trailer).lastSeenAt ?? 'Not provided'}</td></>}
           </tr>)}
         </DataTable>}
   </>
+}
+function addressSummary(site: Site) {
+  const address = site.address
+  return address ? [address.line1, address.line2, address.city, address.stateRegion, address.postalCode, address.countryCode].filter(value => value?.trim()).join(', ') || 'Not provided' : 'Not provided'
+}
+function geofenceConfigured(site: Site) {
+  return site.latitude != null && site.longitude != null && site.geofenceRadiusM != null
 }
 function certificate(driver: Driver) {
   if (!driver.medicalCertificateExpires) return 'Not provided'
@@ -87,7 +95,7 @@ function SiteLocations({ site }: { site: Site }) {
   const location = query.data?.items.find(l => l.id === selected)
   return <section><h2>Operational Locations</h2><p>A neutral Location has no Customer context. Customer areas use the association with this same Site.</p>
     <button type="button" onClick={() => setCreate(!create)}>{create ? 'Close location form' : 'New Operational Location'}</button>
-    {create && <RecordEditor kind="locations" path={`/sites/${site.id}/locations`} customers={customers.data?.items ?? []} created={() => setCreate(false)} />}
+    {create && <RecordEditor kind="locations" path={`/sites/${site.id}/locations`} customers={customers.data?.items ?? []} created={() => setCreate(false)} reconcile={() => query.refetch({ throwOnError: true })} />}
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorBanner error={query.error} retry={() => void query.refetch()} /> : !query.data.items.length ? <EmptyState>No Operational Locations.</EmptyState>
       : <DataTable caption="Operational Locations" headings={['Name', 'Type', 'Customer context', 'Status']}>
         {query.data.items.map(l => <tr key={l.id}><td><button type="button" onClick={() => select(l.id)}>{l.name}</button></td><td>{l.type}</td><td>{l.customerId ? customers.data?.items.find(c => c.id === l.customerId)?.name ?? 'Customer' : 'Neutral'}</td><td>{l.active ? 'Active' : 'Inactive'}</td></tr>)}
