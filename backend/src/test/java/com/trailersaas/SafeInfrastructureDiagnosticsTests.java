@@ -40,6 +40,11 @@ class SafeInfrastructureDiagnosticsTests {
     @Test void poolAndTransactionFailuresWithoutSqlStateAreStillClassified() {
         assertThat(SafeInfrastructureDiagnostics.facts(new org.springframework.dao.DataAccessResourceFailureException("pool private")).category()).isEqualTo("db_connection_failure");
         assertThat(SafeInfrastructureDiagnostics.facts(new org.springframework.transaction.TransactionSystemException("transaction private")).category()).isEqualTo("transaction_failure");
+        // JpaTransactionManager may replace the original connection error with a Hibernate rollback failure.
+        var rollback=new org.springframework.orm.jpa.JpaSystemException(new org.hibernate.TransactionException(
+                "rollback private",new SQLException("connection closed")));
+        assertThat(SafeInfrastructureDiagnostics.facts(rollback).category()).isEqualTo("transaction_failure");
+        assertThat(SafeInfrastructureDiagnostics.facts(rollback).sqlState()).isNull();
         assertThat(SafeInfrastructureDiagnostics.facts(new java.sql.SQLTimeoutException("timeout private")).category()).isEqualTo("db_timeout");
     }
     @Test void cyclicCausesAndInvalidSqlStateNeverExposeArbitraryValuesOrLoop() {

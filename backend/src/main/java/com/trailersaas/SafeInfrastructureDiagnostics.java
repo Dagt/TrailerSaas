@@ -42,7 +42,7 @@ final class SafeInfrastructureDiagnostics {
             database|=cause instanceof SQLException || cause instanceof DataAccessException;
             connection|=cause instanceof DataAccessResourceFailureException;
             timeout|=cause instanceof SQLTimeoutException || cause instanceof QueryTimeoutException;
-            transaction|=cause instanceof TransactionException;
+            transaction|=cause instanceof TransactionException || cause instanceof org.hibernate.TransactionException;
             if(cause instanceof SQLException sql) {
                 var state=sql.getSQLState();
                 if(sqlState==null && state!=null && state.matches("[A-Z0-9]{5}")) { sqlState=state; }

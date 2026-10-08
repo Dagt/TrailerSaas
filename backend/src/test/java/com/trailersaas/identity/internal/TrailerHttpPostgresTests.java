@@ -215,10 +215,23 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
             assertThat(f.db.value("SELECT count(*) FROM trailers WHERE tenant_id=? AND operational_number='fault2'",tenant)).isEqualTo(0L);
             var diagnostics=output.getAll().lines().filter(line->line.contains("\"logger_name\":\"com.trailersaas.SafeInfrastructureDiagnostics\"")).toList();
             assertThat(diagnostics).hasSize(2).allSatisfy(line->{
-                assertThat(line).contains("\"databaseFailure\":true","exceptionType","rootCauseType","sqlState","trailer-test","traceId");
-                assertThat(line).contains(state.equals("08006")?"db_connection_failure":state.equals("57014")?"db_timeout":"unexpected_failure");
+                assertThat(line).contains("\"databaseFailure\":true","exceptionType","rootCauseType","trailer-test","traceId");
+                if(state.equals("08006")) {
+                    // Hikari closes the connection; JpaTransactionManager replaces the original error on rollback.
+                    assertThat(line).contains("transaction_failure","org.springframework.orm.jpa.JpaSystemException","java.sql.SQLException");
+                } else {
+                    assertThat(line).contains("\"sqlState\":\""+state+"\"",state.equals("57014")?"db_timeout":"unexpected_failure");
+                }
                 assertThat(line).doesNotContain("controlled database failure","insert into","update trailers",TOKEN);
             });
+            if(state.equals("08006")) {
+                // Original connection evidence remains correlated in the enabled native diagnostics.
+                assertThat(output.getAll().lines().filter(line->line.contains("\"logger_name\":\"org.hibernate.orm.jdbc.error\"")
+                        && line.contains("HHH000247")).toList()).hasSize(2).allSatisfy(line->{
+                    assertThat(line).contains("SQLState: 08006","trailer-test","traceId");
+                    assertThat(line).doesNotContain("controlled database failure","insert into","update trailers",TOKEN);
+                });
+            }
         } finally { f.db.execute("DROP TRIGGER test_trailer_failure ON trailers");f.db.execute("DROP FUNCTION test_trailer_failure()"); }
     }
     Map<String,Object> create(Map<String,Object> fields) throws Exception {
