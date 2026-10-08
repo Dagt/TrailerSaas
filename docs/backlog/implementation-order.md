@@ -40,10 +40,11 @@ explicit #29/#32/#55 and optional Mobile deviceId deferments do not block #22.
 - #25 invitation/onboarding
 - #26 TenantContext/RLS
 
-Current safe security sequence: **#22 -> #23 -> #24 -> #26 -> #27 -> #25**.
+**Wave 1 completed** with [PR #81](https://github.com/Dagt/TrailerSaas/pull/81).
+Integrated sequence: **#22 -> #23 -> #24 -> #26 -> #27 -> #25**.
 Customer-scoped onboarding in #25 is implemented after #27 because Customers
-and their tenant-safe FK must exist first. #25 remains pending review/merge;
-it is not complete until its PR merges. The rest of the roadmap is unchanged.
+and their tenant-safe FK must exist first. #25 is merged and closed.
+The rest of the roadmap is unchanged.
 
 Exit: every later Tenant-owned feature has an enforceable security foundation.
 
@@ -53,7 +54,8 @@ Can proceed with controlled parallelism after Wave 1:
 
 ### Master data
 - #27 Customers/Sites/Locations
-- #28 Drivers/Tractors
+- #28 Drivers/Tractors — next bounded master-data implementation; complete only
+  after its implementation PR merges
 - #29 Trailers/QR
 - #30 Admin master-data Web
 

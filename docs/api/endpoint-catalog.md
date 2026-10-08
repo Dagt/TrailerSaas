@@ -41,6 +41,15 @@ Base Tenant path:
 
 ## Drivers / equipment
 
+Drivers/Tractors are implemented in #28 under the Tenant base path. DRIVER_VIEW
+and TRACTOR_VIEW allow Tenant Admin/Transport Operations reads; create/edit/link/
+unlink remain Admin-only through the existing write capabilities. Driver targets
+require fresh same-Tenant ACTIVE membership + TENANT DRIVER role. Lists have no
+filters/pagination; unknown parameters are rejected. PATCH/link commands require
+expectedVersion. DELETE user-link also requires an explicit JSON body
+`{"expectedVersion": 4}`; it returns 204 and deletes no identity/access.
+Trailer endpoints below remain future #29 scope.
+
 - `POST /drivers`
 - `GET /drivers`
 - `GET /drivers/{id}`

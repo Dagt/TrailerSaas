@@ -29,8 +29,10 @@ Roles map to capabilities centrally. Domain-state rules are evaluated after capa
 ### Driver / tractor / trailer master data
 
 - `DRIVER_CREATE`
+- `DRIVER_VIEW`
 - `DRIVER_EDIT`
 - `TRACTOR_CREATE`
+- `TRACTOR_VIEW`
 - `TRACTOR_EDIT`
 - `TRAILER_CREATE`
 - `TRAILER_EDIT`
@@ -184,6 +186,29 @@ Dispatcher through customer_sites; Locations require a matching customer_id.
 Neutral NULL Locations are visible only to Tenant-wide readers. Customer-level
 RLS is not introduced; transaction-local Tenant RLS remains defense-in-depth.
 Customer-scoped roles now reference real Customers via the V5 Tenant-safe FK.
+
+## Approved Driver/Tractor read mapping (#28)
+
+The owner approved DRIVER_VIEW and TRACTOR_VIEW, extending the catalog from
+55 to **57 capabilities**. These are the only additional grants:
+
+| Role | DRIVER_VIEW | TRACTOR_VIEW |
+| --- | --- | --- |
+| TENANT_ADMIN | Tenant-wide | Tenant-wide |
+| TRANSPORT_OPERATIONS | Tenant-wide, read-only | Tenant-wide, read-only |
+| CUSTOMER_DISPATCHER | Deny | Deny |
+| YARD_SPOTTER | Deny | Deny |
+| DRIVER | Deny | Deny |
+
+DRIVER_CREATE, DRIVER_EDIT, TRACTOR_CREATE and TRACTOR_EDIT remain Admin-only.
+No generic Yard/Driver browse permission or Operations administrative write
+permission is implied. All 57 capabilities are covered by exhaustive mapping tests.
+
+Driver/User linking is authorized separately with DRIVER_EDIT. The target User
+must have a fresh same-Tenant ACTIVE membership and TENANT-scoped DRIVER role
+with customer_id NULL. Identity exposes only `DriverAccountLinkPolicy` eligibility
+validation to Drivers; it does not expose roles or authorize the actor. Linking
+creates no membership/role; unlinking removes neither identity nor access.
 
 ## Future custom roles
 

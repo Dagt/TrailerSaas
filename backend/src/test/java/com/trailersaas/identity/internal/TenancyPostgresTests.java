@@ -31,10 +31,10 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     @Test
     void flywayV5PreservesAcceptedIdentityColumnsAndAddsCustomerForeignKey() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
         // Flyway history is migrator-owned; runtime deliberately has no grant.
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5", "6");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
@@ -42,7 +42,7 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
             }
             assertThat(tables).containsExactlyInAnyOrder("users", "tenants", "tenant_memberships",
                     "role_assignments", "flyway_schema_history", "customers", "physical_sites", "customer_sites", "operational_locations",
-                    "membership_invitations", "invitation_role_assignments");
+                    "membership_invitations", "invitation_role_assignments", "drivers", "tractors");
             for (var entry : java.util.Map.of(
                     "users", List.of("id", "firebase_uid", "email", "display_name", "created_at", "updated_at"),
                     "tenants", List.of("id", "name", "status", "created_at", "updated_at"),
