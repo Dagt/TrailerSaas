@@ -143,8 +143,10 @@ class TrailerPostgresTests extends PostgresIntegrationTest {
             assertThat(ids("SELECT id FROM trailer_qr_identities")).isEmpty();
             lookup.establish(token);
             assertThat(ids("SELECT id FROM trailer_qr_identities")).containsExactly(qa);
+            assertThat(ids("SELECT id FROM trailer_qr_identities WHERE id='"+qb+"'")).isEmpty();
             assertThat(ids("SELECT id FROM trailers")).isEmpty();
             context.establishTenant(a);
+            assertThat(ids("SELECT id FROM trailer_qr_identities")).containsExactly(qa);
             assertThat(ids("SELECT id FROM trailers")).containsExactly(ta);
             return null;
         });
@@ -153,10 +155,49 @@ class TrailerPostgresTests extends PostgresIntegrationTest {
             assertThat(f.db.execute(c,"UPDATE trailer_qr_identities SET active=false,revoked_at=now() WHERE id=?",qa)).isZero();
             reject("42501",()->f.db.execute(c,"INSERT INTO trailer_qr_identities VALUES(?,?,?,?,true,now(),NULL)",UUID.randomUUID(),a,ta,randomToken()));
             c.rollback();
+            c.setAutoCommit(false);setting(c,"app.current_trailer_qr_token",token);
+            reject("42501",()->f.db.execute(c,"DELETE FROM trailer_qr_identities WHERE id=?",qa));
+            c.rollback();
         }
         f.db.execute("UPDATE trailer_qr_identities SET active=false,revoked_at=now() WHERE id=?",qa);
         new TransactionTemplate(transactions).execute(s->{lookup.establish(token);assertThat(ids("SELECT id FROM trailer_qr_identities")).isEmpty();return null;});
         new TransactionTemplate(transactions).execute(s->{lookup.establish(randomToken());assertThat(ids("SELECT id FROM trailer_qr_identities")).isEmpty();return null;});
+    }
+    @Test void tenantAPlusTenantBTokenCannotUseCrossTenantQrLookupPolicy() throws Exception {
+        String foreign=token(qb);
+        new TransactionTemplate(transactions).execute(s->{
+            context.establishTenant(a);
+            // Deliberately bypass the Java guard to exercise PostgreSQL defense-in-depth.
+            rawSetting("app.current_trailer_qr_token",foreign);
+            assertThat(ids("SELECT id FROM trailer_qr_identities")).containsExactly(qa);
+            assertThat(ids("SELECT id FROM trailer_qr_identities WHERE id='"+qb+"'")).isEmpty();
+            assertThat(ids("SELECT id FROM trailers")).containsExactly(ta);
+            return null;
+        });
+    }
+    @ParameterizedTest @ValueSource(strings={"app.current_invitation_hash","app.current_user_id"})
+    void invitationOrBootstrapUserPlusQrTokenCannotUseSpecialLookup(String mode) throws Exception {
+        String exact=token(qb);
+        new TransactionTemplate(transactions).execute(s->{
+            rawSetting(mode,mode.equals("app.current_user_id")?user.toString():"a".repeat(64));
+            rawSetting("app.current_trailer_qr_token",exact);
+            assertThat(ids("SELECT id FROM trailer_qr_identities")).isEmpty();
+            assertThat(ids("SELECT id FROM trailers")).isEmpty();
+            return null;
+        });
+    }
+    @Test void derivedTenantDisablesSpecialPolicyEvenIfTokenIsSubsequentlyChangedBySql() throws Exception {
+        String first=token(qa),foreign=token(qb);
+        new TransactionTemplate(transactions).execute(s->{
+            lookup.establish(first);
+            assertThat(ids("SELECT tenant_id FROM trailer_qr_identities")).containsExactly(a);
+            context.establishTenant(a);
+            rawSetting("app.current_trailer_qr_token",foreign);
+            // Only the normal Tenant policy can apply now; B never becomes visible.
+            assertThat(ids("SELECT id FROM trailer_qr_identities")).containsExactly(qa);
+            assertThat(ids("SELECT id FROM trailers")).containsExactly(ta);
+            return null;
+        });
     }
     @Test void pooledPhysicalConnectionClearsQrAndTenantAfterCommitAndRollback() throws Exception {
         String token=token(qa);long pid=pid();
@@ -183,6 +224,26 @@ class TrailerPostgresTests extends PostgresIntegrationTest {
             return null;
         });
         tenants.execute(a,()->{assertThatThrownBy(()->lookup.establish(first)).isInstanceOf(IllegalStateException.class);return null;});
+        tenants.execute(a,()->{assertThatThrownBy(()->context.establishTenant(b)).isInstanceOf(IllegalStateException.class);return null;});
+        new TransactionTemplate(transactions).execute(s->{
+            context.establishBootstrapUser(new AuthenticatedUserPrincipal(user,"u",null,null));
+            assertThatThrownBy(()->lookup.establish(first)).isInstanceOf(IllegalStateException.class);
+            return null;
+        });
+        new TransactionTemplate(transactions).execute(s->{
+            rawSetting("app.current_invitation_hash","a".repeat(64));
+            assertThatThrownBy(()->lookup.establish(first)).isInstanceOf(IllegalStateException.class);
+            return null;
+        });
+        new TransactionTemplate(transactions).execute(s->{
+            lookup.establish(first);context.establishTenant(a);
+            assertThatThrownBy(()->context.establishTenant(b)).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(()->lookup.establish(second)).isInstanceOf(IllegalStateException.class);
+            return null;
+        });
+    }
+    void rawSetting(String key,String value) {
+        manager.unwrap(org.hibernate.Session.class).doWork(c->setting(c,key,value));
     }
     long pid() { return ((Number)manager.createNativeQuery("SELECT pg_backend_pid()").getSingleResult()).longValue(); }
     List<UUID> ids(String sql) { return manager.createNativeQuery(sql,UUID.class).getResultList(); }

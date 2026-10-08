@@ -63,9 +63,11 @@ CREATE POLICY trailer_qr_tenant ON trailer_qr_identities TO "${runtimeRole}"
         AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL)
     WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
         AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL);
--- Resolution can identify one active QR, never mutate it or read the Trailer.
+-- Cross-Tenant lookup exists only in pure QR bootstrap mode, before Tenant derivation.
 CREATE POLICY trailer_qr_lookup ON trailer_qr_identities FOR SELECT TO "${runtimeRole}"
     USING (public_token = NULLIF(current_setting('app.current_trailer_qr_token', true), '')
         AND active AND revoked_at IS NULL
-        AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL);
+        AND NULLIF(current_setting('app.current_tenant_id', true), '') IS NULL
+        AND NULLIF(current_setting('app.current_user_id', true), '') IS NULL
+        AND NULLIF(current_setting('app.current_invitation_hash', true), '') IS NULL);
 GRANT SELECT, INSERT, UPDATE ON trailers, trailer_qr_identities TO "${runtimeRole}";

@@ -596,8 +596,10 @@ Token and operational number are separately available for future labels.
 
 GET /api/v1/trailer-qr/{publicToken} requires Firebase. TrailerQrLookupContext
 sets prepared transaction-local app.current_trailer_qr_token on the existing JPA
-connection. Its SELECT-only policy exposes just the active exact QR, no Trailer/
-enumeration/writes. DB-derived Tenant is then pinned for normal Trailer RLS,
+connection. Its SELECT-only policy requires pure QR bootstrap mode: empty Tenant,
+bootstrap User and invitation-hash settings. It exposes just the active exact QR,
+no Trailer/enumeration/writes. After DB-derived Tenant is pinned, the special
+policy stops applying and only normal Tenant RLS supplies visibility,
 followed by fresh ACTIVE membership and TrailerAccessPolicy scan authorization.
 Admin/Operations, scoped Dispatcher, Yard MOVE/CHECK or Driver HOOK/DROP may
 identify; no physical mutation is authorized. Unknown/revoked/unauthorized
@@ -608,10 +610,14 @@ Both tables enable Tenant USING/WITH CHECK excluding /me bootstrap. Runtime
 gets SELECT/INSERT/UPDATE only, never DELETE/ownership/schema CREATE/bypass.
 No Customer-level RLS exists; Customer filtering is application authorization.
 QR tokens are redacted from MDC HTTP paths and Problem Details instances.
-Raw JDBC diagnostics from Hibernate, Hikari's broken-connection logger and
-Spring's rollback-exception logger are disabled because their exception messages/
-stack traces can contain QR identifiers/foreign IDs. Pool lifecycle logs and
-safe HTTP status/correlation logs remain; infrastructure errors still return 5xx.
+Infrastructure logger levels are inherited normally; no Hibernate/Hikari/
+transaction logger is disabled for QR privacy. SafeInfrastructureDiagnostics
+adds a correlated structured fallback record with failureCategory, databaseFailure,
+exceptionType, rootCauseType and SQLState when available. It never logs the
+Throwable, message, SQL or parameter values. Request paths remain redacted;
+no request token is added to application diagnostic fields. The public QR is
+an identifier, not an authentication credential. Infrastructure failures remain
+safe 5xx and retain DB/pool/transaction diagnostics under ADR-015.
 
 PostgreSQL 18 tests cover exact schema/grants, state/FK invariants, generated
 normalization, RLS/context/pool isolation and QR uniqueness/history. Real HTTP

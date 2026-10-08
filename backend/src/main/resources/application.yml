@@ -61,12 +61,6 @@ logging:
       console: logstash
   level:
     org.springframework.web: WARN
-    # PostgreSQL exception details can contain public QR tokens and foreign IDs.
-    # Safe HTTP completion logs retain status/correlation without raw SQL diagnostics.
-    org.hibernate.orm.jdbc.error: "OFF"
-    org.hibernate.orm.jdbc.warn: "OFF"
-    com.zaxxer.hikari.pool.ProxyConnection: "OFF"
-    org.springframework.transaction.interceptor.TransactionInterceptor: "OFF"
 
 trailersaas:
   firebase:

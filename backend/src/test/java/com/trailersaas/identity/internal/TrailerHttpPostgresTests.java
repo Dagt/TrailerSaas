@@ -195,17 +195,30 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
     }
     @ParameterizedTest @ValueSource(strings={"08006","57014","P0001"})
     void infrastructureFailuresRemainSafe5xxAndRollbackMetadata(String state,CapturedOutput output) throws Exception {
+        for(String logger:List.of("org.hibernate.orm.jdbc.error","org.hibernate.orm.jdbc.warn",
+                "com.zaxxer.hikari.pool.ProxyConnection","org.springframework.transaction.interceptor.TransactionInterceptor")) {
+            assertThat(org.slf4j.LoggerFactory.getLogger(logger).isWarnEnabled()).as(logger).isTrue();
+            assertThat(org.slf4j.LoggerFactory.getLogger(logger).isErrorEnabled()).as(logger).isTrue();
+        }
         var t=create(Map.of("operationalNumber","fault"));
-        f.db.execute("CREATE FUNCTION test_trailer_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'private QR synthetic-secret-qr-token' USING ERRCODE='"+state+"'; END $$");
+        f.db.execute("CREATE FUNCTION test_trailer_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'controlled database failure' USING ERRCODE='"+state+"'; END $$");
         f.db.execute("CREATE TRIGGER test_trailer_failure BEFORE INSERT OR UPDATE ON trailers FOR EACH ROW EXECUTE FUNCTION test_trailer_failure()");
         try {
             for(var response:List.of(req("POST","/trailers",Map.of("operationalNumber","fault2"),TOKEN),
                     req("PATCH","/trailers/"+t.get("id"),Map.of("expectedVersion",0,"active",false),TOKEN))) {
                 assertThat(response.statusCode()).isEqualTo(500);assertThat(body(response)).containsEntry("detail","The server could not complete the request.");
-                assertThat(response.body()).doesNotContain("RESOURCE_CONFLICT","SQL","constraint","private","synthetic-secret-qr-token");
+                assertThat(response.body()).doesNotContain("RESOURCE_CONFLICT","SQL","constraint","controlled database failure");
+                assertThat(body(response)).containsKey("traceId");
+                assertThat(response.headers().firstValue("X-Request-Id")).contains("trailer-test");
             }
             assertThat(f.db.value("SELECT version FROM trailers WHERE id=?",UUID.fromString((String)t.get("id")))).isEqualTo(0L);
-            assertThat(output.getAll()).doesNotContain("synthetic-secret-qr-token","private QR");
+            assertThat(f.db.value("SELECT count(*) FROM trailers WHERE tenant_id=? AND operational_number='fault2'",tenant)).isEqualTo(0L);
+            var diagnostics=output.getAll().lines().filter(line->line.contains("\"logger_name\":\"com.trailersaas.SafeInfrastructureDiagnostics\"")).toList();
+            assertThat(diagnostics).hasSize(2).allSatisfy(line->{
+                assertThat(line).contains("\"databaseFailure\":true","exceptionType","rootCauseType","sqlState","trailer-test","traceId");
+                assertThat(line).contains(state.equals("08006")?"db_connection_failure":state.equals("57014")?"db_timeout":"unexpected_failure");
+                assertThat(line).doesNotContain("controlled database failure","insert into","update trailers",TOKEN);
+            });
         } finally { f.db.execute("DROP TRIGGER test_trailer_failure ON trailers");f.db.execute("DROP FUNCTION test_trailer_failure()"); }
     }
     Map<String,Object> create(Map<String,Object> fields) throws Exception {
