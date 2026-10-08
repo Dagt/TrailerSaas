@@ -75,7 +75,8 @@ class TenantSettingsHttpPostgresTests extends PostgresIntegrationTest {
         var sdk=mock(com.google.firebase.auth.FirebaseToken.class);
         when(sdk.getUid()).thenReturn("fixture-"+user);
         when(sdk.getClaims()).thenReturn(java.util.Map.of("role","TENANT_ADMIN","tenantId",tenant.toString(),"isAdmin",true));
-        when(verifier.verify("settings-test-token")).thenReturn(FirebaseAdminTokenVerifier.identity(sdk));
+        var verifiedIdentity = FirebaseAdminTokenVerifier.identity(sdk);
+        when(verifier.verify("settings-test-token")).thenReturn(verifiedIdentity);
         problem(request("GET",null,true),403,"CAPABILITY_DENIED");
         problem(request("PATCH","{\"expectedVersion\":0,\"staleTrailerThresholdHours\":99}",true),403,"CAPABILITY_DENIED");
         verify(sdk,never()).getClaims();
