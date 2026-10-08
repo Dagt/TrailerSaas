@@ -608,8 +608,10 @@ Both tables enable Tenant USING/WITH CHECK excluding /me bootstrap. Runtime
 gets SELECT/INSERT/UPDATE only, never DELETE/ownership/schema CREATE/bypass.
 No Customer-level RLS exists; Customer filtering is application authorization.
 QR tokens are redacted from MDC HTTP paths and Problem Details instances.
-Hibernate raw JDBC error/warning logs are disabled because PostgreSQL diagnostics
-can contain QR identifiers/foreign IDs; safe status/correlation logs remain.
+Raw JDBC diagnostics from Hibernate, Hikari's broken-connection logger and
+Spring's rollback-exception logger are disabled because their exception messages/
+stack traces can contain QR identifiers/foreign IDs. Pool lifecycle logs and
+safe HTTP status/correlation logs remain; infrastructure errors still return 5xx.
 
 PostgreSQL 18 tests cover exact schema/grants, state/FK invariants, generated
 normalization, RLS/context/pool isolation and QR uniqueness/history. Real HTTP
