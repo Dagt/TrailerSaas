@@ -25,13 +25,14 @@ public class InfrastructureExceptionHandler extends ResponseEntityExceptionHandl
             return null;
         }
         // Only errors reaching this fallback are untrusted; domain advice runs before it.
+        if (status.value() >= 500) { SafeInfrastructureDiagnostics.record(exception); }
         return createResponseEntity(ProblemDetailsConfiguration.safeInfrastructureProblem(status),
                 headers, status, request);
     }
 
     @ExceptionHandler(Exception.class)
     ProblemDetail unexpectedException(Exception exception) {
-        // Exception messages may contain secrets; the completion log records status and correlation.
+        SafeInfrastructureDiagnostics.record(exception);
         return ProblemDetailsConfiguration.safeInfrastructureProblem(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

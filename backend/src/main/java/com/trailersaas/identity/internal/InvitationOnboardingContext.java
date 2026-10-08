@@ -20,11 +20,12 @@ class InvitationOnboardingContext {
             try (var query = connection.prepareStatement("""
                     SELECT NULLIF(current_setting('app.current_tenant_id', true), ''),
                            NULLIF(current_setting('app.current_user_id', true), ''),
-                           NULLIF(current_setting('app.current_invitation_hash', true), '')
+                           NULLIF(current_setting('app.current_invitation_hash', true), ''),
+                           NULLIF(current_setting('app.current_trailer_qr_token', true), '')
                     """)) {
                 try (var values = query.executeQuery()) {
                     values.next();
-                    if (values.getString(1) != null || values.getString(2) != null
+                    if (values.getString(1) != null || values.getString(2) != null || values.getString(4) != null
                             || (values.getString(3) != null && !hash.equals(values.getString(3)))) {
                         throw new IllegalStateException("Onboarding context cannot change or mix modes.");
                     }

@@ -659,6 +659,191 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/trailers:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Trailers]
+      operationId: listTrailers
+      description: >
+        Fresh TRAILER_VIEW_ALL Tenant scope or TRAILER_VIEW_CUSTOMER_SCOPED Customer IDs. Exact normalized operationalNumber; filters AND together with scope. Foreign designatedCustomerId filter returns CUSTOMER_SCOPE_DENIED. No pagination; unknown filters rejected. Order normalized number/id.
+      parameters:
+        - name: operationalNumber
+          in: query
+          schema: { type: string }
+        - name: designatedCustomerId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: locationState
+          in: query
+          schema:
+            $ref: '#/components/schemas/TrailerLocationState'
+        - name: currentLocationId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: loadState
+          in: query
+          schema:
+            $ref: '#/components/schemas/TrailerLoadState'
+        - name: serviceabilityState
+          in: query
+          schema:
+            $ref: '#/components/schemas/TrailerServiceabilityState'
+        - name: active
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: TrailerList
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailerList'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Trailers]
+      operationId: createTrailer
+      description: >
+        TRAILER_CREATE. Only operationalNumber required. Initial LOCATION_UNKNOWN / UNKNOWN / IN_SERVICE, active=true, version=0. designatedCustomerId is Tenant-safe designation, not ownership. No physical-state input.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrailerRequest'
+      responses:
+        '201':
+          description: Trailer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Trailers]
+      operationId: getTrailer
+      description: >
+        Fresh Trailer read scope. Nonexistent, cross-Tenant or outside Customer scope returns RESOURCE_NOT_FOUND, including unassigned Trailers for Dispatcher.
+      responses:
+        '200':
+          description: Trailer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Trailers]
+      operationId: updateTrailer
+      description: >
+        TRAILER_EDIT, Admin-only. Metadata/active only; cannot mutate Customer designation or physical state. Omitted values unchanged; nullable values clear. expectedVersion mandatory; stale/race STALE_VERSION. No-op retains version; normalized duplicate RESOURCE_CONFLICT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTrailerRequest'
+      responses:
+        '200':
+          description: Trailer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/qr-identities:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Trailers]
+      operationId: listTrailerQrIdentities
+      description: >
+        TRAILER_EDIT, Admin-only. Active and revoked history ordered issuedAt DESC/id. Public token and operational number remain separate for future labels.
+      responses:
+        '200':
+          description: TrailerQrIdentityList
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailerQrIdentityList'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Trailers]
+      operationId: issueTrailerQrIdentity
+      description: >
+        TRAILER_EDIT, Admin-only. No functional payload. Lock Trailer, require no active QR, insert 128-bit SecureRandom public identifier. Existing active QR returns RESOURCE_CONFLICT. Never implicitly revoke.
+      responses:
+        '201':
+          description: TrailerQrIdentity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailerQrIdentity'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/qr-identities/{qrId}/revocation:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: qrId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Trailers]
+      operationId: revokeTrailerQrIdentity
+      description: >
+        TRAILER_EDIT, Admin-only. No functional payload. Lock Trailer and exact QR; retain history, set server revokedAt. Already revoked is idempotent. Wrong pair/Tenant returns RESOURCE_NOT_FOUND.
+      responses:
+        '204':
+          description: No content
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/trailer-qr/{publicToken}:
+    parameters:
+      - name: publicToken
+        in: path
+        required: true
+        description: Canonical unpadded URL-safe Base64 of exactly 16 bytes; identifier, never authorization.
+        schema: { type: string, minLength: 22, maxLength: 22, pattern: '^[A-Za-z0-9_-]{21}[AQgw]$' }
+    get:
+      tags: [Trailers]
+      operationId: resolveTrailerQr
+      description: >
+        Firebase authentication required; no query inputs. Exact active QR SELECT-only RLS context derives Tenant from DB, then normal Tenant RLS and fresh membership/capabilities apply. VIEW_ALL or permitted designated Customer; Yard MOVE/CHECK or Driver HOOK/DROP allow identification only. Unknown/revoked/no membership/suspended/unauthorized/outside scope all return identical 404 RESOURCE_NOT_FOUND. Malformed syntax 400; no bearer 401. No physical mutation authorized.
+      responses:
+        '200':
+          description: TrailerScanSummary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailerScanSummary'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /api/v1/tenants/{tenantId}/orders:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -1477,6 +1662,125 @@ components:
           items:
             $ref: '#/components/schemas/RequestedStopInput'
         plannedTrailerId: { type: [string, "null"], format: uuid }
+
+    Trailer:
+      type: object
+      additionalProperties: false
+      required: [id, operationalNumber, designatedCustomerId, trailerType, capabilityNotes, locationState, currentLocationId, lastKnownLocationId, lastSeenAt, lastDriverId, loadState, serviceabilityState, usagePurpose, active, version, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        designatedCustomerId: { type: [string, "null"], format: uuid }
+        trailerType: { type: [string, "null"] }
+        capabilityNotes: { type: [string, "null"] }
+        locationState:
+          $ref: '#/components/schemas/TrailerLocationState'
+        currentLocationId: { type: [string, "null"], format: uuid }
+        lastKnownLocationId: { type: [string, "null"], format: uuid }
+        lastSeenAt: { type: [string, "null"], format: date-time }
+        lastDriverId: { type: [string, "null"], format: uuid }
+        loadState:
+          $ref: '#/components/schemas/TrailerLoadState'
+        serviceabilityState:
+          $ref: '#/components/schemas/TrailerServiceabilityState'
+        usagePurpose:
+          $ref: '#/components/schemas/TrailerUsagePurpose'
+        active: { type: boolean }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    TrailerList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trailer'
+
+    CreateTrailerRequest:
+      type: object
+      additionalProperties: false
+      description: Original display number is preserved; SQL generates its normalized identity. Control characters and empty ASCII-space keys are rejected.
+      required: [operationalNumber]
+      properties:
+        operationalNumber: { type: string }
+        designatedCustomerId: { type: [string, "null"], format: uuid }
+        trailerType: { type: [string, "null"] }
+        capabilityNotes: { type: [string, "null"] }
+        usagePurpose:
+          $ref: '#/components/schemas/TrailerUsagePurpose'
+
+    UpdateTrailerRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        operationalNumber: { type: string }
+        trailerType: { type: [string, "null"] }
+        capabilityNotes: { type: [string, "null"] }
+        usagePurpose:
+          $ref: '#/components/schemas/TrailerUsagePurpose'
+        active: { type: boolean }
+
+    TrailerLocationState:
+      type: string
+      enum: [AT_LOCATION, IN_TRANSIT, LOCATION_UNKNOWN]
+
+    TrailerLoadState:
+      type: string
+      enum: [EMPTY, LOADED, UNKNOWN]
+
+    TrailerServiceabilityState:
+      type: string
+      enum: [IN_SERVICE, OUT_OF_SERVICE]
+
+    TrailerUsagePurpose:
+      type: [string, "null"]
+      enum: [DELIVERY, SHUTTLE, WIP_STORAGE, TOOLING_STORAGE, OTHER, null]
+
+    TrailerQrIdentity:
+      type: object
+      additionalProperties: false
+      required: [id, trailerId, publicToken, operationalNumber, active, issuedAt, revokedAt]
+      properties:
+        id: { type: string, format: uuid }
+        trailerId: { type: string, format: uuid }
+        publicToken: { type: string, minLength: 22, maxLength: 22, pattern: '^[A-Za-z0-9_-]{21}[AQgw]$' }
+        operationalNumber: { type: string }
+        active: { type: boolean }
+        issuedAt: { type: string, format: date-time }
+        revokedAt: { type: [string, "null"], format: date-time }
+
+    TrailerQrIdentityList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrailerQrIdentity'
+
+    TrailerScanSummary:
+      type: object
+      additionalProperties: false
+      description: Identification only. No token, Tenant, Customer metadata, roles, scopes or history.
+      required: [trailerId, operationalNumber, trailerType, locationState, loadState, serviceabilityState, active]
+      properties:
+        trailerId: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        trailerType: { type: [string, "null"] }
+        locationState:
+          $ref: '#/components/schemas/TrailerLocationState'
+        loadState:
+          $ref: '#/components/schemas/TrailerLoadState'
+        serviceabilityState:
+          $ref: '#/components/schemas/TrailerServiceabilityState'
+        active: { type: boolean }
 
     OrderSummary:
       type: object

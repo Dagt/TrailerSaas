@@ -19,8 +19,9 @@ import org.springframework.mock.env.MockEnvironment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StructuredLoggingTests {
-    @Test
-    void nativeJsonCompletionLogHasCorrelationAndNeverCopiesHeadersBodiesOrQuery() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"/test","/api/v1/trailer-qr/synthetic-public-qr-token"})
+    void nativeJsonCompletionLogHasCorrelationAndNeverCopiesHeadersBodiesOrQuery(String path) throws Exception {
         Logger logger = (Logger) LoggerFactory.getLogger(RequestCorrelationFilter.class);
         var appender = new ListAppender<ILoggingEvent>() {
             @Override
@@ -39,7 +40,7 @@ class StructuredLoggingTests {
         encoder.setCharset(StandardCharsets.UTF_8);
         encoder.start();
         try {
-            var request = new MockHttpServletRequest("POST", "/test");
+            var request = new MockHttpServletRequest(path.startsWith("/api/v1/trailer-qr/")?"GET":"POST", path);
             request.addHeader(RequestCorrelationFilter.HEADER, "privacy-test");
             request.addHeader("Authorization", "Bearer synthetic-secret-token");
             request.addHeader("Cookie", "synthetic-secret-token");
@@ -51,11 +52,11 @@ class StructuredLoggingTests {
             Map<String, Object> fields = JsonPath.parse(json).read("$");
             assertThat(fields).containsEntry("requestId", "privacy-test")
                     .containsEntry("traceId", "privacy-test")
-                    .containsEntry("http.path", "/test")
-                    .containsEntry("http.method", "POST")
+                    .containsEntry("http.path", path.startsWith("/api/v1/trailer-qr/")?"/api/v1/trailer-qr/redacted":"/test")
+                    .containsEntry("http.method", request.getMethod())
                     .containsEntry("http.status", 200)
                     .containsKeys("@timestamp", "level", "logger_name", "durationMs");
-            assertThat(json).doesNotContain("synthetic-secret-token", "Authorization", "Cookie", "signature");
+            assertThat(json).doesNotContain("synthetic-secret-token","synthetic-public-qr-token", "Authorization", "Cookie", "signature");
             assertThat(json.strip()).doesNotContain("\n", "\r");
         } finally {
             encoder.stop();

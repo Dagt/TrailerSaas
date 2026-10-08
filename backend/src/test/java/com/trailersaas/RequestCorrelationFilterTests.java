@@ -21,6 +21,25 @@ class RequestCorrelationFilterTests {
     private final RequestCorrelationFilter filter = new RequestCorrelationFilter();
 
     @Test
+    void qrTokenIsRedactedFromMdcAndProblemInstance() throws Exception {
+        String token="synthetic-secret-qr-token";
+        var request=new MockHttpServletRequest("GET","/api/v1/trailer-qr/"+token);
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+                new org.springframework.web.context.request.ServletRequestAttributes(request));
+        try {
+            filter.doFilter(request,new MockHttpServletResponse(),(req,res)->{
+                assertThat(MDC.get("http.path")).isEqualTo("/api/v1/trailer-qr/redacted");
+                var problem=ProblemDetail.forStatus(404);
+                ProblemDetailsConfiguration.addCorrelation(problem);
+                assertThat(problem.getInstance().toString()).isEqualTo("/api/v1/trailer-qr/redacted");
+                assertThat(MDC.getCopyOfContextMap().toString()).doesNotContain(token);
+            });
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
+    @Test
     void errorRedispatchRetainsOriginalTraceAfterOuterScopeClosed() throws Exception {
         var request = new MockHttpServletRequest("GET", "/test");
         var response = new MockHttpServletResponse();
