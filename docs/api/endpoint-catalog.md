@@ -48,7 +48,12 @@ require fresh same-Tenant ACTIVE membership + TENANT DRIVER role. Lists have no
 filters/pagination; unknown parameters are rejected. PATCH/link commands require
 expectedVersion. DELETE user-link also requires an explicit JSON body
 `{"expectedVersion": 4}`; it returns 204 and deletes no identity/access.
-Trailer endpoints below remain future #29 scope.
+Trailer CRUD and QR identities are implemented in #29. Admin creates/edits and
+manages QR; Admin/Operations read all, Dispatcher reads designated Customer scope.
+Yard/Driver may resolve scans only with existing physical capabilities, not browse.
+The global Firebase-authenticated QR path is **/api/v1/trailer-qr/{publicToken}**;
+it derives Tenant from the exact active QR row, never client context.
+Customer-designation, physical-state commands and timeline below remain deferred.
 
 - `POST /drivers`
 - `GET /drivers`

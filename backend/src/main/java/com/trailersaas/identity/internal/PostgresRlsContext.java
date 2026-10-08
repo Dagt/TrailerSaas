@@ -40,12 +40,16 @@ class PostgresRlsContext implements TenantContext {
             }
             try (var query = connection.prepareStatement("""
                     SELECT NULLIF(current_setting('app.current_tenant_id', true), ''),
-                           NULLIF(current_setting('app.current_user_id', true), '')
+                           NULLIF(current_setting('app.current_user_id', true), ''),
+                           NULLIF(current_setting('app.current_trailer_qr_token', true), '')
                     """)) {
                 try (var settings = query.executeQuery()) {
                     settings.next();
                     var currentTenant = settings.getString(1);
                     var currentUser = settings.getString(2);
+                    if (userId != null && settings.getString(3) != null) {
+                        throw new IllegalStateException("QR lookup cannot mix bootstrap context");
+                    }
                     if ((currentTenant != null || currentUser != null)
                             && (!matches(currentTenant, tenantId) || !matches(currentUser, userId))) {
                         throw new IllegalStateException("RLS context cannot change within a transaction");

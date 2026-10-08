@@ -566,6 +566,58 @@ propagate to the existing safe 5xx Problem Details handler; they are not permane
 invitation conflicts. Both domain and infrastructure failures roll back all
 membership/role/invitation changes together.
 
+## Trailers and QR identities (#29)
+
+V8__trailers_qr_identities.sql adds only trailers and trailer_qr_identities;
+V1–V7 and Accepted schema/state documents remain untouched. Trailer UUID is
+independent of number. Amendment I/V7's exact generated STORED expression is
+reused with C collation, ASCII-only trim/collapse/case fold, controls rejected
+and original display preserved. No ownership/size fields are introduced.
+Tenant-safe nullable FKs protect Customer, current/last Location and last Driver.
+Closed SQL catalogs keep location/load/serviceability/usage separate:
+AT_LOCATION needs a Location; LOCATION_UNKNOWN forbids one; IN_TRANSIT has no
+extra unapproved constraint.
+
+POST sets LOCATION_UNKNOWN / UNKNOWN / IN_SERVICE, active=true, version=0 and
+null provenance. Generic PATCH changes only number/type/notes/purpose/active,
+requires expectedVersion and @Version, retains version on no-op, and never
+changes designation or physical state. Integrity 23505/23503/23514 maps to safe
+RESOURCE_CONFLICT; infrastructure failures stay safe 5xx. Responses omit Tenant/
+normalized key. Exact seven filters AND with Customer scope; no pagination.
+TrailerAccessPolicy exposes fresh Tenant-wide/Customer UUID scope from identity.
+Dispatcher sees only matching designation, never foreign/unassigned; direct
+invisible IDs are 404 and explicit foreign Customer filter is 403.
+
+QR management uses TRAILER_EDIT. Issue locks Trailer; one-active partial UNIQUE
+is the final barrier. SecureRandom generates 16 bytes/128 bits, unpadded URL-safe
+Base64 (22 canonical characters), stored as public_token per ADR-018. Revoke
+locks parent/QR, retains history, is idempotent; reissue preserves Trailer UUID.
+Token and operational number are separately available for future labels.
+
+GET /api/v1/trailer-qr/{publicToken} requires Firebase. TrailerQrLookupContext
+sets prepared transaction-local app.current_trailer_qr_token on the existing JPA
+connection. Its SELECT-only policy exposes just the active exact QR, no Trailer/
+enumeration/writes. DB-derived Tenant is then pinned for normal Trailer RLS,
+followed by fresh ACTIVE membership and TrailerAccessPolicy scan authorization.
+Admin/Operations, scoped Dispatcher, Yard MOVE/CHECK or Driver HOOK/DROP may
+identify; no physical mutation is authorized. Unknown/revoked/unauthorized
+lookups all return identical 404. No admin/migrator/BYPASSRLS path is used.
+Commit/rollback clears both settings, verified with a one-connection pool.
+
+Both tables enable Tenant USING/WITH CHECK excluding /me bootstrap. Runtime
+gets SELECT/INSERT/UPDATE only, never DELETE/ownership/schema CREATE/bypass.
+No Customer-level RLS exists; Customer filtering is application authorization.
+QR tokens are redacted from MDC HTTP paths and Problem Details instances.
+Hibernate raw JDBC error/warning logs are disabled because PostgreSQL diagnostics
+can contain QR identifiers/foreign IDs; safe status/correlation logs remain.
+
+PostgreSQL 18 tests cover exact schema/grants, state/FK invariants, generated
+normalization, RLS/context/pool isolation and QR uniqueness/history. Real HTTP
+tests cover scoped reads/filters, strict PATCH, safe failures, optimistic races,
+serialized concurrent QR issuance, reissue and all-role authenticated resolution.
+No movement events, couplings, physical commands, timeline, audit subsystem,
+UI, image/printing/provider infrastructure or #30 is implemented.
+
 ## Tests
 
 With a working Docker daemon in Linux-container mode:
@@ -607,7 +659,7 @@ stable ordering and fresh status/role reads; original 401/stateless tests remain
 resolution, deny-by-default, multiple roles, Customer A/B isolation, assigned-work
 constraints and bypass prevention. Real HTTP/PostgreSQL tests prove same-token
 revocation, ignored malicious claims, safe correlated 401/403 responses and the
-difference between membership visibility and authorization. Flyway now ends at V7;
+difference between membership visibility and authorization. Flyway now ends at V8;
 existing table/column and runtime grant assertions remain, with RLS enabled.
 V4 tests deliberately omit Tenant predicates and verify isolation in PostgreSQL,
 bootstrap privacy, context conflicts, and outer-transaction authorization.

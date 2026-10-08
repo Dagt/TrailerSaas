@@ -215,3 +215,21 @@ creates no membership/role; unlinking removes neither identity nor access.
 MVP may ship only with system roles.
 
 The capability model should make future tenant-defined custom roles possible without changing domain services, but a custom-role UI is not required for MVP.
+
+## Trailer read and QR identification boundary (#29)
+
+The catalog remains 57 capabilities and all existing mappings are unchanged.
+Admin: TRAILER_CREATE/EDIT/VIEW_ALL. Operations: VIEW_ALL only.
+Dispatcher: VIEW_CUSTOMER_SCOPED with fresh Customer assignments; unassigned/
+foreign designation is invisible. Driver/Yard have no generic Trailer browse.
+Identity's public TrailerAccessPolicy exposes only Tenant-wide/Customer-ID scope,
+never internal roles or Firebase claims. Explicit outside-scope Customer list
+filter is CUSTOMER_SCOPE_DENIED; invisible direct resources return 404.
+
+QR list/issue/revoke uses TRAILER_EDIT, Admin-only. Global authenticated resolution
+derives Tenant from exact active QR under SELECT-only RLS, then checks fresh
+ACTIVE membership and VIEW_ALL/scoped designation. YARD_MOVE_EXECUTE or
+YARD_CHECK_EXECUTE and TRAILER_HOOK or TRAILER_DROP allow scan identification
+only; future commands must enforce assignment/domain-state authorization.
+QR identifier alone grants nothing. All QR authorization failures are safe 404.
+No new OOS/correction/return-to-service authority is inferred; OQ-054 stays open.

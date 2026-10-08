@@ -63,7 +63,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         request.setAttribute(TRACE_ATTRIBUTE, MDC.get("traceId"));
         request.setAttribute(SPAN_ATTRIBUTE, MDC.get("spanId"));
         MDC.put("http.method", request.getMethod());
-        MDC.put("http.path", request.getRequestURI());
+        MDC.put("http.path", ProblemDetailsConfiguration.safeRequestPath(request.getRequestURI()));
         long start = System.nanoTime();
         boolean failed = false;
         try {

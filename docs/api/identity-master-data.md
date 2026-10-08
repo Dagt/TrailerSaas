@@ -410,33 +410,49 @@ RESOURCE_NOT_FOUND after valid Tenant authorization. All requests use existing
 
 ## 11. Trailers
 
+Implemented in #29 under the Tenant base. No hard delete, physical command or
+movement history is implemented in this baseline.
+
 ### POST /trailers
 ### GET /trailers
 ### GET /trailers/{trailerId}
 ### PATCH /trailers/{trailerId}
 
-Create request:
+POST requires TRAILER_CREATE (Admin). Only operationalNumber is required;
+optional designatedCustomerId (same Tenant), trailerType, capabilityNotes and
+usagePurpose are metadata. Designation is not ownership. Original number is
+preserved; amendment I/V7's ASCII-only generated normalization enforces identity.
+Controls/empty keys fail validation. UUID is independent from number.
 
-```json
-{
-  "operationalNumber": "T114",
-  "designatedCustomerId": "uuid",
-  "trailerType": "53_DRY_VAN",
-  "capabilityNotes": "..."
-}
-```
+Server initial state: LOCATION_UNKNOWN, null current/last-known Location, last
+seen and Driver, UNKNOWN load, IN_SERVICE, active=true, version=0. Create cannot
+supply those state fields. Responses contain id, display number, designation,
+type/notes, locationState/currentLocationId/lastKnownLocationId/lastSeenAt/
+lastDriverId, loadState, serviceabilityState, usagePurpose, active, version and
+timestamps, never Tenant ID or normalized key.
 
-List filters include:
+Reads use TRAILER_VIEW_ALL for Admin/Operations, or fresh
+TRAILER_VIEW_CUSTOMER_SCOPED Customer IDs for Dispatcher. Dispatcher sees only
+matching designated Customers, excluding unassigned Trailers. Direct invisible
+IDs return 404 RESOURCE_NOT_FOUND. Yard/Driver have no generic browse.
 
-- operationalNumber;
-- designatedCustomerId;
-- locationState;
-- currentLocationId;
-- loadState;
-- serviceabilityState;
-- active.
+GET list returns items ordered by normalized number/id, without pagination.
+Exact filters: operationalNumber (normalized exact match), designatedCustomerId,
+locationState, currentLocationId, loadState, serviceabilityState, active. Filters
+AND with each other and the mandatory Customer scope. Invalid/unknown filters
+return 400; explicit outside-scope Customer filter returns 403 CUSTOMER_SCOPE_DENIED.
 
-Trailer detail returns current projection plus recent/linked operational summaries, not the entire unbounded movement history.
+PATCH requires TRAILER_EDIT (Admin) and expectedVersion. Mutable fields only:
+operationalNumber, trailerType, capabilityNotes, usagePurpose, active.
+Omitted fields stay unchanged; nullable metadata clears with explicit null.
+No-op retains version; stale/racing updates return STALE_VERSION, normalized
+duplicate or invalid/cross-Tenant Customer FK returns safe RESOURCE_CONFLICT.
+Generic PATCH cannot change designation or any physical state/provenance.
+
+### Deferred operational commands
+
+The following approved contracts are future implementation, not #29 endpoints.
+They require their own domain/history/audit behavior. OQ-054 remains open.
 
 ### POST /trailers/{trailerId}/customer-designation-changes
 
@@ -502,27 +518,45 @@ Response preserves:
 
 ## 12. Trailer QR
 
-### GET /trailers/{trailerId}/qr-identities
+Implemented in #29; management paths are Tenant-scoped and require TRAILER_EDIT
+(Admin-only). No QR image/printing/labels/UI or production QR host is configured.
 
-Admin/authorized equipment management view of active/revoked QR identities.
+### GET /trailers/{trailerId}/qr-identities
+Returns items with id, trailerId, publicToken, operationalNumber, active,
+issuedAt, revokedAt, ordered issuedAt DESC/id. Retains revoked history; token and
+display number are separate for future labels.
 
 ### POST /trailers/{trailerId}/qr-identities
-
-Issues a new non-guessable QR identity.
+No functional payload. Locks Trailer and returns 201 with a new public QR
+identity: SecureRandom 16 bytes (128 bits), URL-safe Base64 without padding,
+canonical 22 characters. Stores the public identifier directly (ADR-018).
+One active QR per Trailer is DB-enforced; an existing active QR returns 409.
+Reissue requires explicit revoke first, preserving Trailer UUID.
 
 ### POST /trailers/{trailerId}/qr-identities/{qrId}/revocation
+No functional payload. Locks Trailer and exact QR, sets active=false and server
+revokedAt, retaining history. Returns 204, including already revoked. Wrong pair/
+Tenant returns 404. Full audit subsystem integration remains deferred.
 
-Revokes a compromised/replaced QR identity.
+### GET /api/v1/trailer-qr/{publicToken}
+Global Firebase-authenticated endpoint, outside the Tenant base path.
+Accepts no Tenant/Customer/role hints. Canonical token syntax is required.
+An exact active QR SELECT-only transaction-local RLS context derives Tenant from
+the stored QR. Normal Tenant RLS then loads Trailer and fresh ACTIVE membership/
+capabilities authorize identification. Token alone never grants permission.
 
-QR issuance/revocation is audited.
+Admin/Operations use TRAILER_VIEW_ALL; Dispatcher requires the designated
+Customer under TRAILER_VIEW_CUSTOMER_SCOPED. Yard may identify with
+YARD_MOVE_EXECUTE or YARD_CHECK_EXECUTE; Driver with TRAILER_HOOK or TRAILER_DROP.
+These scan permissions authorize no state mutation or physical command.
 
-### GET /trailer-qr/{publicToken}
+Scan summary contains only trailerId, operationalNumber, trailerType,
+locationState, loadState, serviceabilityState and active. Unknown/revoked tokens,
+missing/suspended membership and outside Customer scope (including unassigned)
+all return the same safe 404 RESOURCE_NOT_FOUND. Invalid syntax is 400; missing/
+invalid bearer is 401. QR tokens are redacted from error instances and HTTP logs.
 
-Requires authenticated Tenant context.
-
-Returns a Trailer scan summary if the Trailer belongs to the active Tenant and caller has permission.
-
-The token is an identifier, not an authorization secret.
+### Deferred timeline
 
 ### GET /trailers/{trailerId}/timeline
 

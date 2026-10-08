@@ -32,10 +32,19 @@ public class ProblemDetailsConfiguration implements WebMvcConfigurer {
     }
 
     public static void addCorrelation(ProblemDetail body) {
+        var attributes = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        if (attributes instanceof org.springframework.web.context.request.ServletRequestAttributes servlet
+                && servlet.getRequest().getRequestURI().startsWith("/api/v1/trailer-qr/")) {
+            body.setInstance(URI.create("/api/v1/trailer-qr/redacted"));
+        }
         String traceId = MDC.get("traceId");
         if (traceId == null) {
             traceId = MDC.get("requestId");
         }
         body.setProperty("traceId", traceId == null ? UUID.randomUUID().toString() : traceId);
+    }
+
+    static String safeRequestPath(String path) {
+        return path.startsWith("/api/v1/trailer-qr/") ? "/api/v1/trailer-qr/redacted" : path;
     }
 }
