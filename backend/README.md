@@ -603,7 +603,9 @@ policy stops applying and only normal Tenant RLS supplies visibility,
 followed by fresh ACTIVE membership and TrailerAccessPolicy scan authorization.
 Admin/Operations, scoped Dispatcher, Yard MOVE/CHECK or Driver HOOK/DROP may
 identify; no physical mutation is authorized. Unknown/revoked/unauthorized
-lookups all return identical 404. No admin/migrator/BYPASSRLS path is used.
+lookups and inactive/missing underlying Trailers all return identical 404.
+Deactivation leaves QR identity/history intact; the same active QR resolves
+again after Trailer reactivation. No admin/migrator/BYPASSRLS path is used.
 Commit/rollback clears both settings, verified with a one-connection pool.
 
 Both tables enable Tenant USING/WITH CHECK excluding /me bootstrap. Runtime

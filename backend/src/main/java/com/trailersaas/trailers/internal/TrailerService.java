@@ -84,6 +84,7 @@ class TrailerService {
         var qr=repository.activeQrForToken(token);
         tenantContext.establishTenant(qr.tenantId);
         var trailer=repository.resource(qr.tenantId,qr.trailerId,false);
+        if(!trailer.active) { throw TrailerFailure.missing(); }
         if(!access.mayResolveQr(actor,qr.tenantId,trailer.designatedCustomerId)) { throw TrailerFailure.missing(); }
         return Scan.of(trailer);
     }

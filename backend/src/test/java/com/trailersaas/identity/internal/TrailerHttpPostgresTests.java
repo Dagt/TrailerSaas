@@ -149,6 +149,43 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
         var other=create(Map.of("operationalNumber","other"));
         problem(req("POST","/trailers/"+other.get("id")+"/qr-identities/"+reissued.get("id")+"/revocation",null,TOKEN),404,"RESOURCE_NOT_FOUND");
     }
+    @Test void inactiveTrailerQrIsHiddenWithoutRevokingIdentityAndResolvesAfterReactivation(CapturedOutput output) throws Exception {
+        var trailer=create(Map.of("operationalNumber","lifecycle","designatedCustomerId",customerA));
+        UUID trailerId=UUID.fromString((String)trailer.get("id"));
+        String path="/trailers/"+trailerId,qrPath=path+"/qr-identities";
+        var issued=req("POST",qrPath,null,TOKEN);assertThat(issued.statusCode()).isEqualTo(201);
+        var qr=body(issued);UUID qrId=UUID.fromString((String)qr.get("id"));String token=(String)qr.get("publicToken");
+        var originalScan=scan(token,TOKEN);assertThat(originalScan.statusCode()).isEqualTo(200);
+        assertThat(body(originalScan)).containsEntry("trailerId",trailerId.toString()).containsEntry("active",true);
+        var history=items(req("GET",qrPath,null,TOKEN));assertThat(history).containsExactly(qr);
+        String qrSnapshot=(String)f.db.value("SELECT row_to_json(q)::text FROM trailer_qr_identities q WHERE id=?",qrId);
+
+        var deactivated=req("PATCH",path,Map.of("expectedVersion",trailer.get("version"),"active",false),TOKEN);
+        assertThat(deactivated.statusCode()).isEqualTo(200);
+        assertThat(body(deactivated)).containsEntry("id",trailerId.toString()).containsEntry("active",false).containsEntry("version",1);
+        var hidden=scan(token,TOKEN);problem(hidden,404,"RESOURCE_NOT_FOUND");
+        assertThat(body(hidden)).containsEntry("status",404).containsEntry("detail","The resource was not found.")
+                .containsEntry("instance","/api/v1/trailer-qr/redacted");
+        var unknown=scan("AAAAAAAAAAAAAAAAAAAAAA",TOKEN);problem(unknown,404,"RESOURCE_NOT_FOUND");
+        var hiddenProblem=new HashMap<>(body(hidden));var unknownProblem=new HashMap<>(body(unknown));
+        hiddenProblem.remove("traceId");unknownProblem.remove("traceId");
+        assertThat(hiddenProblem).isEqualTo(unknownProblem);
+        assertThat(hidden.body()).doesNotContain("inactive","active",token,trailerId.toString(),tenant.toString(),customerA.toString());
+        assertThat(f.db.value("SELECT active FROM trailer_qr_identities WHERE id=?",qrId)).isEqualTo(true);
+        assertThat(f.db.value("SELECT public_token FROM trailer_qr_identities WHERE id=?",qrId)).isEqualTo(token);
+        assertThat(f.db.value("SELECT revoked_at FROM trailer_qr_identities WHERE id=?",qrId)).isNull();
+        assertThat(f.db.value("SELECT row_to_json(q)::text FROM trailer_qr_identities q WHERE id=?",qrId)).isEqualTo(qrSnapshot);
+        assertThat(items(req("GET",qrPath,null,TOKEN))).isEqualTo(history);
+
+        var reactivated=req("PATCH",path,Map.of("expectedVersion",body(deactivated).get("version"),"active",true),TOKEN);
+        assertThat(reactivated.statusCode()).isEqualTo(200);
+        assertThat(body(reactivated)).containsEntry("id",trailerId.toString()).containsEntry("active",true).containsEntry("version",2);
+        var restored=scan(token,TOKEN);assertThat(restored.statusCode()).isEqualTo(200);
+        assertThat(body(restored)).isEqualTo(body(originalScan));
+        assertThat(f.db.value("SELECT row_to_json(q)::text FROM trailer_qr_identities q WHERE id=?",qrId)).isEqualTo(qrSnapshot);
+        assertThat(items(req("GET",qrPath,null,TOKEN))).isEqualTo(history);
+        assertThat(output.getAll()).doesNotContain(token,TOKEN);
+    }
     @Test void simultaneousQrIssuesSerializeOnTrailerWithoutImplicitRevocation() throws Exception {
         var t=create(Map.of("operationalNumber","race"));String p="/trailers/"+t.get("id")+"/qr-identities";
         var start=new CountDownLatch(1);

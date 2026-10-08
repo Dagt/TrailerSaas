@@ -552,8 +552,10 @@ These scan permissions authorize no state mutation or physical command.
 
 Scan summary contains only trailerId, operationalNumber, trailerType,
 locationState, loadState, serviceabilityState and active. Unknown/revoked tokens,
-missing/suspended membership and outside Customer scope (including unassigned)
-all return the same safe 404 RESOURCE_NOT_FOUND. Invalid syntax is 400; missing/
+inactive/missing underlying Trailers, missing/suspended membership and outside
+Customer scope (including unassigned) all return the same safe 404 RESOURCE_NOT_FOUND.
+Deactivation does not revoke or change the QR; the same active QR resolves again
+after Trailer reactivation. Invalid syntax is 400; missing/
 invalid bearer is 401. QR tokens are redacted from error instances and HTTP logs.
 
 ### Deferred timeline
