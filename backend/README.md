@@ -628,6 +628,37 @@ serialized concurrent QR issuance, reissue and all-role authenticated resolution
 No movement events, couplings, physical commands, timeline, audit subsystem,
 UI, image/printing/provider infrastructure or #30 is implemented.
 
+## Tenant settings and Web CORS (#30)
+
+V9__tenant_settings.sql creates only tenant_settings: Tenant PK/FK, positive
+stale_trailer_threshold_hours, nullable default_timezone, timestamps and @Version.
+Existing Tenants receive 72 hours/NULL/version 0. New Tenant provisioning must
+create settings in its own future flow; the runtime cannot INSERT settings.
+V1–V8 stay unchanged. Runtime has SELECT/UPDATE only, no DELETE/ownership/schema
+CREATE/PUBLIC/bypass privileges. Tenant USING/WITH CHECK excludes /me bootstrap;
+no context sees no settings rows.
+
+GET/PATCH /api/v1/tenants/{tenantId}/settings require TENANT_SETTINGS_MANAGE from
+fresh PostgreSQL authorization. PATCH requires expectedVersion, positive integral
+threshold, IANA timezone or explicit null clearing, and rejects unknown fields.
+@Version prevents silent overwrite; stale/races return STALE_VERSION, and no-op
+retains version. No retention, billing or arbitrary settings JSON is implemented.
+
+Spring Security CORS uses WEB_ALLOWED_ORIGINS, a comma-separated **exact origin**
+allowlist. Outside local, supply HTTPS origins for the actual Web environments;
+empty means no cross-origin access. Wildcards, URL credentials/paths/queries and
+non-local loopback are rejected without echoing values. Local defaults only to
+http://127.0.0.1:5173 and http://localhost:5173; override explicitly if Vite chooses
+another port. Allowed methods: GET/POST/PATCH/DELETE/OPTIONS; headers:
+Authorization/Content-Type/X-Request-Id; exposed X-Request-Id. Credentials=false;
+bearer authentication and all existing Tenant/capability/RLS checks remain required.
+No session cookie or wildcard fallback is added. V8 QR RLS/redaction/diagnostics
+remain unchanged.
+
+PostgreSQL 18 tests cover migration/backfill/schema/grants/RLS, Admin-only settings,
+validation, nullable/no-op/stale/concurrent updates and real HTTP CORS preflight,
+unknown origins and continued 401 authentication.
+
 ## Tests
 
 With a working Docker daemon in Linux-container mode:
@@ -669,7 +700,7 @@ stable ordering and fresh status/role reads; original 401/stateless tests remain
 resolution, deny-by-default, multiple roles, Customer A/B isolation, assigned-work
 constraints and bypass prevention. Real HTTP/PostgreSQL tests prove same-token
 revocation, ignored malicious claims, safe correlated 401/403 responses and the
-difference between membership visibility and authorization. Flyway now ends at V8;
+difference between membership visibility and authorization. Flyway now ends at V9;
 existing table/column and runtime grant assertions remain, with RLS enabled.
 V4 tests deliberately omit Tenant predicates and verify isolation in PostgreSQL,
 bootstrap privacy, context conflicts, and outer-transaction authorization.

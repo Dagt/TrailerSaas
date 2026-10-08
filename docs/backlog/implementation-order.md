@@ -55,8 +55,8 @@ Can proceed with controlled parallelism after Wave 1:
 ### Master data
 - #27 Customers/Sites/Locations
 - #28 Drivers/Tractors — merged/complete in [PR #82](https://github.com/Dagt/TrailerSaas/pull/82)
-- #29 Trailers/QR — current bounded implementation; complete only after its PR merges
-- #30 Admin master-data Web
+- #29 Trailers/QR — merged/complete in [PR #83](https://github.com/Dagt/TrailerSaas/pull/83)
+- #30 Tenant settings/Admin master-data Web — current bounded implementation; complete only after its PR merges
 
 ### File/job infrastructure
 - #52 R2 document transport

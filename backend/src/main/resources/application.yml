@@ -63,5 +63,7 @@ logging:
     org.springframework.web: WARN
 
 trailersaas:
+  cors:
+    allowed-origins: ${WEB_ALLOWED_ORIGINS:}
   firebase:
     project-id: ${FIREBASE_PROJECT_ID}

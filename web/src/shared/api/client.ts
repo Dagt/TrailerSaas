@@ -1,8 +1,50 @@
-import { readWebEnvironment } from '../config/environment'
+export interface Problem {
+  status: number; code?: string; detail?: string; traceId?: string
+  errors?: { field: string; message: string }[]
+}
 
-const webEnvironment = readWebEnvironment(import.meta.env)
+export class ApiProblem extends Error {
+  readonly problem: Problem
+  constructor(problem: Problem) { super('The API request could not be completed.'); this.name = 'ApiProblem'; this.problem = problem }
+}
 
-// Transport and authentication are added by later API/identity issues.
-export const apiClient = Object.freeze({
-  baseUrl: webEnvironment.apiBaseUrl,
-})
+export interface ApiClient {
+  request<T>(path: string, options?: { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; body?: unknown; signal?: AbortSignal }): Promise<T>
+}
+
+/** No response/request logging, token storage, mutation retries, or authorization decisions. */
+export function createApiClient(baseUrl: string, getToken: () => Promise<string | null>,
+  unauthorized: () => void = () => {}, transport: typeof fetch = globalThis.fetch): ApiClient {
+  return {
+    async request<T>(path: string, options: { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
+      let token: string | null
+      try { token = await getToken() } catch {
+        unauthorized(); throw new ApiProblem({ status: 401, code: 'AUTHENTICATION_REQUIRED' })
+      }
+      if (!token) { unauthorized(); throw new ApiProblem({ status: 401, code: 'AUTHENTICATION_REQUIRED' }) }
+      const headers: Record<string, string> = { Accept: 'application/json', Authorization: `Bearer ${token}` }
+      if (typeof globalThis.crypto?.randomUUID === 'function') headers['X-Request-Id'] = crypto.randomUUID()
+      if (options.body !== undefined) headers['Content-Type'] = 'application/json'
+      let response: Response
+      try {
+        response = await transport(`${baseUrl.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`, {
+          method: options.method ?? 'GET', headers, signal: options.signal,
+          ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}), credentials: 'omit',
+        })
+      } catch (error) {
+        if (options.signal?.aborted) throw error
+        throw new ApiProblem({ status: 503 })
+      }
+      if (!response.ok) {
+        let body: Partial<Problem> = {}
+        if (response.headers.get('Content-Type')?.includes('application/problem+json')) {
+          try { body = await response.json() as Partial<Problem> } catch { /* Generic safe error. */ }
+        }
+        if (response.status === 401) unauthorized()
+        throw new ApiProblem({ status: response.status, code: body.code, detail: body.detail, traceId: body.traceId, errors: body.errors })
+      }
+      if (response.status === 204) return undefined as T
+      return response.json() as Promise<T>
+    },
+  }
+}

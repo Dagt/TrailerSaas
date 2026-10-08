@@ -177,6 +177,7 @@ paths:
     get:
       tags: [Settings]
       operationId: getTenantSettings
+      description: TENANT_SETTINGS_MANAGE, Tenant Admin only. Returns the approved threshold, optional IANA timezone and optimistic version.
       responses:
         '200':
           description: Tenant settings
@@ -189,17 +190,13 @@ paths:
     patch:
       tags: [Settings]
       operationId: updateTenantSettings
+      description: TENANT_SETTINGS_MANAGE, Tenant Admin only. Omitted fields remain unchanged; null clears defaultTimezone. Unknown fields fail validation. STALE_VERSION on stale expectedVersion or concurrent update; no-op preserves version.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [expectedVersion]
-              properties:
-                expectedVersion: { type: integer, format: int64 }
-                staleTrailerThresholdHours: { type: integer }
-                defaultTimezone: { type: string }
+              $ref: '#/components/schemas/UpdateTenantSettingsRequest'
       responses:
         '200':
           description: Updated settings
@@ -1371,10 +1368,21 @@ components:
 
     TenantSettings:
       type: object
+      additionalProperties: false
+      required: [staleTrailerThresholdHours, defaultTimezone, version]
       properties:
-        staleTrailerThresholdHours: { type: integer }
-        defaultTimezone: { type: [string, "null"] }
-        version: { type: integer, format: int64 }
+        staleTrailerThresholdHours: { type: integer, format: int32, minimum: 1 }
+        defaultTimezone: { type: [string, "null"], description: Valid IANA timezone when non-null }
+        version: { type: integer, format: int64, minimum: 0 }
+
+    UpdateTenantSettingsRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        staleTrailerThresholdHours: { type: integer, format: int32, minimum: 1 }
+        defaultTimezone: { type: [string, "null"], description: Valid IANA timezone; explicit null clears it }
 
     CreateCustomerRequest:
       type: object

@@ -70,6 +70,12 @@ Required now is distinct from expected future requirements.
 | `GOOGLE_APPLICATION_CREDENTIALS` | Backend | Official ADC path to protected/mounted credentials | D/S/P | For file-based ADC; optional with official ambient ADC | Path is config; contents are secret | Active #22 |
 | `VITE_APP_ENV` | Web | Application environment, independent of build mode | D/S/P | Explicit S/P, optional D | Public bundle config | Active #20 |
 | `VITE_API_BASE_URL` | Web | Absolute API base URL | D/S/P | Yes S/P, optional D | Public bundle config | Active #16/#20 |
+| `WEB_ALLOWED_ORIGINS` | Backend | Exact comma-separated Web origin allowlist | D/S/P | For cross-origin Web; local loopback defaults only | Server config | Active #30 |
+| `VITE_FIREBASE_API_KEY` | Web | Firebase Authentication project key | D/S/P | With all other Web identity fields to enable sign-in | Public client config | Active #30 |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Web | Firebase auth domain | D/S/P | With Web identity configuration | Public client config | Active #30 |
+| `VITE_FIREBASE_PROJECT_ID` | Web | Firebase project | D/S/P | With Web identity configuration | Public client config | Active #30 |
+| `VITE_FIREBASE_APP_ID` | Web | Firebase Web app identifier | D/S/P | With Web identity configuration | Public client config | Active #30 |
+| `VITE_QR_PUBLIC_BASE_URL` | Web | Public label URL base, separate from API | D/S/P | Only for printing; missing disables print | Public bundle config | Active #30 |
 | `APP_ENV` | Mobile | Compile-time application environment | D/S/P | Explicit S/P, optional D | Public app config | Active #17 |
 | `API_BASE_URL` | Mobile | Absolute API base URL | D/S/P | Yes S/P, optional D | Public app config | Active #17/#20 |
 | `VITE_SENTRY_DSN` | Web | HTTPS ingestion DSN; empty/absent disables SDK | D/S/P | No | Public bundle config, not an admin credential | Active #21 |
@@ -81,7 +87,7 @@ Examples of API base URLs: local `http://localhost:8080/api/v1`, Staging
 `https://api.staging.example.test/api/v1`, Production
 `https://api.production.example.test/api/v1`. No same-origin Production fallback.
 
-### Reserved Client Firebase / FCM
+### Client Firebase / reserved FCM
 
 Client Firebase API keys identify a project; they are not administrative service
 credentials or authorization. Client config is extractable and must use provider
@@ -92,10 +98,6 @@ contents, private keys or administrative credentials in Web/Mobile defines.
 
 | Name | Intended consumer | Purpose | Environments | Required now | Classification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `VITE_FIREBASE_API_KEY` | Web | Firebase client project API key | D/S/P | No | Public client config | Reserved #22 |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Web | Client auth domain | D/S/P | No | Public client config | Reserved #22 |
-| `VITE_FIREBASE_PROJECT_ID` | Web | Client project | D/S/P | No | Public client config | Reserved #22 |
-| `VITE_FIREBASE_APP_ID` | Web | Client app identifier | D/S/P | No | Public client config | Reserved #22 |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Web | FCM sender identifier | D/S/P | No | Public client config | Reserved #56 |
 | `VITE_FIREBASE_VAPID_KEY` | Web | Web-push public key, never its private counterpart | D/S/P | No | Public client config | Reserved #56 |
 | `FIREBASE_API_KEY` | Mobile | Firebase client project API key | D/S/P | No | Public app config | Reserved #22/#42 |
@@ -180,6 +182,29 @@ Changing `--mode` alone does not select an application environment. Ensure no
 inherited shell/local file overrides this selection; process variables win.
 The safe unconfigured CI production build is still Development-targeted.
 Restart Vite after changes and rebuild to change a distributed client's config.
+
+#30 activates official Firebase Web Authentication for existing email/password
+accounts, session restore, ID token retrieval and sign-out. Configure all four
+VITE_FIREBASE_* identity fields together; partial configuration fails validation.
+All absent allows a safe unconfigured build with sign-in disabled, not a production
+authentication fallback. Functional Web environments must supply their own public
+project/app values. Tests inject the auth/SDK boundaries and never contact Firebase.
+Firebase custom claims are never authorization; /me supplies PostgreSQL memberships.
+No backend ADC/service-account data belongs in the browser. Mobile Firebase/FCM
+remain reserved and unaffected.
+
+WEB_ALLOWED_ORIGINS supplies exact origins, no wildcard/path/query/credentials.
+Local defaults allow only http://127.0.0.1:5173 and http://localhost:5173; explicitly
+set another loopback origin if needed. Outside local, only non-loopback HTTPS
+origins are accepted; empty disables cross-origin requests. Allow credentials=false,
+methods GET/POST/PATCH/DELETE/OPTIONS, headers Authorization/Content-Type/X-Request-Id,
+and expose X-Request-Id. CORS never replaces bearer/capability authorization.
+
+VITE_QR_PUBLIC_BASE_URL is optional configuration for print preview. When supplied
+it must be absolute HTTPS outside Development; local HTTP is allowed only on
+loopback. Credentials/query/fragments are rejected. The label encodes
+`<base>/t/<publicToken>` and displays the operational number separately. Missing
+configuration disables print; no real Production QR host or public fallback is set.
 
 ### Mobile
 

@@ -155,7 +155,8 @@ Role changes are audited.
 
 ### GET /settings
 
-Capability: `TENANT_SETTINGS_MANAGE` for full configuration; read access may be narrower for operational clients as needed.
+Implemented in #30. Capability: `TENANT_SETTINGS_MANAGE` (Tenant Admin only)
+for both GET and PATCH. No operational-client settings read is implemented.
 
 Returns only implemented/approved settings.
 
@@ -184,6 +185,26 @@ Request:
 ```
 
 Do not expose unresolved retention/customer-edit policy settings until those product policies are approved.
+
+V9 backfills existing Tenants with threshold 72 hours, nullable timezone and
+version 0. The threshold must be a positive PostgreSQL integer; 72 is an initial
+configuration value, not a universal domain constant. Non-null timezone must be
+an IANA zone. PATCH requires a nonnegative integral expectedVersion, rejects
+unknown fields, retains omitted fields and clears timezone on explicit null.
+Optimistic conflicts return STALE_VERSION; a no-op keeps its version.
+Runtime has SELECT/UPDATE only under Tenant RLS. Future Tenant creation must
+create its settings row in that separate administrative flow.
+
+The #30 Web workspace consumes only implemented master-data APIs. Customer-Site
+associations have POST/DELETE but no complete GET directory, so Web offers
+explicit association and removal of a server-confirmed pair during the current
+visit; it never infers associations from addresses or Locations. Driver unlink
+is supported; new linking waits for an approved account picker/directory.
+Trailer metadata PATCH excludes designation and physical state. The disabled
+designation entry point requires the future audited reassignment command (#40).
+Current/last Location IDs cannot be resolved directly through a detail GET today;
+Web does not invent one or display fake location names. Site detail has its real
+Operational Location list, including neutral versus Customer-context Locations.
 
 ## 5. Customers
 

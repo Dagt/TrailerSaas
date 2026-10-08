@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest'
 import { readWebEnvironment } from './environment'
 
 describe('explicit environment configuration', () => {
+  it('enables only complete public Firebase configuration and disables unconfigured sign-in', () => {
+    expect(readWebEnvironment({}).firebase).toBeUndefined()
+    expect(() => readWebEnvironment({ VITE_FIREBASE_API_KEY: 'only-one-field' })).toThrow(/All four/)
+    expect(readWebEnvironment({ VITE_FIREBASE_API_KEY: 'public-key', VITE_FIREBASE_AUTH_DOMAIN: 'auth.example.test', VITE_FIREBASE_PROJECT_ID: 'test-project', VITE_FIREBASE_APP_ID: 'test-app' }).firebase)
+      .toEqual({ apiKey: 'public-key', authDomain: 'auth.example.test', projectId: 'test-project', appId: 'test-app' })
+  })
+  it('public QR URLs are optional, HTTPS outside Development, and loopback-only for local HTTP', () => {
+    expect(readWebEnvironment({}).qrPublicBaseUrl).toBeUndefined()
+    expect(readWebEnvironment({ VITE_QR_PUBLIC_BASE_URL: 'http://localhost:5173/' }).qrPublicBaseUrl).toBe('http://localhost:5173')
+    expect(readWebEnvironment({ VITE_APP_ENV: 'production', VITE_API_BASE_URL: 'https://api.example.test', VITE_QR_PUBLIC_BASE_URL: 'https://labels.example.test' }).qrPublicBaseUrl).toBe('https://labels.example.test')
+    for (const url of ['http://remote.example.test', 'javascript:secret', 'https://user:secret@example.test', 'https://labels.example.test?token=secret']) {
+      expect(() => readWebEnvironment({ VITE_QR_PUBLIC_BASE_URL: url })).toThrow(/VITE_QR_PUBLIC_BASE_URL/)
+    }
+    expect(() => readWebEnvironment({ VITE_APP_ENV: 'staging', VITE_API_BASE_URL: 'https://api.example.test', VITE_QR_PUBLIC_BASE_URL: 'http://localhost:5173' })).toThrow(/VITE_QR_PUBLIC_BASE_URL/)
+  })
   it('defaults to development with a loopback API, without future provider configuration', () => {
     expect(readWebEnvironment({})).toEqual({
       environment: 'development', apiBaseUrl: 'http://127.0.0.1:8080/api/v1',
