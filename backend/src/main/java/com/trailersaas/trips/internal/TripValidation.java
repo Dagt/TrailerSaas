@@ -158,8 +158,6 @@ final class TripValidation {
     var instructions = text(input.get("instructions"), true);
     if (instructions != null && instructions.isBlank()) throw TripFailure.invalid("instructions");
     var site = uuid(input.get("destinationSiteId"), true);
-    if (type == null && (site != null || instructions != null))
-      throw TripFailure.invalid("resolutionType");
     if ("HOLD_CONTACT_DISPATCH".equals(type) && site != null)
       throw TripFailure.invalid("destinationSiteId");
     return new Cancellation(

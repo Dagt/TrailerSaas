@@ -113,6 +113,9 @@ class TripOperationalService implements TripCancellationResolutionPort {
       metadata.put("resolutionType", r.resolutionType());
       metadata.put("destinationSiteId", r.destinationSiteId());
       metadata.put("instructions", r.instructions());
+    } else {
+      if (r.destinationSiteId() != null) metadata.put("destinationSiteId", r.destinationSiteId());
+      if (r.instructions() != null) metadata.put("instructions", r.instructions());
     }
     var type = before ? "TRIP_CANCELLED" : "TRIP_CANCELLATION_STARTED";
     event(trip, null, actor, type, r.reason(), metadata, at);

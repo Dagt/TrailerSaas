@@ -780,6 +780,28 @@ class TripOperationalPostgresTests extends PostgresIntegrationTest {
   }
 
   @ParameterizedTest
+  @ValueSource(strings = {"instructions", "destination", "both"})
+  void preMovementOptionalResolutionFieldsRemainOptionalAndArePreserved(String mode)
+      throws Exception {
+    var trip = create(true, false);
+    var request = cancellation(0, false);
+    if (!mode.equals("destination")) request.put("instructions", "Contact dispatch before work");
+    if (!mode.equals("instructions")) request.put("destinationSiteId", site.toString());
+    var response = cancellation(trip, request, "admin");
+    assertThat(response.statusCode()).withFailMessage(response.body()).isEqualTo(200);
+    assertThat(field(trip, "status")).isEqualTo("CANCELLED");
+    var metadata =
+        JsonPath.<Map<String, Object>>read(response.body(), "$.operationalHistory[0].metadata");
+    assertThat(metadata)
+        .containsEntry("previousState", "ASSIGNED")
+        .doesNotContainKey("resolutionType");
+    if (!mode.equals("destination"))
+      assertThat(metadata).containsEntry("instructions", "Contact dispatch before work");
+    if (!mode.equals("instructions"))
+      assertThat(metadata).containsEntry("destinationSiteId", site.toString());
+  }
+
+  @ParameterizedTest
   @ValueSource(
       strings = {
         "missingType",
