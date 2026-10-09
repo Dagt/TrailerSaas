@@ -23,7 +23,7 @@ implements only POST/list/detail for the initial Order aggregate:
   weight-unit example below is not a closed catalog.
 - GET/list returns Order summaries and `nextCursor`; GET/detail and POST return
   the projection plus `cargoLines` and `requestedStops`, their IDs and timestamps.
-  There are no public Manifest, Trip, fulfillment, evidence or history projections.
+  Order responses contain no Manifest, Trip, fulfillment, evidence or history projections.
 - List supports `customerId`, `status`, `unplanned`, `cursor`, `limit` (default 50,
   maximum 200). Ordering is `createdAt DESC, id DESC`; opaque keyset continuation
   is scoped again on every request, not an authorization token or public cursor

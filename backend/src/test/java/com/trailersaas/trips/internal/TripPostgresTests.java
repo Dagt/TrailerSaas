@@ -161,7 +161,15 @@ class TripPostgresTests extends PostgresIntegrationTest {
     assertThat(JsonPath.<String>read(r.body(), "$.code")).isEqualTo(code);
     assertThat(r.body())
         .contains("traceId")
-        .doesNotContain("constraint", "SQL", "fixture-", customer.toString(), other.toString());
+        .doesNotContain("constraint", "SQL", "fixture-", other.toString());
+    // instance may echo IDs supplied in the request URI, never hidden resource metadata.
+    var publicFields = new HashMap<>(JsonPath.<Map<String, Object>>read(r.body(), "$"));
+    var instance = publicFields.remove("instance");
+    if (instance != null) {
+      assertThat(instance).isEqualTo(r.uri().getPath());
+    }
+    assertThat(publicFields.toString())
+        .doesNotContain(customer.toString(), customerB.toString(), other.toString());
     assertThat(r.headers().firstValue("X-Request-Id")).contains("trip-regression");
   }
 
@@ -814,7 +822,9 @@ class TripPostgresTests extends PostgresIntegrationTest {
               waitFor(release);
               return call.callRealMethod();
             })
-        .when(releaseHandler)
+        .when(
+            org.springframework.test.util.AopTestUtils.<TripPlanningRelease>getUltimateTargetObject(
+                releaseHandler))
         .release(tenant, order);
     try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
       var cancellation = pool.submit(() -> cancel(0));
@@ -922,7 +932,9 @@ class TripPostgresTests extends PostgresIntegrationTest {
               waitFor(release);
               return call.callRealMethod();
             })
-        .when(usage)
+        .when(
+            org.springframework.test.util.AopTestUtils.<TripSiteUsageGuard>getUltimateTargetObject(
+                usage))
         .hasActiveUse(tenant, customer, site);
     try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
       var removal = pool.submit(() -> http("DELETE", association(), "admin", ""));
