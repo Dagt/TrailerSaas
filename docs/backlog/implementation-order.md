@@ -69,9 +69,11 @@ Exit: equipment/locations exist and durable evidence/background infrastructure i
 ### Orders
 - #31 → #32 → #33
 
-#31 is the current bounded implementation: OPEN Orders, cargo lines and requested
-Stops, with Tenant/customer-scoped creation and reads. Complete only after its PR
-merges; planning/manifests (#32) and mutations/state transitions (#33) remain separate.
+#31 is merged/complete via [PR #85](https://github.com/Dagt/TrailerSaas/pull/85).
+#32 is the current bounded implementation: internal OPEN/CLOSED Manifest planning,
+many-to-many Order allocations and optional plannedTrailerId during Order creation.
+Complete only after its PR merges. #33 remains next for Order mutations/state
+transitions; #34 defines Trip planning and the still-deferred unplanned filter.
 
 ### Trips
 - #34 → #35 → #36 → #37

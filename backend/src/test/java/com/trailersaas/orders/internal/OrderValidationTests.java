@@ -27,9 +27,16 @@ class OrderValidationTests {
         assertThat(result.requestedStops()).hasSize(2);
     }
     @ParameterizedTest @ValueSource(strings = {"plannedTrailerId", "status", "tenantId", "createdByUserId", "version", "unknown"})
-    void unsupportedCreateFieldsAreRejectedAndNotEchoed(String field) {
+    void unsupportedOrMalformedCreateFieldsAreRejectedAndNotEchoed(String field) {
         var input = valid(); input.put(field, "private-value");
         assertThatThrownBy(() -> OrderValidation.create(input)).isInstanceOf(OrderFailure.class).hasMessage("The request contains invalid values.");
+    }
+    @Test void plannedTrailerIsOptionalNullableAndStrictlyUuid() {
+        var input = valid(); assertThat(OrderValidation.create(input).plannedTrailerId()).isNull();
+        input.put("plannedTrailerId", null); assertThat(OrderValidation.create(input).plannedTrailerId()).isNull();
+        var trailer = UUID.randomUUID(); input.put("plannedTrailerId", trailer.toString());
+        assertThat(OrderValidation.create(input).plannedTrailerId()).isEqualTo(trailer);
+        input.put("plannedTrailerId", 42); assertThatThrownBy(() -> OrderValidation.create(input)).isInstanceOf(OrderFailure.class);
     }
     @ParameterizedTest @ValueSource(strings = {"customerId", "orderNumber", "requestedStops"})
     void requiredFieldsCannotBeMissing(String field) {

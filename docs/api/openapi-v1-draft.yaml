@@ -874,12 +874,15 @@ paths:
     post:
       tags: [Orders]
       operationId: createOrder
-      x-implementation-status: implemented-issue-31
+      x-implementation-status: implemented-issue-32
       description: >
         ORDER_CREATE, checked against fresh database Customer scope. Atomically creates an OPEN
-        Order, zero or more cargo lines and requested Stops. No planning or idempotent replay
-        is implemented; do not blindly retry an uncertain creation. Unknown fields, including
-        plannedTrailerId, are rejected rather than ignored.
+        Order, zero or more cargo lines and requested Stops. Optional plannedTrailerId additionally
+        requires TRIP_ASSIGN_TRAILER against fresh Customer scope and Trailer visibility. The same
+        transaction creates an OPEN Manifest and allocation with unspecified (null) quantities;
+        the Trailer must be active and IN_SERVICE. There is no direct Order-to-Trailer FK,
+        physical coupling or Order PLANNED transition. No idempotent replay is implemented;
+        do not blindly retry an uncertain creation. Unknown fields are rejected.
       requestBody:
         required: true
         content:
@@ -1662,6 +1665,13 @@ components:
         poNumber: { type: [string, "null"] }
         shipmentNumber: { type: [string, "null"] }
         bolReference: { type: [string, "null"] }
+        plannedTrailerId:
+          type: [string, "null"]
+          format: uuid
+          description: >
+            Optional initial Manifest planning. Requires TRIP_ASSIGN_TRAILER and fresh Trailer
+            visibility in the same Tenant; Trailer must be active and IN_SERVICE. Creates an
+            OPEN Manifest with a null-amount allocation atomically; Order remains OPEN.
         cargoLines:
           type: array
           description: Optional; omission or an empty array creates no cargo lines.
@@ -1850,7 +1860,7 @@ components:
 
     CreateOrderRequest:
       type: object
-      description: Accepted future contract including manifest planning; not the implemented issue 31 request.
+      description: Accepted broad contract; the strict implemented request is CreateOrderRequestImplemented.
       required: [customerId, orderNumber, requestedStops]
       properties:
         customerId: { type: string, format: uuid }

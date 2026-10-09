@@ -19,13 +19,19 @@ class OrderService {
     private final OrderAccessPolicy access;
     private final OrderDestinationPolicy destinations;
     private final OrderRepository repository;
-    OrderService(TenantAuthorization authorization, OrderAccessPolicy access, OrderDestinationPolicy destinations, OrderRepository repository) {
+    private final ManifestService manifests;
+    OrderService(TenantAuthorization authorization, OrderAccessPolicy access, OrderDestinationPolicy destinations, OrderRepository repository, ManifestService manifests) {
         this.authorization = authorization; this.access = access; this.destinations = destinations; this.repository = repository;
+        this.manifests = manifests;
     }
 
     Detail create(AuthenticatedUserPrincipal actor, UUID tenant, Map<String, Object> input) {
         var request = OrderValidation.create(input);
         authorization.requireCustomerCapability(actor, tenant, request.customerId(), Capability.ORDER_CREATE);
+        if (request.plannedTrailerId() != null) {
+            authorization.requireCustomerCapability(actor, tenant, request.customerId(), Capability.TRIP_ASSIGN_TRAILER);
+            manifests.validateTrailer(actor, tenant, request.plannedTrailerId());
+        }
         if (!destinations.customerExists(tenant, request.customerId())) { throw OrderFailure.conflict(); }
         // Validate normalized resources against the Order's already-authorized Customer, not snapshot text/claims.
         for (var stop : request.requestedStops()) {
@@ -57,6 +63,7 @@ class OrderService {
             if (!OrderFailure.expectedIntegrity(failure)) { throw failure; }
             throw OrderFailure.conflict();
         }
+        if (request.plannedTrailerId() != null) { manifests.planCreatedOrder(actor, order, request.plannedTrailerId()); }
         return detail(order);
     }
 

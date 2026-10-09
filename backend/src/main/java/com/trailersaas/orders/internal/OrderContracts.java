@@ -9,7 +9,7 @@ import java.util.UUID;
 final class OrderContracts {
     private OrderContracts() {}
     record Create(UUID customerId, String orderNumber, String poNumber, String shipmentNumber, String bolReference,
-            List<CargoInput> cargoLines, List<StopInput> requestedStops) {}
+            List<CargoInput> cargoLines, List<StopInput> requestedStops, UUID plannedTrailerId) {}
     record CargoInput(String description, BigDecimal quantity, Integer palletCount, BigDecimal weight, String weightUnit) {}
     record StopInput(int sequenceNumber, UUID siteId, UUID locationId, Map<String, Object> siteSnapshot,
             String stopType, Instant scheduledAt, String instructions) {}

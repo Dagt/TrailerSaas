@@ -8,22 +8,22 @@ Base:
 
 ## 1. Orders
 
-### Implemented surface — issue #31
+### Implemented surface — issues #31–#32
 
 The Accepted v0.1 contracts below describe the full future surface. Issue #31
 implements only POST/list/detail for the initial Order aggregate:
 
 - POST accepts `customerId`, `orderNumber`, nullable PO/shipment/BOL references,
   optional `cargoLines` (zero or more), and at least one `requestedStops`.
-  Unknown fields, including `plannedTrailerId`, are rejected with
-  `400 VALIDATION_FAILED`; planning requires #32, not a direct Order↔Trailer FK.
+  Optional `plannedTrailerId` is implemented by #32 as initial Manifest planning,
+  never a direct Order↔Trailer FK. Unknown fields give `400 VALIDATION_FAILED`.
 - Creation is atomic and always produces `OPEN`, version 0 and null
   `deliveredAt`/`completedAt`/`cancelledAt`. No transition/PATCH/cancellation is
   implemented. Cargo units and requested Stop types remain open strings; the
   weight-unit example below is not a closed catalog.
 - GET/list returns Order summaries and `nextCursor`; GET/detail and POST return
   the projection plus `cargoLines` and `requestedStops`, their IDs and timestamps.
-  There are no manifests, Trips, fulfillment, evidence or history projections.
+  There are no public Manifest, Trip, fulfillment, evidence or history projections.
 - List supports only `customerId`, `status`, `cursor`, `limit` (default 50,
   maximum 200). Ordering is `createdAt DESC, id DESC`; opaque keyset continuation
   is scoped again on every request, not an authorization token or public cursor
@@ -108,7 +108,40 @@ Request:
 }
 ```
 
-`plannedTrailerId` is accepted only when caller has the corresponding assignment capability/customer scope. Internally the service persists this through the approved planning/manifest relationship rather than inventing a direct Order foreign key.
+`plannedTrailerId` additionally requires fresh `TRIP_ASSIGN_TRAILER` for the Order
+Customer and fresh Trailer read scope. Admin/Operations can plan Tenant-wide;
+Customer Dispatcher must see the Trailer through its designated authorized
+Customer. Same-Tenant, active and IN_SERVICE are required. In the same transaction
+as Order/cargo/Stops, #32 creates an OPEN/version-0 Manifest and one allocation
+with `allocatedQuantity`, `allocatedPalletCount`, `allocatedWeight` all null
+(amount unspecified). Null/omission creates no Manifest. The Order stays OPEN,
+and no physical Trailer field, coupling or Trip is changed.
+
+### Internal Manifest planning — issue #32
+
+V11 implements many-to-many `load_manifests`/`manifest_orders`, with an optional
+Trailer and tenant-safe parent FKs. Multiple Manifests may reference one Trailer;
+an Order can appear once per Manifest and across multiple Manifests.
+No public Manifest CRUD endpoints are introduced.
+
+Service commands create OPEN/version 0, add/remove allocations only for OPEN
+Orders in an OPEN Manifest, and explicitly close OPEN -> CLOSED without reopen.
+Every existing-Manifest mutation requires `expectedVersion`, increments version
+and advances `updatedAt`; close records server `closedAt`. Parent row locking
+serializes allocation commands, while JPA `@Version` and expected-version checks
+prevent lost updates (`STALE_VERSION`). No lifecycle of Order/Trip/Trailer/Shift
+automatically closes a Manifest. CLOSED allocations are preserved and immutable
+through the service layer. Partial unload, returns, cancelled remainders and
+post-departure reallocation remain deferred.
+
+Allocation amounts are independently nullable/nonnegative, including zero and
+decimals for quantity/weight; pallets are integral. There is no unit conversion,
+automatic cargo distribution, capacity check or inferred fully-allocated state.
+All commands authorize from current PostgreSQL memberships/roles. Scoped actors
+can alter only their own Customer Orders; mutation results expose only Manifest
+revision metadata, never other allocations. Closing requires Tenant-wide
+`TRIP_ASSIGN_TRAILER`. `unplanned` still requires #34 Trip planning; it is not
+implemented as “no Manifest”. Active/appointment filters remain deferred too.
 
 For a requested Stop, either a normalized `siteId` or an approved `siteSnapshot` may be supplied. `siteSnapshot` is used when the operational destination has not yet been normalized into reusable master Site data and is preserved for historical accuracy.
 
