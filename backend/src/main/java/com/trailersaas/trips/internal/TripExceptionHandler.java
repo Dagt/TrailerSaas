@@ -12,7 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes = TripController.class)
+@RestControllerAdvice(assignableTypes = {TripController.class, DriverUpdatesController.class})
 @Order(10)
 class TripExceptionHandler {
   @ExceptionHandler(TripFailure.class)

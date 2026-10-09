@@ -860,7 +860,7 @@ class TripOperationalPostgresTests extends PostgresIntegrationTest {
           "DELETE FROM role_assignments WHERE tenant_id=? AND role_code='CUSTOMER_DISPATCHER'",
           tenant);
       status = 403;
-      code = "TENANT_ACCESS_DENIED";
+      code = "CAPABILITY_DENIED";
     } else if (mode.equals("claims")) {
       token = "fakeClaim";
       var u = actor(token, "DRIVER");
