@@ -64,6 +64,17 @@ class OrderHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(one.statusCode()).isEqualTo(201); assertThat(two.statusCode()).isEqualTo(201);
         assertThat(id(one)).isNotEqualTo(id(two)); assertThat(JsonPath.<List<?>>read(one.body(), "$.cargoLines")).isEmpty();
     }
+    @Test void publicResponsesNeverExposeCreatorIdentityButPersistServerPrincipal() throws Exception {
+        var adminOrder = post("admin", simple(a)); var opsOrder = post("ops", simple(a));
+        var dispatcherOrder = post("dispatcher", simple(a));
+        var adminId = id(adminOrder);
+        assertThat(f.db.value("SELECT created_by_user_id FROM orders WHERE id=?", adminId)).isEqualTo(user);
+        assertThat(f.db.value("SELECT created_by_user_id FROM orders WHERE id=?", id(dispatcherOrder))).isEqualTo(dispatcher);
+        for (var response : List.of(adminOrder, opsOrder, dispatcherOrder, get("dispatcher", ""), get("dispatcher", "/" + adminId))) {
+            assertThat(response.statusCode()).isBetween(200, 201);
+            assertThat(response.body()).doesNotContain("createdByUserId", "firebaseUid", "userId", "creatorEmail", "creatorDisplayName", user.toString(), dispatcher.toString());
+        }
+    }
     @Test void customerScopeCannotBeSpoofedInCreateListDetailOrCursor() throws Exception {
         var aOrder = id(post("admin", simple(a))); var bOrder = id(post("admin", simple(b))); var cOrder = id(post("admin", simple(c)));
         problem(post("dispatcher", simple(b)), 403, "CUSTOMER_SCOPE_DENIED");

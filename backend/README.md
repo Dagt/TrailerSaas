@@ -20,6 +20,14 @@ Normalized destination validation uses the public Customers policy; Orders never
 reads Customers/Identity internal repositories. That policy holds the Site's
 shared parent lock during association validation to coordinate with association
 removal. Snapshots contain destination data, never authorization context.
+Customers owns the public `CustomerSiteUsageGuard` SPI; Orders implements a
+fresh Tenant/Customer/Site-scoped usage query invoked after the removal obtains
+the exclusive Site lock. Only COMPLETED/CANCELLED Orders are terminal for this
+check. Active Orders and existing active Customer-specific Locations prevent
+removal with RESOURCE_CONFLICT; terminal history survives safe removal. Customers
+does not depend on Orders internals, and no association FK/cascade is added.
+The server principal still supplies `created_by_user_id`, but public Order DTOs
+omit creator User identifiers until an authorized audit/history surface exists.
 
 GET/list supports customerId/status and real opaque keyset cursor/limit, ordered
 by creation timestamp and ID descending; default 50, maximum 200. Detail reads

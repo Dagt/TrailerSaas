@@ -51,6 +51,11 @@ address taxonomy or coordinate-pair rule is introduced. Only name is required fo
 an ad-hoc historical destination; the snapshot is frozen at creation.
 
 Normalized destinations require a same-Tenant Customer↔Site association.
+Association removal checks fresh active Order use under the Site's exclusive
+parent lock, coordinated with creation's shared lock. OPEN, PLANNED, IN_PROGRESS,
+PARTIALLY_DELIVERED, DELIVERED and CANCELLING block removal; COMPLETED/CANCELLED
+alone do not. Existing active Customer-specific Locations still block removal.
+Historical Stops remain intact and have no permanent FK to the mutable association.
 An optional Location belongs to that exact Site/Tenant and is neutral or matches
 the Order Customer. A snapshot may coexist with normalized references but never
 bypasses their validation. Text/address matching grants no authority. An ad-hoc
@@ -60,6 +65,9 @@ v1.0.1 requirement to normalize before any transition requiring a real Location.
 
 The OpenAPI implemented request/response schemas are separate from
 `CreateOrderRequest` and the future mutation contracts below.
+Creator User identity remains server-derived persistence metadata only; it is not
+included in POST detail, list summaries or GET detail. Authorized actor/provenance
+presentation belongs to the future audit/history surface.
 
 ### POST /orders
 

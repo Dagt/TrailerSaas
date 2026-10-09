@@ -55,10 +55,28 @@ class OrderRepositoryTests {
         assertThat(Modifier.isPublic(OrderRepository.class.getModifiers())).isFalse();
         assertThat(OrderRepository.class.getInterfaces()).isEmpty();
         var reads = Arrays.stream(OrderRepository.class.getDeclaredMethods())
-                .filter(m -> Set.of("resource", "list", "cargo", "stops").contains(m.getName())).toList();
-        assertThat(reads).hasSize(4);
+                .filter(m -> Set.of("resource", "list", "cargo", "stops", "hasActiveSiteUse").contains(m.getName())).toList();
+        assertThat(reads).hasSize(5);
         for (var read : reads) { assertThat(read.getParameterTypes()[0]).isEqualTo(UUID.class); }
         assertThat(Arrays.stream(OrderRepository.class.getDeclaredMethods()).map(m -> m.getName()))
                 .doesNotContain("findAll", "findById");
+    }
+    @Test @SuppressWarnings("unchecked")
+    void activeSiteUseBindsTenantCustomerAndSiteAndExcludesOnlyTerminalStates() {
+        var em = mock(EntityManager.class);
+        TypedQuery<UUID> query = mock(TypedQuery.class, RETURNS_SELF);
+        when(em.createQuery(anyString(), eq(UUID.class))).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of(UUID.randomUUID()));
+        var tenant = UUID.randomUUID(); var customer = UUID.randomUUID(); var site = UUID.randomUUID();
+        assertThat(new OrderRepository(em).hasActiveSiteUse(tenant, customer, site)).isTrue();
+        var hql = ArgumentCaptor.forClass(String.class);
+        verify(em).createQuery(hql.capture(), eq(UUID.class));
+        assertThat(hql.getValue()).contains("o.tenantId=:tenant", "o.customerId=:customer",
+                "o.status not in :terminal", "s.tenantId=o.tenantId", "s.orderId=o.id", "s.siteId=:site");
+        verify(query).setParameter("tenant", tenant);
+        verify(query).setParameter("customer", customer);
+        verify(query).setParameter("site", site);
+        verify(query).setParameter("terminal", Set.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED));
+        verify(query).setMaxResults(1);
     }
 }

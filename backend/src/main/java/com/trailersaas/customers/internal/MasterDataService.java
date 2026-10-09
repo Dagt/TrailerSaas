@@ -1,6 +1,7 @@
 package com.trailersaas.customers.internal;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.UUID;
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
 import com.trailersaas.identity.CustomerAccessScope;
 import com.trailersaas.identity.TenantAuthorization;
+import com.trailersaas.customers.CustomerSiteUsageGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +23,11 @@ import static com.trailersaas.customers.internal.MasterDataValidation.*;
 class MasterDataService {
     private final TenantAuthorization authorization;
     private final MasterDataRepository repository;
-    MasterDataService(TenantAuthorization authorization, MasterDataRepository repository) {
+    private final List<CustomerSiteUsageGuard> siteUsageGuards;
+    MasterDataService(TenantAuthorization authorization, MasterDataRepository repository,
+            List<CustomerSiteUsageGuard> siteUsageGuards) {
         this.authorization = authorization; this.repository = repository;
+        this.siteUsageGuards = List.copyOf(siteUsageGuards);
     }
 
     Customer createCustomer(AuthenticatedUserPrincipal user, UUID tenant, CreateCustomer request) {
@@ -122,7 +127,10 @@ class MasterDataService {
     void disassociate(AuthenticatedUserPrincipal user, UUID tenant, UUID customer, UUID site) {
         authorization.requireTenantCapability(user, tenant, CUSTOMER_EDIT);
         var association = repository.lockAssociation(tenant, customer, site, true);
-        if (repository.hasActiveLocations(tenant, customer, site)) { throw MasterDataFailure.conflict(); }
+        if (repository.hasActiveLocations(tenant, customer, site)
+                || siteUsageGuards.stream().anyMatch(guard -> guard.hasActiveUse(tenant, customer, site))) {
+            throw MasterDataFailure.conflict();
+        }
         repository.deleteAssociation(tenant, association);
     }
 

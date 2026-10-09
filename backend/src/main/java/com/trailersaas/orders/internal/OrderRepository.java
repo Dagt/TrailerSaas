@@ -41,6 +41,19 @@ class OrderRepository {
         return em.createQuery("select s from OrderStopEntity s where s.tenantId=:tenant and s.orderId=:order order by s.sequenceNumber, s.id", OrderStopEntity.class)
                 .setParameter("tenant", tenant).setParameter("order", order).getResultList();
     }
+    boolean hasActiveSiteUse(UUID tenant, UUID customer, UUID site) {
+        // Fresh statement after the caller acquires the exclusive Site lock.
+        // Every accepted state except COMPLETED/CANCELLED keeps the association in active use.
+        return !em.createQuery("""
+                select o.id from OrderEntity o where o.tenantId=:tenant and o.customerId=:customer
+                    and o.status not in :terminal
+                    and exists (select s.id from OrderStopEntity s where s.tenantId=o.tenantId
+                        and s.orderId=o.id and s.siteId=:site)
+                """, UUID.class).setParameter("tenant", tenant).setParameter("customer", customer)
+                .setParameter("site", site).setParameter("terminal", java.util.Set.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED))
+                .setMaxResults(1).getResultList().isEmpty();
+    }
+
     void insert(Object entity) { em.persist(entity); }
     void flush() { em.flush(); }
 }
