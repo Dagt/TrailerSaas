@@ -460,15 +460,19 @@ Hook is two explicit operations, never an implicit combined shortcut.
 ### Serialization, replay and atomicity
 
 Locks are acquired in this order: exclusive Trip, shared active Driver identity,
-transaction advisory operation lock, exclusive Tractor, exclusive Trailer,
+transaction-local unique-row operation claim, exclusive Tractor, exclusive Trailer,
 coupling interval. Drop then validates locked Stop/destination parents. Existing
 assignment/substitution commands use the same Trip parent lock; administrative
 equipment changes wait for physical parent locks. Site compatibility retains the
 shared Site versus exclusive association-removal protocol.
 
-The approved #38 arbitration is PostgreSQL advisory **transaction** locking of
-Tenant+clientOperationId before ledger lookup, backed by its unique constraint.
-SHA-256 prefix collisions cause only extra serialization; no process mutex is used.
+Accepted hardening L governs arbitration: after authentication, Tenant context and
+fresh assigned-Driver authorization, INSERT a PROCESSING row using
+`ON CONFLICT (tenant_id,client_operation_id) DO NOTHING RETURNING id`. No prior
+existence query, advisory lock, process mutex or committed lease is used. The unique
+index makes duplicates wait for the competing transaction. A winner commit lets
+the duplicate read the terminal row in a new statement; a winner rollback removes
+the claim, allowing the waiting INSERT to claim and continue.
 The canonical request SHA-256 includes operation type, path Trip and every logical
 body field, including Hook's expectedTrailerVersion. It excludes transport JSON
 ordering and bearer tokens. Equivalent Instant representations canonicalize equally.
@@ -476,17 +480,22 @@ ordering and bearer tokens. Equivalent Instant representations canonicalize equa
 Same key/User/type/hash returns the saved SUCCEEDED result, even after the original
 physical change/version advance or a later Drop. Current authorization is still
 required. Changed key content/type/path/User returns IDEMPOTENCY_KEY_REUSED. First
-execution alone checks physical state/version. This approved #38 ledger shape uses
-SUCCEEDED/REJECTED and processed_at; it does not introduce the generalized PROCESSING
-claim lifecycle described by hardening L. Failed commands roll back without a false
-durable success. device_id remains NULL until the User-device registration parent
+execution alone checks physical state/version. request_hash and server-created
+created_at are mandatory; PROCESSING has processed_at NULL and terminal
+SUCCEEDED/REJECTED requires processed_at. The same transaction writes the business
+effect and bounded response, then updates its claim to SUCCEEDED before commit.
+PROCESSING is never intentionally committed independently. Failed commands,
+including transient failures, roll back the claim and all business writes; #38 does
+not persist rejected responses. device_id remains NULL until the User-device registration parent
 exists (#56); no placeholder device table/FK or invented device identity is created.
 
 Movement fact, interval, Trailer projection and saved bounded response commit in
 one runtime Tenant transaction. Failure at any write rolls all four back. Lost
 response after commit is recoverable by the same key; a new Hook key with an old
 version receives STALE_VERSION. Integrity conflicts are safely mapped; infrastructure
-failures stay safe 5xx. Runtime cannot update/delete movement facts or ledger rows,
+failures stay safe 5xx. Runtime cannot update/delete movement facts or delete ledger
+rows. Ledger UPDATE is restricted to status, processed_at and result/response columns;
+claim identity, request hash and created_at cannot be updated by runtime. It cannot
 delete intervals, rewrite immutable interval fields, own tables or bypass RLS.
 
 ### Deferred surfaces

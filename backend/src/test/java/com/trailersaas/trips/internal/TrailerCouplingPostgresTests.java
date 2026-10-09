@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.trailersaas.*;
 import com.trailersaas.identity.*;
+import com.trailersaas.trailers.TrailerCouplingTransactions;
 import java.net.URI;
 import java.net.http.*;
 import java.sql.*;
@@ -29,6 +30,8 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
   @Autowired DataSource runtime;
   @Autowired TripCouplingService service;
   @Autowired TenantTransactionExecutor transactions;
+  @Autowired TrailerCouplingTransactions physical;
+  @Autowired jakarta.persistence.EntityManager em;
   @MockitoBean FirebaseTokenVerifier verifier;
 
   @Value("${local.server.port}")
@@ -725,10 +728,12 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
     "hook,trailer_couplings,INSERT",
     "hook,trailers,UPDATE",
     "hook,processed_client_operations,INSERT",
+    "hook,processed_client_operations,UPDATE",
     "drop,trailer_movement_events,INSERT",
     "drop,trailer_couplings,UPDATE",
     "drop,trailers,UPDATE",
-    "drop,processed_client_operations,INSERT"
+    "drop,processed_client_operations,INSERT",
+    "drop,processed_client_operations,UPDATE"
   })
   void eachWriteFailureRollsBackEntireCommand(String command, String table, String mutation)
       throws Exception {
@@ -764,6 +769,7 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
       assertThat(count("trailer_couplings")).isEqualTo(couplings);
       assertThat(count("trailer_movement_events")).isEqualTo(events);
       assertThat(count("processed_client_operations")).isEqualTo(ledger);
+      assertNoProcessing();
       assertThat(
               f.db.value(
                   "select coalesce(jsonb_agg(to_jsonb(c) order by id),'[]'::jsonb)::text from"
@@ -833,6 +839,221 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
     assertThat(count("trailer_movement_events")).isEqualTo(command.equals("hooks") ? 1L : 2L);
     assertThat(count("processed_client_operations")).isEqualTo(command.equals("hooks") ? 1L : 2L);
     assertThat(trailerField("version")).isEqualTo(command.equals("hooks") ? 1L : 2L);
+    assertNoProcessing();
+  }
+
+  void assertNoProcessing() throws Exception {
+    assertThat(
+            f.db.value(
+                "select count(*) from processed_client_operations where tenant_id=? and"
+                    + " status='PROCESSING'",
+                tenant))
+        .isEqualTo(0L);
+  }
+
+  // Isolate unique-index arbitration from the HTTP layer's earlier exclusive Trip lock.
+  // Both calls use the same stable, already persisted assigned Trip fixture; no production
+  // endpoint bypasses the Trip/Driver authorization and locking protocol.
+  TrailerCouplingTransactions.Result physicalCommand(String command, UUID key) {
+    var context =
+        new TrailerCouplingTransactions.TripContext(trip, "ASSIGNED", 0, driver, tractor, trailer);
+    if (command.equals("hooks"))
+      return physical.hook(
+          tenant,
+          user,
+          key,
+          context,
+          driver,
+          new TrailerCouplingTransactions.Hook(
+              trailer, tractor, driver, Instant.parse(HOOK_AT), 0));
+    return physical.drop(
+        tenant,
+        user,
+        key,
+        context,
+        driver,
+        new TrailerCouplingTransactions.Drop(trailer, stop, location, Instant.parse(DROP_AT)),
+        () -> {});
+  }
+
+  @ParameterizedTest
+  @CsvSource({"hooks,false", "hooks,true", "drops,false", "drops,true"})
+  void uniqueClaimWaitsForWinnerAndReplaysCommitOrContinuesAfterRollback(
+      String command, boolean rollback) throws Exception {
+    if (command.equals("drops")) ok(hook(UUID.randomUUID()));
+    var key = UUID.randomUUID();
+    var held = new CountDownLatch(1);
+    var release = new CountDownLatch(1);
+    var winnerClaim = new java.util.concurrent.atomic.AtomicReference<UUID>();
+    var winnerResponse =
+        new java.util.concurrent.atomic.AtomicReference<TrailerCouplingTransactions.Result>();
+    try (var pool = Executors.newFixedThreadPool(2)) {
+      var winner =
+          pool.submit(
+              () ->
+                  transactions.execute(
+                      tenant,
+                      () -> {
+                        var response = physicalCommand(command, key);
+                        winnerResponse.set(response);
+                        winnerClaim.set(
+                            (UUID)
+                                em.createNativeQuery(
+                                        "select id from processed_client_operations where"
+                                            + " tenant_id=:tenant and client_operation_id=:key",
+                                        UUID.class)
+                                    .setParameter("tenant", tenant)
+                                    .setParameter("key", key)
+                                    .getSingleResult());
+                        held.countDown();
+                        waitFor(release);
+                        if (rollback) throw new IllegalStateException("Controlled winner rollback");
+                        return response;
+                      }));
+      try {
+        waitFor(held);
+        // An uncommitted claim and physical writes are invisible to another connection.
+        assertThat(
+                f.db.value(
+                    "select count(*) from processed_client_operations where tenant_id=? and"
+                        + " client_operation_id=?",
+                    tenant,
+                    key))
+            .isEqualTo(0L);
+        var waiter =
+            pool.submit(() -> transactions.execute(tenant, () -> physicalCommand(command, key)));
+        lockWait("insert into processed_client_operations");
+        assertThat(waiter.isDone()).isFalse();
+        release.countDown();
+        if (rollback) {
+          assertThatThrownBy(() -> winner.get(30, TimeUnit.SECONDS))
+              .hasRootCauseMessage("Controlled winner rollback");
+        } else assertThat(winner.get(30, TimeUnit.SECONDS)).isEqualTo(winnerResponse.get());
+        var result = waiter.get(30, TimeUnit.SECONDS);
+        if (!rollback) assertThat(result).isEqualTo(winnerResponse.get());
+        var committedClaim =
+            (UUID)
+                f.db.value(
+                    "select id from processed_client_operations where tenant_id=? and"
+                        + " client_operation_id=?",
+                    tenant,
+                    key);
+        if (rollback) assertThat(committedClaim).isNotEqualTo(winnerClaim.get());
+        else assertThat(committedClaim).isEqualTo(winnerClaim.get());
+        assertThat(
+                f.db.value(
+                    "select status from processed_client_operations where id=?", committedClaim))
+            .isEqualTo("SUCCEEDED");
+        assertThat(count("trailer_couplings")).isEqualTo(1L);
+        assertThat(count("trailer_movement_events")).isEqualTo(command.equals("hooks") ? 1L : 2L);
+        assertThat(count("processed_client_operations"))
+            .isEqualTo(command.equals("hooks") ? 1L : 2L);
+        assertThat(trailerField("version")).isEqualTo(command.equals("hooks") ? 1L : 2L);
+        assertNoProcessing();
+      } finally {
+        release.countDown();
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"hooks", "drops"})
+  void processingClaimExistsInsideBusinessTransactionBeforeAnyMovementWrite(String command)
+      throws Exception {
+    if (command.equals("drops")) ok(hook(UUID.randomUUID()));
+    f.db.execute(
+        "create function issue38_claim_required() returns trigger language plpgsql as $$ begin  if"
+            + " not exists(select 1 from processed_client_operations p where"
+            + " p.tenant_id=NEW.tenant_id and p.client_operation_id=NEW.client_operation_id and"
+            + " p.status='PROCESSING' and p.processed_at is null and p.created_at is not null and"
+            + " p.request_hash is not null) then raise exception using"
+            + " errcode='23514',message='Missing transaction claim'; end if; return NEW; end; $$");
+    f.db.execute(
+        "create trigger issue38_claim_required before insert on trailer_movement_events"
+            + " for each row execute function issue38_claim_required()");
+    try {
+      ok(command.equals("hooks") ? hook(UUID.randomUUID()) : drop(UUID.randomUUID()));
+      assertNoProcessing();
+      assertThat(
+              f.db.value(
+                  "select count(*) from processed_client_operations where tenant_id=? and"
+                      + " status='SUCCEEDED' and processed_at>=created_at",
+                  tenant))
+          .isEqualTo(command.equals("hooks") ? 1L : 2L);
+    } finally {
+      f.db.execute("drop trigger issue38_claim_required on trailer_movement_events");
+      f.db.execute("drop function issue38_claim_required()");
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "null,now(),PROCESSING,null,23502",
+    "hash,null,PROCESSING,null,23502",
+    "hash,now(),PROCESSING,now(),23514",
+    "hash,now(),SUCCEEDED,null,23514",
+    "hash,now(),REJECTED,null,23514"
+  })
+  void ledgerRejectsMissingRequiredFieldsAndInconsistentMilestones(
+      String hash, String created, String status, String processed, String sqlState) {
+    rejectSql(
+        sqlState,
+        () ->
+            f.db.execute(
+                "insert into"
+                    + " processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at,processed_at)"
+                    + " values(?,?,?,?,'TRAILER_HOOK',"
+                    + (hash.equals("null") ? "null" : "'hash'")
+                    + ",?,"
+                    + created
+                    + ","
+                    + processed
+                    + ")",
+                UUID.randomUUID(),
+                tenant,
+                UUID.randomUUID(),
+                user,
+                status));
+  }
+
+  @Test
+  void ledgerSupportsTransactionLocalProcessingAndBothTerminalStatuses() throws Exception {
+    try (var c = runtime.getConnection()) {
+      c.setAutoCommit(false);
+      context(c, tenant, null);
+      for (var status : List.of("PROCESSING", "SUCCEEDED", "REJECTED")) {
+        f.db.execute(
+            c,
+            "insert into"
+                + " processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at,processed_at)"
+                + " values(?,?,?,?,'TRAILER_HOOK','hash',?,now(),"
+                + (status.equals("PROCESSING") ? "null" : "now()")
+                + ")",
+            UUID.randomUUID(),
+            tenant,
+            UUID.randomUUID(),
+            user,
+            status);
+      }
+      assertThat(rows(c, "processed_client_operations")).isEqualTo(3L);
+      c.rollback(); // PROCESSING is a transaction-local fixture, never committed as a lease.
+    }
+    assertThat(
+            f.db.value(
+                "select is_nullable from information_schema.columns where"
+                    + " table_name='processed_client_operations' and column_name='request_hash'"))
+        .isEqualTo("NO");
+    assertThat(
+            f.db.value(
+                "select is_nullable from information_schema.columns where"
+                    + " table_name='processed_client_operations' and column_name='created_at'"))
+        .isEqualTo("NO");
+    assertThat(
+            f.db.value(
+                "select is_nullable from information_schema.columns where"
+                    + " table_name='processed_client_operations' and column_name='processed_at'"))
+        .isEqualTo("YES");
+    assertNoProcessing();
   }
 
   @ParameterizedTest
@@ -1119,6 +1340,7 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
             "operation_type",
             "request_hash",
             "status",
+            "created_at",
             "processed_at",
             "result_entity_type",
             "result_entity_id",
@@ -1272,6 +1494,23 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
                     tenant));
         c.rollback();
       }
+      if (table.equals("processed_client_operations")) {
+        for (var column : columns(table))
+          assertThat(
+                  value(
+                      c,
+                      "select has_column_privilege(current_user,'processed_client_operations','"
+                          + column
+                          + "','UPDATE')"))
+              .isEqualTo(
+                  Set.of(
+                          "status",
+                          "processed_at",
+                          "result_entity_type",
+                          "result_entity_id",
+                          "response_data")
+                      .contains(column));
+      }
     }
   }
 
@@ -1320,8 +1559,8 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
               f.db.execute(
                   c,
                   "insert into"
-                      + " processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,status,processed_at)"
-                      + " values(?,?,?,?,'TRAILER_HOOK','SUCCEEDED',now())",
+                      + " processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at,processed_at)"
+                      + " values(?,?,?,?,'TRAILER_HOOK','hash','SUCCEEDED',now(),now())",
                   UUID.randomUUID(),
                   tenant,
                   UUID.randomUUID(),
@@ -1418,7 +1657,7 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
         () ->
             f.db.execute(
                 "insert into processed_client_operations select"
-                    + " ?,tenant_id,client_operation_id,user_id,device_id,operation_type,request_hash,status,processed_at,result_entity_type,result_entity_id,response_data"
+                    + " ?,tenant_id,client_operation_id,user_id,device_id,operation_type,request_hash,status,created_at,processed_at,result_entity_type,result_entity_id,response_data"
                     + " from processed_client_operations where tenant_id=? limit 1",
                 UUID.randomUUID(),
                 tenant));
@@ -1427,8 +1666,8 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
         () ->
             f.db.execute(
                 "insert into"
-                    + " processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,status,processed_at)"
-                    + " values(?,?,?,?,'TRAILER_HOOK','UNKNOWN',now())",
+                    + " processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at,processed_at)"
+                    + " values(?,?,?,?,'TRAILER_HOOK','hash','UNKNOWN',now(),now())",
                 UUID.randomUUID(),
                 tenant,
                 UUID.randomUUID(),
@@ -1724,10 +1963,27 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
         try (var c = pool.getConnection()) {
           c.setAutoCommit(false);
           context(c, tenant, null);
-          value(c, "select pg_advisory_xact_lock(38123456)");
+          var key = UUID.randomUUID();
+          f.db.execute(
+              c,
+              "insert into"
+                  + " processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at)"
+                  + " values(?,?,?,?,'TRAILER_HOOK','hash','PROCESSING',now())",
+              UUID.randomUUID(),
+              tenant,
+              key,
+              user);
           assertThat(((Number) value(c, "select pg_backend_pid()")).longValue()).isEqualTo(pid);
           if (rollback) c.rollback();
-          else c.commit();
+          else {
+            f.db.execute(
+                c,
+                "update processed_client_operations set status='SUCCEEDED',processed_at=now()"
+                    + " where tenant_id=? and client_operation_id=?",
+                tenant,
+                key);
+            c.commit();
+          }
         }
         try (var c = pool.getConnection()) {
           assertThat(((Number) value(c, "select pg_backend_pid()")).longValue()).isEqualTo(pid);
@@ -1739,13 +1995,14 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
                   value(
                       c,
                       "select count(*) from pg_locks where pid=pg_backend_pid() and"
-                          + " locktype='advisory'"))
+                          + " locktype in ('transactionid','tuple')"))
               .isEqualTo(0L);
           for (var table :
               List.of(
                   "trailer_couplings", "trailer_movement_events", "processed_client_operations"))
             assertThat(rows(c, table)).isZero();
         }
+        assertNoProcessing();
       }
     }
   }

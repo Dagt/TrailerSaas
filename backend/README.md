@@ -886,7 +886,8 @@ There is no unique Trip coupling: its one-active semantic guard is serialized by
 the Trip parent lock. Tenant-safe FKs have no destructive cascade.
 
 Runtime has SELECT/INSERT on the three tables and UPDATE only on coupling
-dropped_at/drop_event_id. All have Tenant RLS excluding bootstrap. No DELETE,
+dropped_at/drop_event_id plus ledger status/processed_at/result_entity_type/
+result_entity_id/response_data to finish the transaction-local claim. All have Tenant RLS excluding bootstrap. No DELETE,
 ownership, PUBLIC, BYPASSRLS, schema CREATE or administrator datasource is used.
 Device identity remains NULL until its parent registration surface exists.
 
@@ -897,8 +898,14 @@ Both commands allow ASSIGNED/AT_STOP/CANCELLING and never perform departure or
 normal Trip/Stop/Order execution transitions. Drop validates its normalized
 Stop/Site/Location and actual Order Customer compatibility through public policies.
 
-Tenant+operation advisory transaction locks serialize replay, with a SHA-256 logical
-request fingerprint and unique ledger key. Fresh authority precedes replay; physical
+Accepted hardening L uses conflict-safe INSERT PROCESSING with the Tenant+operation
+unique index as replay arbitration. Duplicates wait for winner commit and read its
+terminal result, or claim after winner rollback. There is no prior existence query,
+advisory lock, process mutex or committed PROCESSING lease. request_hash and created_at
+are NOT NULL; processed_at is NULL only for PROCESSING. Claim, physical writes and
+terminal SUCCEEDED response commit together; failure rolls back everything without
+persisting a transient REJECTED response. SHA-256 fingerprints the logical request.
+Fresh authority precedes replay; physical
 version checks apply only on first execution. Fact/interval/projection/saved result
 commit atomically. PostgreSQL 18 tests cover both race directions, double coupling,
 same-key concurrency, reassignment/substitution, rollback at each write, exact

@@ -83,13 +83,16 @@ CREATE TABLE processed_client_operations (
     user_id uuid NOT NULL REFERENCES users(id),
     device_id uuid NULL,
     operation_type varchar NOT NULL,
-    request_hash varchar NULL,
-    status varchar NOT NULL CHECK (status IN ('SUCCEEDED','REJECTED')),
-    processed_at timestamptz NOT NULL,
+    request_hash varchar NOT NULL,
+    status varchar NOT NULL CHECK (status IN ('PROCESSING','SUCCEEDED','REJECTED')),
+    created_at timestamptz NOT NULL,
+    processed_at timestamptz NULL,
     result_entity_type varchar NULL,
     result_entity_id uuid NULL,
     response_data jsonb NULL,
-    UNIQUE (tenant_id,client_operation_id)
+    UNIQUE (tenant_id,client_operation_id),
+    CHECK ((status='PROCESSING' AND processed_at IS NULL)
+        OR (status IN ('SUCCEEDED','REJECTED') AND processed_at IS NOT NULL))
 );
 -- device_id is reserved and NULL in #38; device registration belongs to #56.
 ALTER TABLE trailer_movement_events ENABLE ROW LEVEL SECURITY;
@@ -105,5 +108,8 @@ CREATE POLICY processed_operations_tenant ON processed_client_operations TO "${r
     USING (tenant_id=NULLIF(current_setting('app.current_tenant_id',true),'')::uuid AND NULLIF(current_setting('app.current_user_id',true),'') IS NULL)
     WITH CHECK (tenant_id=NULLIF(current_setting('app.current_tenant_id',true),'')::uuid AND NULLIF(current_setting('app.current_user_id',true),'') IS NULL);
 GRANT SELECT,INSERT ON trailer_movement_events,processed_client_operations TO "${runtimeRole}";
+-- Only the claim's terminal outcome may be updated; its identity/hash remain immutable.
+GRANT UPDATE(status,processed_at,result_entity_type,result_entity_id,response_data)
+    ON processed_client_operations TO "${runtimeRole}";
 GRANT SELECT,INSERT ON trailer_couplings TO "${runtimeRole}";
 GRANT UPDATE(dropped_at,drop_event_id) ON trailer_couplings TO "${runtimeRole}";

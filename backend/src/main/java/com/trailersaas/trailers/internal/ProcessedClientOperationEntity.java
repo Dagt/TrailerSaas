@@ -27,13 +27,16 @@ class ProcessedClientOperationEntity {
   @Column(name = "operation_type", nullable = false)
   String operationType;
 
-  @Column(name = "request_hash")
+  @Column(name = "request_hash", nullable = false)
   String requestHash;
 
   @Column(nullable = false)
   String status;
 
-  @Column(name = "processed_at", nullable = false)
+  @Column(name = "created_at", nullable = false)
+  Instant createdAt;
+
+  @Column(name = "processed_at")
   Instant processedAt;
 
   @Column(name = "result_entity_type")

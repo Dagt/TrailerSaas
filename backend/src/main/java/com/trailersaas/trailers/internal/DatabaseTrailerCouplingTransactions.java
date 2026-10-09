@@ -5,7 +5,6 @@ import static com.trailersaas.trailers.CouplingCommandRejectedException.Reason.*
 import com.trailersaas.tractors.TractorCouplingPolicy;
 import com.trailersaas.trailers.*;
 import jakarta.persistence.*;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.*;
@@ -13,7 +12,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 @Service
@@ -33,8 +31,8 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
   public Result hook(
       UUID tenant, UUID user, UUID operation, TripContext trip, UUID actualDriver, Hook r) {
     var hash = hookHash(trip.id(), r);
-    var replay = replay(tenant, user, operation, "TRAILER_HOOK", hash);
-    if (replay != null) return replay;
+    var claim = claim(tenant, user, operation, "TRAILER_HOOK", hash);
+    if (claim == null) return replay(tenant, user, operation, "TRAILER_HOOK", hash);
     if (!actualDriver.equals(r.driverId())) throw fail(MISSING);
     state(trip);
     if (!r.trailerId().equals(trip.plannedInitialTrailerId())) throw fail(SUBSTITUTION);
@@ -76,8 +74,7 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     em.persist(c);
     observed(trailer, r.driverId(), r.occurredAt(), at);
     flush();
-    return remember(
-        tenant, user, operation, "TRAILER_HOOK", hash, result(c, trailer, trip, event), at);
+    return remember(tenant, claim, result(c, trailer, trip, event), at);
   }
 
   public Result drop(
@@ -89,8 +86,8 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
       Drop r,
       Runnable destination) {
     var hash = dropHash(trip.id(), r);
-    var replay = replay(tenant, user, operation, "TRAILER_DROP", hash);
-    if (replay != null) return replay;
+    var claim = claim(tenant, user, operation, "TRAILER_DROP", hash);
+    if (claim == null) return replay(tenant, user, operation, "TRAILER_DROP", hash);
     state(trip);
     // Read only the key first. Both commands lock Tractor -> Trailer -> Coupling.
     var initial = activeTrailer(tenant, r.trailerId(), false);
@@ -123,18 +120,33 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     trailer.lastKnownLocationId = r.locationId();
     observed(trailer, driver, r.occurredAt(), at);
     flush();
-    return remember(
-        tenant, user, operation, "TRAILER_DROP", hash, result(c, trailer, trip, event), at);
+    return remember(tenant, claim, result(c, trailer, trip, event), at);
+  }
+
+  private UUID claim(UUID tenant, UUID user, UUID key, String type, String hash) {
+    pinned(tenant);
+    // The unique index arbitrates even while a competing claim is uncommitted.
+    // ON CONFLICT waits for commit/rollback without aborting this transaction.
+    var rows =
+        em.createNativeQuery(
+                "insert into processed_client_operations"
+                    + " (id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at)"
+                    + " values(:id,:tenant,:key,:user,:type,:hash,'PROCESSING',:at) on conflict"
+                    + " (tenant_id,client_operation_id) do nothing returning id",
+                UUID.class)
+            .setParameter("id", UUID.randomUUID())
+            .setParameter("tenant", tenant)
+            .setParameter("key", key)
+            .setParameter("user", user)
+            .setParameter("type", type)
+            .setParameter("hash", hash)
+            .setParameter("at", Instant.now().truncatedTo(ChronoUnit.MICROS))
+            .getResultList();
+    return rows.isEmpty() ? null : (UUID) rows.getFirst();
   }
 
   private Result replay(UUID tenant, UUID user, UUID key, String type, String hash) {
-    pinned(tenant);
-    // SHA-256 prefix is only a lock key: collisions serialize extra work, never identify
-    // operations.
-    long lock = ByteBuffer.wrap(digest(tenant + "|" + key)).getLong();
-    em.createNativeQuery("select pg_advisory_xact_lock(:key)")
-        .setParameter("key", lock)
-        .getSingleResult();
+    // New statement after unique arbitration sees the winner's committed terminal row.
     var row =
         em.createQuery(
                 "select p from ProcessedClientOperationEntity p where p.tenantId=:tenant and"
@@ -144,7 +156,7 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
             .setParameter("key", key)
             .getResultStream()
             .findFirst();
-    if (row.isEmpty()) return null;
+    if (row.isEmpty()) throw new IllegalStateException("Operation claim outcome unavailable.");
     var p = row.get();
     if (!user.equals(p.userId)
         || !type.equals(p.operationType)
@@ -154,22 +166,20 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     return json.convertValue(p.responseData, Result.class);
   }
 
-  private Result remember(
-      UUID tenant, UUID user, UUID key, String type, String hash, Result response, Instant at) {
-    var p = new ProcessedClientOperationEntity();
-    p.id = UUID.randomUUID();
-    p.tenantId = tenant;
-    p.clientOperationId = key;
-    p.userId = user;
-    p.operationType = type;
-    p.requestHash = hash;
-    p.status = "SUCCEEDED";
-    p.processedAt = at;
-    p.resultEntityType = "TRAILER_COUPLING";
-    p.resultEntityId = response.coupling().id();
-    p.responseData = json.convertValue(response, new TypeReference<Map<String, Object>>() {});
-    em.persist(p);
-    flush();
+  private Result remember(UUID tenant, UUID claim, Result response, Instant at) {
+    var changed =
+        em.createNativeQuery(
+                "update processed_client_operations set status='SUCCEEDED',processed_at=:at,"
+                    + " result_entity_type='TRAILER_COUPLING',result_entity_id=:entity,"
+                    + " response_data=cast(:response as jsonb)"
+                    + " where tenant_id=:tenant and id=:id and status='PROCESSING'")
+            .setParameter("at", at)
+            .setParameter("entity", response.coupling().id())
+            .setParameter("response", json.writeValueAsString(response))
+            .setParameter("tenant", tenant)
+            .setParameter("id", claim)
+            .executeUpdate();
+    if (changed != 1) throw new IllegalStateException("Operation claim completion failed.");
     return response;
   }
 
