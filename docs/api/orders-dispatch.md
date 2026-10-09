@@ -650,3 +650,73 @@ Firebase authorization, admin datasource, BYPASSRLS or physical Hook is introduc
 #36 owns reroute/cancellation/notification flows, #37 owns Web, later execution owns
 Hook/Drop/Stops/POD/coupling. #61 generic Audit remains deferred. V14 operational history
 is durable domain history, not an early generic Audit subsystem or formal event sourcing.
+
+
+## Issue #36 implementation boundary
+
+V15 adds append-only `trip_operational_events` and `trip_driver_updates`, with
+Tenant RLS, tenant-safe Trip/Driver FKs and a composite Stop/Trip FK. Both runtime
+tables are SELECT/INSERT only. Stops additionally receive UPDATE for bounded
+future-instruction/cancellation projection changes; no delete/cascade is added.
+V1–V14 remain unchanged. No generic Audit, outbox jobs, push or Stop execution table.
+
+POST reroutes requires fresh TRIP_REROUTE, expectedVersion, affectedStopId,
+normalized newSiteId, reason and instructions. Only IN_TRANSIT/AT_STOP Trips and
+PENDING/EN_ROUTE Stops are eligible. Under exclusive Trip then Stop locks, every
+mapped Customer must be visible for a scoped actor; all Customers served by the
+affected Stop must be compatible with the new Site/Location. Trip-only visits
+permit neutral Locations only. Shared Site/Location locks coordinate with master
+mutation/disassociation. Same-Tenant Site data is frozen through Customers' public
+boundary. Before mutation, durable metadata retains the complete previous
+Site/Location/snapshot/schedule/instructions/status/version and replacement.
+Trip and Stop versions advance, physical lifecycle and Trailer fields do not.
+Later master edits cannot overwrite snapshots. Completed Stops are immutable.
+
+POST cancellations requires both TRIP_REROUTE and ORDER_CANCEL for every mapped
+Customer; unmapped Trips require Tenant-wide authority. PLANNED/ASSIGNED -> CANCELLED
+sets server cancelledAt and cancels PENDING/EN_ROUTE/EXCEPTION Stops, preserving
+terminal Stops byte-for-byte. Inconsistent ARRIVED/IN_SERVICE blocks that command.
+IN_TRANSIT/AT_STOP -> CANCELLING preserves startedAt, leaves cancelledAt null and
+leaves every Stop/mapping untouched. Active instructions require resolutionType
+and nonblank instructions: RETURN_TO_BASE requires a same-Tenant destination;
+REROUTE requires a destination compatible with every affected Customer;
+HOLD_CONTACT_DISPATCH forbids a destination; OTHER_AUTHORIZED optionally supplies
+a same-Tenant destination. Pre-movement resolution is optional. Orders are never
+implicitly cancelled and no physical location/coupling/movement is asserted.
+
+Trips-owned `TripCancellationResolutionPort` is a MANDATORY, already Tenant-pinned
+transaction hook, not a REST endpoint. Future execution owns authorization and
+actual safe-resolution facts. It locks CANCELLING, sets CANCELLED/server cancelledAt,
+advances version/time, cancels only nonterminal Stops and persists finished history
+plus Driver update. Terminal Stops remain exact; no fake physical facts are emitted.
+
+Every relevant assignment/substitution/create command now uses the same durable
+transactional Driver-update sink. A new Driver and a reassigned-away Driver each
+receive targeted updates; the old Driver's removal notice excludes the new identity
+and future plan. Tractor/Trailer changes target the current Driver; REJECT records
+the decision and unchanged expected Trailer. Projection starts at V15 without
+synthetic historical delivery/backfill. Update-insert failure rolls back business
+state/history. The transaction-bound `TripDriverUpdateRecorded` hook is only an
+integration seam for #55 enqueue in the same transaction, never authoritative
+truth, delivery proof or an in-memory correctness dependency.
+
+GET driver/me/updates uses fresh TRIP_VIEW_ASSIGNED and Drivers' public active
+User-link boundary. Query includes the resolved Driver ID server-side only;
+historical targeted removal notices remain retrievable after reassignment.
+Incremental keyset uses createdAt ASC/id ASC, opaque cursor, default 50/max 200.
+No acknowledgment state or arbitrary Driver lookup. Push remains secondary.
+Timeline merges assignment and operational events globally by occurredAt ASC/id ASC;
+assignmentHistory remains assignment-only, operationalHistory is separate.
+Neither timeline nor detail exposes delivery/outbox/generic Audit rows.
+
+Trip parent serializes scope derivation, assignments, reroutes, cancellations and
+Order mapping release. Stop locks follow deterministic sequence/id order; Site
+locks follow. Trip commands never take reverse Order locks (Order cancellation
+uses Order -> Trip). Same-version commands have one winner and STALE_VERSION for
+the loser. History/update/projection share one transaction and roll back together.
+No Idempotency-Key replay ledger: uncertain responses must be reconciled using
+Trip detail/timeline/Driver updates, never assumed replayable.
+
+#37 Web, #44 physical execution/mobile, #45 POD, #55 outbox workers/FCM/retries and
+#61 generic Audit remain deferred. No departure, arrival, Hook/Drop, movement,
+coupling, Order cancellation side effect or normal Trip-completion endpoint.

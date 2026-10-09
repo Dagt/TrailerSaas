@@ -1213,25 +1213,109 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/trips/{tripId}/reroutes:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Trips]
+      operationId: rerouteTrip
+      x-implementation-status: implemented-issue-36
+      description: >
+        Fresh TRIP_REROUTE and ALL mapped Customer scopes. IN_TRANSIT/AT_STOP only; affected Stop PENDING/EN_ROUTE only. Retains frozen previous/replacement destination history and changes future instructions, never physical movement. expectedVersion guards Trip and Stop mutation. No replay guarantee; reconcile uncertain response via reads.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RerouteTripRequestImplemented'
+      responses:
+        '200':
+          description: Updated Trip detail and durable operational history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/cancellations:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Trips]
+      operationId: cancelTrip
+      x-implementation-status: implemented-issue-36
+      description: >
+        Requires fresh TRIP_REROUTE and ORDER_CANCEL for ALL mapped Customers; an unmapped Trip requires Tenant-wide authority. PLANNED/ASSIGNED becomes CANCELLED; IN_TRANSIT/AT_STOP becomes CANCELLING with a safe resolution instruction. Preserves completed Stops, mappings and Orders. No physical effects or public finish-cancellation shortcut. No idempotent replay guarantee.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelTripRequestImplemented'
+      responses:
+        '200':
+          description: Updated Trip detail and durable operational history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/driver/me/updates:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [DriverMobile]
+      operationId: getDriverUpdates
+      x-implementation-status: implemented-issue-36
+      description: >
+        Fresh TRIP_VIEW_ASSIGNED and active Driver linked to authenticated User; no client Driver ID.
+        Retrieves only explicitly targeted durable updates, including reassignment-away notices.
+        PostgreSQL is authoritative even if push is unavailable. Incremental createdAt ASC/id ASC
+        keyset cursor is opaque and scoped again on each request. Projection starts at V15 without
+        fabricated historical backfill. Unknown query fields rejected.
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: Driver-targeted incremental update page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverUpdatePageImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /api/v1/tenants/{tenantId}/trips/{tripId}/timeline:
     parameters:
       - $ref: '#/components/parameters/TenantId'
       - $ref: '#/components/parameters/TripId'
     get:
       tags: [Trips]
-      operationId: getTripAssignmentTimeline
-      x-implementation-status: implemented-issue-35
+      operationId: getTripOperationalTimeline
+      x-implementation-status: implemented-issue-36
       description: >
-        TRIP_VIEW_ALL only. Partial operational timeline containing persisted assignment/substitution
-        events in occurredAt ASC/id ASC order. No fabricated pre-V14 history, execution, reroute,
-        cancellation, POD or generic Audit events; those remain future surfaces.
+        TRIP_VIEW_ALL only. Operational timeline merging assignment/substitution and durable reroute/cancellation events
+        globally in occurredAt ASC/id ASC order. No fabricated pre-V14 history, Driver delivery rows,
+        execution, POD, push attempts, outbox or generic Audit.
       responses:
         '200':
-          description: Chronological assignment timeline
+          description: Chronological operational timeline
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TripAssignmentTimelineImplemented'
+                $ref: '#/components/schemas/TripOperationalTimelineImplemented'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -2383,6 +2467,141 @@ components:
         decision: { type: string, enum: [AUTHORIZE, REJECT] }
         reason: { type: string, minLength: 1, pattern: '\S' }
 
+    RerouteTripRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, affectedStopId, newSiteId, reason, instructions]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        affectedStopId: { type: string, format: uuid }
+        newSiteId: { type: string, format: uuid }
+        newLocationId: { type: [string, "null"], format: uuid }
+        scheduledAt: { type: [string, "null"], format: date-time }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+        instructions: { type: string, minLength: 1, pattern: '\S' }
+
+    TripCancellationResolutionTypeImplemented:
+      type: string
+      enum: [RETURN_TO_BASE, REROUTE, HOLD_CONTACT_DISPATCH, OTHER_AUTHORIZED]
+
+    CancelTripRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, reason]
+      description: >
+        Active cancellation requires resolutionType and nonblank instructions. RETURN_TO_BASE/REROUTE
+        require destinationSiteId; HOLD_CONTACT_DISPATCH forbids it; OTHER_AUTHORIZED permits it.
+        REROUTE destination must serve all mapped Customers; base/other destination must be same Tenant.
+        Before movement resolution is optional. No client actor or occurrence time.
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+        resolutionType:
+          anyOf:
+            - $ref: '#/components/schemas/TripCancellationResolutionTypeImplemented'
+            - type: "null"
+        destinationSiteId: { type: [string, "null"], format: uuid }
+        instructions: { type: [string, "null"], minLength: 1, pattern: '\S' }
+
+    TripDestinationInstructionImplemented:
+      type: object
+      additionalProperties: false
+      properties:
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        siteSnapshot:
+          anyOf:
+            - $ref: '#/components/schemas/OrderDestinationSnapshot'
+            - type: "null"
+        scheduledAt: { type: [string, "null"], format: date-time }
+        instructions: { type: [string, "null"] }
+        status:
+          $ref: '#/components/schemas/ExecutableStopStatusImplemented'
+        version: { type: integer, format: int64, minimum: 0 }
+
+    TripOperationalEventImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, eventType, tripStopId, actorUserId, targetDriverId, occurredAt, reason, metadata]
+      properties:
+        id: { type: string, format: uuid }
+        eventType:
+          type: string
+          enum: [TRIP_REROUTED, TRIP_CANCELLED, TRIP_CANCELLATION_STARTED, TRIP_CANCELLATION_FINISHED]
+        tripStopId: { type: [string, "null"], format: uuid }
+        actorUserId: { type: [string, "null"], format: uuid }
+        targetDriverId: { type: [string, "null"], format: uuid }
+        occurredAt: { type: string, format: date-time }
+        reason: { type: [string, "null"] }
+        metadata:
+          type: [object, "null"]
+          additionalProperties: false
+          properties:
+            previous:
+              $ref: '#/components/schemas/TripDestinationInstructionImplemented'
+            replacement:
+              $ref: '#/components/schemas/TripDestinationInstructionImplemented'
+            previousState:
+              $ref: '#/components/schemas/TripStatusImplemented'
+            resolutionType:
+              $ref: '#/components/schemas/TripCancellationResolutionTypeImplemented'
+            destinationSiteId: { type: [string, "null"], format: uuid }
+            instructions: { type: [string, "null"] }
+
+    DriverUpdatePayloadImplemented:
+      type: object
+      additionalProperties: false
+      required: [tripId, tripVersion]
+      description: Bounded operational facts for this target Driver; no actor, role or Customer metadata.
+      properties:
+        tripId: { type: string, format: uuid }
+        tripVersion: { type: integer, format: int64, minimum: 0 }
+        status:
+          $ref: '#/components/schemas/TripStatusImplemented'
+        currentAssignment: { type: boolean }
+        changedResource: { type: string, enum: [DRIVER, TRACTOR, TRAILER] }
+        tractorId: { type: [string, "null"], format: uuid }
+        expectedTrailerId: { type: [string, "null"], format: uuid }
+        decision: { type: string, enum: [AUTHORIZE, REJECT] }
+        affectedStopId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        siteSnapshot:
+          $ref: '#/components/schemas/OrderDestinationSnapshot'
+        scheduledAt: { type: [string, "null"], format: date-time }
+        instructions: { type: [string, "null"] }
+        reason: { type: string }
+        stopVersion: { type: integer, format: int64, minimum: 0 }
+        resolutionType:
+          $ref: '#/components/schemas/TripCancellationResolutionTypeImplemented'
+        destinationSiteId: { type: [string, "null"], format: uuid }
+        safeResolutionFinished: { type: boolean }
+
+    DriverUpdateImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, tripId, updateType, occurredAt, payload]
+      properties:
+        id: { type: string, format: uuid }
+        tripId: { type: string, format: uuid }
+        updateType:
+          type: string
+          enum: [TRIP_REROUTED, TRIP_CANCELLATION_STARTED, TRIP_CANCELLED, TRIP_CANCELLATION_FINISHED, TRIP_ASSIGNMENT_CHANGED, TRAILER_EXPECTATION_CHANGED]
+        occurredAt: { type: string, format: date-time }
+        payload:
+          $ref: '#/components/schemas/DriverUpdatePayloadImplemented'
+
+    DriverUpdatePageImplemented:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DriverUpdateImplemented'
+        nextCursor: { type: [string, "null"] }
+
     TripAssignmentEventImplemented:
       type: object
       additionalProperties: false
@@ -2407,7 +2626,7 @@ components:
             previousTrailerId: { type: string, format: uuid }
             expectedTrailerId: { type: string, format: uuid }
 
-    TripAssignmentTimelineImplemented:
+    TripOperationalTimelineImplemented:
       type: object
       additionalProperties: false
       required: [items]
@@ -2415,12 +2634,14 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/TripAssignmentEventImplemented'
+            oneOf:
+              - $ref: '#/components/schemas/TripAssignmentEventImplemented'
+              - $ref: '#/components/schemas/TripOperationalEventImplemented'
 
     TripDetailImplemented:
       type: object
       additionalProperties: false
-      required: [id, status, currentDriverId, currentTractorId, plannedInitialTrailerId, version, createdAt, updatedAt, startedAt, completedAt, cancelledAt, stops, assignmentHistory]
+      required: [id, status, currentDriverId, currentTractorId, plannedInitialTrailerId, version, createdAt, updatedAt, startedAt, completedAt, cancelledAt, stops, assignmentHistory, operationalHistory]
       properties:
         id: { type: string, format: uuid }
         status:
@@ -2443,6 +2664,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TripAssignmentEventImplemented'
+
+        operationalHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripOperationalEventImplemented'
 
     ExecutableTripStopImplemented:
       type: object

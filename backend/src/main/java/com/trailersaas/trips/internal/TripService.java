@@ -28,6 +28,7 @@ class TripService {
   private final TractorPlanningPolicy tractors;
   private final TrailerPlanningPolicy trailers;
   private final TripRepository repository;
+  private final TripDriverUpdateSink updates;
 
   TripService(
       TenantAuthorization auth,
@@ -37,7 +38,8 @@ class TripService {
       DriverPlanningPolicy drivers,
       TractorPlanningPolicy tractors,
       TrailerPlanningPolicy trailers,
-      TripRepository repository) {
+      TripRepository repository,
+      TripDriverUpdateSink updates) {
     this.auth = auth;
     this.orders = orders;
     this.snapshots = snapshots;
@@ -46,6 +48,7 @@ class TripService {
     this.tractors = tractors;
     this.trailers = trailers;
     this.repository = repository;
+    this.updates = updates;
   }
 
   Detail create(AuthenticatedUserPrincipal actor, UUID tenant, Map<String, Object> input) {
@@ -154,6 +157,7 @@ class TripService {
           null,
           now);
     }
+    updates.assignment(trip, trip.currentDriverId, true, "DRIVER", null, now, 0);
     flush();
     for (var order : locked) {
       orders.planned(actor, tenant, order);
@@ -196,14 +200,22 @@ class TripService {
                             .sorted()
                             .toList()))
             .toList(),
-        repository.history(trip.tenantId, trip.id).stream().map(Assignment::of).toList());
+        repository.history(trip.tenantId, trip.id).stream().map(Assignment::of).toList(),
+        repository.operationalHistory(trip.tenantId, trip.id).stream()
+            .map(Operational::of)
+            .toList());
   }
 
   @Transactional(readOnly = true)
   Timeline timeline(AuthenticatedUserPrincipal actor, UUID tenant, UUID id) {
     auth.requireTenantCapability(actor, tenant, Capability.TRIP_VIEW_ALL);
     repository.resource(tenant, id, false);
-    return new Timeline(repository.history(tenant, id).stream().map(Assignment::of).toList());
+    var items = new ArrayList<HistoryItem>();
+    items.addAll(repository.history(tenant, id).stream().map(Assignment::of).toList());
+    items.addAll(repository.operationalHistory(tenant, id).stream().map(Operational::of).toList());
+    // PostgreSQL UUID ordering is unsigned; Java UUID natural order is signed.
+    items.sort(Comparator.comparing(HistoryItem::occurredAt).thenComparing(e -> e.id().toString()));
+    return new Timeline(List.copyOf(items));
   }
 
   private void flush() {

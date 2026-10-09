@@ -873,7 +873,7 @@ class TripAssignmentPostgresTests extends PostgresIntegrationTest {
 
   @Test
   void migrationExactShapeChronologicalIndexNoBackfillAndNoCascade() throws Exception {
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
     flyway.validate();
     try (var c = flyway.getConfiguration().getDataSource().getConnection();
         var q = c.createStatement()) {

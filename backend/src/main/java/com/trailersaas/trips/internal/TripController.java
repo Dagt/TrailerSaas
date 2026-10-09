@@ -14,10 +14,13 @@ class TripController {
   private final TripService service;
 
   private final TripAssignmentService assignments;
+  private final TripOperationalService operations;
 
-  TripController(TripService service, TripAssignmentService assignments) {
+  TripController(
+      TripService service, TripAssignmentService assignments, TripOperationalService operations) {
     this.service = service;
     this.assignments = assignments;
+    this.operations = operations;
   }
 
   @PostMapping
@@ -91,6 +94,28 @@ class TripController {
       @RequestParam Map<String, String> query) {
     TripValidation.fields(query, Set.of());
     return assignments.decide(actor, tenantId, tripId, body);
+  }
+
+  @PostMapping("/{tripId}/reroutes")
+  Detail reroute(
+      @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+      @PathVariable UUID tenantId,
+      @PathVariable UUID tripId,
+      @RequestBody Map<String, Object> body,
+      @RequestParam Map<String, String> query) {
+    TripValidation.fields(query, Set.of());
+    return operations.reroute(actor, tenantId, tripId, body);
+  }
+
+  @PostMapping("/{tripId}/cancellations")
+  Detail cancel(
+      @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+      @PathVariable UUID tenantId,
+      @PathVariable UUID tripId,
+      @RequestBody Map<String, Object> body,
+      @RequestParam Map<String, String> query) {
+    TripValidation.fields(query, Set.of());
+    return operations.cancel(actor, tenantId, tripId, body);
   }
 
   @GetMapping("/{tripId}/timeline")

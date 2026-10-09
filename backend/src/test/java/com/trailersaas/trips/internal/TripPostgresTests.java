@@ -199,7 +199,7 @@ class TripPostgresTests extends PostgresIntegrationTest {
 
   @Test
   void migrationHasExactObjectsCatalogsGrantsAndNoCascade() throws Exception {
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
     var expected =
         Map.of(
             "trips",
@@ -267,7 +267,8 @@ class TripPostgresTests extends PostgresIntegrationTest {
         boolean allowed =
             privilege.equals("SELECT")
                 || privilege.equals("INSERT")
-                || (entry.getKey().equals("trips") && privilege.equals("UPDATE"))
+                || (Set.of("trips", "trip_stops").contains(entry.getKey())
+                    && privilege.equals("UPDATE"))
                 || (entry.getKey().equals("trip_stop_orders") && privilege.equals("DELETE"));
         assertThat(
                 f.db.value(

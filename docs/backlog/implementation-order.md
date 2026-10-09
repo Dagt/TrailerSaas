@@ -78,9 +78,9 @@ Generic durable Audit persistence/query remains #61.
 - #34 → #35 → #36 → #37
 
 #34 is merged/complete via [PR #88](https://github.com/Dagt/TrailerSaas/pull/88).
-#35 is the current bounded implementation: durable initial/reassignment history,
-assignment commands and explicit Trailer substitution decisions. Complete only
-upon its PR merge. #36 follows for reroute/cancellation; #37 owns dispatch Web.
+#35 is merged/complete via [PR #89](https://github.com/Dagt/TrailerSaas/pull/89).
+#36 is the current bounded implementation: durable reroute/cancellation history and
+Driver update retrieval. Complete only upon its PR merge. #37 owns dispatch Web next.
 
 ### Trailer movement
 - #38 → #39 → #40 → #41

@@ -374,6 +374,15 @@ This records/raises an operational issue; it does not allow Driver to arbitraril
 
 ### GET /driver/me/updates
 
+**Backend implemented by #36** at `/api/v1/tenants/{tenantId}/driver/me/updates`.
+Only the authenticated User's active linked Driver, with fresh TRIP_VIEW_ASSIGNED,
+can retrieve its explicitly targeted rows (including reassignment-away notices).
+`cursor`/`limit` only; incremental `createdAt ASC, id ASC` keyset, default 50/max 200.
+Response: `items` (id/tripId/updateType/occurredAt/structured payload), `nextCursor`.
+No arbitrary Driver ID, acknowledgment state, Flutter UI or unrelated Trip browse.
+Durable PostgreSQL projection begins at V15 with no synthetic historical backfill.
+Push delivery and outbox workers remain #55; missed push cannot lose the instruction.
+
 Returns active server-side operational changes such as:
 
 - reroute;

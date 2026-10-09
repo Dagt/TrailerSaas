@@ -119,6 +119,51 @@ final class TripValidation {
     return new Substitution(expected, requested, decision, text(input.get("reason"), false));
   }
 
+  static long version(Map<String, Object> input) {
+    var v = input.get("expectedVersion");
+    if (!(v instanceof Integer || v instanceof Long) || ((Number) v).longValue() < 0)
+      throw TripFailure.invalid("expectedVersion");
+    return ((Number) v).longValue();
+  }
+
+  static Reroute reroute(Map<String, Object> input) {
+    fields(
+        input,
+        Set.of(
+            "expectedVersion",
+            "affectedStopId",
+            "newSiteId",
+            "newLocationId",
+            "scheduledAt",
+            "reason",
+            "instructions"));
+    return new Reroute(
+        version(input),
+        uuid(input.get("affectedStopId"), false),
+        uuid(input.get("newSiteId"), false),
+        uuid(input.get("newLocationId"), true),
+        instant(input.get("scheduledAt")),
+        text(input.get("reason"), false),
+        text(input.get("instructions"), false));
+  }
+
+  static Cancellation cancellation(Map<String, Object> input) {
+    fields(
+        input,
+        Set.of("expectedVersion", "reason", "resolutionType", "destinationSiteId", "instructions"));
+    var type = text(input.get("resolutionType"), true);
+    if (type != null
+        && !Set.of("RETURN_TO_BASE", "REROUTE", "HOLD_CONTACT_DISPATCH", "OTHER_AUTHORIZED")
+            .contains(type)) throw TripFailure.invalid("resolutionType");
+    var instructions = text(input.get("instructions"), true);
+    if (instructions != null && instructions.isBlank()) throw TripFailure.invalid("instructions");
+    var site = uuid(input.get("destinationSiteId"), true);
+    if ("HOLD_CONTACT_DISPATCH".equals(type) && site != null)
+      throw TripFailure.invalid("destinationSiteId");
+    return new Cancellation(
+        version(input), text(input.get("reason"), false), type, site, instructions);
+  }
+
   static void fields(Map<?, ?> input, Set<String> allowed) {
     if (input == null || input.keySet().stream().anyMatch(k -> !allowed.contains(k))) {
       throw TripFailure.invalid("body");

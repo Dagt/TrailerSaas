@@ -71,8 +71,8 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
-        assertThat(flyway.info().current().getDescription()).isEqualTo("trip assignment history");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("trip operational changes");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
@@ -92,7 +92,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void jpaValidatesOnlyTheFlywayCreatedIdentityEntities() throws Exception {
         assertThat(entityManagerFactory.isOpen()).isTrue();
-        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(22);
+        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(24);
         assertThat(entityManagerFactory.getProperties())
                 .containsEntry("hibernate.hbm2ddl.auto", "validate");
         assertThat(environment.getProperty("spring.sql.init.mode")).isEqualTo("never");
@@ -108,7 +108,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
             while (tables.next()) { names.add(tables.getString(1)); }
             assertThat(names).containsExactlyInAnyOrder("flyway_schema_history", "users",
                     "tenants", "tenant_memberships", "role_assignments", "customers", "physical_sites", "customer_sites", "operational_locations",
-                    "membership_invitations", "invitation_role_assignments", "drivers", "tractors", "trailers", "trailer_qr_identities", "tenant_settings", "orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders", "trips", "trip_stops", "trip_stop_orders", "trip_assignment_events");
+                    "membership_invitations", "invitation_role_assignments", "drivers", "tractors", "trailers", "trailer_qr_identities", "tenant_settings", "orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders", "trips", "trip_stops", "trip_stop_orders", "trip_assignment_events", "trip_operational_events", "trip_driver_updates");
         }
     }
 
