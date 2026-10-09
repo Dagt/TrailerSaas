@@ -131,6 +131,38 @@ dialog::backdrop { background: #14203666; }
 .qr-label img { max-width: 100%; height: auto; }
 .qr-label strong { font-size: 2rem; overflow-wrap: anywhere; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.operations-workspace { display: grid; grid-template-columns: 165px minmax(0,1fr); gap: 1.75rem; }
+.operations-workspace > nav { flex-direction: column; align-self: start; gap: .4rem; }
+.operations-workspace > nav a { padding: .7rem 1rem; border-radius: .5rem; text-decoration: none; }
+.operations-workspace > nav a[aria-current='page'] { background: #dfe9f7; color: #193e68; }
+.operations-content { min-width: 0; }
+.operations-content > section { margin: 1.5rem 0; }
+.operations-content table small { display: block; font-size: .75rem; color: #65758a; margin-top: .3rem; max-width: 24rem; white-space: normal; }
+.operations-content tbody th { text-transform: none; font-size: .9rem; letter-spacing: normal; color: #263951; background: white; }
+.dispatch-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin: 1.5rem 0 2rem; }
+.dispatch-metrics article, .dispatch-card { background: white; padding: 1.25rem; border: 1px solid var(--border); border-radius: .6rem; }
+.dispatch-metrics span, .dispatch-metrics small { display: block; color: #596b83; }
+.dispatch-metrics strong { display: block; font-size: 2.3rem; font-variant-numeric: tabular-nums; color: #183d66; }
+.dispatch-metrics small { font-size: .75rem; }
+.operations-filters, .operations-form-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.operations-filters label, .operations-form-grid label { display: flex; flex-direction: column; gap: .35rem; font-size: .85rem; }
+.operations-actions, .planning-steps { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.25rem 0; }
+.planning-steps button[aria-current='step'] { color: #fff; background: #1d4775; }
+.dispatch-card { margin: 1rem 0; }
+.dispatch-card legend { font-weight: 700; padding: 0 .3rem; }
+.operations-area input[type='checkbox'], dialog input[type='checkbox'] { width: auto; margin-right: .5rem; }
+.operations-timeline { list-style: none; padding: 0; border-left: 2px solid #cddbef; }
+.operations-timeline li { position: relative; padding: 0 0 1.25rem 1.25rem; }
+.operations-timeline li::before { content: ''; position: absolute; left: -.35rem; top: .5rem; width: .6rem; height: .6rem; border-radius: 50%; background: #2c527e; }
+.operations-timeline time { display: block; color: #62738b; font-size: .8rem; }
+.operations-timeline p { margin: .3rem 0; }
+.attention-list { padding: 0; list-style: none; }
+.attention-list li { background: #fff8e8; border: 1px solid #e3d5b6; padding: .75rem; border-radius: .5rem; margin: .5rem 0; }
+.muted { color: #63718a; font-size: .85rem; }
+.button-link { display: inline-block; background: #1d4775; color: white; padding: .6rem 1rem; border-radius: .4rem; margin: .5rem 0 1rem; text-decoration: none; }
+dialog { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+@media (max-width: 900px) { .operations-workspace { grid-template-columns: 1fr; gap: 1rem; } .operations-workspace > nav { flex-direction: row; } .operations-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 600px) { .dispatch-metrics, .operations-filters, .operations-form-grid { grid-template-columns: 1fr; } }
 @media (max-width: 850px) { main { padding: 1rem; } .admin-workspace { grid-template-columns: 1fr; gap: 1rem; } .admin-workspace > nav { flex-direction: row; flex-wrap: wrap; } .detail-list, .filters { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 540px) { .form-grid, .detail-list, .filters { grid-template-columns: 1fr; } .page-header { flex-direction: column; align-items: start; } .app-header { padding: 1rem; } .app-header nav { margin: 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

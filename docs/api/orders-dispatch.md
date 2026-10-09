@@ -720,3 +720,100 @@ Trip detail/timeline/Driver updates, never assumed replayable.
 #37 Web, #44 physical execution/mobile, #45 POD, #55 outbox workers/FCM/retries and
 #61 generic Audit remain deferred. No departure, arrival, Hook/Drop, movement,
 coupling, Order cancellation side effect or normal Trip-completion endpoint.
+
+
+## Issue #37 implementation boundary
+
+`GET /dispatch/board` requires **both** fresh Tenant-wide TRIP_VIEW_ALL and
+ORDER_VIEW_ALL. The same runtime Tenant transaction/RLS applies. No new migration,
+capability, role mapping or domain command is introduced; V1–V15 remain unchanged.
+Orders exposes `OrderDispatchDirectory`, a public bounded read boundary implemented
+inside Orders using the existing planning-presence SPI. Trips owns the board.
+Neither module imports another module's internal persistence or introduces a cycle.
+
+Exact projection:
+
+- `generatedAt`: server observation time;
+- `pendingOrders`: up to 20 nonterminal Orders without mappings to active Trips,
+  using #34's `unplanned=true` semantics, with id/customerId/orderNumber/status/
+  version/createdAt/updatedAt;
+- `activeTrips`: up to 20 PLANNED/ASSIGNED/IN_TRANSIT/AT_STOP/CANCELLING projections,
+  with id/status/currentDriverId/currentTractorId/plannedInitialTrailerId/version/
+  createdAt/updatedAt and nullable `nextPlannedStop`. That summary contains id,
+  sequenceNumber/stopType/siteId/locationId/snapshotName/scheduledAt/status and is
+  the first nonterminal executable Stop in sequence order, never a GPS assertion;
+- `attentionItems`: type/tripId for the displayed Trips only. INCOMPLETE_ASSIGNMENT
+  means PLANNED with Driver or Tractor missing; CANCELLING means that current state.
+
+Both lists use createdAt DESC/id DESC. One bounded SQL Trip projection uses a
+lateral first-Stop lookup; Orders uses a bounded ID query and one batch projection.
+There are no event-history reads, replay, per-Trip detail calls or unbounded child
+collections. Attention is bounded to the displayed preview, not an exhaustive Alert
+service. Complete worklists remain available through their real keyset APIs.
+`customerId` filters both sections. `driverId` and Trip `status` filter the Trip
+section and its attention only: an unplanned Order has no assigned Driver/Trip
+status. Unknown parameters, including ambiguous date filters, return validation
+errors. Terminal Trip filters legitimately produce no active Trips.
+
+Web routes: `/operations` Dashboard, `/operations/orders` planning queue,
+`/operations/trips` paginated list, `/operations/trips/new` planning wizard and
+`/operations/trips/:tripId` detail. Firebase identity and `/me` are reused. ACTIVE
+Tenant Admin/Transport Operations memberships select the UX workspace only;
+every API checks current PostgreSQL authority. Multiple Tenants require explicit
+selection. Operations keys include Tenant and filters/IDs; switching cancels and
+removes Operations queries and resets forms, while sign-out/identity changes clear
+all authenticated cache. No Tenant data or role authority is stored in localStorage.
+
+The queue defaults to unplanned=true and supports Customer/status/unplanned with
+opaque nextCursor continuation. Trip list supports Customer/Driver/status. No
+appointment/active/date filters are simulated. Master catalogs resolve human names
+in Tenant-scoped query cache; Site Locations are loaded for the exact selected Site.
+Unavailable names remain clearly unavailable rather than guessed. Dashboard reads
+no history; assignment history and merged operational timeline load only in detail.
+
+Planning has Orders, Stops, Resources and Review sections. Selected Order details
+supply requested destinations/cargo/references. Each requested Stop becomes its own
+draft, never merged by text/Site/address. Ad-hoc snapshots remain exactly frozen.
+A requested Stop type outside the executable catalog requires explicit selection;
+no operational default is invented. Draft Stops can be reordered with buttons,
+removed, associated explicitly with selected Orders, or added with explicit Site/
+Location selection. BASE_RETURN is only added explicitly. Coverage/unique sequences/
+Instant syntax are validated for UX, then validated again by the backend. Appointments
+are entered as ISO 8601 with an explicit offset/Z, without a hidden local timezone.
+Active Driver/Tractor and active IN_SERVICE Trailer selectors produce a planning
+preview; POST remains authoritative. No request contains orderStopId. Trailer is
+optional and does not imply physical coupling. Successful create opens Trip detail.
+A 5xx/lost create result preserves the draft and disables repeat submit: reconcile
+through Trip reads, never blind POST retry or an invented Idempotency-Key.
+
+State-aware controls call only existing commands: Driver/Tractor assignment on
+nonterminal Trips, ordinary Trailer planning under #35's initial/replacement rules,
+manual AUTHORIZE/REJECT substitution, future-Stop reroute on IN_TRANSIT/AT_STOP,
+and pre-movement/active cancellation. Responses replace cached detail and invalidate
+timeline/Trips/board; create also invalidates Orders. No optimistic state transition,
+manual version increment or automatic mutation retry. STALE_VERSION blocks the
+command and requires explicit **Reload latest** and review. Invalid transitions and
+uncertain infrastructure failures likewise offer read reconciliation. Problem UX
+retains traceId, safe messages and useful field errors without raw SQL/stack/IDs.
+
+Substitution is a **manual dispatcher decision for a known discrepancy**, not a
+fabricated pending Driver scan request. It sends the current expected Trailer guard,
+requested Trailer, AUTHORIZE/REJECT and reason, without invented expectedVersion.
+REJECT may select an inactive/OOS visible Trailer; AUTHORIZE requires eligible
+planning equipment. Both require explicit confirmation. #44 will provide the actual
+wrong-Trailer scan flow. No Hook/coupling is authorized by these Web controls.
+
+Reroute preserves the current scheduledAt unless explicitly cleared. It displays
+the previous destination and history warning, requires reason/instructions and
+confirmation, and sends the current Trip version. Cancellation requires reason and
+confirmation; pre-movement does not force resolution. Active cancellation requires
+instructions and the backend resolution catalog: RETURN_TO_BASE/REROUTE require Site,
+HOLD_CONTACT_DISPATCH hides/clears Site, OTHER_AUTHORIZED allows optional Site.
+No generic Order/Trip/Stop status editor or physical execution control exists.
+
+Deferred: #38+ Hook/Drop/coupling/movement; #41 full operational Trailer search/detail/
+timeline; #44 Driver execution/real scan discrepancy; #45 POD/Fuel/exceptions;
+#55/#56 outbox/push/Alerts; #58+ Customer Portal; #61 generic Audit. Maps/GPS/route
+optimization, production mock records, browser-only state changes and demo state
+bypass buttons are absent. Demo active states must already exist in an authorized
+backend/demo environment; Web cannot manufacture execution facts.
