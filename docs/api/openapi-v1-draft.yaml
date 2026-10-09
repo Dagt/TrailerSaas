@@ -1364,6 +1364,16 @@ paths:
     post:
       tags: [DriverMobile]
       operationId: hookTrailer
+      x-implementation-status: implemented-by-issue-38
+      description: >-
+        Assigned active Driver only: TRIP_EXECUTE_ASSIGNED and TRAILER_HOOK. Trip must be
+        ASSIGNED, AT_STOP or CANCELLING. First execution requires the current expected
+        Trailer, active IN_SERVICE equipment and exact expectedTrailerVersion. Hook is not
+        departure. A canonical UUID Idempotency-Key identifies the logical command; fresh
+        authorization still applies to replay. Successful same-user/type/body replay returns
+        the saved result without repeating physical/version checks. Incompatible reuse returns
+        409 IDEMPOTENCY_KEY_REUSED. Conflicts include STALE_VERSION, INVALID_STATE_TRANSITION,
+        TRAILER_ALREADY_COUPLED, TRACTOR_ALREADY_COUPLED and TRAILER_SUBSTITUTION_NOT_AUTHORIZED.
       requestBody:
         required: true
         content:
@@ -1373,6 +1383,43 @@ paths:
       responses:
         '200':
           description: Trailer hooked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailerCouplingCommandResult'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/drops:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: dropTrailer
+      x-implementation-status: implemented-by-issue-38
+      description: >-
+        TRIP_EXECUTE_ASSIGNED and TRAILER_DROP with fresh active assigned Driver identity.
+        ASSIGNED, AT_STOP or CANCELLING only. Closes the physical coupling for this Trip
+        at a normalized Stop's same-Site, Customer-compatible Operational Location.
+        Cannot invent a coupling or resolve a snapshot-only destination. Occurrence cannot
+        precede Hook. Drop can safely release already coupled inactive/OOS equipment.
+        Does not complete Stop/Trip or alter load state. Same logical Idempotency-Key replay
+        returns the saved bounded result; incompatible reuse is 409 IDEMPOTENCY_KEY_REUSED.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropTrailerRequest'
+      responses:
+        '200':
+          description: Trailer physically dropped; same-key successful replay has the same result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailerCouplingCommandResult'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -2870,13 +2917,82 @@ components:
 
     HookTrailerRequest:
       type: object
+      additionalProperties: false
       required: [trailerId, tractorId, driverId, occurredAt, expectedTrailerVersion]
       properties:
         trailerId: { type: string, format: uuid }
         tractorId: { type: string, format: uuid }
         driverId: { type: string, format: uuid }
         occurredAt: { type: string, format: date-time }
-        expectedTrailerVersion: { type: integer, format: int64 }
+        expectedTrailerVersion: { type: integer, format: int64, minimum: 0 }
+
+    DropTrailerRequest:
+      type: object
+      additionalProperties: false
+      required: [trailerId, stopId, locationId, occurredAt]
+      properties:
+        trailerId: { type: string, format: uuid }
+        stopId: { type: string, format: uuid }
+        locationId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+
+    TrailerCouplingCommandResult:
+      type: object
+      additionalProperties: false
+      required: [coupling, trailer, trip, movementEvent]
+      description: >-
+        Authoritative bounded snapshot at the original command commit, retained for successful
+        replay. No Tenant or ledger metadata. Read reconciliation is required for later state.
+      properties:
+        coupling:
+          type: object
+          additionalProperties: false
+          required: [id, trailerId, tractorId, driverId, tripId, hookedAt, droppedAt]
+          properties:
+            id: { type: string, format: uuid }
+            trailerId: { type: string, format: uuid }
+            tractorId: { type: string, format: uuid }
+            driverId: { type: string, format: uuid }
+            tripId: { type: string, format: uuid }
+            hookedAt: { type: string, format: date-time }
+            droppedAt: { type: [string, "null"], format: date-time }
+        trailer:
+          type: object
+          additionalProperties: false
+          required: [id, version, locationState, currentLocationId, lastKnownLocationId, lastSeenAt, lastDriverId, loadState, serviceabilityState]
+          properties:
+            id: { type: string, format: uuid }
+            version: { type: integer, format: int64, minimum: 0 }
+            locationState:
+              $ref: '#/components/schemas/TrailerLocationState'
+            currentLocationId: { type: [string, "null"], format: uuid }
+            lastKnownLocationId: { type: [string, "null"], format: uuid }
+            lastSeenAt: { type: string, format: date-time }
+            lastDriverId: { type: string, format: uuid }
+            loadState:
+              $ref: '#/components/schemas/TrailerLoadState'
+            serviceabilityState:
+              $ref: '#/components/schemas/TrailerServiceabilityState'
+        trip:
+          type: object
+          additionalProperties: false
+          required: [id, status, version, currentDriverId, currentTractorId, plannedInitialTrailerId]
+          properties:
+            id: { type: string, format: uuid }
+            status: { type: string, enum: [PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING, COMPLETED, CANCELLED] }
+            version: { type: integer, format: int64, minimum: 0 }
+            currentDriverId: { type: [string, "null"], format: uuid }
+            currentTractorId: { type: [string, "null"], format: uuid }
+            plannedInitialTrailerId: { type: [string, "null"], format: uuid }
+        movementEvent:
+          type: object
+          additionalProperties: false
+          required: [id, eventType, occurredAt, recordedAt]
+          properties:
+            id: { type: string, format: uuid }
+            eventType: { type: string, enum: [HOOKED, DROPPED] }
+            occurredAt: { type: string, format: date-time }
+            recordedAt: { type: string, format: date-time }
 
     ArrivalRequest:
       type: object

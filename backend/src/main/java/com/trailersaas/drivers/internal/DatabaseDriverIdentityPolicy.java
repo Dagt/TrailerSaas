@@ -16,14 +16,22 @@ class DatabaseDriverIdentityPolicy implements DriverIdentityPolicy {
   }
 
   public Optional<UUID> activeForUser(UUID tenant, UUID user) {
-    return em.createQuery(
-            "select d from DriverEntity d where d.tenantId=:tenant and d.userId=:user and"
-                + " d.active=true",
-            DriverEntity.class)
-        .setParameter("tenant", tenant)
-        .setParameter("user", user)
-        .getResultStream()
-        .findFirst()
-        .map(d -> d.id);
+    return query(tenant, user, false);
+  }
+
+  public Optional<UUID> lockActiveForUser(UUID tenant, UUID user) {
+    return query(tenant, user, true);
+  }
+
+  private Optional<UUID> query(UUID tenant, UUID user, boolean lock) {
+    var q =
+        em.createQuery(
+                "select d from DriverEntity d where d.tenantId=:tenant and d.userId=:user and"
+                    + " d.active=true",
+                DriverEntity.class)
+            .setParameter("tenant", tenant)
+            .setParameter("user", user);
+    if (lock) q.setLockMode(LockModeType.PESSIMISTIC_READ);
+    return q.getResultStream().findFirst().map(d -> d.id);
   }
 }

@@ -873,3 +873,44 @@ PostgreSQL 18 tests cover isolation, authority, semantics, deterministic bounds,
 filters and constant query count without assignment/operational entity reads.
 The [implementation boundary](../docs/api/orders-dispatch.md#issue-37-implementation-boundary)
 documents exact response fields and deferred operational features.
+
+### Issue #38: physical Hook/Drop coupling and server replay
+
+V16 adds only `trailer_movement_events`, `trailer_couplings` and
+`processed_client_operations`; V1–V15 are unchanged. Movement provenance implements
+Accepted hardening M: distinct actor/source catalogs, HUMAN_USER requires User;
+Hook/Drop derive HUMAN_USER + USER_ACTION from authentication. Coupling active
+partial unique indexes protect Trailer and Tractor. A SECURITY INVOKER close-only
+trigger plus column-scoped UPDATE prevents reopening/tampering with closed history.
+There is no unique Trip coupling: its one-active semantic guard is serialized by
+the Trip parent lock. Tenant-safe FKs have no destructive cascade.
+
+Runtime has SELECT/INSERT on the three tables and UPDATE only on coupling
+dropped_at/drop_event_id plus ledger status/processed_at/result_entity_type/
+result_entity_id/response_data to finish the transaction-local claim. All have Tenant RLS excluding bootstrap. No DELETE,
+ownership, PUBLIC, BYPASSRLS, schema CREATE or administrator datasource is used.
+Device identity remains NULL until its parent registration surface exists.
+
+Trips coordinates current assigned Driver authority and locked execution context;
+Trailers owns physical facts/projection/ledger. Public module boundaries preserve
+Trips → Trailers → Tractors without a cycle or cross-module internal imports.
+Both commands allow ASSIGNED/AT_STOP/CANCELLING and never perform departure or
+normal Trip/Stop/Order execution transitions. Drop validates its normalized
+Stop/Site/Location and actual Order Customer compatibility through public policies.
+
+Accepted hardening L uses conflict-safe INSERT PROCESSING with the Tenant+operation
+unique index as replay arbitration. Duplicates wait for winner commit and read its
+terminal result, or claim after winner rollback. There is no prior existence query,
+advisory lock, process mutex or committed PROCESSING lease. request_hash and created_at
+are NOT NULL; processed_at is NULL only for PROCESSING. Claim, physical writes and
+terminal SUCCEEDED response commit together; failure rolls back everything without
+persisting a transient REJECTED response. SHA-256 fingerprints the logical request.
+Fresh authority precedes replay; physical
+version checks apply only on first execution. Fact/interval/projection/saved result
+commit atomically. PostgreSQL 18 tests cover both race directions, double coupling,
+same-key concurrency, reassignment/substitution, rollback at each write, exact
+privileges, provenance, RLS and pool cleanup. Full local verify requires Docker;
+GitHub Actions always runs Testcontainers with `postgres:18-alpine` without skips.
+See the [implemented API boundary](../docs/api/mobile-execution.md#issue-38-implementation-boundary)
+for request/results, strict initial expected version, replay semantics and deferred
+#39/#40/#41/#44/#46 work.

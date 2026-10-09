@@ -80,12 +80,15 @@ Generic durable Audit persistence/query remains #61.
 #34 is merged/complete via [PR #88](https://github.com/Dagt/TrailerSaas/pull/88).
 #35 is merged/complete via [PR #89](https://github.com/Dagt/TrailerSaas/pull/89).
 #36 is merged/complete via [PR #90](https://github.com/Dagt/TrailerSaas/pull/90).
-#37 is the current bounded implementation: Dispatch Board and Operations Web over
-#31–#36. Complete only upon its PR merge; that merge closes the Trips/dispatch Web
-wave. #38+ remains the next physical Trailer domain work, not implemented here.
+#37 is merged/complete via [PR #91](https://github.com/Dagt/TrailerSaas/pull/91),
+closing the Trips/dispatch Web wave.
 
 ### Trailer movement
 - #38 → #39 → #40 → #41
+
+#38 is the current bounded implementation: physical Hook/Drop coupling transactions,
+movement facts and server replay. Complete only upon its PR merge. #39 is next;
+general movement/projection, corrections and execution remain separate Issues.
 
 ### Evidence/alerts support
 - #53 after #52
