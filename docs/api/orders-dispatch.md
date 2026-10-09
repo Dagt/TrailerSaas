@@ -8,7 +8,7 @@ Base:
 
 ## 1. Orders
 
-### Implemented surface — issues #31–#33
+### Implemented surface — issues #31–#34
 
 The Accepted v0.1 contracts below describe the full future surface. Issue #31
 implements only POST/list/detail for the initial Order aggregate:
@@ -24,12 +24,12 @@ implements only POST/list/detail for the initial Order aggregate:
 - GET/list returns Order summaries and `nextCursor`; GET/detail and POST return
   the projection plus `cargoLines` and `requestedStops`, their IDs and timestamps.
   There are no public Manifest, Trip, fulfillment, evidence or history projections.
-- List supports only `customerId`, `status`, `cursor`, `limit` (default 50,
+- List supports `customerId`, `status`, `unplanned`, `cursor`, `limit` (default 50,
   maximum 200). Ordering is `createdAt DESC, id DESC`; opaque keyset continuation
   is scoped again on every request, not an authorization token or public cursor
   encoding contract. Responses contain `nextCursor: null` at the end.
   Unbounded lists are not returned.
-- `unplanned` is deferred until planning/assignment exists (#32/#34).
+- `unplanned` is implemented by #34 against active Trip mappings (see boundary below).
   `active` has no defined Order field/state mapping. Appointment ranges do not
   specify which of multiple requested Stops to match. Those Accepted filters
   remain future contracts and are rejected rather than silently simulated.
@@ -141,7 +141,7 @@ automatic cargo distribution, capacity check or inferred fully-allocated state.
 All commands authorize from current PostgreSQL memberships/roles. Scoped actors
 can alter only their own Customer Orders; mutation results expose only Manifest
 revision metadata, never other allocations. Closing requires Tenant-wide
-`TRIP_ASSIGN_TRAILER`. `unplanned` still requires #34 Trip planning; it is not
+`TRIP_ASSIGN_TRAILER`. `unplanned` uses #34 Trip planning; it is not
 implemented as “no Manifest”. Active/appointment filters remain deferred too.
 
 For a requested Stop, either a normalized `siteId` or an approved `siteSnapshot` may be supplied. `siteSnapshot` is used when the operational destination has not yet been normalized into reusable master Site data and is preserved for historical accuracy.
@@ -497,3 +497,88 @@ BEFORE_COMMIT), never treat a rolled-back publication as committed history. No r
 or resolution is exposed in GET. #33 deliberately adds no history table/column or
 Audit API. Until #61, the operational resolution payload has no durable replay store;
 this bounded integration gap is explicit, not a claim of audit durability.
+
+
+## Issue #34 implementation boundary
+
+V13 adds only `trips`, `trip_stops` and `trip_stop_orders`. All are Tenant-owned,
+with normal Tenant RLS excluding `/me` bootstrap, no PUBLIC grants and no ownership,
+BYPASSRLS or schema CREATE for runtime. Trips have SELECT/INSERT/UPDATE; executable
+Stops SELECT/INSERT; mappings SELECT/INSERT/DELETE for coordinated pre-execution
+release. Composite FKs protect equipment, Site/Location and Order/requested-Stop
+integrity. No destructive cascades or permanent historical FK to `customer_sites`.
+
+POST `/trips` requires Tenant-wide `TRIP_PLAN`, plus the corresponding fresh
+assignment capability for each supplied initial equipment ID. Driver/Tractor must
+be same-Tenant, exist and be active, held under shared parent locks. A planned
+Trailer additionally must be active/IN_SERVICE and pass `TrailerPlanningPolicy`.
+Both Driver and Tractor produce ASSIGNED; either absent produces PLANNED, retaining
+any valid partial assignment. An inactive supplied resource is rejected rather
+than silently discarded. Trailer is optional and never physical coupling.
+All milestones start null, version 0; every executable Stop starts PENDING.
+
+Strict create accepts only top-level `orderIds`, `stops`, optional `driverId`,
+`tractorId`, `plannedInitialTrailerId`. Orders are unique/nonempty. Stop sequences
+are positive/unique but not necessarily contiguous; Stop orderIds may be empty
+for operational visits. Their union must exactly cover the top-level Order set.
+An Order may appear in multiple Stops and multiple Trips. BASE_RETURN is explicit,
+never inserted automatically. Requested Order Stops remain separate historical
+rows; no matching by Site/address/name occurs.
+
+**Requested-Stop identity gap:** the accepted public `TripStopInput` has no
+`orderStopId`. POST therefore writes `order_stop_id = NULL`. The SQL composite FK
+and `UNIQUE NULLS NOT DISTINCT (tenant_id,trip_stop_id,order_id,order_stop_id)`
+retain flexible specific mapping for a later approved surface. Generic duplicates
+and specific duplicates are rejected, while distinct requested Stops of one Order
+may map to the same executable Stop. No public requested-Stop field is invented.
+
+Trip creation locks Orders exclusively in deterministic UUID order before Site,
+equipment and Trip writes. Only OPEN/PLANNED are eligible; other states return
+INVALID_STATE_TRANSITION. OPEN changes to PLANNED through #33's lifecycle hook,
+with one version/time advance and ORDER_PLANNED event; already PLANNED gets no
+false transition or version advance. Trip/Stops/mappings and all Order transitions
+commit or roll back together. Manifest planning alone still does not plan an Order
+operationally. No execution or physical Trailer state changes occur.
+
+Normalized destinations use shared Site locks, coordinated with exclusive Site
+locks on Customer association removal. Every Order Customer served at the Stop
+must have a current association; neutral Locations may serve multiple Customers,
+Customer-specific Locations must match all served Customers. A Trip-only Stop
+may use a Tenant Site/neutral Location, but not a Customer-specific Location.
+Ad-hoc destinations reuse the strict minimal Order snapshot representation, frozen
+at creation; normalized references may coexist with a snapshot. Snapshot text
+never authorizes. The Customers-owned usage guard also blocks association removal
+for PLANNED/ASSIGNED/IN_TRANSIT/AT_STOP/CANCELLING Trips serving that Customer at
+that Site. Terminal Trips alone do not block; historical Stops remain unchanged.
+
+
+Pre-execution Order cancellation invokes an Orders-owned release SPI implemented
+by Trips. The existing Order exclusive lock is acquired first; affected Trip
+parents are locked in deterministic UUID order. Only PLANNED/ASSIGNED permit
+removing this Order's mappings. Each modified Trip advances version/updatedAt once;
+its status, all executable Stops and other Orders' mappings remain. No automatic
+Trip cancellation or Stop deletion occurs. A mapping to an active/executed/terminal
+Trip causes safe conflict and full rollback, preserving history. Manifest release,
+Trip mapping release and cancellation are one transaction.
+
+GET `/trips` and GET `/trips/{tripId}` require Tenant-wide `TRIP_VIEW_ALL`.
+Detail exposes the current Trip projection and sequence-ordered executable Stops
+with mapped Order IDs, no Tenant ID, requested-Stop identities, fake assignment
+history/timeline or Audit data. List keysets `createdAt DESC,id DESC`, default 50,
+max 200; supported filters are status, driverId, customerId, cursor, limit.
+customerId means at least one mapped Order of that Customer. Unknown/from/to/active
+parameters are rejected. Driver-assigned mobile reads remain a later bounded flow.
+
+Order `unplanned=true` selects nonterminal Orders (excluding COMPLETED/CANCELLED)
+without mappings to PLANNED/ASSIGNED/IN_TRANSIT/AT_STOP/CANCELLING Trips. Terminal
+Trip mappings do not count; Manifests do not count. `false` selects the complement.
+The bounded SQL planning-directory SPI retains the Order's fresh Customer scope,
+filters and real keyset without N+1 or an Orders→Trips module dependency. Order
+active/appointment filters remain explicitly deferred.
+
+No Idempotency-Key replay guarantee exists for create Trip. Reconcile uncertain
+responses through GET/list; a blind retry can create another Trip. Durable initial
+assignment/reassignment history starts in #35, not a substitute event table here.
+Trip reroute/cancellation belongs to #36; Web dispatch belongs to #37. There are no
+assignment mutation APIs, Stop events/execution commands, POD, Hook/Drop, coupling,
+movement, Shift, audit subsystem, outbox or physical Trailer changes in #34.

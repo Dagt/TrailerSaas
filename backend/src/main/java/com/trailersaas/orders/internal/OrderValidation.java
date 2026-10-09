@@ -113,9 +113,16 @@ final class OrderValidation {
             } catch (IllegalArgumentException | java.time.DateTimeException e) { throw OrderFailure.invalid("cursor"); }
         }
     }
-    record Filters(UUID customerId, OrderStatus status, Position cursor, int limit) {}
+    record Filters(UUID customerId, OrderStatus status, Position cursor, int limit, Boolean unplanned) {
+        Filters(UUID customerId, OrderStatus status, Position cursor, int limit) { this(customerId,status,cursor,limit,null); }
+    }
+    private static Boolean unplanned(Map<String,String> input) {
+        if (!input.containsKey("unplanned")) { return null; }
+        if (!Set.of("true","false").contains(input.get("unplanned"))) { throw OrderFailure.invalid("unplanned"); }
+        return Boolean.valueOf(input.get("unplanned"));
+    }
     static Filters filters(Map<String, String> input) {
-        fields(input, Set.of("customerId", "status", "cursor", "limit"), "query");
+        fields(input, Set.of("customerId", "status", "cursor", "limit", "unplanned"), "query");
         OrderStatus status = null;
         if (input.containsKey("status")) {
             try { status = OrderStatus.valueOf(input.get("status")); } catch (IllegalArgumentException e) { throw OrderFailure.invalid("status"); }
@@ -127,6 +134,6 @@ final class OrderValidation {
         // Existing OpenAPI Limit contract: 1..200, default 50.
         if (limit < 1 || limit > 200) { throw OrderFailure.invalid("limit"); }
         return new Filters(input.containsKey("customerId") ? uuid(input.get("customerId"), "customerId", false) : null,
-                status, input.containsKey("cursor") ? Position.decode(input.get("cursor")) : null, limit);
+                status, input.containsKey("cursor") ? Position.decode(input.get("cursor")) : null, limit, unplanned(input));
     }
 }

@@ -795,3 +795,34 @@ when Docker is unavailable.
 
 GitHub Actions uses the runner's local Docker daemon, not a PostgreSQL service
 or external database. The four existing CI jobs remain required.
+
+
+### Issue #34: operational Trip planning
+
+V13 creates Trips, executable Stops and flexible Order mappings, with Tenant RLS
+and minimum SELECT/INSERT plus Trip UPDATE and mapping DELETE for coordinated
+pre-execution cancellation. V1–V12 remain intact. Trip creation is PLANNED unless
+both valid active Driver and Tractor are supplied, then ASSIGNED; Trailer remains
+optional planning, not physical coupling. Public module policies hold equipment
+eligibility and shared Site locks inside the same transaction.
+
+Orders are exclusively locked in deterministic UUID order before any planning
+writes. OPEN→PLANNED uses the existing lifecycle/history hook once; already PLANNED
+permits additional Trips without a false transition. An Orders-owned release SPI
+lets cancellation detach only this Order's PLANNED/ASSIGNED mappings atomically
+with Manifest release, preserving Trips/Stops/history and bumping each Trip once.
+No Orders→Trips dependency is introduced. A Customers-owned guard prevents Site
+association removal while active executable Stops serve that Customer.
+
+POST/list/detail Trip APIs are Tenant-wide TRIP_PLAN/TRIP_VIEW_ALL; optional IDs
+also require their assignment capabilities. Strict implemented OpenAPI responses
+contain current projection/executable Stops, no assignment history. `order_stop_id`
+is structurally supported but NULL for POST: the accepted input has no requested-
+Stop identifier. Order `unplanned` now queries nonterminal operational Trip mappings,
+independent of Manifests and with the original Customer scope/keyset. No replay
+ledger is claimed; uncertain create responses require read reconciliation.
+
+PostgreSQL 18 regressions cover cardinality, tenant-safe FKs, exact schema/grants,
+RLS, catalog checks, atomic writes, Order planning, cancellation releases and real
+Order/Site lock waits. #35 assignment events, #36 Trip mutations, #37 Web dispatch
+and all physical execution remain outside this implementation.

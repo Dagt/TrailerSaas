@@ -189,7 +189,7 @@ class OrderHttpPostgresTests extends PostgresIntegrationTest {
     void futureOrServerManagedCreateFieldsAreRejected(String field) throws Exception {
         problem(post("admin", simple(a).replace("{\"customerId\"", "{\"" + field + "\":\"private\",\"customerId\"")), 400, "VALIDATION_FAILED");
     }
-    @ParameterizedTest @ValueSource(strings = {"unplanned=true", "active=true", "appointmentFrom=2026-10-08T00:00:00Z", "unknown=value", "limit=0", "limit=201", "cursor=unknown", "status=INVALID", "customerId=unknown"})
+    @ParameterizedTest @ValueSource(strings = {"unplanned=maybe", "active=true", "appointmentFrom=2026-10-08T00:00:00Z", "unknown=value", "limit=0", "limit=201", "cursor=unknown", "status=INVALID", "customerId=unknown"})
     void unsupportedOrMalformedFiltersAreRejected(String query) throws Exception { problem(get("admin", "?" + query), 400, "VALIDATION_FAILED"); }
     @Test void cursorIsRealStableKeysetIncludingTiedTimestampsAndCustomerStatusFilters() throws Exception {
         var ids = new ArrayList<UUID>(); for (int i = 0; i < 5; i++) { ids.add(id(post("admin", simple(a)))); }

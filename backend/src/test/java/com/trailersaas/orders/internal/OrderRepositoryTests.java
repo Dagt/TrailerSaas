@@ -55,8 +55,8 @@ class OrderRepositoryTests {
         assertThat(Modifier.isPublic(OrderRepository.class.getModifiers())).isFalse();
         assertThat(OrderRepository.class.getInterfaces()).isEmpty();
         var reads = Arrays.stream(OrderRepository.class.getDeclaredMethods())
-                .filter(m -> !Modifier.isPrivate(m.getModifiers()) && Set.of("resource", "lockForMutation", "lockForAllocation", "list", "cargo", "stops", "hasActiveSiteUse").contains(m.getName())).toList();
-        assertThat(reads).hasSize(7);
+                .filter(m -> !Modifier.isPrivate(m.getModifiers()) && Set.of("resource", "lockForMutation", "lockForAllocation", "list", "byPlanningIds", "cargo", "stops", "hasActiveSiteUse").contains(m.getName())).toList();
+        assertThat(reads).hasSize(8);
         for (var read : reads) { assertThat(read.getParameterTypes()[0]).isEqualTo(UUID.class); }
         assertThat(Arrays.stream(OrderRepository.class.getDeclaredMethods()).map(m -> m.getName()))
                 .doesNotContain("findAll", "findById");
