@@ -402,3 +402,97 @@ For offline commands:
 Server may reject impossible/future timestamps or flag suspicious clock skew according to the future sync ADR.
 
 The API does not treat device time as unquestionable authority.
+
+## Issue #38 implementation boundary
+
+The runtime API implements physical coupling only:
+
+- `POST /api/v1/tenants/{tenantId}/trips/{tripId}/hooks`;
+- `POST /api/v1/tenants/{tenantId}/trips/{tripId}/drops`.
+
+Both return 200 with `coupling`, a bounded `trailer` current projection, the locked
+`trip` projection and `movementEvent` (id/type/occurredAt/recordedAt). No Tenant or
+replay-ledger metadata is public. The strict implemented OpenAPI defines the exact
+body: Hook requires trailerId/tractorId/driverId/occurredAt/expectedTrailerVersion;
+Drop requires trailerId/stopId/locationId/occurredAt. The canonical UUID header
+`Idempotency-Key` is required. Actor/source fields are never client inputs.
+
+### Authority and physical preconditions
+
+Every request, including replay, requires fresh ACTIVE membership/capability,
+the authenticated User's active linked Driver and that Driver's current Trip
+assignment. Hook uses TRAILER_HOOK; Drop uses TRAILER_DROP; both additionally
+require TRIP_EXECUTE_ASSIGNED. There is no Admin/Operations override and no generic
+Trailer browse requirement. Assigned physical command authority is independent of
+QR/UUID identification. Trip states allowed for either command are ASSIGNED,
+AT_STOP and CANCELLING; other states return INVALID_STATE_TRANSITION.
+
+First Hook requires the active current assigned Tractor, active IN_SERVICE Trailer,
+an exact Trailer version and the durable current expected Trailer. The #35
+substitution policy is reused: mismatch/null expectation returns
+TRAILER_SUBSTITUTION_NOT_AUTHORIZED; AUTHORIZE changes the expectation and permits
+a later physical command, whereas REJECT never grants authority. Hook cannot
+double-couple a Trailer/Tractor or give the same Trip a second active coupling.
+The latter is a service invariant, not a new unique Trip constraint.
+
+Drop closes only this Trip's existing interval, with occurrence no earlier than
+Hook. It validates a same-Trip normalized Stop and same-Site Operational Location,
+including current compatibility for the Stop's actual mapped Order Customers.
+An ad-hoc frozen snapshot cannot establish a physical Drop location. Drop can
+release already coupled inactive/OOS equipment. The actual assigned Driver is
+recorded in the Drop event; the original interval's Driver and Tractor are preserved.
+
+### Projection, provenance and history
+
+`trailer_couplings` is the authoritative physical Trailer/Tractor relationship;
+plannedInitialTrailerId remains an expectation. Hook preserves location/load/
+serviceability/designation/purpose, updating only lastDriverId/lastSeenAt/version/
+updatedAt. It is not departure. Drop also sets AT_LOCATION, currentLocationId and
+lastKnownLocationId. Neither command changes Trip/Stop/Order lifecycle or load state.
+
+Each successful command creates exactly one append-only HOOKED/DROPPED fact with
+server-derived `actor_type=HUMAN_USER`, `source_type=USER_ACTION` and actor_user_id.
+This applies Accepted hardening M; SQL rejects invalid catalogs and HUMAN_USER
+without a User. occurredAt is device time; recordedAt is server time. Closed
+intervals cannot be rewritten/reopened and are never deleted. Drop followed by
+Hook is two explicit operations, never an implicit combined shortcut.
+
+### Serialization, replay and atomicity
+
+Locks are acquired in this order: exclusive Trip, shared active Driver identity,
+transaction advisory operation lock, exclusive Tractor, exclusive Trailer,
+coupling interval. Drop then validates locked Stop/destination parents. Existing
+assignment/substitution commands use the same Trip parent lock; administrative
+equipment changes wait for physical parent locks. Site compatibility retains the
+shared Site versus exclusive association-removal protocol.
+
+The approved #38 arbitration is PostgreSQL advisory **transaction** locking of
+Tenant+clientOperationId before ledger lookup, backed by its unique constraint.
+SHA-256 prefix collisions cause only extra serialization; no process mutex is used.
+The canonical request SHA-256 includes operation type, path Trip and every logical
+body field, including Hook's expectedTrailerVersion. It excludes transport JSON
+ordering and bearer tokens. Equivalent Instant representations canonicalize equally.
+
+Same key/User/type/hash returns the saved SUCCEEDED result, even after the original
+physical change/version advance or a later Drop. Current authorization is still
+required. Changed key content/type/path/User returns IDEMPOTENCY_KEY_REUSED. First
+execution alone checks physical state/version. This approved #38 ledger shape uses
+SUCCEEDED/REJECTED and processed_at; it does not introduce the generalized PROCESSING
+claim lifecycle described by hardening L. Failed commands roll back without a false
+durable success. device_id remains NULL until the User-device registration parent
+exists (#56); no placeholder device table/FK or invented device identity is created.
+
+Movement fact, interval, Trailer projection and saved bounded response commit in
+one runtime Tenant transaction. Failure at any write rolls all four back. Lost
+response after commit is recoverable by the same key; a new Hook key with an old
+version receives STALE_VERSION. Integrity conflicts are safely mapped; infrastructure
+failures stay safe 5xx. Runtime cannot update/delete movement facts or ledger rows,
+delete intervals, rewrite immutable interval fields, own tables or bypass RLS.
+
+### Deferred surfaces
+
+#39 owns broader movement/current projection; #40 corrections/OOS/load commands;
+#41 full Trailer search/detail/timeline. Physical facts are not fabricated into the
+Trip assignment/operational timeline. #44 owns departure and normal Trip execution,
+arrival/service/POD and Driver flows; #46 owns client queue/dependencies/retries.
+No Flutter/Web execution UI, Shift, inspection, outbox or generic Audit is added.

@@ -16,7 +16,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
     assignableTypes = {
       TripController.class,
       DriverUpdatesController.class,
-      DispatchBoardController.class
+      DispatchBoardController.class,
+      TripCouplingController.class
     })
 @Order(10)
 class TripExceptionHandler {
@@ -60,6 +61,21 @@ class TripExceptionHandler {
           case MISSING -> TripFailure.missing();
           case STATE -> TripFailure.state();
           case CONFLICT -> TripFailure.conflict();
+        });
+  }
+
+  @ExceptionHandler(com.trailersaas.trailers.CouplingCommandRejectedException.class)
+  ProblemDetail coupling(com.trailersaas.trailers.CouplingCommandRejectedException e) {
+    return failure(
+        switch (e.reason()) {
+          case MISSING -> TripFailure.missing();
+          case STATE -> TripFailure.tripState();
+          case STALE -> TripFailure.stale();
+          case CONFLICT -> TripFailure.conflict();
+          case TRAILER_COUPLED -> TripFailure.physical("TRAILER_ALREADY_COUPLED");
+          case TRACTOR_COUPLED -> TripFailure.physical("TRACTOR_ALREADY_COUPLED");
+          case SUBSTITUTION -> TripFailure.physical("TRAILER_SUBSTITUTION_NOT_AUTHORIZED");
+          case KEY_REUSED -> TripFailure.physical("IDEMPOTENCY_KEY_REUSED");
         });
   }
 

@@ -1,5 +1,5 @@
 /**
- * Trailer master data and revocable QR identities. Physical commands remain deferred.
+ * Trailer master data, QR identity and physical coupling persistence.
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = "identity")
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"identity", "tractors"})
 package com.trailersaas.trailers;

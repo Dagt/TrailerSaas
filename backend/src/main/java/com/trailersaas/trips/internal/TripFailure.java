@@ -49,6 +49,10 @@ final class TripFailure extends RuntimeException {
         409, "STALE_VERSION", "The resource changed. Reload it before trying again.", null);
   }
 
+  static TripFailure physical(String code) {
+    return new TripFailure(409, code, "The physical command conflicts with current state.", null);
+  }
+
   static boolean integrity(Throwable failure) {
     for (var c = failure; c != null; c = c.getCause()) {
       if (c instanceof SQLException sql) {

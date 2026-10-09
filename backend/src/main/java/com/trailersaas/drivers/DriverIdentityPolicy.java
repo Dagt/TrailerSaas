@@ -8,4 +8,7 @@ import java.util.UUID;
  */
 public interface DriverIdentityPolicy {
   Optional<UUID> activeForUser(UUID tenantId, UUID authenticatedUserId);
+
+  /** Pins the authenticated operational identity during a physical command transaction. */
+  Optional<UUID> lockActiveForUser(UUID tenantId, UUID authenticatedUserId);
 }

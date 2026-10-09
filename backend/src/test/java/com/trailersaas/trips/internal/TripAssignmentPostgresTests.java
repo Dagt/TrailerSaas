@@ -477,7 +477,9 @@ class TripAssignmentPostgresTests extends PostgresIntegrationTest {
         .isTrue();
     assertThat(f.db.value("SELECT row_to_json(t)::text FROM trailers t WHERE id=?", requested))
         .isEqualTo(original);
-    assertThat(f.db.value("SELECT to_regclass('trailer_couplings')")).isNull();
+    // Substitution changes planning only, even now that physical coupling is available.
+    assertThat(f.db.value("SELECT count(*) FROM trailer_couplings WHERE tenant_id=?",tenant)).isEqualTo(0L);
+    assertThat(f.db.value("SELECT count(*) FROM trailer_movement_events WHERE tenant_id=?",tenant)).isEqualTo(0L);
     problem(
         decide(trip, trailer, target("trailer"), "AUTHORIZE", "admin"), 409, "RESOURCE_CONFLICT");
     assertThat(historyCount(trip)).isEqualTo(5);
@@ -873,7 +875,7 @@ class TripAssignmentPostgresTests extends PostgresIntegrationTest {
 
   @Test
   void migrationExactShapeChronologicalIndexNoBackfillAndNoCascade() throws Exception {
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
     flyway.validate();
     try (var c = flyway.getConfiguration().getDataSource().getConnection();
         var q = c.createStatement()) {
