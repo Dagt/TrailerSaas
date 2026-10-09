@@ -44,7 +44,7 @@ function object(value: unknown): Record<string, unknown> { return value && typeo
 function string(value: unknown): string | null { return typeof value === 'string' ? value : null }
 function HistoryEntry({ event }: { event: AssignmentHistory | OperationalHistory }) {
   const names = useNames(), m = event.metadata ?? {}, previous = object(m.previous), replacement = object(m.replacement)
-  const destination = (d: Record<string, unknown>) => names.site(string(d.siteId), string(object(d.siteSnapshot).name))
+  const destination = (d: Record<string, unknown>) => string(object(d.siteSnapshot).name) ?? names.site(string(d.siteId))
   const label = ({ DRIVER_ASSIGNED: 'Driver assigned', DRIVER_REASSIGNED: 'Driver reassigned', TRACTOR_ASSIGNED: 'Tractor assigned', TRACTOR_REASSIGNED: 'Tractor reassigned', TRAILER_PLANNED: 'Trailer planned', TRAILER_SUBSTITUTION_AUTHORIZED: 'Trailer substitution authorized', TRAILER_SUBSTITUTION_REJECTED: 'Trailer substitution rejected', TRIP_REROUTED: 'Trip rerouted', TRIP_CANCELLED: 'Trip cancelled before execution', TRIP_CANCELLATION_STARTED: 'Trip cancellation started', TRIP_CANCELLATION_FINISHED: 'Trip cancellation finished' } as Record<string, string>)[event.eventType] ?? human(event.eventType)
   return <li><strong>{label}</strong> <time dateTime={event.occurredAt}>{when(event.occurredAt)}</time>
     {'driverId' in event && <p>{event.driverId ? names.driver(event.driverId) : event.tractorId ? names.tractor(event.tractorId) : names.trailer(event.trailerId)}</p>}

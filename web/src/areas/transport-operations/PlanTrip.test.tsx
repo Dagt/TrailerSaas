@@ -100,6 +100,10 @@ it('never retries an uncertain create and reconciles through Trip reads', async 
   expect(await screen.findByText(/Your draft has been preserved/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Create Trip' })).toBeDisabled()
   expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+  await u.click(screen.getByRole('button', { name: '2. Stops' }))
+  await u.click(screen.getByLabelText('Stop 1 appointment')); await u.keyboard('{Enter}')
+  expect(f.requests.filter(r => r.method === 'POST')).toHaveLength(1)
+  await u.click(screen.getByRole('button', { name: 'Continue to Resources' })); await u.click(screen.getByRole('button', { name: 'Continue to Review' }))
   await u.click(screen.getByRole('link', { name: 'Reconcile in Trip list' }))
   expect(await screen.findByRole('link', { name: 'Open Trip 10000000' })).toBeInTheDocument()
   expect(f.requests.filter(r => r.method === 'POST')).toHaveLength(1)
@@ -120,4 +124,11 @@ it.each(['duplicate orders', 'duplicate sequence', 'foreign mapping', 'missing c
 it.each(['IN_TRANSIT', 'AT_STOP'] as const)('allows filling a null expected Trailer in %s without ordinary active replacement', state => {
   expect(actions(trip(state)).trailer).toBe(true)
   expect(actions({ ...trip(state), plannedInitialTrailerId: resourceId }).trailer).toBe(false)
+})
+
+it('requires the Review step even when Enter submits a valid Stop draft', async () => {
+  const { f, u } = await start()
+  await u.click(screen.getByLabelText('Stop 1 appointment')); await u.keyboard('{Enter}')
+  expect(f.requests.filter(r => r.method === 'POST')).toHaveLength(0)
+  expect(screen.getByRole('heading', { name: 'Executable Stops' })).toBeInTheDocument()
 })

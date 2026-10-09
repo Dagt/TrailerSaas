@@ -32,6 +32,7 @@ export function PlanTrip() {
     setStep(Math.min(3, step + 1))
   }
   const submit = form.handleSubmit(async value => {
+    if (step !== 3 || uncertain || command.isPending) return
     form.clearErrors()
     const request = { ...value, stops: value.stops.map((s, i) => ({ ...s, sequenceNumber: i + 1 })) }
     const result = createSchema.safeParse(request)

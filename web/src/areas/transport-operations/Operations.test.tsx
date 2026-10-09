@@ -255,3 +255,12 @@ it('loses cached Operations data when identity changes', async () => {
   expect(f.cache.getQueryData(key(tenantA, 'secret'))).toBeUndefined()
   await waitFor(() => expect(f.requests.filter(r => r.path === '/api/v1/me')).toHaveLength(2))
 })
+
+it('keeps frozen historical destinations even when the live Site has been renamed', async () => {
+  const t = trip('IN_TRANSIT')
+  t.operationalHistory = [{ id: alternateId, eventType: 'TRIP_REROUTED', tripStopId: t.stops[0]!.id, actorUserId: null, targetDriverId: null, occurredAt: stamps(), reason: 'Reroute', metadata: { previous: { siteId, siteSnapshot: { name: 'Frozen old facility' } }, replacement: { siteId, siteSnapshot: { name: 'Frozen new facility' } } } }]
+  const f = operationsFixture(`/operations/trips/${tripId}`, { trip: t })
+  f.rows.sites![0]!.name = 'Renamed live facility'
+  expect(await screen.findByText(/Frozen old facility → Frozen new facility/)).toBeInTheDocument()
+  expect(await screen.findAllByText(/Renamed live facility/)).not.toHaveLength(0)
+})
