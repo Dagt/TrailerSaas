@@ -24,6 +24,10 @@ class OrderExceptionHandler {
         ProblemDetailsConfiguration.addCorrelation(body);
         return body;
     }
+    @ExceptionHandler(com.trailersaas.orders.OrderPlanningRejectedException.class)
+    ProblemDetail planning(com.trailersaas.orders.OrderPlanningRejectedException failure) {
+        return failure(switch(failure.reason()) {case MISSING -> OrderFailure.missing();case STATE -> OrderFailure.transition();case CONFLICT -> OrderFailure.conflict();});
+    }
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     ProblemDetail invalid(Exception ignored) { return failure(OrderFailure.invalid("body")); }
 }

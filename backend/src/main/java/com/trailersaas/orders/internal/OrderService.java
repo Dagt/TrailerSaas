@@ -20,9 +20,10 @@ class OrderService {
     private final OrderDestinationPolicy destinations;
     private final OrderRepository repository;
     private final ManifestService manifests;
-    OrderService(TenantAuthorization authorization, OrderAccessPolicy access, OrderDestinationPolicy destinations, OrderRepository repository, ManifestService manifests) {
+    private final com.trailersaas.orders.OrderPlanningDirectory planningDirectory;
+    OrderService(TenantAuthorization authorization, OrderAccessPolicy access, OrderDestinationPolicy destinations, OrderRepository repository, ManifestService manifests, com.trailersaas.orders.OrderPlanningDirectory planningDirectory) {
         this.authorization = authorization; this.access = access; this.destinations = destinations; this.repository = repository;
-        this.manifests = manifests;
+        this.manifests = manifests; this.planningDirectory = planningDirectory;
     }
 
     Detail create(AuthenticatedUserPrincipal actor, UUID tenant, Map<String, Object> input) {
@@ -72,7 +73,10 @@ class OrderService {
         var scope = access.readScope(actor, tenant);
         var filters = OrderValidation.filters(parameters);
         if (filters.customerId() != null && !scope.tenantWide() && !scope.customerIds().contains(filters.customerId())) { throw OrderFailure.scope(); }
-        var rows = repository.list(tenant, scope, filters);
+        var rows = filters.unplanned() == null ? repository.list(tenant, scope, filters) : repository.byPlanningIds(tenant, scope,
+                planningDirectory.page(new com.trailersaas.orders.OrderPlanningDirectory.Query(tenant, scope, filters.customerId(),
+                    filters.status() == null ? null : filters.status().name(), filters.cursor() == null ? null : filters.cursor().createdAt(),
+                    filters.cursor() == null ? null : filters.cursor().id(), filters.limit() + 1, filters.unplanned())));
         boolean more = rows.size() > filters.limit();
         var page = more ? rows.subList(0, filters.limit()) : rows;
         var last = page.isEmpty() ? null : page.getLast();

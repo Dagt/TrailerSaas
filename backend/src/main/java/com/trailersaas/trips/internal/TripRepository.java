@@ -1,0 +1,113 @@
+package com.trailersaas.trips.internal;
+
+import jakarta.persistence.*;
+import java.util.*;
+import org.springframework.stereotype.Repository;
+
+@Repository
+class TripRepository {
+  private final EntityManager em;
+
+  TripRepository(EntityManager em) {
+    this.em = em;
+  }
+
+  TripEntity resource(UUID tenant, UUID id, boolean lock) {
+    var q =
+        em.createQuery(
+                "select t from TripEntity t where t.tenantId=:tenant and t.id=:id",
+                TripEntity.class)
+            .setParameter("tenant", tenant)
+            .setParameter("id", id);
+    if (lock) {
+      q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+    }
+    return q.getResultStream().findFirst().orElseThrow(TripFailure::missing);
+  }
+
+  List<TripEntity> list(UUID tenant, TripValidation.Filters f) {
+    var q =
+        em.createNativeQuery(
+                "select t.* from trips t where t.tenant_id=:tenant"
+                    + (f.status() == null ? "" : " and t.status=:status")
+                    + (f.driverId() == null ? "" : " and t.current_driver_id=:driver")
+                    + (f.customerId() == null
+                        ? ""
+                        : " and exists (select 1 from trip_stops s join trip_stop_orders a on"
+                            + " a.tenant_id=s.tenant_id and a.trip_stop_id=s.id join orders o on"
+                            + " o.tenant_id=a.tenant_id and o.id=a.order_id where"
+                            + " s.tenant_id=t.tenant_id and s.trip_id=t.id and"
+                            + " o.customer_id=:customer)")
+                    + (f.cursor() == null
+                        ? ""
+                        : " and (t.created_at<:at or (t.created_at=:at and t.id<:id))")
+                    + " order by t.created_at desc,t.id desc",
+                TripEntity.class)
+            .setParameter("tenant", tenant);
+    if (f.status() != null) {
+      q.setParameter("status", f.status());
+    }
+    if (f.driverId() != null) {
+      q.setParameter("driver", f.driverId());
+    }
+    if (f.customerId() != null) {
+      q.setParameter("customer", f.customerId());
+    }
+    if (f.cursor() != null) {
+      q.setParameter("at", f.cursor().createdAt());
+      q.setParameter("id", f.cursor().id());
+    }
+    return q.setMaxResults(f.limit() + 1).getResultList();
+  }
+
+  List<TripStopEntity> stops(UUID tenant, UUID trip) {
+    return em.createQuery(
+            "select s from TripStopEntity s where s.tenantId=:tenant and s.tripId=:trip order by"
+                + " s.sequenceNumber,s.id",
+            TripStopEntity.class)
+        .setParameter("tenant", tenant)
+        .setParameter("trip", trip)
+        .getResultList();
+  }
+
+  List<TripStopOrderEntity> mappings(UUID tenant, UUID trip) {
+    return em.createQuery(
+            "select a from TripStopOrderEntity a where a.tenantId=:tenant and a.tripStopId in"
+                + " (select s.id from TripStopEntity s where s.tenantId=:tenant and s.tripId=:trip)"
+                + " order by a.orderId,a.id",
+            TripStopOrderEntity.class)
+        .setParameter("tenant", tenant)
+        .setParameter("trip", trip)
+        .getResultList();
+  }
+
+  List<UUID> tripsForOrder(UUID tenant, UUID order) {
+    return em.createQuery(
+            "select distinct s.tripId from TripStopEntity s,TripStopOrderEntity a where"
+                + " s.tenantId=:tenant and a.tenantId=:tenant and a.tripStopId=s.id and"
+                + " a.orderId=:order order by s.tripId",
+            UUID.class)
+        .setParameter("tenant", tenant)
+        .setParameter("order", order)
+        .getResultList();
+  }
+
+  void releaseMappings(UUID tenant, UUID trip, UUID order) {
+    em.createQuery(
+            "delete from TripStopOrderEntity a where a.tenantId=:tenant and a.orderId=:order and"
+                + " a.tripStopId in (select s.id from TripStopEntity s where s.tenantId=:tenant and"
+                + " s.tripId=:trip)")
+        .setParameter("tenant", tenant)
+        .setParameter("order", order)
+        .setParameter("trip", trip)
+        .executeUpdate();
+  }
+
+  void insert(Object row) {
+    em.persist(row);
+  }
+
+  void flush() {
+    em.flush();
+  }
+}

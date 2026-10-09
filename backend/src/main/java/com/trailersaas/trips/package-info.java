@@ -1,5 +1,3 @@
-/**
- * Trips and dispatch module boundary reserved for later implementation issues.
- */
-@org.springframework.modulith.ApplicationModule
+/** Executable Trip planning uses only public module APIs. */
+@org.springframework.modulith.ApplicationModule(allowedDependencies={"identity","orders","customers","drivers","tractors","trailers"})
 package com.trailersaas.trips;

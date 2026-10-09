@@ -87,7 +87,7 @@ class OrderValidationTests {
         assertThat(OrderValidation.filters(Map.of("limit", "200")).limit()).isEqualTo(200);
         assertThatThrownBy(() -> OrderValidation.Position.decode(position.encode() + "=")).isInstanceOf(OrderFailure.class);
     }
-    @ParameterizedTest @ValueSource(strings = {"appointmentFrom", "appointmentTo", "unplanned", "active", "sort", "tenantId"})
+    @ParameterizedTest @ValueSource(strings = {"appointmentFrom", "appointmentTo", "unplanned-invalid", "active", "sort", "tenantId"})
     void deferredOrUnknownFiltersCannotBeSilentlyIgnored(String field) {
         assertThatThrownBy(() -> OrderValidation.filters(Map.of(field, "value"))).isInstanceOf(OrderFailure.class);
     }
@@ -97,5 +97,15 @@ class OrderValidationTests {
     void infrastructureIsNotMistakenForIntegrity(String state) {
         var error = new org.springframework.dao.DataAccessResourceFailureException("private", new SQLException("private", state));
         assertThat(OrderFailure.expectedIntegrity(error)).isEqualTo(Set.of("23503", "23505", "23514").contains(state));
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"true","false"})
+    void unplannedSupportsStrictBooleanFilter(String value) {
+        assertThat(OrderValidation.filters(Map.of("unplanned",value)).unplanned()).isEqualTo(Boolean.valueOf(value));
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"", "1", "TRUE", "maybe"})
+    void unplannedRejectsNonCanonicalBoolean(String value) {
+        assertThatThrownBy(()->OrderValidation.filters(Map.of("unplanned",value))).isInstanceOf(OrderFailure.class);
     }
 }

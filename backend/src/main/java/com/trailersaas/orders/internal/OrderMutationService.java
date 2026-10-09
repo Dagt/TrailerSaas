@@ -22,10 +22,11 @@ class OrderMutationService {
     private final ManifestService manifests;
     private final OrderDestinationPolicy destinations;
     private final ApplicationEventPublisher events;
+    private final List<com.trailersaas.orders.OrderPreExecutionPlanningRelease> planningReleases;
     OrderMutationService(TenantAuthorization authorization, TenantActorMembership attribution, OrderRepository repository,
-            ManifestService manifests, OrderDestinationPolicy destinations, ApplicationEventPublisher events) {
+            ManifestService manifests, OrderDestinationPolicy destinations, ApplicationEventPublisher events, List<com.trailersaas.orders.OrderPreExecutionPlanningRelease> planningReleases) {
         this.authorization = authorization; this.attribution = attribution; this.repository = repository;
-        this.manifests = manifests; this.destinations = destinations; this.events = events;
+        this.manifests = manifests; this.destinations = destinations; this.events = events; this.planningReleases = List.copyOf(planningReleases);
     }
     Detail patch(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, Map<String, Object> input) {
         long expected = OrderMutationValidation.version(input, Set.of("expectedVersion", "poNumber", "shipmentNumber", "bolReference"));
@@ -58,7 +59,10 @@ class OrderMutationService {
                 && !destinations.compatible(tenant, order.customerId, resolution.destinationSiteId(), null)) {
             throw OrderFailure.conflict();
         }
-        if (action == Action.ORDER_CANCELLED) { manifests.releasePreExecutionAllocations(order); }
+        if (action == Action.ORDER_CANCELLED) {
+            manifests.releasePreExecutionAllocations(order);
+            for (var release : planningReleases) { release.release(tenant, order.id); }
+        }
         transition(order, action, human(actor, tenant), reason, resolution);
         return detail(order);
     }

@@ -44,6 +44,13 @@ class OrderRepository {
         return q.setMaxResults(filters.limit() + 1).getResultList();
     }
 
+    List<OrderEntity> byPlanningIds(UUID tenant, CustomerAccessScope scope, List<UUID> ids) {
+        if (ids.isEmpty()) { return List.of(); }
+        var q = em.createQuery("select o from OrderEntity o where o.tenantId=:tenant and o.id in :ids"
+                + (scope.tenantWide() ? "" : " and o.customerId in :customers") + " order by o.createdAt desc,o.id desc", OrderEntity.class)
+                .setParameter("tenant",tenant).setParameter("ids",ids);
+        if (!scope.tenantWide()) { q.setParameter("customers",scope.customerIds()); } return q.getResultList();
+    }
     List<OrderCargoEntity> cargo(UUID tenant, UUID order) {
         return em.createQuery("select c from OrderCargoEntity c where c.tenantId=:tenant and c.orderId=:order order by c.createdAt, c.id", OrderCargoEntity.class)
                 .setParameter("tenant", tenant).setParameter("order", order).getResultList();

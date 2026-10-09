@@ -71,13 +71,17 @@ Exit: equipment/locations exist and durable evidence/background infrastructure i
 
 #31 is merged/complete via [PR #85](https://github.com/Dagt/TrailerSaas/pull/85).
 #32 is merged/complete via [PR #86](https://github.com/Dagt/TrailerSaas/pull/86).
-#33 is the current bounded implementation: Order reference edits, cancellation,
-completion and lifecycle/history integration hooks, with Order-first Manifest locking.
-Complete only after its PR merges. #34 follows for actual Trip planning and the
-still-deferred unplanned filter. Generic durable Audit persistence/query remains #61.
+#33 is merged/complete via [PR #87](https://github.com/Dagt/TrailerSaas/pull/87).
+Generic durable Audit persistence/query remains #61.
 
 ### Trips
 - #34 → #35 → #36 → #37
+
+#34 is the current bounded implementation: Trip/executable Stop planning,
+Order OPEN→PLANNED integration, coordinated cancellation release and the real
+Order unplanned filter. Complete only after its PR merges. #35 follows for durable
+initial/reassignment history and assignment commands; #36 owns reroute/cancellation,
+and #37 owns the dispatch Web surface.
 
 ### Trailer movement
 - #38 → #39 → #40 → #41
