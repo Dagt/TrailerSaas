@@ -302,21 +302,36 @@ class TripPostgresTests extends PostgresIntegrationTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"none", "driver", "tractor", "both"})
+  @ValueSource(
+      strings = {
+        "none",
+        "driver",
+        "tractor",
+        "both",
+        "trailer",
+        "driverTrailer",
+        "tractorTrailer",
+        "all"
+      })
   void initialAssignmentPolicyAndMilestones(String mode) throws Exception {
     var b = plan();
-    if (mode.equals("driver") || mode.equals("both")) {
+    boolean hasDriver = Set.of("driver", "driverTrailer", "both", "all").contains(mode);
+    boolean hasTractor = Set.of("tractor", "tractorTrailer", "both", "all").contains(mode);
+    boolean hasTrailer = Set.of("trailer", "driverTrailer", "tractorTrailer", "all").contains(mode);
+    if (hasDriver) {
       b.put("driverId", driver.toString());
     }
-    if (mode.equals("tractor") || mode.equals("both")) {
+    if (hasTractor) {
       b.put("tractorId", tractor.toString());
     }
-    b.put("plannedInitialTrailerId", trailer.toString());
+    if (hasTrailer) {
+      b.put("plannedInitialTrailerId", trailer.toString());
+    }
     var physical = f.db.value("SELECT to_jsonb(t)::text FROM trailers t WHERE id=?", trailer);
     var r = post(b);
     var trip = id(r);
     assertThat(JsonPath.<String>read(r.body(), "$.status"))
-        .isEqualTo(mode.equals("both") ? "ASSIGNED" : "PLANNED");
+        .isEqualTo(hasDriver && hasTractor ? "ASSIGNED" : "PLANNED");
     assertThat(JsonPath.<Number>read(r.body(), "$.version").longValue()).isZero();
     for (var field : List.of("startedAt", "completedAt", "cancelledAt")) {
       assertThat(JsonPath.<Object>read(r.body(), "$." + field)).isNull();
@@ -327,7 +342,47 @@ class TripPostgresTests extends PostgresIntegrationTest {
     assertThat(f.db.value("SELECT version FROM orders WHERE id=?", order)).isEqualTo(1L);
     assertThat(f.db.value("SELECT to_jsonb(t)::text FROM trailers t WHERE id=?", trailer))
         .isEqualTo(physical);
-    assertThat(r.body()).doesNotContain("tenantId", "orderStopId", "assignmentHistory");
+    assertThat(r.body()).doesNotContain("tenantId", "orderStopId");
+    var expected = new HashMap<String, UUID>();
+    if (hasDriver) {
+      expected.put("DRIVER_ASSIGNED", driver);
+    }
+    if (hasTractor) {
+      expected.put("TRACTOR_ASSIGNED", tractor);
+    }
+    if (hasTrailer) {
+      expected.put("TRAILER_PLANNED", trailer);
+    }
+    var history = JsonPath.<List<Map<String, Object>>>read(r.body(), "$.assignmentHistory");
+    assertThat(history).hasSize(expected.size());
+    assertThat(history.stream().map(e -> (String) e.get("eventType")))
+        .containsExactlyInAnyOrderElementsOf(expected.keySet());
+    assertThat(history)
+        .allSatisfy(
+            e -> {
+              String type = (String) e.get("eventType");
+              assertThat(e.get("actorUserId")).isEqualTo(user.toString());
+              assertThat(e).containsKeys("reason", "metadata", "occurredAt");
+              assertThat(e.get("reason")).isNull();
+              assertThat(e.get("metadata")).isNull();
+              assertThat(e.get("occurredAt")).isInstanceOf(String.class);
+              assertThat(java.time.Instant.parse((String) e.get("occurredAt"))).isNotNull();
+              for (var resource : List.of("driver", "tractor", "trailer")) {
+                assertThat(e.get(resource + "Id"))
+                    .isEqualTo(
+                        type.startsWith(resource.toUpperCase(Locale.ROOT) + "_")
+                            ? expected.get(type).toString()
+                            : null);
+              }
+              assertThat(e).doesNotContainKeys("tenantId", "orderStopId");
+            });
+    assertThat(JsonPath.<String>read(r.body(), "$.currentDriverId"))
+        .isEqualTo(hasDriver ? driver.toString() : null);
+    assertThat(JsonPath.<String>read(r.body(), "$.currentTractorId"))
+        .isEqualTo(hasTractor ? tractor.toString() : null);
+    assertThat(JsonPath.<String>read(r.body(), "$.plannedInitialTrailerId"))
+        .isEqualTo(hasTrailer ? trailer.toString() : null);
+    assertThat(f.db.value("SELECT version FROM trips WHERE id=?", trip)).isEqualTo(0L);
     assertThat(f.db.value("SELECT order_stop_id FROM trip_stop_orders WHERE tenant_id=?", tenant))
         .isNull();
     assertThat(f.db.value("SELECT id FROM trips WHERE id=?", trip)).isEqualTo(trip);
