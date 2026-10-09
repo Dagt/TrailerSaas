@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import com.trailersaas.identity.CustomerAccessScope;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -12,10 +13,20 @@ class OrderRepository {
     OrderRepository(EntityManager em) { this.em = em; }
 
     OrderEntity resource(UUID tenant, UUID id, CustomerAccessScope scope) {
+        return resource(tenant, id, scope, null);
+    }
+    OrderEntity lockForMutation(UUID tenant, UUID id, CustomerAccessScope scope) {
+        return resource(tenant, id, scope, LockModeType.PESSIMISTIC_WRITE);
+    }
+    OrderEntity lockForAllocation(UUID tenant, UUID id, CustomerAccessScope scope) {
+        return resource(tenant, id, scope, LockModeType.PESSIMISTIC_READ);
+    }
+    private OrderEntity resource(UUID tenant, UUID id, CustomerAccessScope scope, LockModeType lock) {
         var q = em.createQuery("select o from OrderEntity o where o.tenantId=:tenant and o.id=:id"
                 + (scope.tenantWide() ? "" : " and o.customerId in :customers"), OrderEntity.class)
                 .setParameter("tenant", tenant).setParameter("id", id);
         if (!scope.tenantWide()) { q.setParameter("customers", scope.customerIds()); }
+        if (lock != null) { q.setLockMode(lock); }
         return q.getResultStream().findFirst().orElseThrow(OrderFailure::missing);
     }
 

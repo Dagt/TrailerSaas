@@ -70,10 +70,11 @@ Exit: equipment/locations exist and durable evidence/background infrastructure i
 - #31 → #32 → #33
 
 #31 is merged/complete via [PR #85](https://github.com/Dagt/TrailerSaas/pull/85).
-#32 is the current bounded implementation: internal OPEN/CLOSED Manifest planning,
-many-to-many Order allocations and optional plannedTrailerId during Order creation.
-Complete only after its PR merges. #33 remains next for Order mutations/state
-transitions; #34 defines Trip planning and the still-deferred unplanned filter.
+#32 is merged/complete via [PR #86](https://github.com/Dagt/TrailerSaas/pull/86).
+#33 is the current bounded implementation: Order reference edits, cancellation,
+completion and lifecycle/history integration hooks, with Order-first Manifest locking.
+Complete only after its PR merges. #34 follows for actual Trip planning and the
+still-deferred unplanned filter. Generic durable Audit persistence/query remains #61.
 
 ### Trips
 - #34 → #35 → #36 → #37

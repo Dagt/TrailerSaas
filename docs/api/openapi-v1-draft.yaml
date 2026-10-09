@@ -923,23 +923,28 @@ paths:
     patch:
       tags: [Orders]
       operationId: updateOrderBeforeExecution
-      x-implementation-status: planned
-      description: Accepted future contract; not implemented in issue 31. Owned by issue 33.
+      x-implementation-status: implemented-issue-33
+      description: ORDER_EDIT with fresh Customer scope; only OPEN/PLANNED. STALE_VERSION and INVALID_STATE_TRANSITION are distinct 409 outcomes.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               required: [expectedVersion]
               properties:
-                expectedVersion: { type: integer, format: int64 }
+                expectedVersion: { type: integer, format: int64, minimum: 0 }
                 poNumber: { type: [string, "null"] }
                 shipmentNumber: { type: [string, "null"] }
                 bolReference: { type: [string, "null"] }
       responses:
         '200':
           description: Updated Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -951,17 +956,58 @@ paths:
     post:
       tags: [Orders]
       operationId: cancelOrder
-      x-implementation-status: planned
-      description: Accepted future contract; not implemented in issue 31. Owned by issue 33.
+      x-implementation-status: implemented-issue-33
+      description: >
+        ORDER_CANCEL with fresh Customer scope. OPEN/PLANNED cancel directly and release
+        OPEN Manifest allocations atomically; active fulfillment enters CANCELLING.
+        Active cancellation requires resolution.type and nonblank instructions; destinationSiteId
+        must be Customer/Site compatible. No Idempotency-Key replay guarantee or ledger in #33.
+        STALE_VERSION and INVALID_STATE_TRANSITION are distinct 409 outcomes.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CancelOrderRequest'
+              $ref: '#/components/schemas/CancelOrderRequestImplemented'
       responses:
         '200':
           description: Updated Order state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/orders/{orderId}/completion:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrderId'
+    post:
+      tags: [Orders]
+      operationId: completeOrder
+      x-implementation-status: implemented-issue-33
+      description: >
+        ORDER_COMPLETE with fresh Customer scope; only DELIVERED -> COMPLETED.
+        deliveredAt is preserved and completedAt is server-generated. Other states return
+        INVALID_STATE_TRANSITION; stale expectedVersion returns STALE_VERSION (409).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [expectedVersion]
+              properties:
+                expectedVersion: { type: integer, format: int64, minimum: 0 }
+      responses:
+        '200':
+          description: Completed Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -2017,6 +2063,23 @@ components:
         deliveredAt: { type: [string, "null"], format: date-time }
         completedAt: { type: [string, "null"], format: date-time }
         cancelledAt: { type: [string, "null"], format: date-time }
+
+    CancelOrderRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+        resolution:
+          type: [object, "null"]
+          additionalProperties: false
+          required: [type]
+          description: Non-null resolution and instructions are required for active cancellation; no closed type catalog is assumed.
+          properties:
+            type: { type: string, minLength: 1, pattern: '\S' }
+            destinationSiteId: { type: [string, "null"], format: uuid }
+            instructions: { type: [string, "null"], minLength: 1, pattern: '\S' }
 
     CancelOrderRequest:
       type: object

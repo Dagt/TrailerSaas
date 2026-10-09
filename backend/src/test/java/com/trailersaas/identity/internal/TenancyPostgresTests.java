@@ -31,10 +31,10 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     @Test
     void flywayV5PreservesAcceptedIdentityColumnsAndAddsCustomerForeignKey() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("11");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
         // Flyway history is migrator-owned; runtime deliberately has no grant.
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {

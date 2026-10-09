@@ -34,6 +34,10 @@ class ManifestServiceTests {
     @ParameterizedTest @ValueSource(strings = {"allocate", "remove", "close"})
     void closedAndStaleRejectEveryMutationWithoutChildWrites(String command) {
         var m = manifest("CLOSED");
+        var scope = new CustomerAccessScope(true, Set.of());
+        when(auth.resolveCustomerScope(actor, tenant, Capability.TRIP_ASSIGN_TRAILER)).thenReturn(scope);
+        var order = new OrderEntity(); order.status = OrderStatus.OPEN;
+        when(orders.lockForAllocation(tenant, orderId, scope)).thenReturn(order);
         assertThatThrownBy(() -> invoke(command, 0)).isInstanceOf(OrderFailure.class).extracting(e -> ((OrderFailure)e).code).isEqualTo("RESOURCE_CONFLICT");
         m.status = ManifestStatus.OPEN; m.version = 1;
         assertThatThrownBy(() -> invoke(command, 0)).isInstanceOf(OrderFailure.class).extracting(e -> ((OrderFailure)e).code).isEqualTo("STALE_VERSION");
@@ -51,8 +55,11 @@ class ManifestServiceTests {
         manifest("OPEN"); var scope = new CustomerAccessScope(true, Set.of());
         when(auth.resolveCustomerScope(actor, tenant, Capability.TRIP_ASSIGN_TRAILER)).thenReturn(scope);
         var order = new OrderEntity(); order.id = orderId; order.status = status;
-        when(orders.resource(tenant, orderId, scope)).thenReturn(order);
-        if (status == OrderStatus.OPEN) { service.allocate(actor, tenant, manifestId, 0, orderId, null, null, null); verify(repo).insert(any(ManifestOrderEntity.class)); }
+        when(orders.lockForAllocation(tenant, orderId, scope)).thenReturn(order);
+        if (status == OrderStatus.OPEN) {
+            service.allocate(actor, tenant, manifestId, 0, orderId, null, null, null); verify(repo).insert(any(ManifestOrderEntity.class));
+            var locks=inOrder(orders,repo);locks.verify(orders).lockForAllocation(tenant,orderId,scope);locks.verify(repo).lock(tenant,manifestId);
+        }
         else { assertThatThrownBy(() -> service.allocate(actor, tenant, manifestId, 0, orderId, null, null, null)).isInstanceOf(OrderFailure.class); verify(repo, never()).insert(any()); }
     }
     @Test void closeRequiresTenantWideCapabilityAndKeepsAllocations() {
