@@ -46,6 +46,9 @@ class ManifestPostgresTests extends PostgresIntegrationTest {
         var one = manifest(a, trailer); var two = manifest(a, trailer); manifest(a, null);
         allocation(a, one, order, null, null, null); allocation(a, one, secondOrder, new BigDecimal("1.25"), 0, new BigDecimal("0.75"));
         allocation(a, two, order, BigDecimal.ZERO, 2, null);
+        assertThat((BigDecimal) f.db.value("SELECT allocated_quantity FROM manifest_orders WHERE manifest_id=? AND order_id=?", one, secondOrder)).isEqualByComparingTo("1.25");
+        assertThat((BigDecimal) f.db.value("SELECT allocated_weight FROM manifest_orders WHERE manifest_id=? AND order_id=?", one, secondOrder)).isEqualByComparingTo("0.75");
+        assertThat(f.db.value("SELECT allocated_pallet_count FROM manifest_orders WHERE manifest_id=? AND order_id=?", one, secondOrder)).isEqualTo(0);
         rejects("23505", () -> allocation(a, one, order, null, null, null));
         assertThat(f.db.value("SELECT count(*) FROM manifest_orders WHERE order_id=?", order)).isEqualTo(2L);
         assertThat(f.db.value("SELECT count(*) FROM manifest_orders WHERE manifest_id=?", one)).isEqualTo(2L);
@@ -101,7 +104,7 @@ class ManifestPostgresTests extends PostgresIntegrationTest {
     }
     @Test void serviceLifecycleVersionsAndClosedHistoryArePreserved() throws Exception {
         var m = service.create(admin, a, trailer);
-        assertThat(m.status()).isEqualTo("OPEN"); assertThat(m.version()).isZero(); assertThat(m.closedAt()).isNull();
+        assertThat(m.status()).isEqualTo(ManifestStatus.OPEN); assertThat(m.version()).isZero(); assertThat(m.closedAt()).isNull();
         var added = service.allocate(admin, a, m.id(), 0, order, new BigDecimal("0.25"), 0, null);
         assertThat(added.version()).isEqualTo(1); assertThat(added.updatedAt()).isAfter(m.updatedAt());
         failure("STALE_VERSION", () -> service.remove(admin, a, m.id(), 0, order));
@@ -109,7 +112,7 @@ class ManifestPostgresTests extends PostgresIntegrationTest {
         assertThat(f.db.value("SELECT count(*) FROM orders WHERE id=?", order)).isEqualTo(1L);
         service.allocate(admin, a, m.id(), 2, order, null, null, null);
         var closed = service.close(admin, a, m.id(), 3); assertThat(closed.version()).isEqualTo(4);
-        assertThat(closed.closedAt()).isNotNull(); assertThat(closed.status()).isEqualTo("CLOSED");
+        assertThat(closed.closedAt()).isNotNull(); assertThat(closed.status()).isEqualTo(ManifestStatus.CLOSED);
         failure("RESOURCE_CONFLICT", () -> service.allocate(admin, a, m.id(), 4, secondOrder, null, null, null));
         failure("RESOURCE_CONFLICT", () -> service.remove(admin, a, m.id(), 4, order));
         failure("RESOURCE_CONFLICT", () -> service.close(admin, a, m.id(), 4));

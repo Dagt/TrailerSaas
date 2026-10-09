@@ -20,7 +20,7 @@ class ManifestService {
     record Revision(UUID id, long version, Instant updatedAt) {
         static Revision of(LoadManifestEntity m) { return new Revision(m.id, m.version, m.updatedAt); }
     }
-    record Manifest(UUID id, UUID trailerId, String status, long version, Instant createdAt, Instant updatedAt, Instant closedAt) {
+    record Manifest(UUID id, UUID trailerId, ManifestStatus status, long version, Instant createdAt, Instant updatedAt, Instant closedAt) {
         static Manifest of(LoadManifestEntity m) { return new Manifest(m.id, m.trailerId, m.status, m.version, m.createdAt, m.updatedAt, m.closedAt); }
     }
     private final TenantAuthorization authorization;
@@ -38,6 +38,7 @@ class ManifestService {
     /** Included in Order creation, not an existing-Manifest mutation: initial version stays zero. */
     void planCreatedOrder(AuthenticatedUserPrincipal actor, OrderEntity order, UUID trailer) {
         authorization.requireCustomerCapability(actor, order.tenantId, order.customerId, Capability.TRIP_ASSIGN_TRAILER);
+        requireOpen(order);
         validateTrailer(actor, order.tenantId, trailer);
         var manifest = open(order.tenantId, trailer);
         insertAllocation(manifest, order, null, null, null); flush();
@@ -72,19 +73,19 @@ class ManifestService {
     Manifest close(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, long expectedVersion) {
         authorization.requireTenantCapability(actor, tenant, Capability.TRIP_ASSIGN_TRAILER);
         var manifest = mutable(tenant, id, expectedVersion);
-        manifest.status = "CLOSED"; touch(manifest); manifest.closedAt = manifest.updatedAt;
+        manifest.status = ManifestStatus.CLOSED; touch(manifest); manifest.closedAt = manifest.updatedAt;
         flush(); return Manifest.of(manifest);
     }
     private LoadManifestEntity open(UUID tenant, UUID trailer) {
         var m = new LoadManifestEntity(); m.id = UUID.randomUUID(); m.tenantId = tenant; m.trailerId = trailer;
-        m.status = "OPEN"; m.createdAt = m.updatedAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
+        m.status = ManifestStatus.OPEN; m.createdAt = m.updatedAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
         repository.insert(m); return m;
     }
     private LoadManifestEntity mutable(UUID tenant, UUID id, long expectedVersion) {
         if (expectedVersion < 0) { throw OrderFailure.invalid("expectedVersion"); }
         var m = repository.lock(tenant, id);
         if (m.version != expectedVersion) { throw OrderFailure.stale(); }
-        if (!"OPEN".equals(m.status)) { throw OrderFailure.conflict(); }
+        if (m.status != ManifestStatus.OPEN) { throw OrderFailure.conflict(); }
         return m;
     }
     private void insertAllocation(LoadManifestEntity m, OrderEntity order, BigDecimal quantity, Integer pallets, BigDecimal weight) {

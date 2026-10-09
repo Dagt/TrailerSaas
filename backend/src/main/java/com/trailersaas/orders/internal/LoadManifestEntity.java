@@ -9,7 +9,7 @@ class LoadManifestEntity {
     @Id UUID id;
     @Column(name = "tenant_id", nullable = false, updatable = false) UUID tenantId;
     @Column(name = "trailer_id", updatable = false) UUID trailerId;
-    @Column(nullable = false) String status;
+    @Enumerated(EnumType.STRING) @Column(nullable = false) ManifestStatus status;
     @Column(name = "created_at", nullable = false, updatable = false) Instant createdAt;
     @Column(name = "updated_at", nullable = false) Instant updatedAt;
     @Version @Column(nullable = false) long version;

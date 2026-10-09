@@ -21,7 +21,7 @@ class ManifestServiceTests {
     final UUID tenant = UUID.randomUUID(), manifestId = UUID.randomUUID(), orderId = UUID.randomUUID();
     final AuthenticatedUserPrincipal actor = new AuthenticatedUserPrincipal(UUID.randomUUID(), "fixture", null, null);
     LoadManifestEntity manifest(String status) {
-        var m = new LoadManifestEntity(); m.id = manifestId; m.tenantId = tenant; m.status = status; m.updatedAt = m.createdAt = Instant.now();
+        var m = new LoadManifestEntity(); m.id = manifestId; m.tenantId = tenant; m.status = ManifestStatus.valueOf(status); m.updatedAt = m.createdAt = Instant.now();
         when(repo.lock(tenant, manifestId)).thenReturn(m); return m;
     }
     @Test void quantitiesAcceptNullZeroAndIndependentDecimalsButRejectNegatives() {
@@ -35,7 +35,7 @@ class ManifestServiceTests {
     void closedAndStaleRejectEveryMutationWithoutChildWrites(String command) {
         var m = manifest("CLOSED");
         assertThatThrownBy(() -> invoke(command, 0)).isInstanceOf(OrderFailure.class).extracting(e -> ((OrderFailure)e).code).isEqualTo("RESOURCE_CONFLICT");
-        m.status = "OPEN"; m.version = 1;
+        m.status = ManifestStatus.OPEN; m.version = 1;
         assertThatThrownBy(() -> invoke(command, 0)).isInstanceOf(OrderFailure.class).extracting(e -> ((OrderFailure)e).code).isEqualTo("STALE_VERSION");
         verify(repo, never()).insert(any()); verify(repo, never()).remove(any()); verify(repo, never()).flush();
     }
@@ -58,7 +58,7 @@ class ManifestServiceTests {
     @Test void closeRequiresTenantWideCapabilityAndKeepsAllocations() {
         var m = manifest("OPEN"); var result = service.close(actor, tenant, manifestId, 0);
         verify(auth).requireTenantCapability(actor, tenant, Capability.TRIP_ASSIGN_TRAILER);
-        assertThat(result.status()).isEqualTo("CLOSED"); assertThat(m.closedAt).isEqualTo(m.updatedAt).isAfter(m.createdAt);
+        assertThat(result.status()).isEqualTo(ManifestStatus.CLOSED); assertThat(m.closedAt).isEqualTo(m.updatedAt).isAfter(m.createdAt);
         verify(repo, never()).remove(any());
     }
     @ParameterizedTest @EnumSource(TrailerPlanningPolicy.Eligibility.class)
