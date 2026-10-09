@@ -43,7 +43,7 @@ class IdentitySecurityConfiguration {
     @Bean
     SecurityFilterChain identitySecurity(HttpSecurity http, AuthenticationManager identityAuthenticationManager,
             AuthenticationEntryPoint identityAuthenticationEntryPoint) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
+        return http.cors(cors -> {}).csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(cache -> cache.disable())
                 .formLogin(form -> form.disable()).httpBasic(basic -> basic.disable()).logout(logout -> logout.disable())

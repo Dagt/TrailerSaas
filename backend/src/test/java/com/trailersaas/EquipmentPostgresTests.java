@@ -36,11 +36,11 @@ class EquipmentPostgresTests extends PostgresIntegrationTest {
     }
     @Test void v7CreatesExactlyDriversAndTractorsAndValidatesPriorChecksums() {
         flyway.validate();
-        assertThat(flyway.info().applied()).extracting(i->i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8");
+        assertThat(flyway.info().applied()).extracting(i->i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8","9");
         assertThat(manager.createNativeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'",String.class).getResultList())
                 .containsExactlyInAnyOrder("flyway_schema_history","users","tenants","tenant_memberships","role_assignments",
                         "customers","physical_sites","customer_sites","operational_locations","membership_invitations",
-                        "invitation_role_assignments","drivers","tractors","trailers","trailer_qr_identities");
+                        "invitation_role_assignments","drivers","tractors","trailers","trailer_qr_identities","tenant_settings");
         assertThat(manager.createNativeQuery("SELECT column_name FROM information_schema.columns WHERE table_name='drivers' ORDER BY ordinal_position",String.class).getResultList())
                 .containsExactly("id","tenant_id","user_id","name","license_number","medical_certificate_expires","active","created_at","updated_at","version");
         assertThat(manager.createNativeQuery("SELECT column_name FROM information_schema.columns WHERE table_name='tractors' ORDER BY ordinal_position",String.class).getResultList())

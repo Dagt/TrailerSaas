@@ -32,10 +32,10 @@ class TrailerPostgresTests extends PostgresIntegrationTest {
     String token(UUID id) throws Exception { return (String)f.db.value("SELECT public_token FROM trailer_qr_identities WHERE id=?",id); }
     @Test void v8AddsExactlyTwoTablesAndExactColumnsWithPreservedChecksums() {
         flyway.validate();
-        assertThat(flyway.info().applied()).extracting(i->i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8");
+        assertThat(flyway.info().applied()).extracting(i->i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8","9");
         assertThat(manager.createNativeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'",String.class).getResultList())
             .containsExactlyInAnyOrder("flyway_schema_history","users","tenants","tenant_memberships","role_assignments","customers","physical_sites",
-                    "customer_sites","operational_locations","membership_invitations","invitation_role_assignments","drivers","tractors","trailers","trailer_qr_identities");
+                    "customer_sites","operational_locations","membership_invitations","invitation_role_assignments","drivers","tractors","trailers","trailer_qr_identities","tenant_settings");
         assertThat(manager.createNativeQuery("SELECT column_name FROM information_schema.columns WHERE table_name='trailers' ORDER BY ordinal_position",String.class).getResultList())
             .containsExactly("id","tenant_id","operational_number","operational_number_normalized","designated_customer_id","trailer_type","capability_notes",
                     "location_state","current_location_id","last_known_location_id","last_seen_at","last_driver_id","load_state","serviceability_state","usage_purpose","active","created_at","updated_at","version");
