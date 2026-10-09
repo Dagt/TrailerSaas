@@ -46,7 +46,7 @@ function AdminDirectory() {
   </section>
 }
 export function AdminHome() { return <PageHeader title="Tenant Admin" description="Manage master data and Tenant settings. Choose a section from the navigation." /> }
-function SignIn() {
+export function SignIn({ operations = false }: { operations?: boolean }) {
   const { auth, refresh, expired } = useAuth()
   const [failed, setFailed] = useState(false)
   const form = useForm<{ email: string; password: string }>({ defaultValues: { email: '', password: '' } })
@@ -57,7 +57,7 @@ function SignIn() {
     setFailed(false)
     try { await auth.signIn(fields.email, fields.password); form.reset() } catch { setFailed(true); form.resetField('password') }
   })
-  return <section className="sign-in"><PageHeader title="Tenant Admin" description="Sign in to manage your Tenant." />
+  return <section className="sign-in"><PageHeader title={operations ? 'Transport Operations' : 'Tenant Admin'} description={operations ? 'Sign in to plan and coordinate dispatch.' : 'Sign in to manage your Tenant.'} />
     {!auth.configured ? <EmptyState>Web sign-in is not configured. Contact your administrator.</EmptyState>
       : <form onSubmit={submit} noValidate>
         <FormField id="signin-email" label="Email" error={form.formState.errors.email?.message}>

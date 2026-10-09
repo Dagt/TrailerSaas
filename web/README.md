@@ -126,7 +126,7 @@ src/
 Admin routes: /admin, /admin/customers[/customerId], /admin/locations (Physical
 Sites), /admin/sites/:siteId (Site + Locations), /admin/drivers[/driverId],
 /admin/tractors[/tractorId], /admin/trailers[/trailerId], /admin/settings.
-The Operations and Customer areas remain their original placeholders.
+Operations is implemented by #37 as described below. Customer Portal remains a placeholder.
 Local semantic HTML/CSS components provide labelled forms, keyboard focus,
 native confirmation dialogs, responsive tables, status text and reduced motion.
 TanStack Query owns server state; React Hook Form and Zod validate inputs without
@@ -171,7 +171,7 @@ designatedCustomerId or physical-state fields. The disabled designation entry po
 waits for #40's audited reassignment command. Location/load/serviceability are
 read-only. All seven accepted Trailer filters are available; no coupling filter.
 Only stale threshold (positive integer) and nullable IANA default timezone appear
-in Settings. No retention/billing/users/access/invitations/operations/audit UI.
+in Settings. No retention/billing/users/access/invitations/audit UI in Admin.
 
 ## QR management and printing
 
@@ -194,3 +194,35 @@ unused Node/Firestore transitive dependency; Web imports only firebase/app/auth.
 Production hosting must rewrite non-asset SPA paths such as `/operations`
 to `index.html` to support deep links. No deployments or frontend authorization
 shortcuts are included. There is no large component framework or full design system.
+
+
+## Transport Operations (#37)
+
+Operations uses the same Firebase session and `/me` directory; ACTIVE Tenant-wide
+TRANSPORT_OPERATIONS or TENANT_ADMIN memberships select the workspace for UX only.
+Backend authorization always remains authoritative. Routes: `/operations`,
+`/operations/orders`, `/operations/trips`, `/operations/trips/new`,
+`/operations/trips/:tripId`. Navigation is Dashboard/Orders/Trips.
+
+Dashboard calls the bounded current Dispatch Board projection, not event replay.
+Orders defaults to unplanned work and uses real keyset pagination; Trips also uses
+keysets. The four-section plan flow preserves independent requested destinations,
+frozen ad-hoc snapshots and explicit BASE_RETURN. Active resources are selected by
+human labels, never manual UUID entry. ISO appointments require an explicit timezone.
+Trip detail displays current assignments, Stops, linked Orders and persisted histories.
+State-aware assignment/substitution/reroute/cancellation dialogs send explicit requests
+and reconcile authoritative responses; no optimistic state-machine changes or mutation
+retries. Stale commands require Reload latest and another review. Uncertain creates
+preserve the draft and require read reconciliation, never a second blind POST.
+
+Operations queries are Tenant-namespaced; switching cancels/removes old queries,
+resets the workspace and returns to Dashboard. Identity changes/sign-out clear cache.
+No sensitive localStorage or Firebase-claim authorization. Existing Admin remains intact.
+Semantic HTML, captions, labelled fields, keyboard/native dialogs, visible focus and
+responsive dense tables reuse the small local component set; no new UI dependencies.
+
+Manual substitution decisions represent an operationally known discrepancy until
+Driver scan execution exists. Expected Trailer never claims physical coupling/current
+location. There are no status editors, fake records, execution bypass buttons, maps,
+GPS, Alerts, POD, Hook/Drop, mobile flows, Customer Portal or generic Audit. See
+[the exact API/UI boundary](../docs/api/orders-dispatch.md#issue-37-implementation-boundary).

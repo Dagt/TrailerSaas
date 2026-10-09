@@ -12,11 +12,12 @@ export function StatusBadge({ children }: PropsWithChildren) { return <span clas
 export function DataTable({ headings, children, caption }: PropsWithChildren<{ headings: string[]; caption: string }>) {
   return <div className="table-scroll"><table><caption className="sr-only">{caption}</caption><thead><tr>{headings.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>
 }
-export function ErrorBanner({ error, retry, reload }: { error: unknown; retry?: () => void; reload?: () => void }) {
+export function ErrorBanner({ error, retry, reload, staleMessage }: { error: unknown; retry?: () => void; reload?: () => void; staleMessage?: string }) {
   const problem = error instanceof ApiProblem ? error.problem : undefined
   const stale = problem?.code === 'STALE_VERSION'
   let message = 'The request could not be completed. Please try again.'
-  if (stale) message = 'This record changed while you were editing it. Review the latest version before saving again.'
+  if (stale) message = staleMessage ?? 'This record changed while you were editing it. Review the latest version before saving again.'
+  else if (problem?.code === 'INVALID_STATE_TRANSITION') message = 'This action is not available in the current state. Reload the latest state before continuing.'
   else if (problem?.status === 401) message = 'Your session needs to be verified. Sign in or refresh your session.'
   else if (problem?.status === 403) message = 'You do not have access to this action.'
   else if (problem?.status === 404) message = 'The resource was not found.'

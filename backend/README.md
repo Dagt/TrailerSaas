@@ -858,3 +858,18 @@ is an already-authorized Tenant transaction port for future execution, never a
 public command. Driver update projection begins at V15 without invented backfill.
 See [API boundary](../docs/api/orders-dispatch.md#issue-36-implementation-boundary)
 for state/scoping/locking and [Driver API](../docs/api/mobile-execution.md).
+
+
+### Issue #37: bounded Dispatch Board read projection
+
+GET `/api/v1/tenants/{tenantId}/dispatch/board` requires fresh Tenant-wide
+TRIP_VIEW_ALL and ORDER_VIEW_ALL under existing runtime Tenant RLS. It previews
+at most 20 unplanned nonterminal Orders and 20 active Trips, with a single next
+nonterminal executable Stop per Trip and current assignment/cancellation attention.
+Customer filters both sections; Driver/Trip status filter Trips/attention only.
+No date interpretation, history replay, new migration or new grants. Orders-owned
+public `OrderDispatchDirectory` keeps persistence internal and avoids module cycles.
+PostgreSQL 18 tests cover isolation, authority, semantics, deterministic bounds,
+filters and constant query count without assignment/operational entity reads.
+The [implementation boundary](../docs/api/orders-dispatch.md#issue-37-implementation-boundary)
+documents exact response fields and deferred operational features.

@@ -1018,6 +1018,43 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/dispatch/board:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Trips]
+      operationId: getDispatchBoard
+      x-implementation-status: implemented-issue-37
+      description: >
+        Requires both Tenant-wide TRIP_VIEW_ALL and ORDER_VIEW_ALL, freshly resolved.
+        Bounded current projections: at most 20 pending nonterminal unplanned Orders and
+        20 active Trips, each in createdAt DESC/id DESC order. Attention refers only to
+        displayed Trips: incomplete PLANNED Driver/Tractor assignments or CANCELLING.
+        No event-history replay, GPS, physical Trailer state, or Alerts. customerId filters
+        both sections; driverId/status filter Trips and their attention only. Date is
+        deferred and unknown parameters are rejected. No pagination on this bounded preview;
+        use the Order/Trip lists for keyset continuation.
+      parameters:
+        - name: customerId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: driverId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TripStatusImplemented'
+      responses:
+        '200':
+          description: Current bounded dispatch preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchBoardImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /api/v1/tenants/{tenantId}/trips:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -2348,6 +2385,83 @@ components:
         reason: { type: string }
         resolution:
           type: [object, "null"]
+
+    DispatchPendingOrderImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, customerId, orderNumber, status, version, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        orderNumber: { type: string }
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    DispatchNextStopImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, sequenceNumber, stopType, siteId, locationId, snapshotName, scheduledAt, status]
+      properties:
+        id: { type: string, format: uuid }
+        sequenceNumber: { type: integer, minimum: 1 }
+        stopType: { type: string }
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        snapshotName: { type: [string, "null"] }
+        scheduledAt: { type: [string, "null"], format: date-time }
+        status: { type: string }
+
+    DispatchActiveTripImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, status, currentDriverId, currentTractorId, plannedInitialTrailerId, version, createdAt, updatedAt, nextPlannedStop]
+      properties:
+        id: { type: string, format: uuid }
+        status:
+          $ref: '#/components/schemas/TripStatusImplemented'
+        currentDriverId: { type: [string, "null"], format: uuid }
+        currentTractorId: { type: [string, "null"], format: uuid }
+        plannedInitialTrailerId: { type: [string, "null"], format: uuid }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        nextPlannedStop:
+          anyOf:
+            - $ref: '#/components/schemas/DispatchNextStopImplemented'
+            - type: "null"
+
+    DispatchAttentionImplemented:
+      type: object
+      additionalProperties: false
+      required: [type, tripId]
+      properties:
+        type: { type: string, enum: [INCOMPLETE_ASSIGNMENT, CANCELLING] }
+        tripId: { type: string, format: uuid }
+
+    DispatchBoardImplemented:
+      type: object
+      additionalProperties: false
+      required: [generatedAt, pendingOrders, activeTrips, attentionItems]
+      properties:
+        generatedAt: { type: string, format: date-time }
+        pendingOrders:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/DispatchPendingOrderImplemented'
+        activeTrips:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/DispatchActiveTripImplemented'
+        attentionItems:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/DispatchAttentionImplemented'
 
     TripStatusImplemented:
       type: string

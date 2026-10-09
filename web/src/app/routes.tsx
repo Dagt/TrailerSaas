@@ -6,10 +6,12 @@ import { CustomerPortalArea } from '../areas/customer-portal/CustomerPortalArea'
 import { AppShell } from './AppShell'
 import { Home } from './Home'
 import { NotFound } from './NotFound'
+import { LoadingState } from '../shared/ui/components'
 
 export const appRoutes: RouteObject[] = [
   {
     Component: AppShell,
+    HydrateFallback: LoadingState,
     children: [
       { index: true, Component: Home },
       { path: 'admin', Component: AdminLayout, children: [
@@ -26,7 +28,13 @@ export const appRoutes: RouteObject[] = [
         { path: 'trailers/:trailerId', element: <MasterDetail kind="trailers" /> },
         { path: 'settings', Component: SettingsPage },
       ] },
-      { path: 'operations', Component: TransportOperationsArea },
+      { path: 'operations', Component: TransportOperationsArea, children: [
+        { index: true, lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).Dashboard }) },
+        { path: 'orders', lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).OrdersQueue }) },
+        { path: 'trips', lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).TripsList }) },
+        { path: 'trips/new', lazy: async () => ({ Component: (await import('../areas/transport-operations/PlanTrip')).PlanTrip }) },
+        { path: 'trips/:tripId', lazy: async () => ({ Component: (await import('../areas/transport-operations/TripDetailPage')).TripDetailPage }) },
+      ] },
       { path: 'customer', Component: CustomerPortalArea },
       { path: '*', Component: NotFound },
     ],
