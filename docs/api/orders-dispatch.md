@@ -582,3 +582,71 @@ assignment/reassignment history starts in #35, not a substitute event table here
 Trip reroute/cancellation belongs to #36; Web dispatch belongs to #37. There are no
 assignment mutation APIs, Stop events/execution commands, POD, Hook/Drop, coupling,
 movement, Shift, audit subsystem, outbox or physical Trailer changes in #34.
+
+
+## Issue #35 implementation boundary
+
+V14 creates only append-only `trip_assignment_events`, with the seven Accepted
+Driver/Tractor assignment/reassignment, Trailer planning and substitution decision
+codes. SQL checks require exactly the event's corresponding resource. Tenant-safe
+Trip/equipment FKs and the global actor User FK preserve identity without destructive
+cascades. Runtime has SELECT/INSERT only; Tenant RLS excludes bootstrap. The index
+`(tenant_id,trip_id,occurred_at,id)` makes detail/timeline chronology deterministic.
+V1–V13 are unchanged. Pre-V14 current assignments remain authoritative projections;
+no synthetic historical actor, reason or sequence is backfilled.
+
+New Trip creates append initial events for each supplied resource with authenticated
+User actor, server occurrence time and null reason, atomically with Trip/Stops/mappings
+and Order planning. Initial Trip version stays 0. No assignments means no events.
+
+The three assignment endpoints require strict nonnegative integer expectedVersion,
+target UUID and nonblank reason. A scoped Trip exclusive lock precedes version/state
+checks. Material mutations advance @Version/updatedAt once and append history in the
+same transaction. Same-current-resource requests with the current version are 200
+no-ops, preserving time/version/event count; stale versions are STALE_VERSION.
+Targets are freshly checked under shared parent locks. Driver/Tractor must be active;
+normal Trailer planning must be visible, active and IN_SERVICE. No Trailer row changes.
+
+Driver/Tractor changes allow PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP and CANCELLING,
+never terminal states. Completing both active current resources and an executable Stop
+promotes PLANNED to ASSIGNED; Trailer remains optional. Active reassignment preserves
+physical lifecycle/milestones. Ordinary Trailer assignment fills a null expectation in
+PLANNED/ASSIGNED/IN_TRANSIT/AT_STOP; replacing an existing expectation ordinarily is
+limited to PLANNED/ASSIGNED. Same Trailer is a no-op in those allowed states; CANCELLING
+and terminal states reject. Existing expectations in active Trips require substitution.
+
+Fresh capability scopes are derived from PostgreSQL, not Firebase claims. Customer
+Dispatcher commands require **every** Customer represented by currently mapped Orders
+to be authorized, with nonempty mappings. The locked Trip parent serializes mapping
+release; customer derivation does not acquire Order locks in reverse cancellation order.
+A mixed/out-of-scope Trip returns generic 404, never the blocking Customer. Dispatcher
+still has no TRIP_ASSIGN_TRACTOR or general TRIP_VIEW_ALL; no role mappings change.
+
+Substitution accepts exactly expectedTrailerId, requestedTrailerId, AUTHORIZE/REJECT
+and reason, with no invented expectedVersion. ASSIGNED/IN_TRANSIT/AT_STOP only. Exclusive
+Trip locking and exact current nonnull expectedTrailerId matching guard concurrency;
+a stale/missing expectation gives RESOURCE_CONFLICT. Identical expected/requested is
+VALIDATION_FAILED. AUTHORIZE requires visible active/IN_SERVICE target, updates current
+planning and appends AUTHORIZED. REJECT needs visible same-Tenant existence only (even
+inactive/OOS), leaves current planning intact and appends REJECTED. Both advance version
+and time, preserve expectedTrailerId in metadata and change no physical coupling/state.
+A scoped requested Trailer must also pass fresh Customer Trailer visibility.
+
+Reassignment metadata retains previousDriverId/previousTractorId/previousTrailerId.
+Events retain server actor, reason/time and all previous resources, with no mutable
+previous-resource columns or invented assignment-segment tables. Trip detail adds
+assignmentHistory. GET timeline requires TRIP_VIEW_ALL and returns only persisted
+assignment/substitution items in occurredAt ASC/id ASC order. It is a partial domain
+timeline, not generic Audit, reroute, cancellation, execution or evidence history.
+
+`TripTrailerExpectationPolicy` is a public planning-only boundary for the future Hook
+caller's already-established runtime Tenant transaction. It reads the current expected
+Trailer freshly under a shared Trip lock: matching scanned ID satisfies planning
+expectation; mismatch or unknown expectation never authorizes silent substitution.
+AUTHORIZE changes that expectation; REJECT does not. The future caller still owns full
+assigned-work, capability, physical-state and Hook validation. No approval cache,
+Firebase authorization, admin datasource, BYPASSRLS or physical Hook is introduced.
+
+#36 owns reroute/cancellation/notification flows, #37 owns Web, later execution owns
+Hook/Drop/Stops/POD/coupling. #61 generic Audit remains deferred. V14 operational history
+is durable domain history, not an early generic Audit subsystem or formal event sourcing.

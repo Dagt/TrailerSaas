@@ -101,8 +101,9 @@ final class TripContracts {
       Instant startedAt,
       Instant completedAt,
       Instant cancelledAt,
-      List<Stop> stops) {
-    static Detail of(TripEntity t, List<Stop> stops) {
+      List<Stop> stops,
+      List<Assignment> assignmentHistory) {
+    static Detail of(TripEntity t, List<Stop> stops, List<Assignment> history) {
       return new Detail(
           t.id,
           t.status,
@@ -115,9 +116,41 @@ final class TripContracts {
           t.startedAt,
           t.completedAt,
           t.cancelledAt,
-          stops);
+          stops,
+          history);
     }
   }
+
+  record Assignment(
+      UUID id,
+      String eventType,
+      UUID driverId,
+      UUID tractorId,
+      UUID trailerId,
+      UUID actorUserId,
+      Instant occurredAt,
+      String reason,
+      Map<String, Object> metadata) {
+    static Assignment of(TripAssignmentEventEntity e) {
+      return new Assignment(
+          e.id,
+          e.eventType,
+          e.driverId,
+          e.tractorId,
+          e.trailerId,
+          e.actorUserId,
+          e.occurredAt,
+          e.reason,
+          e.metadata);
+    }
+  }
+
+  record Timeline(List<Assignment> items) {}
+
+  record Assign(long expectedVersion, UUID resourceId, String reason) {}
+
+  record Substitution(
+      UUID expectedTrailerId, UUID requestedTrailerId, String decision, String reason) {}
 
   record Page(List<Summary> items, String nextCursor) {}
 }

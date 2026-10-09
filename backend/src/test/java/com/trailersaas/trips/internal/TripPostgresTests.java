@@ -199,7 +199,7 @@ class TripPostgresTests extends PostgresIntegrationTest {
 
   @Test
   void migrationHasExactObjectsCatalogsGrantsAndNoCascade() throws Exception {
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
     var expected =
         Map.of(
             "trips",
@@ -296,7 +296,7 @@ class TripPostgresTests extends PostgresIntegrationTest {
         .isEqualTo(false);
     assertThat(f.db.value("SELECT has_schema_privilege(?,'public','CREATE')", RUNTIME_USERNAME))
         .isEqualTo(false);
-    for (var table : List.of("trip_assignment_events", "trip_stop_events", "trailer_couplings")) {
+    for (var table : List.of("trip_stop_events", "trailer_couplings")) {
       assertThat(f.db.value("SELECT to_regclass(?)", table)).isNull();
     }
   }

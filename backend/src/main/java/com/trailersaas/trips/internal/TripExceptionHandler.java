@@ -40,6 +40,14 @@ class TripExceptionHandler {
     return body;
   }
 
+  @ExceptionHandler({
+    org.springframework.orm.ObjectOptimisticLockingFailureException.class,
+    jakarta.persistence.OptimisticLockException.class
+  })
+  ProblemDetail stale(Exception ignored) {
+    return failure(TripFailure.stale());
+  }
+
   @ExceptionHandler(com.trailersaas.orders.OrderPlanningRejectedException.class)
   ProblemDetail planning(com.trailersaas.orders.OrderPlanningRejectedException failure) {
     return failure(

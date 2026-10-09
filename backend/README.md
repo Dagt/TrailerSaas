@@ -826,3 +826,18 @@ PostgreSQL 18 regressions cover cardinality, tenant-safe FKs, exact schema/grant
 RLS, catalog checks, atomic writes, Order planning, cancellation releases and real
 Order/Site lock waits. #35 assignment events, #36 Trip mutations, #37 Web dispatch
 and all physical execution remain outside this implementation.
+
+
+## Trip assignment history and substitution (#35)
+
+V14 adds `trip_assignment_events` only (Tenant RLS; runtime SELECT/INSERT, no history
+UPDATE/DELETE). V1–V13 remain unchanged. POST /trips now creates initial Driver/Tractor/
+Trailer events atomically without changing version 0. Pre-V14 projections are not
+backfilled with synthetic history. Assignment/reassignment commands use an exclusive
+Trip lock, expectedVersion, fresh all-mapped-Customer scope and shared eligibility
+locks. Substitution uses the Accepted expectedTrailerId guard: AUTHORIZE changes the
+planned expectation; REJECT preserves it, including when the visible target is OOS
+or inactive. Neither affects physical Trailer state/coupling. Detail and the bounded
+TRIP_VIEW_ALL timeline expose chronological domain assignment history. See the
+[API implementation boundary](../docs/api/orders-dispatch.md#issue-35-implementation-boundary)
+for state/no-op rules, metadata, the planning-only future Hook policy and exclusions.

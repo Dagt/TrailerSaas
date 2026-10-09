@@ -77,11 +77,10 @@ Generic durable Audit persistence/query remains #61.
 ### Trips
 - #34 → #35 → #36 → #37
 
-#34 is the current bounded implementation: Trip/executable Stop planning,
-Order OPEN→PLANNED integration, coordinated cancellation release and the real
-Order unplanned filter. Complete only after its PR merges. #35 follows for durable
-initial/reassignment history and assignment commands; #36 owns reroute/cancellation,
-and #37 owns the dispatch Web surface.
+#34 is merged/complete via [PR #88](https://github.com/Dagt/TrailerSaas/pull/88).
+#35 is the current bounded implementation: durable initial/reassignment history,
+assignment commands and explicit Trailer substitution decisions. Complete only
+upon its PR merge. #36 follows for reroute/cancellation; #37 owns dispatch Web.
 
 ### Trailer movement
 - #38 → #39 → #40 → #41

@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.*;
 class TripController {
   private final TripService service;
 
-  TripController(TripService service) {
+  private final TripAssignmentService assignments;
+
+  TripController(TripService service, TripAssignmentService assignments) {
     this.service = service;
+    this.assignments = assignments;
   }
 
   @PostMapping
@@ -44,5 +47,59 @@ class TripController {
       @RequestParam Map<String, String> query) {
     TripValidation.fields(query, Set.of());
     return service.get(actor, tenantId, tripId);
+  }
+
+  @PostMapping("/{tripId}/driver-assignments")
+  Detail driver(
+      @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+      @PathVariable UUID tenantId,
+      @PathVariable UUID tripId,
+      @RequestBody Map<String, Object> body,
+      @RequestParam Map<String, String> query) {
+    TripValidation.fields(query, Set.of());
+    return assignments.assign(actor, tenantId, tripId, TripAssignmentService.Kind.DRIVER, body);
+  }
+
+  @PostMapping("/{tripId}/tractor-assignments")
+  Detail tractor(
+      @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+      @PathVariable UUID tenantId,
+      @PathVariable UUID tripId,
+      @RequestBody Map<String, Object> body,
+      @RequestParam Map<String, String> query) {
+    TripValidation.fields(query, Set.of());
+    return assignments.assign(actor, tenantId, tripId, TripAssignmentService.Kind.TRACTOR, body);
+  }
+
+  @PostMapping("/{tripId}/planned-trailer-assignments")
+  Detail trailer(
+      @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+      @PathVariable UUID tenantId,
+      @PathVariable UUID tripId,
+      @RequestBody Map<String, Object> body,
+      @RequestParam Map<String, String> query) {
+    TripValidation.fields(query, Set.of());
+    return assignments.assign(actor, tenantId, tripId, TripAssignmentService.Kind.TRAILER, body);
+  }
+
+  @PostMapping("/{tripId}/trailer-substitution-decisions")
+  Detail substitution(
+      @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+      @PathVariable UUID tenantId,
+      @PathVariable UUID tripId,
+      @RequestBody Map<String, Object> body,
+      @RequestParam Map<String, String> query) {
+    TripValidation.fields(query, Set.of());
+    return assignments.decide(actor, tenantId, tripId, body);
+  }
+
+  @GetMapping("/{tripId}/timeline")
+  Timeline timeline(
+      @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+      @PathVariable UUID tenantId,
+      @PathVariable UUID tripId,
+      @RequestParam Map<String, String> query) {
+    TripValidation.fields(query, Set.of());
+    return service.timeline(actor, tenantId, tripId);
   }
 }

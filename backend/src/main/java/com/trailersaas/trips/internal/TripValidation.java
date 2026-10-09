@@ -96,6 +96,29 @@ final class TripValidation {
         uuid(input.get("plannedInitialTrailerId"), true));
   }
 
+  static Assign assignment(Map<String, Object> input, String resourceField) {
+    fields(input, Set.of("expectedVersion", resourceField, "reason"));
+    var value = input.get("expectedVersion");
+    if (!(value instanceof Integer || value instanceof Long) || ((Number) value).longValue() < 0) {
+      throw TripFailure.invalid("expectedVersion");
+    }
+    return new Assign(
+        ((Number) value).longValue(),
+        uuid(input.get(resourceField), false),
+        text(input.get("reason"), false));
+  }
+
+  static Substitution substitution(Map<String, Object> input) {
+    fields(input, Set.of("expectedTrailerId", "requestedTrailerId", "decision", "reason"));
+    var expected = uuid(input.get("expectedTrailerId"), false);
+    var requested = uuid(input.get("requestedTrailerId"), false);
+    var decision = text(input.get("decision"), false);
+    if (expected.equals(requested) || !Set.of("AUTHORIZE", "REJECT").contains(decision)) {
+      throw TripFailure.invalid("decision");
+    }
+    return new Substitution(expected, requested, decision, text(input.get("reason"), false));
+  }
+
   static void fields(Map<?, ?> input, Set<String> allowed) {
     if (input == null || input.keySet().stream().anyMatch(k -> !allowed.contains(k))) {
       throw TripFailure.invalid("body");

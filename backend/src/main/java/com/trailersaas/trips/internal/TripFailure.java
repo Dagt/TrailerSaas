@@ -36,6 +36,19 @@ final class TripFailure extends RuntimeException {
         null);
   }
 
+  static TripFailure tripState() {
+    return new TripFailure(
+        409,
+        "INVALID_STATE_TRANSITION",
+        "The Trip cannot perform that action in its current state.",
+        null);
+  }
+
+  static TripFailure stale() {
+    return new TripFailure(
+        409, "STALE_VERSION", "The resource changed. Reload it before trying again.", null);
+  }
+
   static boolean integrity(Throwable failure) {
     for (var c = failure; c != null; c = c.getCause()) {
       if (c instanceof SQLException sql) {
