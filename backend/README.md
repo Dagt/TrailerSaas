@@ -1,5 +1,38 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Orders foundation (issue #31)
+
+V10 creates only `orders`, `order_cargo_lines` and `order_stops`; V1–V9 remain
+unchanged. The initial Order aggregate is independent of Trips, Trailers and
+manifests. The accepted v1.0.1 milestones exist from creation; #31 creates only
+OPEN/version 0 with null milestone timestamps.
+
+All three tables use Tenant RLS excluding identity bootstrap, non-destructive
+tenant-safe parent FKs, and runtime **SELECT/INSERT only**. Runtime has no
+UPDATE/DELETE, ownership or RLS bypass. Stop FKs use V5's existing
+`(tenant_id, site_id, id)` Location key and preserve historical snapshots.
+The full status catalog is structural preparation, not implemented commands.
+
+`POST /api/v1/tenants/{tenantId}/orders` atomically creates the projection,
+zero or more cargo lines and requested Stops. List/detail use the public identity
+Order access boundary with fresh memberships/roles and Customer scope.
+Normalized destination validation uses the public Customers policy; Orders never
+reads Customers/Identity internal repositories. That policy holds the Site's
+shared parent lock during association validation to coordinate with association
+removal. Snapshots contain destination data, never authorization context.
+
+GET/list supports customerId/status and real opaque keyset cursor/limit, ordered
+by creation timestamp and ID descending; default 50, maximum 200. Detail reads
+children only after the scoped parent is visible. Authorization is reapplied on
+each request/page. Normalized destinations require Customer↔Site compatibility
+and optional neutral/same-Customer Location within the exact Site.
+
+See [Orders API](../docs/api/orders-dispatch.md) for the minimum snapshot shape,
+implemented schemas and explicit gaps: plannedTrailerId/manifests (#32), Order
+mutations/transitions (#33), unplanned/active/appointment filters and richer
+fulfillment/history. Unsupported fields/filters fail validation. No idempotency
+ledger/replay guarantee, UI, Trip, outbox or audit subsystem is introduced.
+
 Issue #19 adds migration-first PostgreSQL persistence to the existing Spring
 Boot application (ADR-003/006/013). Use JDK 25 and the Maven Wrapper.
 

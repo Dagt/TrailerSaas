@@ -8,6 +8,59 @@ Base:
 
 ## 1. Orders
 
+### Implemented surface — issue #31
+
+The Accepted v0.1 contracts below describe the full future surface. Issue #31
+implements only POST/list/detail for the initial Order aggregate:
+
+- POST accepts `customerId`, `orderNumber`, nullable PO/shipment/BOL references,
+  optional `cargoLines` (zero or more), and at least one `requestedStops`.
+  Unknown fields, including `plannedTrailerId`, are rejected with
+  `400 VALIDATION_FAILED`; planning requires #32, not a direct Order↔Trailer FK.
+- Creation is atomic and always produces `OPEN`, version 0 and null
+  `deliveredAt`/`completedAt`/`cancelledAt`. No transition/PATCH/cancellation is
+  implemented. Cargo units and requested Stop types remain open strings; the
+  weight-unit example below is not a closed catalog.
+- GET/list returns Order summaries and `nextCursor`; GET/detail and POST return
+  the projection plus `cargoLines` and `requestedStops`, their IDs and timestamps.
+  There are no manifests, Trips, fulfillment, evidence or history projections.
+- List supports only `customerId`, `status`, `cursor`, `limit` (default 50,
+  maximum 200). Ordering is `createdAt DESC, id DESC`; opaque keyset continuation
+  is scoped again on every request, not an authorization token or public cursor
+  encoding contract. Responses contain `nextCursor: null` at the end.
+  Unbounded lists are not returned.
+- `unplanned` is deferred until planning/assignment exists (#32/#34).
+  `active` has no defined Order field/state mapping. Appointment ranges do not
+  specify which of multiple requested Stops to match. Those Accepted filters
+  remain future contracts and are rejected rather than silently simulated.
+- ORDER_CREATE is checked fresh against the target Customer; ORDER_VIEW_ALL
+  sees the Tenant, ORDER_VIEW_CUSTOMER_SCOPED sees current authorized Customers.
+  A foreign explicit customer filter gives CUSTOMER_SCOPE_DENIED; an invisible
+  direct resource gives generic RESOURCE_NOT_FOUND. Firebase claims grant nothing.
+- POST has no idempotent replay ledger in #31. An uncertain response must be
+  reconciled using reads, not blindly replayed.
+
+**Destination snapshot representation:** the prior contract specifies an object
+without an exact shape. The implemented minimum reuses the existing Site DTO:
+`name` (nonblank, required), optional `address` with `line1`, `line2`, `city`,
+`stateRegion`, `postalCode`, `countryCode`; optional `timezone`, `latitude`,
+`longitude`, `geofenceRadiusM`. Address fields are individually nullable,
+country code is two characters when supplied, timezone is IANA, coordinates are
+independently nullable/in range and radius is positive when supplied. No new
+address taxonomy or coordinate-pair rule is introduced. Only name is required for
+an ad-hoc historical destination; the snapshot is frozen at creation.
+
+Normalized destinations require a same-Tenant Customer↔Site association.
+An optional Location belongs to that exact Site/Tenant and is neutral or matches
+the Order Customer. A snapshot may coexist with normalized references but never
+bypasses their validation. Text/address matching grants no authority. An ad-hoc
+snapshot does not create or impersonate master Site/Location data; authorization
+always comes from the Order Customer. Future physical execution retains the
+v1.0.1 requirement to normalize before any transition requiring a real Location.
+
+The OpenAPI implemented request/response schemas are separate from
+`CreateOrderRequest` and the future mutation contracts below.
+
 ### POST /orders
 
 Capability: `ORDER_CREATE`.
