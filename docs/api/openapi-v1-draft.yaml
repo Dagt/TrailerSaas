@@ -847,6 +847,11 @@ paths:
     get:
       tags: [Orders]
       operationId: listOrders
+      x-implementation-status: implemented-issue-31
+      description: >
+        Fresh Tenant/customer-scoped summaries, ordered by createdAt DESC, id DESC.
+        Only customerId, status, cursor and limit are supported. Cursor is opaque;
+        each page rechecks authorization. Planning, active and appointment filters remain deferred.
       parameters:
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Limit'
@@ -855,30 +860,39 @@ paths:
           schema: { type: string, format: uuid }
         - name: status
           in: query
-          schema: { type: string }
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
       responses:
         '200':
-          $ref: '#/components/responses/PagedResponse'
+          description: Scoped Order summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderList'
         default:
           $ref: '#/components/responses/Problem'
     post:
       tags: [Orders]
       operationId: createOrder
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKeyOptional'
+      x-implementation-status: implemented-issue-31
+      description: >
+        ORDER_CREATE, checked against fresh database Customer scope. Atomically creates an OPEN
+        Order, zero or more cargo lines and requested Stops. No planning or idempotent replay
+        is implemented; do not blindly retry an uncertain creation. Unknown fields, including
+        plannedTrailerId, are rejected rather than ignored.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOrderRequest'
+              $ref: '#/components/schemas/CreateOrderRequestImplemented'
       responses:
         '201':
           description: Order created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderSummary'
+                $ref: '#/components/schemas/OrderDetail'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -889,18 +903,25 @@ paths:
     get:
       tags: [Orders]
       operationId: getOrder
+      x-implementation-status: implemented-issue-31
+      description: >
+        ORDER_VIEW_ALL or fresh ORDER_VIEW_CUSTOMER_SCOPED. Invisible resources return
+        generic RESOURCE_NOT_FOUND. Includes only the Order, cargo and requested Stops;
+        fulfillment, Trips, manifests, evidence and history are future contract surfaces.
       responses:
         '200':
           description: Order detail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderSummary'
+                $ref: '#/components/schemas/OrderDetail'
         default:
           $ref: '#/components/responses/Problem'
     patch:
       tags: [Orders]
       operationId: updateOrderBeforeExecution
+      x-implementation-status: planned
+      description: Accepted future contract; not implemented in issue 31. Owned by issue 33.
       requestBody:
         required: true
         content:
@@ -927,6 +948,8 @@ paths:
     post:
       tags: [Orders]
       operationId: cancelOrder
+      x-implementation-status: planned
+      description: Accepted future contract; not implemented in issue 31. Owned by issue 33.
       requestBody:
         required: true
         content:
@@ -1629,6 +1652,180 @@ components:
           $ref: '#/components/schemas/CreateTractorRequest/properties/operationalNumber'
         active: { type: boolean }
 
+    CreateOrderRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [customerId, orderNumber, requestedStops]
+      properties:
+        customerId: { type: string, format: uuid }
+        orderNumber: { type: string, pattern: '\S', minLength: 1 }
+        poNumber: { type: [string, "null"] }
+        shipmentNumber: { type: [string, "null"] }
+        bolReference: { type: [string, "null"] }
+        cargoLines:
+          type: array
+          description: Optional; omission or an empty array creates no cargo lines.
+          items:
+            $ref: '#/components/schemas/OrderCargoLineInputImplemented'
+        requestedStops:
+          type: array
+          minItems: 1
+          description: Unique sequenceNumber per Order; persisted independently of any Trip.
+          items:
+            $ref: '#/components/schemas/OrderRequestedStopInputImplemented'
+
+    OrderCargoLineInputImplemented:
+      type: object
+      additionalProperties: false
+      required: [description]
+      properties:
+        description: { type: string, pattern: '\S', minLength: 1 }
+        quantity: { type: [number, "null"] }
+        palletCount: { type: [integer, "null"] }
+        weight: { type: [number, "null"] }
+        weightUnit:
+          type: [string, "null"]
+          description: Open metadata string; no approved closed unit taxonomy or conversion.
+
+    OrderRequestedStopInputImplemented:
+      type: object
+      additionalProperties: false
+      required: [sequenceNumber, stopType]
+      description: >
+        Requires siteId or a valid snapshot (both may coexist). locationId requires siteId.
+        Normalized Site must be associated with the Order Customer; Location belongs to
+        that exact Tenant/Site and is neutral or belongs to that Customer.
+      properties:
+        sequenceNumber: { type: integer, minimum: 1 }
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        siteSnapshot:
+          anyOf:
+            - $ref: '#/components/schemas/OrderDestinationSnapshot'
+            - type: "null"
+        stopType:
+          type: string
+          pattern: '\S'
+          minLength: 1
+          description: Requested Stop type; no executable Trip Stop enum is imposed by issue 31.
+        scheduledAt: { type: [string, "null"], format: date-time }
+        instructions: { type: [string, "null"] }
+
+    OrderDestinationSnapshot:
+      type: object
+      additionalProperties: false
+      required: [name]
+      description: >
+        Minimal destination representation from existing Site DTO fields. Frozen at creation;
+        optional address/timezone/coordinates do not establish permissions or master data.
+        No Tenant, Customer, Site, Location or authorization identifiers.
+      properties:
+        name: { type: string, pattern: '\S', minLength: 1 }
+        address:
+          anyOf:
+            - type: object
+              additionalProperties: false
+              properties:
+                line1: { type: [string, "null"] }
+                line2: { type: [string, "null"] }
+                city: { type: [string, "null"] }
+                stateRegion: { type: [string, "null"] }
+                postalCode: { type: [string, "null"] }
+                countryCode: { type: [string, "null"], minLength: 2, maxLength: 2 }
+            - type: "null"
+        timezone:
+          type: [string, "null"]
+          description: IANA timezone when supplied.
+        latitude: { type: [number, "null"], minimum: -90, maximum: 90 }
+        longitude: { type: [number, "null"], minimum: -180, maximum: 180 }
+        geofenceRadiusM: { type: [integer, "null"], minimum: 1 }
+
+    OrderStatus:
+      type: string
+      enum: [OPEN, PLANNED, IN_PROGRESS, PARTIALLY_DELIVERED, DELIVERED, COMPLETED, CANCELLING, CANCELLED]
+      description: Accepted full catalog; issue 31 creates only OPEN and implements no transitions.
+
+    OrderList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSummary'
+        nextCursor:
+          type: [string, "null"]
+          description: Opaque continuation, null at end; never grants Tenant/customer access.
+
+    OrderCargoLine:
+      type: object
+      additionalProperties: false
+      required: [id, description, quantity, palletCount, weight, weightUnit, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        description: { type: string, pattern: '\S', minLength: 1 }
+        quantity: { type: [number, "null"] }
+        palletCount: { type: [integer, "null"] }
+        weight: { type: [number, "null"] }
+        weightUnit:
+          type: [string, "null"]
+          description: Open metadata string; no approved closed unit taxonomy or conversion.
+        createdAt: { type: string, format: date-time }
+
+    OrderRequestedStop:
+      type: object
+      additionalProperties: false
+      required: [id, sequenceNumber, siteId, locationId, siteSnapshot, stopType, scheduledAt, instructions, version, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        sequenceNumber: { type: integer, minimum: 1 }
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        siteSnapshot:
+          anyOf:
+            - $ref: '#/components/schemas/OrderDestinationSnapshot'
+            - type: "null"
+        stopType:
+          type: string
+          pattern: '\S'
+          minLength: 1
+          description: Requested Stop type; no executable Trip Stop enum is imposed by issue 31.
+        scheduledAt: { type: [string, "null"], format: date-time }
+        instructions: { type: [string, "null"] }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    OrderDetail:
+      type: object
+      additionalProperties: false
+      required: [id, customerId, orderNumber, poNumber, shipmentNumber, bolReference, status, version, createdAt, updatedAt, deliveredAt, completedAt, cancelledAt, cargoLines, requestedStops]
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        orderNumber: { type: string }
+        poNumber: { type: [string, "null"] }
+        shipmentNumber: { type: [string, "null"] }
+        bolReference: { type: [string, "null"] }
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        deliveredAt: { type: [string, "null"], format: date-time }
+        completedAt: { type: [string, "null"], format: date-time }
+        cancelledAt: { type: [string, "null"], format: date-time }
+        cargoLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderCargoLine'
+        requestedStops:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderRequestedStop'
+
+
     CargoLineInput:
       type: object
       required: [description]
@@ -1653,6 +1850,7 @@ components:
 
     CreateOrderRequest:
       type: object
+      description: Accepted future contract including manifest planning; not the implemented issue 31 request.
       required: [customerId, orderNumber, requestedStops]
       properties:
         customerId: { type: string, format: uuid }
@@ -1792,12 +1990,23 @@ components:
 
     OrderSummary:
       type: object
+      additionalProperties: false
+      required: [id, customerId, orderNumber, poNumber, shipmentNumber, bolReference, status, version, createdAt, updatedAt, deliveredAt, completedAt, cancelledAt]
       properties:
         id: { type: string, format: uuid }
         customerId: { type: string, format: uuid }
         orderNumber: { type: string }
-        status: { type: string }
-        version: { type: integer, format: int64 }
+        poNumber: { type: [string, "null"] }
+        shipmentNumber: { type: [string, "null"] }
+        bolReference: { type: [string, "null"] }
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        deliveredAt: { type: [string, "null"], format: date-time }
+        completedAt: { type: [string, "null"], format: date-time }
+        cancelledAt: { type: [string, "null"], format: date-time }
 
     CancelOrderRequest:
       type: object
