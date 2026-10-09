@@ -15,6 +15,7 @@ final class OrderFailure extends RuntimeException {
     static OrderFailure conflict() { return new OrderFailure(409, "RESOURCE_CONFLICT", "The requested change conflicts with existing data.", null); }
     static OrderFailure scope() { return new OrderFailure(403, "CUSTOMER_SCOPE_DENIED", "The requested action is outside the permitted Customer scope.", null); }
     static OrderFailure stale() { return new OrderFailure(409, "STALE_VERSION", "The resource changed since it was read.", null); }
+    static OrderFailure transition() { return new OrderFailure(409, "INVALID_STATE_TRANSITION", "The Order cannot perform that action in its current state.", null); }
     static boolean expectedIntegrity(RuntimeException failure) {
         for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
             if (cause instanceof SQLException sql) { return Set.of("23503", "23505", "23514").contains(sql.getSQLState() == null ? "" : sql.getSQLState()); }

@@ -8,7 +8,7 @@ Base:
 
 ## 1. Orders
 
-### Implemented surface — issues #31–#32
+### Implemented surface — issues #31–#33
 
 The Accepted v0.1 contracts below describe the full future surface. Issue #31
 implements only POST/list/detail for the initial Order aggregate:
@@ -18,8 +18,8 @@ implements only POST/list/detail for the initial Order aggregate:
   Optional `plannedTrailerId` is implemented by #32 as initial Manifest planning,
   never a direct Order↔Trailer FK. Unknown fields give `400 VALIDATION_FAILED`.
 - Creation is atomic and always produces `OPEN`, version 0 and null
-  `deliveredAt`/`completedAt`/`cancelledAt`. No transition/PATCH/cancellation is
-  implemented. Cargo units and requested Stop types remain open strings; the
+  `deliveredAt`/`completedAt`/`cancelledAt`. Issue #33 adds the bounded reference
+  edits, cancellation/completion and internal lifecycle hooks described below. Cargo units and requested Stop types remain open strings; the
   weight-unit example below is not a closed catalog.
 - GET/list returns Order summaries and `nextCursor`; GET/detail and POST return
   the projection plus `cargoLines` and `requestedStops`, their IDs and timestamps.
@@ -64,7 +64,8 @@ always comes from the Order Customer. Future physical execution retains the
 v1.0.1 requirement to normalize before any transition requiring a real Location.
 
 The OpenAPI implemented request/response schemas are separate from
-`CreateOrderRequest` and the future mutation contracts below.
+`CreateOrderRequest` and future operational contracts below; #33's strict mutation
+schemas implement only the bounded behavior described in its implementation section.
 Creator User identity remains server-derived persistence metadata only; it is not
 included in POST detail, list summaries or GET detail. Authorized actor/provenance
 presentation belongs to the future audit/history surface.
@@ -442,3 +443,57 @@ Returns ordered user-facing events, for example:
 - completion.
 
 Internal audit noise should not be mixed into the primary operational timeline.
+
+## Issue #33 implementation boundary
+
+PATCH `/orders/{orderId}` is implemented for OPEN/PLANNED only and changes exactly
+`poNumber`, `shipmentNumber`, `bolReference`. Omission preserves; explicit null clears.
+Strict bodies require a nonnegative integer `expectedVersion`. No-op keeps version;
+material edit advances it once. Cargo, Stops, Customer, number and Trailer are immutable
+through this command. Invalid state returns `409 INVALID_STATE_TRANSITION`, distinct
+from `409 STALE_VERSION` after the scoped Order lock/version check.
+
+`POST /orders/{orderId}/cancellations` requires ORDER_CANCEL, expectedVersion and
+nonblank reason. OPEN/PLANNED -> CANCELLED sets server cancelledAt and releases only
+allocations in OPEN Manifests, advancing each affected Manifest version/updatedAt.
+CLOSED allocations and all cargo/requested Stops/snapshots remain unchanged; empty
+Manifests remain OPEN. IN_PROGRESS/PARTIALLY_DELIVERED -> CANCELLING requires a
+resolution with nonblank type/instructions and optional Customer-compatible Tenant
+Site. No closed resolution catalog is assumed. It emits that operational instruction
+payload but creates no Trip/Stop or physical Trailer change. cancelledAt stays null
+until the future operational flow calls the cancellation-finished hook.
+
+`POST /orders/{orderId}/completion` requires ORDER_COMPLETE and expectedVersion only.
+DELIVERED -> COMPLETED preserves deliveredAt and sets server completedAt. No reopen.
+All commands resolve fresh PostgreSQL capabilities/Customer scopes; invisible IDs
+return generic 404. An optional Idempotency-Key is not backed by a replay ledger;
+an uncertain response must be reconciled, not assumed replayable.
+
+### Order / Manifest concurrency protocol
+
+Allocation add/remove takes the scoped Order shared lock before checking OPEN,
+then locks its Manifest. Order mutation takes the scoped Order exclusive lock first.
+Pre-execution cancellation locks affected OPEN Manifests in UUID order, rechecks
+OPEN after acquiring each lock, removes allocations, and commits together with Order
+status/version/milestones. A failure rolls back every change. Allocation that owns
+its shared lock finishes before cancellation releases it; allocation waiting behind
+cancellation observes the new state and rejects. Manifest close remains independent
+and explicit; CLOSED history is never released.
+
+### Future execution and history integrations
+
+Orders-owned `OrderLifecyclePort` exposes only plan, start, partial, resume, deliver
+and finish-cancellation hooks inside an already-established runtime Tenant transaction.
+The future caller owns workflow authorization, operational planning, Stops/POD checks.
+Manifest planning alone never changes OPEN to PLANNED. No execution REST or Trips are
+created. Every accepted transition advances version/updatedAt with server milestones.
+
+`OrderLifecycleEvent` carries action, Tenant/Order/Customer, previous/new state,
+version, server occurrence time, human User/membership attribution or SYSTEM, and
+reason/resolution where applicable. Publication is an **in-process transaction-bound
+hook, not durable history**. Audit persistence/query and generic actor infrastructure
+remain #61; future durable listeners must participate in the transaction (for example
+BEFORE_COMMIT), never treat a rolled-back publication as committed history. No reason
+or resolution is exposed in GET. #33 deliberately adds no history table/column or
+Audit API. Until #61, the operational resolution payload has no durable replay store;
+this bounded integration gap is explicit, not a claim of audit durability.

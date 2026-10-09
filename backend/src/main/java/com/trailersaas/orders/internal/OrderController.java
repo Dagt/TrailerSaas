@@ -11,7 +11,23 @@ import static com.trailersaas.orders.internal.OrderContracts.*;
 @RestController @RequestMapping("/api/v1/tenants/{tenantId}/orders")
 class OrderController {
     private final OrderService service;
-    OrderController(OrderService service) { this.service = service; }
+    private final OrderMutationService mutations;
+    OrderController(OrderService service, OrderMutationService mutations) { this.service = service; this.mutations = mutations; }
+    @PatchMapping("/{orderId}")
+    Detail patch(@AuthenticationPrincipal AuthenticatedUserPrincipal actor, @PathVariable UUID tenantId,
+            @PathVariable UUID orderId, @RequestBody Map<String, Object> input, @RequestParam Map<String, String> parameters) {
+        OrderValidation.fields(parameters, java.util.Set.of(), "query"); return mutations.patch(actor, tenantId, orderId, input);
+    }
+    @PostMapping("/{orderId}/cancellations")
+    Detail cancel(@AuthenticationPrincipal AuthenticatedUserPrincipal actor, @PathVariable UUID tenantId,
+            @PathVariable UUID orderId, @RequestBody Map<String, Object> input, @RequestParam Map<String, String> parameters) {
+        OrderValidation.fields(parameters, java.util.Set.of(), "query"); return mutations.cancel(actor, tenantId, orderId, input);
+    }
+    @PostMapping("/{orderId}/completion")
+    Detail complete(@AuthenticationPrincipal AuthenticatedUserPrincipal actor, @PathVariable UUID tenantId,
+            @PathVariable UUID orderId, @RequestBody Map<String, Object> input, @RequestParam Map<String, String> parameters) {
+        OrderValidation.fields(parameters, java.util.Set.of(), "query"); return mutations.complete(actor, tenantId, orderId, input);
+    }
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
     Detail create(@AuthenticationPrincipal AuthenticatedUserPrincipal actor, @PathVariable UUID tenantId,
             @RequestBody Map<String, Object> input, @RequestParam Map<String, String> parameters) {

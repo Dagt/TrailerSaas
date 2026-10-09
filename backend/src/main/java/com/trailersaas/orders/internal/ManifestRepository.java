@@ -19,6 +19,14 @@ class ManifestRepository {
                 .setParameter("tenant", tenant).setParameter("manifest", manifest).setParameter("order", order)
                 .getResultStream().findFirst().orElse(null);
     }
+    java.util.List<UUID> openManifestIdsForOrder(UUID tenant, UUID order) {
+        return em.createQuery("""
+                select m.id from LoadManifestEntity m where m.tenantId=:tenant
+                and m.status=com.trailersaas.orders.internal.ManifestStatus.OPEN
+                and exists (select a.id from ManifestOrderEntity a where a.tenantId=m.tenantId
+                    and a.manifestId=m.id and a.orderId=:order) order by m.id
+                """, UUID.class).setParameter("tenant", tenant).setParameter("order", order).getResultList();
+    }
     void insert(Object entity) { em.persist(entity); }
     void remove(ManifestOrderEntity allocation) { em.remove(allocation); }
     void flush() { em.flush(); }

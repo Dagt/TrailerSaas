@@ -56,16 +56,16 @@ class ManifestService {
             BigDecimal quantity, Integer pallets, BigDecimal weight) {
         amounts(quantity, pallets, weight);
         var scope = authorization.resolveCustomerScope(actor, tenant, Capability.TRIP_ASSIGN_TRAILER);
-        var manifest = mutable(tenant, id, expectedVersion);
-        var order = orders.resource(tenant, orderId, scope);
+        var order = orders.lockForAllocation(tenant, orderId, scope);
         requireOpen(order);
+        var manifest = mutable(tenant, id, expectedVersion);
         if (repository.allocation(tenant, id, orderId) != null) { throw OrderFailure.conflict(); }
         insertAllocation(manifest, order, quantity, pallets, weight); touch(manifest); flush(); return Revision.of(manifest);
     }
     Revision remove(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, long expectedVersion, UUID orderId) {
         var scope = authorization.resolveCustomerScope(actor, tenant, Capability.TRIP_ASSIGN_TRAILER);
+        var order = orders.lockForAllocation(tenant, orderId, scope); requireOpen(order);
         var manifest = mutable(tenant, id, expectedVersion);
-        var order = orders.resource(tenant, orderId, scope); requireOpen(order);
         var allocation = repository.allocation(tenant, id, orderId);
         if (allocation == null) { throw OrderFailure.missing(); }
         repository.remove(allocation); touch(manifest); flush(); return Revision.of(manifest);
@@ -75,6 +75,18 @@ class ManifestService {
         var manifest = mutable(tenant, id, expectedVersion);
         manifest.status = ManifestStatus.CLOSED; touch(manifest); manifest.closedAt = manifest.updatedAt;
         flush(); return Manifest.of(manifest);
+    }
+    /** Caller already holds the exclusive Order lock and ORDER_CANCEL authorization.
+     * Lock parents deterministically; closing concurrently may turn a parent historical before lock.
+     */
+    void releasePreExecutionAllocations(OrderEntity order) {
+        for (var id : repository.openManifestIdsForOrder(order.tenantId, order.id)) {
+            var manifest = repository.lock(order.tenantId, id);
+            if (manifest.status != ManifestStatus.OPEN) { continue; }
+            var allocation = repository.allocation(order.tenantId, id, order.id);
+            if (allocation != null) { repository.remove(allocation); touch(manifest); }
+        }
+        flush();
     }
     private LoadManifestEntity open(UUID tenant, UUID trailer) {
         var m = new LoadManifestEntity(); m.id = UUID.randomUUID(); m.tenantId = tenant; m.trailerId = trailer;

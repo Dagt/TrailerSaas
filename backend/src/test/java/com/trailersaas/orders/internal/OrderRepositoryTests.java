@@ -55,11 +55,24 @@ class OrderRepositoryTests {
         assertThat(Modifier.isPublic(OrderRepository.class.getModifiers())).isFalse();
         assertThat(OrderRepository.class.getInterfaces()).isEmpty();
         var reads = Arrays.stream(OrderRepository.class.getDeclaredMethods())
-                .filter(m -> Set.of("resource", "list", "cargo", "stops", "hasActiveSiteUse").contains(m.getName())).toList();
-        assertThat(reads).hasSize(5);
+                .filter(m -> !Modifier.isPrivate(m.getModifiers()) && Set.of("resource", "lockForMutation", "lockForAllocation", "list", "cargo", "stops", "hasActiveSiteUse").contains(m.getName())).toList();
+        assertThat(reads).hasSize(7);
         for (var read : reads) { assertThat(read.getParameterTypes()[0]).isEqualTo(UUID.class); }
         assertThat(Arrays.stream(OrderRepository.class.getDeclaredMethods()).map(m -> m.getName()))
                 .doesNotContain("findAll", "findById");
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"mutation","allocation"})
+    @SuppressWarnings("unchecked")
+    void lockQueriesRetainTenantAndCustomerScopeAndUseCorrectDatabaseLock(String mode) {
+        var em=mock(EntityManager.class);TypedQuery<OrderEntity> q=mock(TypedQuery.class,RETURNS_SELF);
+        when(em.createQuery(anyString(),eq(OrderEntity.class))).thenReturn(q);
+        when(q.getResultStream()).thenReturn(java.util.stream.Stream.of(new OrderEntity()));
+        var tenant=UUID.randomUUID();var id=UUID.randomUUID();var customer=UUID.randomUUID();var scope=new CustomerAccessScope(false,Set.of(customer));
+        var repo=new OrderRepository(em);
+        if(mode.equals("mutation")){repo.lockForMutation(tenant,id,scope);}else{repo.lockForAllocation(tenant,id,scope);}
+        verify(q).setParameter("tenant",tenant);verify(q).setParameter("id",id);verify(q).setParameter("customers",Set.of(customer));
+        verify(q).setLockMode(mode.equals("mutation")?jakarta.persistence.LockModeType.PESSIMISTIC_WRITE:jakarta.persistence.LockModeType.PESSIMISTIC_READ);
     }
     @Test @SuppressWarnings("unchecked")
     void activeSiteUseBindsTenantCustomerAndSiteAndExcludesOnlyTerminalStates() {
