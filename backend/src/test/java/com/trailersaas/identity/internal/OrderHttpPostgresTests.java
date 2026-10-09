@@ -43,6 +43,58 @@ class OrderHttpPostgresTests extends PostgresIntegrationTest {
     String create(UUID customer, String stops, String cargo) { return "{\"customerId\":\"" + customer + "\",\"orderNumber\":\"ORD-123\",\"poNumber\":\"PO-88\",\"shipmentNumber\":\"SHIP-2\",\"bolReference\":\"BOL-456\",\"cargoLines\":" + cargo + ",\"requestedStops\":[" + stops + "]}"; }
     String simple(UUID customer) { return create(customer, adhoc(1), "[]"); }
     String normalized(UUID siteId, UUID location) { return "{\"sequenceNumber\":1,\"siteId\":\"" + siteId + "\",\"locationId\":" + (location == null ? "null" : "\"" + location + "\"") + ",\"stopType\":\"DELIVERY\"}"; }
+    String planned(UUID trailer) { return simple(a).replace("{\"customerId\"", "{\"plannedTrailerId\":\"" + trailer + "\",\"customerId\""); }
+    @ParameterizedTest @ValueSource(strings = {"admin", "ops", "dispatcher"})
+    void plannedTrailerCreatesOpenManifestAndNullAllocationAtomicallyWithoutPhysicalChanges(String token) throws Exception {
+        var trailer = new com.trailersaas.TrailerFixtures(flyway).trailer(tenant, "Plan-" + UUID.randomUUID(), a);
+        var response = post(token, planned(trailer)); var order = id(response);
+        assertThat(JsonPath.<String>read(response.body(), "$.status")).isEqualTo("OPEN");
+        assertThat(response.body()).doesNotContain("plannedTrailerId", "manifestId", "createdByUserId");
+        assertThat(f.db.value("SELECT count(*) FROM load_manifests m JOIN manifest_orders a ON a.tenant_id=m.tenant_id AND a.manifest_id=m.id WHERE a.order_id=? AND m.trailer_id=? AND m.status='OPEN' AND m.version=0 AND m.closed_at IS NULL AND a.allocated_quantity IS NULL AND a.allocated_pallet_count IS NULL AND a.allocated_weight IS NULL", order, trailer)).isEqualTo(1L);
+        assertThat(f.db.value("SELECT count(*) FROM trailers WHERE id=? AND active AND location_state='LOCATION_UNKNOWN' AND current_location_id IS NULL AND last_known_location_id IS NULL AND last_driver_id IS NULL AND last_seen_at IS NULL AND load_state='UNKNOWN' AND serviceability_state='IN_SERVICE' AND version=0", trailer)).isEqualTo(1L);
+    }
+    @ParameterizedTest @ValueSource(strings = {"absent", "null"})
+    void withoutPlannedTrailerNoManifestIsCreated(String mode) throws Exception {
+        var body = simple(a); if (mode.equals("null")) { body = body.replace("{\"customerId\"", "{\"plannedTrailerId\":null,\"customerId\""); }
+        id(post("admin", body));
+        assertThat(f.db.value("SELECT count(*) FROM load_manifests WHERE tenant_id=?", tenant)).isEqualTo(0L);
+        assertThat(f.db.value("SELECT count(*) FROM manifest_orders WHERE tenant_id=?", tenant)).isEqualTo(0L);
+    }
+    @ParameterizedTest @ValueSource(strings = {"inactive", "oos", "foreignTenant", "missing", "foreignCustomer", "unassigned"})
+    void incompatibleOrInvisibleTrailerNeverCreatesAnyPlanningRows(String mode) throws Exception {
+        var targetTenant = mode.equals("foreignTenant") ? foreignTenant : tenant;
+        var customer = mode.equals("foreignTenant") ? foreignCustomer : mode.equals("foreignCustomer") ? b : mode.equals("unassigned") ? null : a;
+        var trailer = new com.trailersaas.TrailerFixtures(flyway).trailer(targetTenant, "Plan-" + UUID.randomUUID(), customer);
+        if (mode.equals("inactive")) { f.db.execute("UPDATE trailers SET active=false WHERE id=?", trailer); }
+        if (mode.equals("oos")) { f.db.execute("UPDATE trailers SET serviceability_state='OUT_OF_SERVICE' WHERE id=?", trailer); }
+        var response = post("dispatcher", planned(mode.equals("missing") ? UUID.randomUUID() : trailer));
+        switch (mode) {
+            case "inactive", "oos" -> problem(response, 409, "RESOURCE_CONFLICT");
+            case "foreignCustomer", "unassigned" -> problem(response, 403, "CUSTOMER_SCOPE_DENIED");
+            default -> problem(response, 404, "RESOURCE_NOT_FOUND");
+        }
+        for (var table : List.of("orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders")) {
+            assertThat(f.db.value("SELECT count(*) FROM " + table + " WHERE tenant_id=?", tenant)).isEqualTo(0L);
+        }
+    }
+    @ParameterizedTest @ValueSource(strings = {"manifest", "allocation"})
+    void planningIntegrityFailureRollsBackOrderCargoStopsAndManifest(String kind) throws Exception { planningRollback(kind, "23514", 409); }
+    @ParameterizedTest @ValueSource(strings = {"manifest", "allocation"})
+    void planningInfrastructureFailureRemains5xxWithAtomicRollback(String kind) throws Exception { planningRollback(kind, "08006", 500); }
+    void planningRollback(String kind, String state, int status) throws Exception {
+        var trailer = new com.trailersaas.TrailerFixtures(flyway).trailer(tenant, "Rollback-" + UUID.randomUUID(), a);
+        String fn = "planning_fail_" + UUID.randomUUID().toString().replace("-", "");
+        String table = kind.equals("manifest") ? "load_manifests" : "manifest_orders";
+        f.db.execute("CREATE FUNCTION " + fn + "() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.tenant_id='" + tenant + "' THEN RAISE EXCEPTION 'controlled planning failure' USING ERRCODE='" + state + "'; END IF; RETURN NEW; END $$");
+        f.db.execute("CREATE TRIGGER " + fn + " BEFORE INSERT ON " + table + " FOR EACH ROW EXECUTE FUNCTION " + fn + "()");
+        try {
+            var body = create(a, adhoc(1), "[{\"description\":\"Cargo\"}]").replace("{\"customerId\"", "{\"plannedTrailerId\":\"" + trailer + "\",\"customerId\"");
+            var response = post("admin", body); assertThat(response.statusCode()).isEqualTo(status);
+            assertThat(response.body()).contains("traceId").doesNotContain(fn, "controlled planning failure", state);
+            if (status == 409) { problem(response, status, "RESOURCE_CONFLICT"); }
+            for (var child : List.of("orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders")) { assertThat(f.db.value("SELECT count(*) FROM " + child + " WHERE tenant_id=?", tenant)).isEqualTo(0L); }
+        } finally { f.db.execute("DROP TRIGGER " + fn + " ON " + table); f.db.execute("DROP FUNCTION " + fn + "()"); }
+    }
     @ParameterizedTest @ValueSource(strings = {"admin", "ops", "dispatcher"})
     void createIsAtomicOpenIndependentOfTripAndSupportsMultipleStopsAndCargo(String token) throws Exception {
         var result = post(token, create(a, adhoc(2) + "," + adhoc(1), "[{\"description\":\"Sheets\",\"quantity\":20.5,\"palletCount\":10,\"weight\":18500,\"weightUnit\":\"LB\"},{\"description\":\"Other\",\"weightUnit\":\"custom unit\"}]"));

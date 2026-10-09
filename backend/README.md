@@ -36,10 +36,35 @@ each request/page. Normalized destinations require Customer↔Site compatibility
 and optional neutral/same-Customer Location within the exact Site.
 
 See [Orders API](../docs/api/orders-dispatch.md) for the minimum snapshot shape,
-implemented schemas and explicit gaps: plannedTrailerId/manifests (#32), Order
+implemented schemas and explicit gaps: public Manifest reads/commands, Order
 mutations/transitions (#33), unplanned/active/appointment filters and richer
 fulfillment/history. Unsupported fields/filters fail validation. No idempotency
 ledger/replay guarantee, UI, Trip, outbox or audit subsystem is introduced.
+
+## Manifest planning (issue #32)
+
+V11 adds only `load_manifests` and `manifest_orders`; V1–V10 are unchanged.
+Both have Tenant RLS excluding bootstrap and non-destructive composite FKs.
+Runtime uses SELECT/INSERT/UPDATE on Manifests (no DELETE), and
+SELECT/INSERT/DELETE on allocations (no UPDATE). Orders still have no Trailer FK.
+
+Internal Orders services open Manifests with optional Trailers, add/remove
+allocations for OPEN Orders, and explicitly close OPEN -> CLOSED. CLOSED history
+cannot be changed through these services. Existing commands require expectedVersion;
+the locked parent and @Version protect concurrent child changes. Every mutation
+advances updatedAt/version; explicit close sets closedAt. There is no Manifest
+REST CRUD, automatic closure, partial unload/returns/remainder handling or Trip.
+
+Order POST now accepts optional plannedTrailerId. Fresh ORDER_CREATE plus
+TRIP_ASSIGN_TRAILER/customer scope and the public `TrailerPlanningPolicy`
+validate a visible, same-Tenant active IN_SERVICE Trailer. A shared Trailer lock
+holds eligibility stable through commit. Order, cargo, Stops, OPEN/version-0
+Manifest and one all-null-amount allocation commit atomically. Order remains OPEN;
+no Trailer state is mutated. Omission/null creates no Manifest. Allocation commands
+return only revision metadata to avoid exposing unrelated Customers in a shared
+Manifest. Closing is Tenant-wide only. No new capabilities or dependencies are added.
+
+See [Orders API](../docs/api/orders-dispatch.md) for scope, lifecycle and deferments.
 
 Issue #19 adds migration-first PostgreSQL persistence to the existing Spring
 Boot application (ADR-003/006/013). Use JDK 25 and the Maven Wrapper.

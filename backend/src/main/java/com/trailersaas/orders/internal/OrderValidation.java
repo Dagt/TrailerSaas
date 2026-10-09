@@ -10,7 +10,7 @@ import static com.trailersaas.orders.internal.OrderContracts.*;
 final class OrderValidation {
     private OrderValidation() {}
     static Create create(Map<String, Object> input) {
-        fields(input, Set.of("customerId", "orderNumber", "poNumber", "shipmentNumber", "bolReference", "cargoLines", "requestedStops"), "body");
+        fields(input, Set.of("customerId", "orderNumber", "poNumber", "shipmentNumber", "bolReference", "cargoLines", "requestedStops", "plannedTrailerId"), "body");
         var customer = uuid(input.get("customerId"), "customerId", false);
         var cargo = new ArrayList<CargoInput>();
         if (input.containsKey("cargoLines")) {
@@ -39,7 +39,7 @@ final class OrderValidation {
         if (stops.isEmpty()) { throw OrderFailure.invalid("requestedStops"); }
         return new Create(customer, text(input.get("orderNumber"), "orderNumber", false), text(input.get("poNumber"), "poNumber", true),
                 text(input.get("shipmentNumber"), "shipmentNumber", true), text(input.get("bolReference"), "bolReference", true),
-                List.copyOf(cargo), List.copyOf(stops));
+                List.copyOf(cargo), List.copyOf(stops), uuid(input.get("plannedTrailerId"), "plannedTrailerId", true));
     }
     static void fields(Map<?, ?> input, Set<String> allowed, String field) {
         if (input == null || input.keySet().stream().anyMatch(key -> !allowed.contains(key))) { throw OrderFailure.invalid(field); }
