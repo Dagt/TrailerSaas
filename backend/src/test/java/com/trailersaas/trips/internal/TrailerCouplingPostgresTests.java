@@ -224,7 +224,7 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
     ok(response);
     assertThat(retained()).isEqualTo(before);
     assertThat(trailerField("version")).isEqualTo(1L);
-    assertThat(trailerField("last_seen_at")).isEqualTo(OffsetDateTime.parse(HOOK_AT));
+    assertThat(trailerField("last_seen_at")).isEqualTo(Timestamp.from(Instant.parse(HOOK_AT)));
     assertThat(trailerField("last_driver_id")).isEqualTo(driver);
     assertThat(trailerField("location_state")).isEqualTo("LOCATION_UNKNOWN");
     assertThat(trailerField("current_location_id")).isNull();
@@ -246,9 +246,9 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
         .isNull();
     assertThat(
             f.db.value("select occurred_at from trailer_movement_events where tenant_id=?", tenant))
-        .isEqualTo(OffsetDateTime.parse(HOOK_AT));
+        .isEqualTo(Timestamp.from(Instant.parse(HOOK_AT)));
     assertThat(
-            ((OffsetDateTime)
+            ((Timestamp)
                     f.db.value(
                         "select recorded_at from trailer_movement_events where tenant_id=?",
                         tenant))
@@ -578,12 +578,12 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
     assertThat(trailerField("current_location_id")).isEqualTo(location);
     assertThat(trailerField("last_known_location_id")).isEqualTo(location);
     assertThat(trailerField("last_driver_id")).isEqualTo(driver);
-    assertThat(trailerField("last_seen_at")).isEqualTo(OffsetDateTime.parse(DROP_AT));
+    assertThat(trailerField("last_seen_at")).isEqualTo(Timestamp.from(Instant.parse(DROP_AT)));
     assertThat(trailerField("version")).isEqualTo(2L);
     assertThat(f.db.value("select hooked_at from trailer_couplings where tenant_id=?", tenant))
-        .isEqualTo(OffsetDateTime.parse(HOOK_AT));
+        .isEqualTo(Timestamp.from(Instant.parse(HOOK_AT)));
     assertThat(f.db.value("select dropped_at from trailer_couplings where tenant_id=?", tenant))
-        .isEqualTo(OffsetDateTime.parse(DROP_AT));
+        .isEqualTo(Timestamp.from(Instant.parse(DROP_AT)));
     assertThat(f.db.value("select driver_id from trailer_couplings where tenant_id=?", tenant))
         .isEqualTo(driver);
     assertThat(JsonPath.<String>read(r.body(), "$.movementEvent.eventType")).isEqualTo("DROPPED");
@@ -1137,6 +1137,13 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
     rejectSql(
         "23514",
         () -> f.db.execute("update trailer_couplings set hook_event_id=null where id=?", id));
+    rejectSql(
+        "23514",
+        () ->
+            f.db.execute(
+                "update trailer_couplings set dropped_at=hooked_at-interval '1"
+                    + " second',drop_event_id=hook_event_id where id=?",
+                id));
     ok(drop(UUID.randomUUID()));
     var closed = f.db.value("select row_to_json(c)::text from trailer_couplings c where id=?", id);
     rejectSql(

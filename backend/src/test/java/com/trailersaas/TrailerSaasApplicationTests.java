@@ -72,7 +72,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
-        assertThat(flyway.info().current().getDescription()).isEqualTo("trip operational changes");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("trailer hook drop");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
@@ -92,7 +92,9 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void jpaValidatesOnlyTheFlywayCreatedIdentityEntities() throws Exception {
         assertThat(entityManagerFactory.isOpen()).isTrue();
-        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(24);
+        assertThat(entityManagerFactory.getMetamodel().getEntities()).hasSize(27)
+                .extracting(jakarta.persistence.metamodel.EntityType::getName)
+                .contains("TrailerMovementEntity", "TrailerCouplingEntity", "ProcessedClientOperationEntity");
         assertThat(entityManagerFactory.getProperties())
                 .containsEntry("hibernate.hbm2ddl.auto", "validate");
         assertThat(environment.getProperty("spring.sql.init.mode")).isEqualTo("never");
