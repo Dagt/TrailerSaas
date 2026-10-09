@@ -135,6 +135,25 @@ class TripService {
         repository.insert(mapping);
       }
     }
+    if (trip.currentDriverId != null) {
+      TripAssignmentHistory.append(
+          repository, trip, actor, "DRIVER_ASSIGNED", trip.currentDriverId, null, null, now);
+    }
+    if (trip.currentTractorId != null) {
+      TripAssignmentHistory.append(
+          repository, trip, actor, "TRACTOR_ASSIGNED", trip.currentTractorId, null, null, now);
+    }
+    if (trip.plannedInitialTrailerId != null) {
+      TripAssignmentHistory.append(
+          repository,
+          trip,
+          actor,
+          "TRAILER_PLANNED",
+          trip.plannedInitialTrailerId,
+          null,
+          null,
+          now);
+    }
     flush();
     for (var order : locked) {
       orders.planned(actor, tenant, order);
@@ -161,7 +180,7 @@ class TripService {
     return detail(repository.resource(tenant, id, false));
   }
 
-  private Detail detail(TripEntity trip) {
+  Detail detail(TripEntity trip) {
     var mappings = repository.mappings(trip.tenantId, trip.id);
     return Detail.of(
         trip,
@@ -176,7 +195,15 @@ class TripService {
                             .distinct()
                             .sorted()
                             .toList()))
-            .toList());
+            .toList(),
+        repository.history(trip.tenantId, trip.id).stream().map(Assignment::of).toList());
+  }
+
+  @Transactional(readOnly = true)
+  Timeline timeline(AuthenticatedUserPrincipal actor, UUID tenant, UUID id) {
+    auth.requireTenantCapability(actor, tenant, Capability.TRIP_VIEW_ALL);
+    repository.resource(tenant, id, false);
+    return new Timeline(repository.history(tenant, id).stream().map(Assignment::of).toList());
   }
 
   private void flush() {

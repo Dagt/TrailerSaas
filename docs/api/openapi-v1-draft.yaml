@@ -1059,6 +1059,8 @@ paths:
         Tenant-wide TRIP_PLAN plus assignment capabilities for optional initial IDs.
         Active Driver and Tractor together create ASSIGNED; either missing creates PLANNED.
         Trailer is optional, active and IN_SERVICE; it is planning only, never coupling.
+        Initial supplied resources produce durable #35 assignment events with server actor/time,
+        null reason and no extra initial version increment. No synthetic history backfill.
         All Orders must be OPEN or PLANNED. OPEN becomes PLANNED once, atomically with executable
         Stops and generic mappings. Idempotency-Key has no replay guarantee or ledger in #34;
         reconcile uncertain responses through reads. Blind retry can create another Trip.
@@ -1090,7 +1092,8 @@ paths:
       x-implementation-status: implemented-issue-34
       description: >
         Fresh Tenant-wide TRIP_VIEW_ALL. Missing or foreign Tenant Trip gives generic 404.
-        Executable Stops are sequence ordered; no assignment history, timeline or Audit surface.
+        Executable Stops are sequence ordered; assignmentHistory contains durable assignments/substitution
+        events in occurredAt ASC/id ASC order (#35). No generic Audit or execution history is synthesized.
       responses:
         '200':
           description: Trip detail
@@ -1098,6 +1101,137 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TripDetailImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/driver-assignments:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+    post:
+      tags: [Trips]
+      operationId: assignTripDriver
+      x-implementation-status: implemented-issue-35
+      description: >
+        Fresh TRIP_ASSIGN_DRIVER. Trip exclusive lock and expectedVersion guard. Same current resource is a no-op with unchanged version/time/history. Driver/Tractor permit PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING; terminal states reject. Planned Trailer may fill null in PLANNED/ASSIGNED/IN_TRANSIT/AT_STOP; replace an existing expectation only in PLANNED/ASSIGNED; CANCELLING/terminal reject. Scoped caller must cover ALL mapped Customers, with nonempty mappings; invisible Trip or target gives safe 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTripDriverRequestImplemented'
+      responses:
+        '200':
+          description: Updated Trip detail or same-resource no-op; no physical execution effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/tractor-assignments:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+    post:
+      tags: [Trips]
+      operationId: assignTripTractor
+      x-implementation-status: implemented-issue-35
+      description: >
+        Fresh TRIP_ASSIGN_TRACTOR. Trip exclusive lock and expectedVersion guard. Same current resource is a no-op with unchanged version/time/history. Driver/Tractor permit PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING; terminal states reject. Planned Trailer may fill null in PLANNED/ASSIGNED/IN_TRANSIT/AT_STOP; replace an existing expectation only in PLANNED/ASSIGNED; CANCELLING/terminal reject. Scoped caller must cover ALL mapped Customers, with nonempty mappings; invisible Trip or target gives safe 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTripTractorRequestImplemented'
+      responses:
+        '200':
+          description: Updated Trip detail or same-resource no-op; no physical execution effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/planned-trailer-assignments:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+    post:
+      tags: [Trips]
+      operationId: assignTripTrailer
+      x-implementation-status: implemented-issue-35
+      description: >
+        Fresh TRIP_ASSIGN_TRAILER. Trip exclusive lock and expectedVersion guard. Same current resource is a no-op with unchanged version/time/history. Driver/Tractor permit PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING; terminal states reject. Planned Trailer may fill null in PLANNED/ASSIGNED/IN_TRANSIT/AT_STOP; replace an existing expectation only in PLANNED/ASSIGNED; CANCELLING/terminal reject. Scoped caller must cover ALL mapped Customers, with nonempty mappings; invisible Trip or target gives safe 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTripTrailerRequestImplemented'
+      responses:
+        '200':
+          description: Updated Trip detail or same-resource no-op; no physical execution effects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/trailer-substitution-decisions:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+    post:
+      tags: [Trips]
+      operationId: decideTripTrailerSubstitution
+      x-implementation-status: implemented-issue-35
+      description: >
+        Fresh TRAILER_SUBSTITUTE_AUTHORIZE with ALL mapped Customer scope. ASSIGNED/IN_TRANSIT/AT_STOP
+        only. Exclusive Trip lock and matching nonnull current expectedTrailerId are the concurrency
+        guard (mismatch gives RESOURCE_CONFLICT, not STALE_VERSION). No expectedVersion request field.
+        AUTHORIZE requires visible active IN_SERVICE target and updates planned expectation.
+        REJECT requires visible same-Tenant target (inactive/OOS allowed) and preserves expectation.
+        Both append durable history, advance version/time and leave physical coupling/state untouched.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrailerSubstitutionDecisionRequestImplemented'
+      responses:
+        '200':
+          description: Updated Trip detail with durable decision history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDetailImplemented'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/timeline:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Trips]
+      operationId: getTripAssignmentTimeline
+      x-implementation-status: implemented-issue-35
+      description: >
+        TRIP_VIEW_ALL only. Partial operational timeline containing persisted assignment/substitution
+        events in occurredAt ASC/id ASC order. No fabricated pre-V14 history, execution, reroute,
+        cancellation, POD or generic Audit events; those remain future surfaces.
+      responses:
+        '200':
+          description: Chronological assignment timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripAssignmentTimelineImplemented'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -2212,10 +2346,81 @@ components:
         completedAt: { type: [string, "null"], format: date-time }
         cancelledAt: { type: [string, "null"], format: date-time }
 
+    AssignTripDriverRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, driverId, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        driverId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    AssignTripTractorRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, tractorId, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        tractorId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    AssignTripTrailerRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, trailerId, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        trailerId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    TrailerSubstitutionDecisionRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [expectedTrailerId, requestedTrailerId, decision, reason]
+      properties:
+        expectedTrailerId: { type: string, format: uuid }
+        requestedTrailerId: { type: string, format: uuid }
+        decision: { type: string, enum: [AUTHORIZE, REJECT] }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    TripAssignmentEventImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, eventType, driverId, tractorId, trailerId, actorUserId, occurredAt, reason, metadata]
+      properties:
+        id: { type: string, format: uuid }
+        eventType:
+          type: string
+          enum: [DRIVER_ASSIGNED, DRIVER_REASSIGNED, TRACTOR_ASSIGNED, TRACTOR_REASSIGNED, TRAILER_PLANNED, TRAILER_SUBSTITUTION_AUTHORIZED, TRAILER_SUBSTITUTION_REJECTED]
+        driverId: { type: [string, "null"], format: uuid }
+        tractorId: { type: [string, "null"], format: uuid }
+        trailerId: { type: [string, "null"], format: uuid }
+        actorUserId: { type: [string, "null"], format: uuid }
+        occurredAt: { type: string, format: date-time }
+        reason: { type: [string, "null"] }
+        metadata:
+          type: [object, "null"]
+          additionalProperties: false
+          properties:
+            previousDriverId: { type: string, format: uuid }
+            previousTractorId: { type: string, format: uuid }
+            previousTrailerId: { type: string, format: uuid }
+            expectedTrailerId: { type: string, format: uuid }
+
+    TripAssignmentTimelineImplemented:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripAssignmentEventImplemented'
+
     TripDetailImplemented:
       type: object
       additionalProperties: false
-      required: [id, status, currentDriverId, currentTractorId, plannedInitialTrailerId, version, createdAt, updatedAt, startedAt, completedAt, cancelledAt, stops]
+      required: [id, status, currentDriverId, currentTractorId, plannedInitialTrailerId, version, createdAt, updatedAt, startedAt, completedAt, cancelledAt, stops, assignmentHistory]
       properties:
         id: { type: string, format: uuid }
         status:
@@ -2233,6 +2438,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExecutableTripStopImplemented'
+
+        assignmentHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripAssignmentEventImplemented'
 
     ExecutableTripStopImplemented:
       type: object

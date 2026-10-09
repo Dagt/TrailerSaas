@@ -103,6 +103,31 @@ class TripRepository {
         .executeUpdate();
   }
 
+  Set<UUID> mappedCustomers(UUID tenant, UUID trip) {
+    // Bounded by the locked Trip parent; cancellation release takes that same parent lock.
+    // No Order locks here: cancellation orders its locks Order -> Trip.
+    return new HashSet<UUID>(
+        em.createNativeQuery(
+                "select distinct o.customer_id from trip_stops s join trip_stop_orders a on"
+                    + " a.tenant_id=s.tenant_id and a.trip_stop_id=s.id join orders o on"
+                    + " o.tenant_id=a.tenant_id and o.id=a.order_id where s.tenant_id=:tenant and"
+                    + " s.trip_id=:trip",
+                UUID.class)
+            .setParameter("tenant", tenant)
+            .setParameter("trip", trip)
+            .getResultList());
+  }
+
+  List<TripAssignmentEventEntity> history(UUID tenant, UUID trip) {
+    return em.createQuery(
+            "select e from TripAssignmentEventEntity e where e.tenantId=:tenant and e.tripId=:trip"
+                + " order by e.occurredAt,e.id",
+            TripAssignmentEventEntity.class)
+        .setParameter("tenant", tenant)
+        .setParameter("trip", trip)
+        .getResultList();
+  }
+
   void insert(Object row) {
     em.persist(row);
   }
