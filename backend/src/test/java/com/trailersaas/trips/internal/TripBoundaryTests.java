@@ -19,12 +19,18 @@ class TripBoundaryTests {
             "tripsForOrder",
             "releaseMappings",
             "history",
-            "mappedCustomers");
+            "mappedCustomers",
+            "lockStop",
+            "lockedStops",
+            "stopCustomers",
+            "operationalHistory",
+            "driverUpdates",
+            "requirePinnedTenant");
     var methods =
         Arrays.stream(TripRepository.class.getDeclaredMethods())
             .filter(m -> names.contains(m.getName()))
             .toList();
-    assertThat(methods).hasSize(8);
+    assertThat(methods).hasSize(14);
     methods.forEach(m -> assertThat(m.getParameterTypes()[0]).isEqualTo(UUID.class));
     assertThat(Arrays.stream(TripRepository.class.getDeclaredMethods()).map(m -> m.getName()))
         .doesNotContain("findAll", "findById");

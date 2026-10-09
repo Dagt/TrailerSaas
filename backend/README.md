@@ -841,3 +841,20 @@ or inactive. Neither affects physical Trailer state/coupling. Detail and the bou
 TRIP_VIEW_ALL timeline expose chronological domain assignment history. See the
 [API implementation boundary](../docs/api/orders-dispatch.md#issue-35-implementation-boundary)
 for state/no-op rules, metadata, the planning-only future Hook policy and exclusions.
+
+
+### Issue #36: operational Trip changes and Driver updates
+
+V15 adds only `trip_operational_events` and `trip_driver_updates` (append-only,
+Tenant RLS/SELECT+INSERT, composite Trip/Stop and Tenant-safe Trip/Driver FKs), plus
+Stop UPDATE and its composite identity key. V1–V14 are unchanged. Reroute retains
+frozen previous/replacement destinations before changing future instructions;
+cancellation preserves terminal Stop history. Business/history/Driver projection
+commit atomically. No push/outbox worker, generic Audit or physical execution.
+
+`POST trips/{id}/reroutes`, `POST trips/{id}/cancellations`, merged Trip timeline,
+and `GET driver/me/updates` are bounded backend surfaces. Final safe cancellation
+is an already-authorized Tenant transaction port for future execution, never a
+public command. Driver update projection begins at V15 without invented backfill.
+See [API boundary](../docs/api/orders-dispatch.md#issue-36-implementation-boundary)
+for state/scoping/locking and [Driver API](../docs/api/mobile-execution.md).

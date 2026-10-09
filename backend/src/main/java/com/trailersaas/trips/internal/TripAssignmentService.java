@@ -36,6 +36,7 @@ class TripAssignmentService {
   private final DriverPlanningPolicy drivers;
   private final TractorPlanningPolicy tractors;
   private final TrailerPlanningPolicy trailers;
+  private final TripDriverUpdateSink updates;
 
   TripAssignmentService(
       TenantAuthorization auth,
@@ -43,13 +44,15 @@ class TripAssignmentService {
       TripService reads,
       DriverPlanningPolicy drivers,
       TractorPlanningPolicy tractors,
-      TrailerPlanningPolicy trailers) {
+      TrailerPlanningPolicy trailers,
+      TripDriverUpdateSink updates) {
     this.auth = auth;
     this.repository = repository;
     this.reads = reads;
     this.drivers = drivers;
     this.tractors = tractors;
     this.trailers = trailers;
+    this.updates = updates;
   }
 
   Detail assign(
@@ -125,6 +128,9 @@ class TripAssignmentService {
         request.reason(),
         previous == null ? null : Map.of(key, previous.toString()),
         at);
+    updates.assignment(t, t.currentDriverId, true, kind.name(), null, at, t.version + 1);
+    if (kind == Kind.DRIVER && previous != null)
+      updates.assignment(t, previous, false, "DRIVER", null, at, t.version + 1);
     flush();
     return reads.detail(t);
   }
@@ -154,6 +160,7 @@ class TripAssignmentService {
         r.reason(),
         Map.of("expectedTrailerId", r.expectedTrailerId().toString()),
         at);
+    updates.assignment(t, t.currentDriverId, true, "TRAILER", r.decision(), at, t.version + 1);
     flush();
     return reads.detail(t);
   }

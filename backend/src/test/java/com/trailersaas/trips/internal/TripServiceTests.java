@@ -58,11 +58,20 @@ class TripServiceTests {
         kind.equals("trailer") ? "plannedInitialTrailerId" : kind + "Id", equipment.toString());
     var service =
         new TripService(
-            auth, orders, snapshots, destinations, drivers, tractors, trailers, repository);
+            auth,
+            orders,
+            snapshots,
+            destinations,
+            drivers,
+            tractors,
+            trailers,
+            repository,
+            mock(TripDriverUpdateSink.class));
     assertThatThrownBy(() -> service.create(actor, tenant, input)).isSameAs(denied);
     var sequence = inOrder(auth);
     sequence.verify(auth).requireTenantCapability(actor, tenant, Capability.TRIP_PLAN);
     sequence.verify(auth).requireTenantCapability(actor, tenant, capability);
-    verifyNoInteractions(orders, drivers, tractors, trailers, repository);
+    verifyNoInteractions(
+        orders, drivers, tractors, trailers, repository, mock(TripDriverUpdateSink.class));
   }
 }

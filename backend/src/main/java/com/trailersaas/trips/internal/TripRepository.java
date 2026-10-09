@@ -128,6 +128,86 @@ class TripRepository {
         .getResultList();
   }
 
+  TripStopEntity lockStop(UUID tenant, UUID trip, UUID stop) {
+    return em.createQuery(
+            "select s from TripStopEntity s where s.tenantId=:tenant and s.tripId=:trip and"
+                + " s.id=:id",
+            TripStopEntity.class)
+        .setParameter("tenant", tenant)
+        .setParameter("trip", trip)
+        .setParameter("id", stop)
+        .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+        .getResultStream()
+        .findFirst()
+        .orElseThrow(TripFailure::missing);
+  }
+
+  List<TripStopEntity> lockedStops(UUID tenant, UUID trip) {
+    return em.createQuery(
+            "select s from TripStopEntity s where s.tenantId=:tenant and s.tripId=:trip order by"
+                + " s.sequenceNumber,s.id",
+            TripStopEntity.class)
+        .setParameter("tenant", tenant)
+        .setParameter("trip", trip)
+        .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+        .getResultList();
+  }
+
+  Set<UUID> stopCustomers(UUID tenant, UUID trip, UUID stop) {
+    return new HashSet<UUID>(
+        em.createNativeQuery(
+                "select distinct o.customer_id from trip_stops s join trip_stop_orders a on"
+                    + " a.tenant_id=s.tenant_id and a.trip_stop_id=s.id join orders o on"
+                    + " o.tenant_id=a.tenant_id and o.id=a.order_id where s.tenant_id=:tenant and"
+                    + " s.trip_id=:trip and s.id=:stop",
+                UUID.class)
+            .setParameter("tenant", tenant)
+            .setParameter("trip", trip)
+            .setParameter("stop", stop)
+            .getResultList());
+  }
+
+  List<TripOperationalEventEntity> operationalHistory(UUID tenant, UUID trip) {
+    return em.createQuery(
+            "select e from TripOperationalEventEntity e where e.tenantId=:tenant and e.tripId=:trip"
+                + " order by e.occurredAt,e.id",
+            TripOperationalEventEntity.class)
+        .setParameter("tenant", tenant)
+        .setParameter("trip", trip)
+        .getResultList();
+  }
+
+  List<TripDriverUpdateEntity> driverUpdates(
+      UUID tenant, UUID driver, TripValidation.Position cursor, int limit) {
+    var q =
+        em.createQuery(
+                "select u from TripDriverUpdateEntity u where u.tenantId=:tenant and"
+                    + " u.driverId=:driver"
+                    + (cursor == null
+                        ? ""
+                        : " and (u.createdAt>:at or (u.createdAt=:at and u.id>:id))")
+                    + " order by u.createdAt,u.id",
+                TripDriverUpdateEntity.class)
+            .setParameter("tenant", tenant)
+            .setParameter("driver", driver);
+    if (cursor != null) {
+      q.setParameter("at", cursor.createdAt());
+      q.setParameter("id", cursor.id());
+    }
+    return q.setMaxResults(limit + 1).getResultList();
+  }
+
+  void requirePinnedTenant(UUID tenant) {
+    if (!Boolean.TRUE.equals(
+        em.createNativeQuery(
+                "select"
+                    + " coalesce(NULLIF(current_setting('app.current_tenant_id',true),'')::uuid=:tenant"
+                    + " and NULLIF(current_setting('app.current_user_id',true),'') is null,false)",
+                Boolean.class)
+            .setParameter("tenant", tenant)
+            .getSingleResult())) throw TripFailure.missing();
+  }
+
   void insert(Object row) {
     em.persist(row);
   }

@@ -20,7 +20,8 @@ class TripAssignmentServiceTests {
   final TractorPlanningPolicy tractors = mock(TractorPlanningPolicy.class);
   final TrailerPlanningPolicy trailers = mock(TrailerPlanningPolicy.class);
   final TripAssignmentService service =
-      new TripAssignmentService(auth, repository, reads, drivers, tractors, trailers);
+      new TripAssignmentService(
+          auth, repository, reads, drivers, tractors, trailers, mock(TripDriverUpdateSink.class));
   final UUID tenant = UUID.randomUUID(),
       tripId = UUID.randomUUID(),
       customer = UUID.randomUUID(),
