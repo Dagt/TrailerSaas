@@ -238,7 +238,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
               Semantics(liveRegion: true, child: Text(controller.message!)),
             if (controller.traceId != null)
               Text('Support reference: ${controller.traceId}'),
-            if (controller.pending?.tripId == widget.cached.id)
+            if (controller.pending != null)
               FilledButton(
                 onPressed: controller.sending || !controller.online
                     ? null

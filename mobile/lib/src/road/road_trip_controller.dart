@@ -76,7 +76,7 @@ class RoadTripController extends ChangeNotifier {
       if (saved != null) {
         message = saved.tripId == tripId
             ? 'A previous submission needs recovery before another action.'
-            : 'Another Trip has an uncertain submission. Open that Trip to recover it.';
+            : 'Another Trip has an uncertain submission. Recover that saved submission before another action.';
       }
     } on ApiProblem catch (e) {
       if (_current(generation, s)) {
@@ -149,11 +149,7 @@ class RoadTripController extends ChangeNotifier {
 
   Future<void> recover() async {
     final s = session.snapshot, command = pending;
-    if (s == null ||
-        command == null ||
-        command.tripId != tripId ||
-        !online ||
-        sending) {
+    if (s == null || command == null || !online || sending) {
       return;
     }
     final generation = ++_generation;
@@ -184,6 +180,12 @@ class RoadTripController extends ChangeNotifier {
       if (!_current(generation, s)) return;
       pending = null;
       message = 'Confirmed by server.';
+      if (command.tripId != tripId) {
+        // Reconcile the entire assigned-work set after recovering another Trip.
+        // Its saved result must never replace the currently displayed Trip.
+        await session.refresh();
+        return;
+      }
       try {
         // A saved replay response can describe an earlier state. Re-read before enabling
         // another action or replacing offline work, including after Hook/Drop.

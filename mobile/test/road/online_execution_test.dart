@@ -216,6 +216,58 @@ void main() {
     expect(c.traceId, 'ref');
     expect(c.pending, isNotNull);
   });
+  test(
+    'another Trip receipt can be reconciled explicitly after assignment loss',
+    () async {
+      await start();
+      addTearDown(close);
+      final saved = OnlineCommand(
+        operationUuid(),
+        'previous-trip',
+        'tenants/A/stops/previous-stop/arrivals',
+        {'source': 'MANUAL'},
+      );
+      await journal.save('user-A', 'A', saved);
+      await c.load();
+      expect(c.pending!.tripId, 'previous-trip');
+      final posts = <http.Request>[];
+      f.handler = (request) async {
+        if (request.method == 'POST') {
+          posts.add(request);
+          return http.Response(
+            '{"code":"RESOURCE_NOT_FOUND","detail":"The resource was not found."}',
+            404,
+          );
+        }
+        if (request.url.path.endsWith('/api/v1/me')) {
+          return f.response({'userId': 'user-A', 'memberships': f.memberships});
+        }
+        if (request.url.path.endsWith('/driver/me')) {
+          return f.response({
+            'id': 'driver',
+            'name': 'Jane Driver',
+            'active': true,
+            'version': 0,
+          });
+        }
+        if (request.url.path.endsWith('/driver/me/trips')) {
+          return f.response({'items': f.trips, 'nextCursor': null});
+        }
+        return f.response(detail());
+      };
+      expect(posts, isEmpty);
+      await c.recover();
+      await c.load();
+      expect(posts.length, 1);
+      expect(posts.single.url.path, endsWith('/stops/previous-stop/arrivals'));
+      expect(posts.single.headers['Idempotency-Key'], saved.id);
+      expect(jsonDecode(posts.single.body), saved.body);
+      expect(await journal.read('user-A', 'A'), isNull);
+      expect(f.session.snapshot!.trips.single.id, 'trip-A');
+      expect(c.pending, isNull);
+      expect(c.sending, isFalse);
+    },
+  );
   test('offline never submits or confirms a command', () async {
     await start();
     addTearDown(close);

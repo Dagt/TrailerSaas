@@ -83,6 +83,11 @@ retry, worker, backoff or command dependency queue is implemented. A second oper
 cannot replace an unresolved receipt. Identity/Tenant changes hide old projections and
 ignore late results. The original namespace's unresolved receipt remains isolated for
 later authorized reconciliation rather than silently being replayed under another account.
+An uncertain submission from another Trip can be explicitly recovered without navigating
+to work that is no longer assigned. The original key/path/body still go through fresh
+server authorization; a definitive denial clears the receipt and refreshes assigned work.
+A successful recovery of another Trip refreshes the full work set and never substitutes
+its saved response for the currently displayed Trip.
 
 QR scanning uses mobile_scanner 7.4.2 with camera-only permission. No manual UUID/number
 bypass, gallery/media workflow or continuous location tracking. Only opaque token is
