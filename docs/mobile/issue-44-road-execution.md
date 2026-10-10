@@ -55,6 +55,10 @@ planned. Arrival can still record a visit to an ad-hoc snapshot, but changes Tra
 location only with the Stop's real same-Tenant Customer-compatible Operational Location.
 A snapshot never creates fake location. Unknown stationary Trailer location, or another
 Trip's coupling on the Tractor, cannot silently become authorized travel.
+If a visit has no Operational Location, Arrival does not manufacture a Trailer arrival.
+A later departure remains blocked when the existing #39 projection cannot perform its
+accepted AT_LOCATION-to-IN_TRANSIT transition. An authorized physical location correction
+must resolve that gap; Road does not invent a Location or bypass the transition matrix.
 
 V18 adds only Accepted trip_stop_events (including hardening M source_type),
 Tenant-safe Trip/Stop FKs, provenance checks, RLS, SELECT/INSERT grants and history
@@ -95,6 +99,10 @@ extracted from a raw QR or HTTPS /t/token label and sent to configured backend; 
 URLs are never fetched. QR scan gains an additive version field needed by the existing
 strict Hook contract. QR identity still grants no authority. Wrong expected Trailer is
 blocked pending dispatch substitution; Drop must identify the real active coupling.
+Drop takes that identity from the fresh authenticated coupling projection and confirms it
+explicitly, with no manually entered ID. It does not depend on public QR resolution:
+closing an existing inactive/OOS coupling remains possible under #38's server rules.
+The replacement Hook still requires camera QR identification and fresh server validation.
 
 ## Deferred
 

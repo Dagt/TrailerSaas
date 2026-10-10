@@ -677,100 +677,107 @@ void main() {
       expect(find.text('Scan Trailer and confirm Hook'), findsNothing);
     },
   );
-  testWidgets('Drop and replacement Hook require separate QR confirmations', (
-    tester,
-  ) async {
-    final fixture = MobileFixture(cacheFactory: WidgetCache.new);
-    await fixture.session.start();
-    fixture.session.snapshot!.membership.capabilities.addAll({
-      'TRIP_EXECUTE_ASSIGNED',
-      'TRAILER_DROP',
-      'TRAILER_HOOK',
-    });
-    final projection = detail(
-      status: 'AT_STOP',
-      stopStatus: 'IN_SERVICE',
-      type: 'DROP_HOOK',
-    );
-    (projection['trip'] as Map)['plannedInitialTrailerId'] = 'replacement';
-    projection['currentCoupling'] = {
-      'trailerId': 'original',
-      'operationalNumber': 'TR-OLD',
-    };
-    ((projection['trip'] as Map)['stops'] as List).single['locationId'] =
-        'dock';
-    final posts = <http.Request>[];
-    fixture.handler = (request) async {
-      if (request.url.path.contains('trailer-qr')) {
-        final afterDrop = posts.isNotEmpty;
-        return http.Response(
-          jsonEncode({
-            'trailerId': afterDrop ? 'replacement' : 'original',
-            'operationalNumber': afterDrop ? 'TR-NEW' : 'TR-OLD',
-            'version': afterDrop ? 9 : 7,
-          }),
-          200,
-        );
-      }
-      if (request.method == 'POST') {
-        posts.add(request);
-        projection['currentCoupling'] = request.url.path.endsWith('/drops')
-            ? null
-            : {'trailerId': 'replacement', 'operationalNumber': 'TR-NEW'};
-      }
-      return http.Response(jsonEncode(projection), 200);
-    };
-    addTearDown(() async {
-      await tester.pumpWidget(const SizedBox());
-      await tester.runAsync(fixture.close);
-    });
-    await tester.pumpWidget(
-      MaterialApp(
-        home: RoadTripScreen(
-          session: fixture.session,
-          cached: fixture.session.snapshot!.trips.first,
-          journal: MemoryJournal(),
-          scanner: Scan('abcdefghijklmnopqrstuv'),
+  testWidgets(
+    'Drop of existing coupling survives QR denial; replacement Hook requires QR',
+    (tester) async {
+      final fixture = MobileFixture(cacheFactory: WidgetCache.new);
+      await fixture.session.start();
+      fixture.session.snapshot!.membership.capabilities.addAll({
+        'TRIP_EXECUTE_ASSIGNED',
+        'TRAILER_DROP',
+        'TRAILER_HOOK',
+      });
+      final projection = detail(
+        status: 'AT_STOP',
+        stopStatus: 'IN_SERVICE',
+        type: 'DROP_HOOK',
+      );
+      (projection['trip'] as Map)['plannedInitialTrailerId'] = 'replacement';
+      projection['currentCoupling'] = {
+        'trailerId': 'original',
+        'operationalNumber': 'TR-OLD',
+      };
+      ((projection['trip'] as Map)['stops'] as List).single['locationId'] =
+          'dock';
+      final posts = <http.Request>[];
+      fixture.handler = (request) async {
+        if (request.url.path.contains('trailer-qr')) {
+          final afterDrop = posts.isNotEmpty;
+          if (!afterDrop)
+            return http.Response('{"code":"RESOURCE_NOT_FOUND"}', 404);
+          return http.Response(
+            jsonEncode({
+              'trailerId': afterDrop ? 'replacement' : 'original',
+              'operationalNumber': afterDrop ? 'TR-NEW' : 'TR-OLD',
+              'version': afterDrop ? 9 : 7,
+            }),
+            200,
+          );
+        }
+        if (request.method == 'POST') {
+          posts.add(request);
+          projection['currentCoupling'] = request.url.path.endsWith('/drops')
+              ? null
+              : {'trailerId': 'replacement', 'operationalNumber': 'TR-NEW'};
+        }
+        return http.Response(jsonEncode(projection), 200);
+      };
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox());
+        await tester.runAsync(fixture.close);
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RoadTripScreen(
+            session: fixture.session,
+            cached: fixture.session.snapshot!.trips.first,
+            journal: MemoryJournal(),
+            scanner: Scan('abcdefghijklmnopqrstuv'),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Scan Trailer and confirm Hook'), findsNothing);
-    final drop = find.text('Scan coupled Trailer and confirm Drop');
-    await tester.ensureVisible(drop);
-    await tester.tap(drop);
-    await tester.pumpAndSettle();
-    expect(posts, isEmpty);
-    expect(find.text('Confirm Drop TR-OLD'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Confirm'));
-    await tester.pumpAndSettle();
-    expect(posts.length, 1);
-    expect(posts.single.url.path, endsWith('/trips/trip-A/drops'));
-    final dropped = jsonDecode(posts.single.body) as Map;
-    expect(
-      dropped.keys,
-      unorderedEquals(['occurredAt', 'trailerId', 'stopId', 'locationId']),
-    );
-    expect(dropped['trailerId'], 'original');
-    expect(dropped['locationId'], 'dock');
-    expect(find.text('Scan coupled Trailer and confirm Drop'), findsNothing);
-    final hook = find.text('Scan Trailer and confirm Hook');
-    await tester.ensureVisible(hook);
-    await tester.tap(hook);
-    await tester.pumpAndSettle();
-    expect(posts.length, 1);
-    expect(find.text('Confirm Hook TR-NEW'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Confirm'));
-    await tester.pumpAndSettle();
-    expect(posts.length, 2);
-    expect(posts.last.url.path, endsWith('/trips/trip-A/hooks'));
-    final hooked = jsonDecode(posts.last.body) as Map;
-    expect(hooked['trailerId'], 'replacement');
-    expect(hooked['expectedTrailerVersion'], 9);
-    expect(
-      posts.first.headers['Idempotency-Key'],
-      isNot(posts.last.headers['Idempotency-Key']),
-    );
-    expect(find.text('Physical coupling: TR-NEW'), findsOneWidget);
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Scan Trailer and confirm Hook'), findsNothing);
+      final drop = find.text('Confirm Drop of coupled Trailer');
+      await tester.ensureVisible(drop);
+      await tester.tap(drop);
+      await tester.pumpAndSettle();
+      expect(posts, isEmpty);
+      expect(find.text('Confirm Drop TR-OLD'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Confirm'));
+      await tester.pumpAndSettle();
+      expect(posts.length, 1);
+      expect(posts.single.url.path, endsWith('/trips/trip-A/drops'));
+      final dropped = jsonDecode(posts.single.body) as Map;
+      expect(
+        dropped.keys,
+        unorderedEquals(['occurredAt', 'trailerId', 'stopId', 'locationId']),
+      );
+      expect(dropped['trailerId'], 'original');
+      expect(dropped['locationId'], 'dock');
+      expect(
+        fixture.requests.where((r) => r.url.path.contains('trailer-qr')),
+        isEmpty,
+      );
+      expect(find.text('Confirm Drop of coupled Trailer'), findsNothing);
+      final hook = find.text('Scan Trailer and confirm Hook');
+      await tester.ensureVisible(hook);
+      await tester.tap(hook);
+      await tester.pumpAndSettle();
+      expect(posts.length, 1);
+      expect(find.text('Confirm Hook TR-NEW'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Confirm'));
+      await tester.pumpAndSettle();
+      expect(posts.length, 2);
+      expect(posts.last.url.path, endsWith('/trips/trip-A/hooks'));
+      final hooked = jsonDecode(posts.last.body) as Map;
+      expect(hooked['trailerId'], 'replacement');
+      expect(hooked['expectedTrailerVersion'], 9);
+      expect(
+        posts.first.headers['Idempotency-Key'],
+        isNot(posts.last.headers['Idempotency-Key']),
+      );
+      expect(find.text('Physical coupling: TR-NEW'), findsOneWidget);
+    },
+  );
 }

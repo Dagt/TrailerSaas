@@ -79,60 +79,59 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
     }
   }
 
-  Future<void> scan(bool drop) async {
+  Future<void> scan() async {
     final token = await (widget.scanner ?? NativeQrScanner(context)).scan();
     if (token == null || !mounted) return;
     final resolved = await controller.identify(token);
     if (resolved == null || !mounted) return;
     final trip = controller.trip;
     if (trip == null) return;
-    final coupling =
-        controller.detail?['currentCoupling'] as Map<String, dynamic>?;
-    final expected = drop
-        ? (coupling?['trailerId'])
-        : trip['plannedInitialTrailerId'];
-    if (expected != resolved['trailerId']) {
+    if (trip['plannedInitialTrailerId'] != resolved['trailerId']) {
       await confirm(
         'Trailer not authorized',
-        'This Trailer differs from the ${drop ? 'physically coupled' : 'expected'} Trailer. Contact dispatch; scanning does not authorize substitution.',
+        'This Trailer differs from the expected Trailer. Contact dispatch; scanning does not authorize substitution.',
       );
       return;
     }
-    final tenant = owner.membership.tenantId;
-    final base = 'tenants/$tenant/trips/${widget.cached.id}';
-    if (drop) {
-      final stop = (trip['stops'] as List)
-          .cast<Map<String, dynamic>>()
-          .where((s) => s['status'] == 'IN_SERVICE')
-          .firstOrNull;
-      if (stop == null || stop['locationId'] == null) {
-        await confirm(
-          'Location required',
-          'Dispatch must provide an authorized Operational Location before physical Drop.',
-        );
-        return;
-      }
-      await action(
-        'Confirm Drop ${resolved['operationalNumber']}',
-        '$base/drops',
-        {
-          'trailerId': resolved['trailerId'],
-          'stopId': stop['id'],
-          'locationId': stop['locationId'],
-        },
+    await action(
+      'Confirm Hook ${resolved['operationalNumber']}',
+      'tenants/${owner.membership.tenantId}/trips/${widget.cached.id}/hooks',
+      {
+        'trailerId': resolved['trailerId'],
+        'tractorId': trip['currentTractorId'],
+        'driverId': owner.driver!.id,
+        'expectedTrailerVersion': resolved['version'],
+      },
+    );
+  }
+
+  Future<void> dropCoupled() async {
+    final trip = controller.trip;
+    final coupling =
+        controller.detail?['currentCoupling'] as Map<String, dynamic>?;
+    if (trip == null || coupling == null) return;
+    final stop = (trip['stops'] as List)
+        .cast<Map<String, dynamic>>()
+        .where((s) => s['status'] == 'IN_SERVICE')
+        .firstOrNull;
+    if (stop == null || stop['locationId'] == null) {
+      await confirm(
+        'Location required',
+        'Dispatch must provide an authorized Operational Location before physical Drop.',
       );
-    } else {
-      await action(
-        'Confirm Hook ${resolved['operationalNumber']}',
-        '$base/hooks',
-        {
-          'trailerId': resolved['trailerId'],
-          'tractorId': trip['currentTractorId'],
-          'driverId': owner.driver!.id,
-          'expectedTrailerVersion': resolved['version'],
-        },
-      );
+      return;
     }
+    // This identity is from the authenticated active coupling, never manual input.
+    // A public QR must not prevent closing an existing OOS/inactive coupling.
+    await action(
+      'Confirm Drop ${coupling['operationalNumber']}',
+      'tenants/${owner.membership.tenantId}/trips/${widget.cached.id}/drops',
+      {
+        'trailerId': coupling['trailerId'],
+        'stopId': stop['id'],
+        'locationId': stop['locationId'],
+      },
+    );
   }
 
   @override
@@ -257,7 +256,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
                 capabilities.contains('TRAILER_HOOK') &&
                 coupled == null)
               FilledButton(
-                onPressed: () => scan(false),
+                onPressed: scan,
                 child: const Text('Scan Trailer and confirm Hook'),
               ),
             if (trip['status'] == 'ASSIGNED' &&
@@ -308,12 +307,12 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
                 active?['status'] == 'IN_SERVICE' &&
                 active?['stopType'] == 'DROP_HOOK') ...[
               const Text(
-                'Drop & Hook: scan and confirm Drop first, then scan the authorized replacement and confirm Hook.',
+                'Drop & Hook: confirm the physically coupled Trailer Drop first, then scan the authorized replacement and confirm Hook.',
               ),
               if (coupled != null && capabilities.contains('TRAILER_DROP'))
                 FilledButton(
-                  onPressed: () => scan(true),
-                  child: const Text('Scan coupled Trailer and confirm Drop'),
+                  onPressed: dropCoupled,
+                  child: const Text('Confirm Drop of coupled Trailer'),
                 ),
             ],
             if (active?['status'] == 'IN_SERVICE' &&
