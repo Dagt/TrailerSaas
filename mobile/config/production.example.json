@@ -2,5 +2,11 @@
   "APP_ENV": "production",
   "API_BASE_URL": "https://api.production.example.test/api/v1",
   "SENTRY_ENVIRONMENT": "production",
-  "SENTRY_DSN": ""
+  "SENTRY_DSN": "",
+  "FIREBASE_ENVIRONMENT": "production",
+  "FIREBASE_API_KEY": "",
+  "FIREBASE_APP_ID": "",
+  "FIREBASE_PROJECT_ID": "",
+  "FIREBASE_MESSAGING_SENDER_ID": "",
+  "FIREBASE_IOS_BUNDLE_ID": ""
 }

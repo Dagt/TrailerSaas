@@ -102,18 +102,20 @@ class MobileFixture {
       MockClient((request) async {
         requests.add(request);
         if (handler != null) return handler!(request);
-        if (request.url.path.endsWith('/api/v1/me'))
+        if (request.url.path.endsWith('/api/v1/me')) {
           return response({
             'userId': auth.uid == 'firebase-A' ? 'user-A' : 'user-B',
             'memberships': memberships,
           });
-        if (request.url.path.endsWith('/driver/me'))
+        }
+        if (request.url.path.endsWith('/driver/me')) {
           return response({
             'id': 'driver',
             'name': 'Jane Driver',
             'active': true,
             'version': 0,
           });
+        }
         return response({'items': trips, 'nextCursor': null});
       }),
     );

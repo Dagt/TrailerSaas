@@ -1,5 +1,10 @@
 # Identity and Master Data API v0.1
 
+Issue #42 adds a fresh Tenant-scope `capabilities` array to each `/me` membership for
+Mobile navigation. It is derived from persisted roles, empty for inactive memberships,
+and never authorizes a resource or replaces fresh server checks. The capability catalog
+and mappings are unchanged. See the implemented own-Driver/work reads in mobile-execution.md.
+
 **Status:** Accepted v0.1
 
 All Tenant-owned paths use:

@@ -26,7 +26,7 @@ void main() {
     // Seed the actual empty deployed v1 schema before Drift opens/version checks it.
     final v1 = sqlite.sqlite3.open(file.path);
     v1.execute('PRAGMA user_version=1');
-    v1.dispose();
+    v1.close();
     final upgraded = AppDatabase(NativeDatabase(file));
     addTearDown(upgraded.close);
     await upgraded.initialize();
