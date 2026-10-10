@@ -44,7 +44,12 @@ final class TrailerReadDtos {
       UUID id, UUID customerId, String customerName, String orderNumber, String status) {}
 
   record Manifest(
-      UUID id, String status, long version, Instant updatedAt, List<PlannedOrder> orders) {}
+      UUID id,
+      String status,
+      long version,
+      Instant updatedAt,
+      List<PlannedOrder> orders,
+      boolean ordersTruncated) {}
 
   record Detail(
       @JsonUnwrapped Item projection,

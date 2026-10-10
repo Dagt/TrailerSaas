@@ -618,5 +618,8 @@ retry. Tenant-namespaced queries are covered by existing Operations cancellation
 and cache removal on Tenant/identity changes. This surface introduces no new
 commands or state editor. Designation commands exist in #40 but these views are
 read-only. Documents/evidence remain #49/#52/#53; no fake documents or maps.
+The Evidence section identifies the pending integration rather than claiming
+that a Trailer has no evidence. Manifest previews label omitted authorized
+Orders as a bounded preview, never as "No Orders allocated".
 Customer Portal remains #58+, Driver execution #44, Yard Move #48, Alerts #56,
 and generic Audit #61.

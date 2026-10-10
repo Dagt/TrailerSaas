@@ -237,3 +237,12 @@ labels avoid Driver/Location/Tractor requests per result row. Current versus
 last-known Location and physical versus planned Trailer/load are explicit.
 Timeline uses Tenant/trailer query keys and Load more, retaining loaded rows on
 page failure. No new mutation forms, Customer Portal or evidence integration.
+
+Manifest previews distinguish an empty allocation set from Orders omitted by
+the global preview bound using `ordersTruncated`. That indicator considers only
+authorized Orders. Evidence copy states that integration is not implemented;
+the read surface cannot determine whether evidence exists. Documents #52 and
+evidence linking/workflows #49/#53 remain dependencies, with no upload, R2 or
+document placeholders added here. Trip links use actual coupling or movement
+fact references; planned Manifest Orders link to the existing read-only Order
+route and never imply physical cargo or coupling.

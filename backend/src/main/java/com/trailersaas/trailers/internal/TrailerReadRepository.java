@@ -217,19 +217,21 @@ class TrailerReadRepository {
 
   private ManifestResult manifests(UUID tenant, UUID trailer, CustomerAccessScope scope) {
     String visible = scope.tenantWide() ? "" : " and o.customer_id in (:customers)";
+    String hasVisibleOrders =
+        "exists(select 1 from manifest_orders a join orders o on"
+            + " o.tenant_id=a.tenant_id and o.id=a.order_id where"
+            + " a.tenant_id=m.tenant_id and a.manifest_id=m.id"
+            + visible
+            + ")";
     var parents =
         scoped(
-                """
-                select m.id,m.status,m.version,m.updated_at from load_manifests m
-                where m.tenant_id=:tenant and m.trailer_id=:trailer and m.status='OPEN'
-                """
-                    + (scope.tenantWide()
-                        ? ""
-                        : " and exists(select 1 from manifest_orders a join orders o on"
-                              + " o.tenant_id=a.tenant_id and o.id=a.order_id where"
-                              + " a.tenant_id=m.tenant_id and a.manifest_id=m.id"
-                            + visible
-                            + ")")
+                "select m.id,m.status,m.version,m.updated_at,"
+                    + hasVisibleOrders
+                    + """
+                     from load_manifests m
+                    where m.tenant_id=:tenant and m.trailer_id=:trailer and m.status='OPEN'
+                    """
+                    + (scope.tenantWide() ? "" : " and " + hasVisibleOrders)
                     + " order by m.updated_at desc,m.id desc",
                 tenant,
                 scope)
@@ -257,6 +259,8 @@ class TrailerReadRepository {
             .setMaxResults(51)
             .getResultList();
     truncated |= children.size() > 50;
+    UUID partiallyShownManifest =
+        children.size() > 50 ? (UUID) ((Object[]) children.get(50))[0] : null;
     var orders = new HashMap<UUID, List<PlannedOrder>>();
     for (Object value : children.subList(0, Math.min(50, children.size()))) {
       var r = new Row((Object[]) value);
@@ -272,9 +276,12 @@ class TrailerReadRepository {
       String status = r.text();
       long version = r.number();
       Instant updated = r.instant();
+      boolean hasOrders = r.bool();
       var items = List.copyOf(orders.getOrDefault(id, List.of()));
+      // Only visible allocations contribute; hidden Customers cannot affect this indicator.
+      boolean ordersTruncated = (hasOrders && items.isEmpty()) || id.equals(partiallyShownManifest);
       if (scope.tenantWide() || !items.isEmpty())
-        result.add(new Manifest(id, status, version, updated, items));
+        result.add(new Manifest(id, status, version, updated, items, ordersTruncated));
     }
     // Scoped callers receive no indication or count of hidden allocations/manifests.
     return new ManifestResult(List.copyOf(result), scope.tenantWide() && truncated);

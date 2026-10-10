@@ -14,6 +14,7 @@ export interface TrailerListItem extends Trailer {
 }
 export interface ManifestSummary {
   id: string; status: 'OPEN'; version: number; updatedAt: string
+  ordersTruncated: boolean
   orders: { id: string; customerId: string; customerName: string; orderNumber: string; status: string }[]
 }
 export interface TrailerDetail extends TrailerListItem {

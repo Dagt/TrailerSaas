@@ -996,3 +996,10 @@ Trailer DTO. OPEN Manifest previews cap at 20 parents/50 visible Orders total;
 scoped readers never receive hidden counts or restriction hints. Administrative
 reasons, Trip references and location-change IDs are conservatively redacted for
 scoped timeline readers. No actor User IDs or raw metadata are public.
+
+Per-Manifest `ordersTruncated` distinguishes visible allocations omitted by the
+global preview limit from genuinely empty allocations, without hidden Customer
+counts or flags. Parent existence checks and the 51-row child lookahead remain
+inside the same bounded queries. PostgreSQL tests also record default-planner
+EXPLAIN ANALYZE/BUFFERS node/index evidence and verify bounded returned rows,
+separately from ordered-index eligibility diagnostics, without exact cost assertions.

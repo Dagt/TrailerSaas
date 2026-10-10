@@ -344,6 +344,67 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
             "hasRestrictedOrders",
             "allocationCount");
     assertThat(body(r)).containsEntry("manifestSummaryTruncated", false);
+    assertThat(JsonPath.<Boolean>read(r.body(), "$.openManifests[0].ordersTruncated")).isFalse();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"TENANT_ADMIN", "CUSTOMER_DISPATCHER"})
+  void twentyManifestsWithSixtyVisibleOrdersDistinguishLimitedPreviewFromEmpty(String role)
+      throws Exception {
+    for (int i = 0; i < 20; i++) {
+      var orders = new UUID[3];
+      for (int j = 0; j < 3; j++) orders[j] = order(a, "LIMIT-" + i + "-" + j);
+      manifest("OPEN", orders);
+    }
+    role(role);
+    var response = get("/" + trailer);
+    assertThat(response.statusCode()).isEqualTo(200);
+    var previews = JsonPath.<List<Map<String, Object>>>read(response.body(), "$.openManifests");
+    assertThat(previews).hasSize(role.equals("TENANT_ADMIN") ? 20 : 17);
+    assertThat(JsonPath.<List<?>>read(response.body(), "$.openManifests[*].orders[*]")).hasSize(50);
+    assertThat(body(response))
+        .containsEntry("manifestSummaryTruncated", role.equals("TENANT_ADMIN"));
+    int limited = 0;
+    for (var preview : previews) {
+      var orders = (List<?>) preview.get("orders");
+      boolean truncated = (Boolean) preview.get("ordersTruncated");
+      assertThat(truncated).isEqualTo(orders.size() < 3);
+      if (truncated) limited++;
+      // Every parent has real allocations. Empty previews must never claim otherwise.
+      if (orders.isEmpty()) assertThat(truncated).isTrue();
+    }
+    assertThat(limited).isEqualTo(role.equals("TENANT_ADMIN") ? 4 : 1);
+    assertThat(response.body())
+        .doesNotContain("allocationCount", "hasRestrictedOrders", b.toString());
+  }
+
+  @Test
+  void genuineEmptyManifestAndHiddenOrdersCannotProduceVisibleTruncation() throws Exception {
+    UUID visibleManifest = manifest("OPEN", order(a, "ONE-VISIBLE"));
+    UUID emptyManifest = manifest("OPEN");
+    var wide = get("/" + trailer);
+    var empty =
+        JsonPath.<List<Map<String, Object>>>read(wide.body(), "$.openManifests").stream()
+            .filter(m -> m.get("id").equals(emptyManifest.toString()))
+            .findFirst()
+            .orElseThrow();
+    assertThat((List<?>) empty.get("orders")).isEmpty();
+    assertThat(empty).containsEntry("ordersTruncated", false);
+    role("CUSTOMER_DISPATCHER");
+    var before = body(get("/" + trailer));
+    for (int i = 0; i < 60; i++)
+      f.db.execute(
+          "insert into manifest_orders(id,tenant_id,manifest_id,order_id,created_at)"
+              + " values(?,?,?,?,now())",
+          UUID.randomUUID(),
+          tenant,
+          visibleManifest,
+          order(b, "HIDDEN-" + i));
+    var after = get("/" + trailer);
+    assertThat(body(after)).isEqualTo(before);
+    assertThat(after.body()).doesNotContain("HIDDEN-", b.toString(), emptyManifest.toString());
+    assertThat(JsonPath.<Boolean>read(after.body(), "$.openManifests[0].ordersTruncated"))
+        .isFalse();
   }
 
   @Test
@@ -586,11 +647,6 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
         var s = c.createStatement()) {
       c.setAutoCommit(false);
       s.execute("select set_config('app.current_tenant_id','" + tenant + "',true)");
-      // Verify available ordered index paths, not a cost-dependent choice among equivalent plans.
-      // These planner settings are transaction-local test diagnostics, never production settings.
-      s.execute("set local enable_seqscan=off");
-      s.execute("set local enable_bitmapscan=off");
-      s.execute("set local enable_sort=off");
       var cases =
           Map.of(
               "operational_number_normalized",
@@ -621,6 +677,35 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
                       + "' and trailer_id='"
                       + trailer
                       + "' order by occurred_at desc,id desc limit 50");
+      // Observe real default-planner execution first, without requiring a particular node/cost.
+      for (var entry : cases.entrySet()) {
+        String plan;
+        try (var result =
+            s.executeQuery("explain (analyze, buffers, format json) " + entry.getValue())) {
+          assertThat(result.next()).isTrue();
+          plan = result.getString(1);
+        }
+        int expectedRows =
+            entry.getKey().equals("trailer_movements_history")
+                ? 50
+                : entry.getKey().equals("load_manifests_trailer_lookup") ? 20 : 1;
+        assertThat(JsonPath.<Integer>read(plan, "$[0].Plan['Actual Rows']"))
+            .isEqualTo(expectedRows);
+        System.out.println(
+            "Default PostgreSQL read plan: "
+                + entry.getKey()
+                + "; nodes="
+                + JsonPath.read(plan, "$..['Node Type']")
+                + "; indexes="
+                + JsonPath.read(plan, "$..['Index Name']")
+                + "; returnedRows="
+                + expectedRows);
+      }
+      // Separately verify available ordered index paths, independent of planner cost estimates.
+      // These method settings are transaction-local test diagnostics, never production settings.
+      s.execute("set local enable_seqscan=off");
+      s.execute("set local enable_bitmapscan=off");
+      s.execute("set local enable_sort=off");
       for (var entry : cases.entrySet()) {
         var plan = new StringBuilder();
         try (var r = s.executeQuery("explain " + entry.getValue())) {

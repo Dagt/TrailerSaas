@@ -657,6 +657,13 @@ counts/restriction flags are exposed. manifestSummaryTruncated indicates overflo
 only for Tenant-wide callers; it is always false for scoped callers, whose fixed
 preview bounds still apply.
 
+Each Manifest also exposes `ordersTruncated`: true when the global 50-Order
+limit omits authorized allocations from that Manifest, including an entirely
+omitted Order preview. Empty `orders` with `ordersTruncated=true` must not be
+presented as "No Orders allocated". The indicator is derived only from visible
+Orders; allocations outside the caller's Customer scope cannot change it.
+Genuinely empty Tenant-wide Manifests have `ordersTruncated=false`.
+
 The Trailers-owned native SQL read model joins same-Tenant display data without
 Java internal-module dependencies, entity sharing or mutations. List uses one
 projection query; detail uses one projection plus at most two Manifest queries;

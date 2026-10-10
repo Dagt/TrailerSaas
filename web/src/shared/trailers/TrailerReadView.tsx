@@ -29,13 +29,14 @@ export function TrailerReadView({ trailer: t, tenantId, namespace }: { trailer: 
     ]} /><p className="muted">Last Driver is the last recorded Trailer observation; last Tractor comes from the latest coupling.</p></section>
     <section className="dispatch-card trailer-wide"><h2>Manifest / planned load</h2><p>Allocations describe planning. They do not confirm cargo physically loaded on this Trailer.</p>
       {!t.openManifests?.length ? <EmptyState>No visible OPEN Manifests.</EmptyState> : t.openManifests.map(m => <article key={m.id} className="manifest-summary"><h3>Manifest {m.id.slice(0, 8)} <StatusBadge>{m.status}</StatusBadge></h3>
-        {!m.orders.length ? <p>No Orders allocated.</p> : <DataTable caption={`Orders in Manifest ${m.id.slice(0, 8)}`} headings={['Order', 'Customer', 'Status']}>
+        {!m.orders.length ? <p>{m.ordersTruncated ? 'Orders are outside this bounded planning preview.' : 'No Orders allocated.'}</p> : <DataTable caption={`Orders in Manifest ${m.id.slice(0, 8)}`} headings={['Order', 'Customer', 'Status']}>
           {m.orders.map(o => <tr key={o.id}><th scope="row"><Link to={`/operations/orders/${o.id}`}>{o.orderNumber}</Link></th><td>{o.customerName}</td><td>{readable(o.status)}</td></tr>)}</DataTable>}
+        {m.ordersTruncated && m.orders.length > 0 && <p>Additional Orders are outside this bounded planning preview.</p>}
       </article>)}
       {t.manifestSummaryTruncated && <p>Planning preview limited to 20 OPEN Manifests and 50 Orders.</p>}
     </section>
     <section className="dispatch-card trailer-wide"><h2>Recent movement timeline</h2><TrailerTimeline tenantId={tenantId} trailerId={t.id} namespace={namespace} /></section>
-    <section className="dispatch-card trailer-wide"><h2>Evidence</h2><p>No linked evidence is available yet.</p></section>
+    <section className="dispatch-card trailer-wide"><h2>Evidence</h2><p>Evidence integration is not implemented yet. This view cannot determine whether evidence exists.</p></section>
   </div>
 }
 export function TrailerTimeline({ tenantId, trailerId, namespace }: { tenantId: string; trailerId: string; namespace: 'operations' | 'tenant' }) {

@@ -2,7 +2,7 @@ import { act, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { adminFixture, admin, customerId, resourceId, sample, siteId, stamps, tenantA, tenantB } from '../../test/adminFixture'
-import { operationsFixture, operationsMembership, orderId, tripId } from '../../test/operationsFixture'
+import { operationsFixture, operationsMembership, order, orderId, trip, tripId } from '../../test/operationsFixture'
 import type { TrailerDetail, TrailerTimelineItem, TrailerTimelinePage } from './contracts'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -15,7 +15,7 @@ function detail(): TrailerDetail {
     lastDriverName: 'Previous Driver', lastDriver: { id: siteId, name: 'Previous Driver' }, lastTractorId: resourceId, lastTractorOperationalNumber: 'TR-100',
     currentTractor: { id: resourceId, operationalNumber: 'TR-100' }, lastTractor: { id: resourceId, operationalNumber: 'TR-100' },
     currentCoupling: { id: resourceId, driverId: resourceId, driverName: 'Maria Driver', tractorId: resourceId, tractorOperationalNumber: 'TR-100', tripId, hookedAt: stamps.createdAt, droppedAt: null },
-    lastCoupling: null, lastSeenAt: stamps.createdAt, openManifests: [{ id: resourceId, status: 'OPEN', version: 0, updatedAt: stamps.updatedAt,
+    lastCoupling: null, lastSeenAt: stamps.createdAt, openManifests: [{ id: resourceId, status: 'OPEN', version: 0, updatedAt: stamps.updatedAt, ordersTruncated: false,
       orders: [{ id: orderId, customerId, customerName: 'Acme Packaging', orderNumber: 'ORD-100', status: 'PLANNED' }] }], manifestSummaryTruncated: false }
 }
 function event(type = 'HOOKED', id = 'event-1'): TrailerTimelineItem {
@@ -31,6 +31,12 @@ function fixture(path: string, memberships = [operationsMembership()]) {
   f.fetcher.mockImplementation(async (input, init) => {
     const url = new URL(String(input)), response = await original(input, init)
     const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': status >= 400 ? 'application/problem+json' : 'application/json' } })
+    // Admin's fixture also needs the real Operations read contracts after cross-area navigation.
+    if (path.startsWith('/admin')) {
+      if (url.pathname.endsWith(`/orders/${orderId}`)) return json(order())
+      if (url.pathname.endsWith(`/trips/${tripId}`)) return json(trip())
+      if (url.pathname.endsWith(`/trips/${tripId}/timeline`)) return json({ items: [], nextCursor: null })
+    }
     if (url.pathname.includes(`/trailers/${resourceId}/timeline`)) {
       if (url.searchParams.has('cursor') && failNext) return json({ status: 500, code: 'UNEXPECTED_FAILURE', traceId: 'read-support' }, 500)
       return json(url.searchParams.has('cursor') ? nextPage : page)
@@ -96,8 +102,47 @@ it('coupled detail uses physical resource names, authoritative last Driver and l
   expect(screen.getByText('Previous Driver')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Manifest / planned load' })).toBeInTheDocument()
   expect(screen.getByText(/do not confirm cargo physically loaded/)).toBeInTheDocument()
-  expect(screen.getByText('No linked evidence is available yet.')).toBeInTheDocument()
+  expect(screen.getByText('Evidence integration is not implemented yet. This view cannot determine whether evidence exists.')).toBeInTheDocument()
+  expect(screen.queryByText(/No linked evidence|No evidence/)).not.toBeInTheDocument()
   expect(screen.queryByText(/Hook Trailer|Mark OOS|Correct location/)).not.toBeInTheDocument()
+})
+it.each(['/operations', '/admin'])('%s presents 20 Manifests and a 50-Order preview without false empty allocations', async area => {
+  const f = fixture(`${area}/trailers/${resourceId}`, area === '/admin' ? [admin()] : [operationsMembership()])
+  const base = detail().openManifests[0]!
+  const manifests = Array.from({ length: 20 }, (_, i) => ({ ...base, id: `manifest-${i.toString().padStart(2, '0')}`,
+    ordersTruncated: i >= 16, orders: Array.from({ length: i < 16 ? 3 : i === 16 ? 2 : 0 }, (_, j) => ({ ...base.orders[0]!, id: `order-${i}-${j}`, orderNumber: `ORDER-${i}-${j}` })) }))
+  // Three allocations exist per Manifest; the last ten visible Orders exceed the global cap.
+  f.setDetail({ openManifests: manifests, manifestSummaryTruncated: true })
+  const ui = within((await screen.findByRole('heading', { name: 'Manifest / planned load' })).closest('section')!)
+  expect(ui.getAllByRole('heading', { level: 3 })).toHaveLength(20)
+  expect(ui.getAllByRole('link', { name: /^ORDER-/ })).toHaveLength(50)
+  expect(ui.queryByText('No Orders allocated.')).not.toBeInTheDocument()
+  expect(ui.getAllByText('Orders are outside this bounded planning preview.')).toHaveLength(3)
+  expect(ui.getByText('Additional Orders are outside this bounded planning preview.')).toBeInTheDocument()
+  expect(ui.getByText('Planning preview limited to 20 OPEN Manifests and 50 Orders.')).toBeInTheDocument()
+})
+it('genuinely empty allocations remain distinguishable from a limited planning preview', async () => {
+  const f = fixture(`/operations/trailers/${resourceId}`)
+  f.setDetail({ openManifests: [{ ...detail().openManifests[0]!, orders: [], ordersTruncated: false }] })
+  expect(await screen.findByText('No Orders allocated.')).toBeInTheDocument()
+  expect(screen.queryByText(/outside this bounded planning preview/)).not.toBeInTheDocument()
+})
+it.each(['/operations', '/admin'])('%s Order link opens the existing read-only route and preserves planning terminology', async area => {
+  const u = userEvent.setup(), f = fixture(`${area}/trailers/${resourceId}`, area === '/admin' ? [admin()] : [operationsMembership()])
+  expect(await screen.findByText(/do not confirm cargo physically loaded/)).toBeInTheDocument()
+  await u.click(screen.getByRole('link', { name: 'ORD-100' }))
+  expect(await screen.findByRole('heading', { name: 'ORD-100' })).toBeInTheDocument()
+  expect(f.router.state.location.pathname).toBe(`/operations/orders/${orderId}`)
+  expect(screen.getByRole('heading', { name: 'Requested Stops' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Save|Complete Order/ })).not.toBeInTheDocument()
+})
+it.each(['/operations', '/admin'])('%s physical coupling Trip link opens the implemented Trip detail', async area => {
+  const u = userEvent.setup(), f = fixture(`${area}/trailers/${resourceId}`, area === '/admin' ? [admin()] : [operationsMembership()])
+  await u.click(await screen.findByRole('link', { name: 'Open Trip' }))
+  expect(await screen.findByRole('heading', { name: 'Executable Stops' })).toBeInTheDocument()
+  expect(f.router.state.location.pathname).toBe(`/operations/trips/${tripId}`)
+  expect(screen.getByText('Expected Trailer')).toBeInTheDocument()
+  expect(screen.getByText(/Expected Trailer is not physical coupling/)).toBeInTheDocument()
 })
 it('uncoupled detail retains last coupling without showing a fabricated current Trip', async () => {
   const f = fixture(`/operations/trailers/${resourceId}`);f.setDetail({ currentCoupling: null, couplingState: 'UNCOUPLED', currentDriverName: null, currentTractorOperationalNumber: null, lastCoupling: { ...detail().currentCoupling!, droppedAt: stamps.updatedAt } })

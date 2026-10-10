@@ -2699,12 +2699,15 @@ components:
     TrailerManifestSummary:
       type: object
       additionalProperties: false
-      required: [id, status, version, updatedAt, orders]
+      required: [id, status, version, updatedAt, orders, ordersTruncated]
       properties:
         id: { type: string, format: uuid }
         status: { type: string, const: OPEN }
         version: { type: integer, format: int64, minimum: 0 }
         updatedAt: { type: string, format: date-time }
+        ordersTruncated:
+          type: boolean
+          description: True only when authorized Orders in this Manifest are omitted by the global 50-Order preview limit. Never indicates hidden Customer allocations. An empty orders array with true is a limited preview, not an empty Manifest.
         orders:
           type: array
           maxItems: 50
