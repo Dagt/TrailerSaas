@@ -586,7 +586,11 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
         var s = c.createStatement()) {
       c.setAutoCommit(false);
       s.execute("select set_config('app.current_tenant_id','" + tenant + "',true)");
+      // Verify available ordered index paths, not a cost-dependent choice among equivalent plans.
+      // These planner settings are transaction-local test diagnostics, never production settings.
       s.execute("set local enable_seqscan=off");
+      s.execute("set local enable_bitmapscan=off");
+      s.execute("set local enable_sort=off");
       var cases =
           Map.of(
               "operational_number_normalized",
