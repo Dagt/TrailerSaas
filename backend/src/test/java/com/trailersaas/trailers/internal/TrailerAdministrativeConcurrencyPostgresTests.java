@@ -293,11 +293,26 @@ class TrailerAdministrativeConcurrencyPostgresTests extends PostgresIntegrationT
 
   void assertStale(Throwable failure) {
     if (failure instanceof TrailerFailure f) assertThat(f.code).isEqualTo("STALE_VERSION");
-    else
+    else if (failure instanceof TrailerMovementRejectedException)
       assertThat(failure)
           .isInstanceOf(TrailerMovementRejectedException.class)
           .hasFieldOrPropertyWithValue(
               "reason", TrailerMovementRejectedException.Reason.STALE_VERSION);
+    else {
+      boolean optimistic = false;
+      for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+        optimistic |=
+            cause instanceof jakarta.persistence.OptimisticLockException
+                || cause instanceof org.springframework.dao.OptimisticLockingFailureException
+                || cause instanceof org.hibernate.StaleStateException;
+      }
+      assertThat(optimistic)
+          .as("Generic PATCH retains real JPA optimistic race protection")
+          .isTrue();
+      var problem = new TrailerExceptionHandler().stale((Exception) failure);
+      assertThat(problem.getStatus()).isEqualTo(409);
+      assertThat(problem.getProperties()).containsEntry("code", "STALE_VERSION");
+    }
   }
 
   long version() throws Exception {
