@@ -121,7 +121,7 @@ final class MovementRules {
     m.put("newLocationId", c.locationId());
     m.put("physicalObservation", c.physicalObservation());
     if (!c.physicalObservation()) {
-      m.put("preservedLastSeenAt", s.lastSeenAt());
+      m.put("preservedLastSeenAt", s.lastSeenAt() == null ? null : s.lastSeenAt().toString());
       m.put("preservedLastDriverId", s.lastDriverId());
     }
     return change(
@@ -143,7 +143,7 @@ final class MovementRules {
     reason(c.reason());
     var m = previous(s);
     m.put("preservedLastKnownLocationId", s.lastKnownLocationId());
-    m.put("preservedLastSeenAt", s.lastSeenAt());
+    m.put("preservedLastSeenAt", s.lastSeenAt() == null ? null : s.lastSeenAt().toString());
     m.put("preservedLastDriverId", s.lastDriverId());
     return change(
         s,

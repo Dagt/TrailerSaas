@@ -149,7 +149,7 @@ class MovementRulesTests {
         MovementRules.unknown(
             state(LocationState.AT_LOCATION), new MarkUnknown(target, context(), "Lost"));
     assertThat(mark.metadata())
-        .containsEntry("preservedLastSeenAt", old)
+        .containsEntry("preservedLastSeenAt", old.toString())
         .containsEntry("preservedLastDriverId", driver)
         .containsEntry("preservedLastKnownLocationId", a);
   }

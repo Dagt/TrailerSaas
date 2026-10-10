@@ -566,6 +566,9 @@ Internally generated JSONB metadata is bounded by type:
 - HOOKED/DROPPED: type, Location, actual Driver and occurrence explain their effect;
   no fabricated location transition or arbitrary metadata dump.
 
+Preserved timestamp metadata is explicitly ISO-8601 text (or NULL), independent of
+the persistence JSON mapper's Instant serialization settings.
+
 occurredAt remains operational time, recordedAt is server persistence chronology.
 Under the exclusive Trailer lock the writer uses microsecond server time, advancing
 past the last recorded timestamp if equal/backward readings occur. Reconciliation

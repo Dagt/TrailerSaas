@@ -315,6 +315,11 @@ class TrailerMovementPostgresTests extends PostgresIntegrationTest {
         .containsEntry("preservedLastKnownLocationId", a.toString())
         .containsEntry("preservedLastDriverId", driver.toString())
         .containsEntry("preservedLastSeenAt", BEFORE.toString());
+    tx(
+        () ->
+            movements.changeLoadState(
+                tenant, new LoadChange(target(2), context(), LoadState.LOADED, "Load observed")));
+    assertThat(tx(() -> reconciliation.compare(tenant, trailer)).status()).isEqualTo(Status.MATCH);
   }
 
   @Test
