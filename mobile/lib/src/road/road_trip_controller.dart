@@ -54,8 +54,9 @@ class RoadTripController extends ChangeNotifier {
     try {
       final saved = await journal.read(s.userId, s.membership.tenantId);
       if (saved != null &&
-          !saved.path.startsWith('tenants/${s.membership.tenantId}/'))
+          !saved.path.startsWith('tenants/${s.membership.tenantId}/')) {
         throw const FormatException();
+      }
       final data = await session.api.get(
         'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
       );
@@ -113,8 +114,9 @@ class RoadTripController extends ChangeNotifier {
 
   Future<void> submit(String path, Map<String, dynamic> body) async {
     final s = session.snapshot;
-    if (s == null || !online || sending || pending != null || detail == null)
+    if (s == null || !online || sending || pending != null || detail == null) {
       return;
+    }
     final command = OnlineCommand(operationUuid(), tripId, path, Map.of(body));
     final generation = ++_generation;
     sending = true;
@@ -184,13 +186,15 @@ class RoadTripController extends ChangeNotifier {
                 'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
               );
         if (!_current(generation, s)) return;
-        if ((refreshed['trip'] as Map)['id'] != tripId)
+        if ((refreshed['trip'] as Map)['id'] != tripId) {
           throw const FormatException();
+        }
         if (!await session.cacheConfirmedTrip(
           s,
           refreshed['trip'] as Map<String, dynamic>,
-        ))
+        )) {
           return;
+        }
         if (!_current(generation, s)) return;
         detail = refreshed;
       } catch (_) {
