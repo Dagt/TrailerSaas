@@ -34,6 +34,7 @@ class DatabaseTrailerProjectionReconciliation implements TrailerProjectionReconc
             .getResultStream()
             .findFirst()
             .orElseThrow(() -> fail(RESOURCE_NOT_FOUND));
+    em.refresh(t, LockModeType.PESSIMISTIC_READ);
     var events =
         em.createQuery(
                 "select e from TrailerMovementEntity e where e.tenantId=:tenant and"

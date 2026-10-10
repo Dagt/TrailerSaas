@@ -249,6 +249,30 @@ class TrailerMovementPostgresTests extends PostgresIntegrationTest {
   }
 
   @Test
+  void comparisonRefreshesAPreviouslyManagedProjectionUnderSharedLock() throws Exception {
+    tx(() -> apply("RECOVER", 0));
+    tx(
+        () ->
+            movements.changeLoadState(
+                tenant, new LoadChange(target(1), context(), LoadState.LOADED, "Confirmed")));
+    var result =
+        tx(
+            () -> {
+              em.find(
+                  TrailerEntity.class,
+                  trailer); // An earlier unprotected caller read is not authoritative.
+              try {
+                f.db.execute("update trailers set current_location_id=? where id=?", a, trailer);
+              } catch (java.sql.SQLException failure) {
+                throw new IllegalStateException(failure);
+              }
+              return reconciliation.compare(tenant, trailer);
+            });
+    assertThat(result.status()).isEqualTo(Status.DRIFT);
+    assertThat(result.driftFields()).containsExactly(Field.CURRENT_LOCATION);
+  }
+
+  @Test
   void staleOfflineOccurrenceCannotAppendOrOverwrite() throws Exception {
     baseline(LocationState.IN_TRANSIT, LoadState.UNKNOWN);
     tx(() -> apply("ARRIVE", 0));
