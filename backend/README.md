@@ -914,3 +914,37 @@ GitHub Actions always runs Testcontainers with `postgres:18-alpine` without skip
 See the [implemented API boundary](../docs/api/mobile-execution.md#issue-38-implementation-boundary)
 for request/results, strict initial expected version, replay semantics and deferred
 #39/#40/#41/#44/#46 work.
+
+### Issue #39: movement/projection core and reconciliation
+
+No migration, grant change or public endpoint is added. V1–V16 remain unchanged.
+`TrailerMovementProjection` exposes seven typed operations joining the caller's
+runtime Tenant transaction (MANDATORY), with required expected Trailer version.
+The caller owns authentication, capability/Customer/Trip/Stop authorization,
+parent lock ordering and full offline idempotency. Trailers never locks a Trip
+or claims another operation key. Location identity is checked through the public
+Customers `OperationalLocationDirectory`; Customer compatibility remains the
+workflow's responsibility. Optional Driver/Trip/Stop/Tractor references retain
+V16's tenant-safe FKs and HUMAN_USER's real global User FK.
+
+Each accepted operation locks/refreshes Trailer, checks version/current state,
+validates parents, appends a fixed event and updates the current row before flush.
+`@Version` advances exactly once; infrastructure failures propagate and expected
+integrity conflicts are safe domain failures. Hook/Drop reuse this writer after
+their unchanged physical/ledger checks. Current GET/list still reads Trailer rows.
+
+`TrailerProjectionReconciliation.compare` is an explicit diagnostic in a caller
+transaction. It takes a shared Trailer lock and reads Tenant-scoped facts in
+recordedAt/id order. It derives six movement-owned fields where facts support
+them, compares only known fields, and returns MATCH, DRIFT or INSUFFICIENT_HISTORY.
+Unknown baseline is distinct from a known NULL; known mismatch takes precedence
+over incomplete history. There is no synthetic initial fact, full aggregate rebuild,
+automatic repair, HTTP repair surface or normal-read history replay. See the
+[operation matrix and metadata](../docs/api/mobile-execution.md#issue-39-implementation-boundary).
+
+PostgreSQL 18 regressions cover the transition/load matrices, provenance, location
+integrity, preservation, stale offline facts, history comparison, both write-failure
+rollbacks and real lock waits, including movement versus Hook/Drop. The complete
+#38 suite is preserved. Local Docker availability is required for the full suite.
+Alerts/outbox, correction endpoints, physical Trip/Stop execution, Yard mobile,
+full Trailer timeline and generic Audit remain their later bounded Issues.

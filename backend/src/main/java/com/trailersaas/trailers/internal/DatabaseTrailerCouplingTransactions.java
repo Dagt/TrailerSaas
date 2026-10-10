@@ -20,12 +20,17 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
   private final EntityManager em;
   private final TractorCouplingPolicy tractors;
   private final JsonMapper json;
+  private final DatabaseTrailerMovementProjection movements;
 
   DatabaseTrailerCouplingTransactions(
-      EntityManager em, TractorCouplingPolicy tractors, JsonMapper json) {
+      EntityManager em,
+      TractorCouplingPolicy tractors,
+      JsonMapper json,
+      DatabaseTrailerMovementProjection movements) {
     this.em = em;
     this.tractors = tractors;
     this.json = json;
+    this.movements = movements;
   }
 
   public Result hook(
@@ -48,19 +53,17 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     if (activeTrip(tenant, trip.id())) throw fail(CONFLICT);
     var at = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var event =
-        event(
-            tenant,
+        movements.coupling(
+            trailer,
             user,
             operation,
             trip.id(),
-            r.trailerId(),
             r.driverId(),
             r.tractorId(),
             null,
             "AT_LOCATION".equals(trailer.locationState) ? trailer.currentLocationId : null,
-            "HOOKED",
             r.occurredAt(),
-            at);
+            false);
     var c = new TrailerCouplingEntity();
     c.id = UUID.randomUUID();
     c.tenantId = tenant;
@@ -72,7 +75,6 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     c.hookEventId = event.id;
     c.createdAt = at;
     em.persist(c);
-    observed(trailer, r.driverId(), r.occurredAt(), at);
     flush();
     return remember(tenant, claim, result(c, trailer, trip, event), at);
   }
@@ -100,25 +102,19 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     destination.run();
     var at = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var event =
-        event(
-            tenant,
+        movements.coupling(
+            trailer,
             user,
             operation,
             trip.id(),
-            r.trailerId(),
             driver,
             c.tractorId,
             r.stopId(),
             r.locationId(),
-            "DROPPED",
             r.occurredAt(),
-            at);
+            true);
     c.droppedAt = r.occurredAt();
     c.dropEventId = event.id;
-    trailer.locationState = "AT_LOCATION";
-    trailer.currentLocationId = r.locationId();
-    trailer.lastKnownLocationId = r.locationId();
-    observed(trailer, driver, r.occurredAt(), at);
     flush();
     return remember(tenant, claim, result(c, trailer, trip, event), at);
   }
@@ -183,39 +179,6 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     return response;
   }
 
-  private TrailerMovementEntity event(
-      UUID tenant,
-      UUID user,
-      UUID key,
-      UUID trip,
-      UUID trailer,
-      UUID driver,
-      UUID tractor,
-      UUID stop,
-      UUID location,
-      String type,
-      Instant occurred,
-      Instant at) {
-    var e = new TrailerMovementEntity();
-    e.id = UUID.randomUUID();
-    e.tenantId = tenant;
-    e.trailerId = trailer;
-    e.tripId = trip;
-    e.tripStopId = stop;
-    e.driverId = driver;
-    e.tractorId = tractor;
-    e.locationId = location;
-    e.eventType = type;
-    e.actorType = "HUMAN_USER";
-    e.sourceType = "USER_ACTION";
-    e.actorUserId = user;
-    e.occurredAt = occurred;
-    e.recordedAt = at;
-    e.clientOperationId = key;
-    em.persist(e);
-    return e;
-  }
-
   private TrailerEntity trailer(UUID tenant, UUID id) {
     return em.createQuery(
             "select t from TrailerEntity t where t.tenantId=:tenant and t.id=:id",
@@ -262,13 +225,6 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
         .setMaxResults(1)
         .getResultList()
         .isEmpty();
-  }
-
-  private static void observed(TrailerEntity t, UUID driver, Instant occurred, Instant at) {
-    t.lastDriverId = driver;
-    t.lastSeenAt = occurred;
-    // Always dirty, even when two physical facts share device time/Driver.
-    t.updatedAt = at.isAfter(t.updatedAt) ? at : t.updatedAt.plus(1, ChronoUnit.MICROS);
   }
 
   private static Result result(
