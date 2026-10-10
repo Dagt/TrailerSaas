@@ -842,7 +842,7 @@ paths:
       x-implementation-status: implemented-issue-40
       description: >
         TRAILER_STATE_CORRECT, fresh ACTIVE membership and capability required.
-        Distinct EMPTY/LOADED/UNKNOWN transitions only. Location, serviceability, designation, coupling and Manifest remain unchanged.
+        Distinct EMPTY/LOADED/UNKNOWN transitions only; same load state yields RESOURCE_CONFLICT without event/version change. Location, serviceability, designation, coupling and Manifest remain unchanged.
         Strict body; actor/source/time are server-derived HUMAN_USER/USER_ACTION.
         expectedVersion mandatory; stale yields STALE_VERSION. Invalid state yields INVALID_STATE_TRANSITION.
         Unknown/malformed fields yield VALIDATION_FAILED; invisible parents yield RESOURCE_NOT_FOUND.

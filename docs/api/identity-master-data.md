@@ -582,7 +582,7 @@ Capability: TRAILER_STATE_CORRECT.
 ```
 
 All six distinct EMPTY/LOADED/UNKNOWN transitions are allowed; same-state rejects
-without event/version change. LOAD_STATE_CHANGED retains previousLoadState and
+with RESOURCE_CONFLICT, without event/version change. LOAD_STATE_CHANGED retains previousLoadState and
 newLoadState. No location/coupling/serviceability/Customer/Trip/Manifest side effect.
 Customer reassignment requires a same-Tenant existing Customer, including inactive
 master data; it records previousDesignatedCustomerId (including null) and

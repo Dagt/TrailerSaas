@@ -193,7 +193,7 @@ class TrailerAdministrativeHttpPostgresTests extends PostgresIntegrationTest {
     problem(command(command, input(command, 0)), 403, "TENANT_ACCESS_DENIED");
     f.db.execute("update tenant_memberships set status='ACTIVE' where id=?", membership);
     f.db.execute("delete from role_assignments where membership_id=?", membership);
-    problem(command(command, input(command, 0)), 403, "TENANT_ACCESS_DENIED");
+    problem(command(command, input(command, 0)), 403, "CAPABILITY_DENIED");
     assertThat(count()).isZero();
     assertThat(version()).isZero();
   }
@@ -308,7 +308,7 @@ class TrailerAdministrativeHttpPostgresTests extends PostgresIntegrationTest {
             "load-state-changes",
             Map.of("expectedVersion", 1, "loadState", to, "reason", "Same state")),
         409,
-        "INVALID_STATE_TRANSITION");
+        "RESOURCE_CONFLICT");
     assertThat(count()).isEqualTo(1);
     assertThat(version()).isEqualTo(1);
   }
