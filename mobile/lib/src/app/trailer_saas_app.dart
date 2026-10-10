@@ -4,17 +4,20 @@ import 'package:flutter/material.dart';
 
 import '../configuration/app_configuration.dart';
 import '../persistence/app_database.dart';
-import 'navigation/mode_shell.dart';
+import '../session/session_controller.dart';
+import '../session/session_view.dart';
 
 class TrailerSaasApp extends StatefulWidget {
   const TrailerSaasApp({
     super.key,
     required this.configuration,
     required this.database,
+    this.session,
   });
 
   final AppConfiguration configuration;
   final AppDatabase database;
+  final SessionController? session;
 
   @override
   State<TrailerSaasApp> createState() => _TrailerSaasAppState();
@@ -26,13 +29,26 @@ class _TrailerSaasAppState extends State<TrailerSaasApp> {
   @override
   void initState() {
     super.initState();
-    _databaseReady = widget.database.initialize();
+    _databaseReady = _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await widget.database.initialize();
+    await widget.session?.start();
   }
 
   @override
   void dispose() {
-    unawaited(widget.database.close());
+    unawaited(_close());
     super.dispose();
+  }
+
+  Future<void> _close() async {
+    await widget.session?.shutdown();
+    // No UI survives disposal, and no request/storage details are logged.
+    try {
+      await widget.database.close();
+    } catch (_) {}
   }
 
   @override
@@ -54,7 +70,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp> {
                     TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          _databaseReady = widget.database.initialize();
+                          _databaseReady = _initialize();
                         });
                       },
                       icon: const Icon(Icons.refresh),
@@ -70,7 +86,13 @@ class _TrailerSaasAppState extends State<TrailerSaasApp> {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          return const ModeShell();
+          return widget.session == null
+              ? const Scaffold(
+                  body: Center(
+                    child: Text('Authentication configuration is required.'),
+                  ),
+                )
+              : SessionView(session: widget.session!);
         },
       ),
     );

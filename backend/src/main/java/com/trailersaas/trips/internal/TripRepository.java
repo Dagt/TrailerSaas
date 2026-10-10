@@ -70,6 +70,22 @@ class TripRepository {
         .getResultList();
   }
 
+  List<TripStopEntity> stopsForTrips(UUID tenant,List<UUID> trips) {
+    return em.createQuery("select s from TripStopEntity s where s.tenantId=:tenant and s.tripId in :trips order by s.sequenceNumber,s.id",TripStopEntity.class).setParameter("tenant",tenant).setParameter("trips",trips).getResultList();
+  }
+
+  List<TripEntity> assignedWork(UUID tenant, UUID driver, TripValidation.Position cursor, int limit) {
+    var q=em.createQuery("select t from TripEntity t where t.tenantId=:tenant and t.currentDriverId=:driver and t.status not in ('COMPLETED','CANCELLED')"
+        +(cursor==null?"":" and (t.createdAt<:at or (t.createdAt=:at and t.id<:id))")+" order by t.createdAt desc,t.id desc",TripEntity.class)
+        .setParameter("tenant",tenant).setParameter("driver",driver);
+    if(cursor!=null) q.setParameter("at",cursor.createdAt()).setParameter("id",cursor.id());
+    return q.setMaxResults(limit+1).getResultList();
+  }
+
+  List<TripStopOrderEntity> mappingsForTrips(UUID tenant,List<UUID> trips) {
+    return em.createQuery("select a from TripStopOrderEntity a where a.tenantId=:tenant and a.tripStopId in (select s.id from TripStopEntity s where s.tenantId=:tenant and s.tripId in :trips) order by a.orderId,a.id",TripStopOrderEntity.class).setParameter("tenant",tenant).setParameter("trips",trips).getResultList();
+  }
+
   List<TripStopOrderEntity> mappings(UUID tenant, UUID trip) {
     return em.createQuery(
             "select a from TripStopOrderEntity a where a.tenantId=:tenant and a.tripStopId in"

@@ -91,6 +91,10 @@ jobs:
       - name: Check format
         run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze --fatal-infos
+      - name: Verify session widget regressions individually
+        run: |
+          flutter test test/app/trailer_saas_app_test.dart --reporter expanded
+          flutter test test/session/session_view_test.dart --reporter expanded
       - run: flutter test --reporter expanded
 
   openapi:

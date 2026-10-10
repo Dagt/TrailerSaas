@@ -1,5 +1,19 @@
 # Environment Configuration and Secret Templates
 
+## Issue #42 Mobile Firebase public options
+
+The Flutter app now requires explicit public FIREBASE_ENVIRONMENT (matching APP_ENV),
+FIREBASE_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_APP_ID and FIREBASE_MESSAGING_SENDER_ID;
+FIREBASE_IOS_BUNDLE_ID is available for iOS app registration. APP_ID must match the target
+Android/iOS registered app/package. Examples contain empty provider identifiers and fail
+closed until an operator supplies their own ignored environment config. Pass it using
+`--dart-define-from-file=config/<environment>.json`. Staging/production remain HTTPS-only.
+Use isolated Firebase projects for nonproduction/production; no service account/private
+keys in Mobile. Enable email/password in the relevant Firebase project. Native SDK session
+storage is managed by Firebase; bearer tokens/passwords are not copied into Drift.
+See [mobile README](../../mobile/README.md) and
+[session/cache security boundary](../mobile/issue-42-session-cache.md).
+
 Issue #20 implements ADR-020, using the hosting boundaries accepted in
 ADR-009/016. PostgreSQL and API configuration are active; Issue #22 activates
 backend Firebase ID-token verification through official Admin/ADC. Issue #21 adds optional

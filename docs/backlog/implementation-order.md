@@ -89,9 +89,9 @@ closing the Trips/dispatch Web wave.
 #38 is merged/complete via [PR #92](https://github.com/Dagt/TrailerSaas/pull/92).
 #39 is merged/complete via [PR #93](https://github.com/Dagt/TrailerSaas/pull/93).
 #40 is merged/complete via [PR #94](https://github.com/Dagt/TrailerSaas/pull/94).
-#41 is the current bounded Trailer search/detail/timeline implementation;
-complete only upon merge. After #41 merges, the Trailer movement/read surface
-wave is complete and #42 Mobile auth/cache foundation is next. Public execution
+#41 is merged/complete via [PR #95](https://github.com/Dagt/TrailerSaas/pull/95).
+The Trailer movement/read surface wave is complete. #42 is the current bounded
+Mobile auth/cache implementation, complete only upon merge. Public execution
 and Yard workflows remain separate Issues.
 
 ### Evidence/alerts support
@@ -103,7 +103,7 @@ These streams may overlap according to each Issue's explicit dependencies.
 
 ## Wave 4 — Mobile synchronization foundation
 
-- #42 Mobile auth/cache shell
+- #42 Mobile auth/cache shell — current bounded implementation
 - #46 Offline command queue/replay
 - #54 Mobile media queue
 

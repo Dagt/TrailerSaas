@@ -12,6 +12,18 @@ The authenticated User must resolve to an active Driver for Driver-only commands
 
 ## 1. Driver home/work
 
+### Issue #42 implemented read subset
+
+GET `/driver/me` returns own active linked Driver id/name/active/version. GET
+`/driver/me/trips` returns nonterminal currently assigned work, ordered createdAt DESC/id DESC,
+with cursor/limit (default50/max200), executable Stops and relevant planned Trailer context.
+Both require fresh ACTIVE membership and TRIP_VIEW_ASSIGNED. Unknown query fields, including
+active/date/Driver IDs, are rejected. No administrative actor histories, generic directory,
+Shift or fabricated singular active Trip context. Planned Trailer is not physical coupling.
+The richer home below remains future execution work. `/me` adds fresh Tenant-scope capability
+hints for navigation only; server authorization remains mandatory on every resource request.
+See [session/cache boundary](../mobile/issue-42-session-cache.md). Replay remains #46.
+
 ### GET /driver/me
 
 Returns:

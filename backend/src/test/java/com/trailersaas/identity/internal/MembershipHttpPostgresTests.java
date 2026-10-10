@@ -59,7 +59,7 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         fixtures.membership(tenant, user, "ACTIVE");
         var entries = memberships(me(user));
         assertThat(entries).containsExactly(Map.of("tenantId", tenant.toString(), "tenantName", "Active tenant",
-                "status", "ACTIVE", "roles", List.of()));
+                "status", "ACTIVE", "roles", List.of(), "capabilities", List.of()));
     }
 
     @Test
@@ -83,6 +83,17 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(JsonPath.<List<String>>read(response.body(), "$.memberships[0].roles[*].scopeType"))
                 .containsExactly("CUSTOMER", "CUSTOMER", "TENANT", "TENANT");
         assertThat(me(user).body()).isEqualTo(response.body());
+        var expected = java.util.Arrays.stream(com.trailersaas.identity.Capability.values())
+                .filter(c -> RoleCapabilities.grants(RoleCode.TRANSPORT_OPERATIONS, c)
+                        || RoleCapabilities.grants(RoleCode.YARD_SPOTTER, c))
+                .map(Enum::name).toList();
+        assertThat(JsonPath.<List<String>>read(response.body(), "$.memberships[0].capabilities"))
+                .containsExactlyElementsOf(expected);
+        assertThat(memberships(response).getFirst().keySet())
+                .containsExactlyInAnyOrder("tenantId", "tenantName", "status", "roles", "capabilities");
+        for (var role : JsonPath.<List<Map<String, Object>>>read(response.body(), "$.memberships[0].roles")) {
+            assertThat(role.keySet()).containsExactlyInAnyOrder("roleCode", "scopeType", "customerId");
+        }
     }
 
     @Test
@@ -130,12 +141,17 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         var membership = fixtures.membership(tenant, user, "ACTIVE");
         fixtures.role(tenant, membership, "DRIVER", "TENANT", null);
         assertThat(JsonPath.<String>read(me(user).body(), "$.memberships[0].status")).isEqualTo("ACTIVE");
+        assertThat(JsonPath.<List<String>>read(me(user).body(), "$.memberships[0].capabilities"))
+                .contains("TRIP_VIEW_ASSIGNED");
         for (var status : List.of("SUSPENDED", "DISABLED")) {
             fixtures.execute("UPDATE tenant_memberships SET status=?, updated_at=now() WHERE id=?", status, membership);
             assertThat(JsonPath.<String>read(me(user).body(), "$.memberships[0].status")).isEqualTo(status);
+            assertThat(JsonPath.<List<?>>read(me(user).body(), "$.memberships[0].capabilities")).isEmpty();
         }
         fixtures.execute("DELETE FROM role_assignments WHERE tenant_id=? AND membership_id=?", tenant, membership);
         assertThat(JsonPath.<List<?>>read(me(user).body(), "$.memberships[0].roles")).isEmpty();
+        fixtures.execute("UPDATE tenant_memberships SET status='ACTIVE' WHERE id=?", membership);
+        assertThat(JsonPath.<List<?>>read(me(user).body(), "$.memberships[0].capabilities")).isEmpty();
         var authentication = new FirebaseAuthenticationProvider(verifier, users).authenticate(
                 new org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken("user-" + user));
         assertThat(authentication.getAuthorities()).isEmpty(); // Directory/status is not authorization.
@@ -153,6 +169,21 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(JsonPath.<List<String>>read(response.body(), "$.memberships[*].tenantName"))
                 .containsExactly("A active", "M suspended", "Z disabled");
         assertThat(response.body()).doesNotContain("CANDIDATE_TEST_STATUS"); // Tenant status is not part of /me.
+    }
+
+    @Test
+    void customerScopedRoleNeverWidensTenantCapabilityHints() throws Exception {
+        var user = user();
+        var tenant = fixtures.tenant("Customer only");
+        var membership = fixtures.membership(tenant, user, "ACTIVE");
+        var customer = UUID.randomUUID();
+        fixtures.customer(tenant, customer);
+        fixtures.role(tenant, membership, "CUSTOMER_DISPATCHER", "CUSTOMER", customer);
+        var response = me(user);
+        assertThat(JsonPath.<List<?>>read(response.body(), "$.memberships[0].capabilities")).isEmpty();
+        assertThat(JsonPath.<List<String>>read(response.body(), "$.memberships[0].roles[*].customerId"))
+                .containsExactly(customer.toString());
+        assertThat(me(user).body()).isEqualTo(response.body());
     }
 
     private UUID user() throws Exception {
