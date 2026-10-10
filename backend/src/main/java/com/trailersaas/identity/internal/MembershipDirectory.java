@@ -42,9 +42,15 @@ class MembershipDirectory {
             }
         }
         return memberships.values().stream().map(row -> new MembershipSummary(row.tenantId(),
-                row.tenantName(), row.status(), List.copyOf(roles.get(row.membershipId())))).toList();
+                row.tenantName(), row.status(), List.copyOf(roles.get(row.membershipId())),
+                row.status() == MembershipStatus.ACTIVE
+                    ? java.util.Arrays.stream(com.trailersaas.identity.Capability.values())
+                        .filter(capability -> roles.get(row.membershipId()).stream().anyMatch(role ->
+                            role.scopeType() == RoleScopeType.TENANT && RoleCapabilities.grants(role.roleCode(),capability)))
+                        .map(Enum::name).toList() : List.of())).toList();
     }
 
-    record MembershipSummary(UUID tenantId, String tenantName, MembershipStatus status, List<RoleSummary> roles) {}
+    record MembershipSummary(UUID tenantId, String tenantName, MembershipStatus status, List<RoleSummary> roles,
+            List<String> capabilities) {}
     record RoleSummary(RoleCode roleCode, RoleScopeType scopeType, UUID customerId) {}
 }

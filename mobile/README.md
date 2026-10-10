@@ -1,5 +1,38 @@
 # TrailerSaaS Mobile
 
+## Current implementation — Issue #42
+
+Firebase sign-in/session restore, `/me`, Tenant selection, own Driver/work reads and persistent
+namespaced Drift caches now replace the unauthenticated shell. Road is read-only downloaded
+work; Yard is an authorized shell. No execution/replay. See the
+[session/cache boundary](../docs/mobile/issue-42-session-cache.md).
+
+Use the locked SDK/dependencies. New packages are Firebase Core/Auth, HTTP and connectivity;
+unrelated scaffold dependencies remain locked. Configure ignored environment JSON with public
+FIREBASE_ENVIRONMENT (must equal APP_ENV), FIREBASE_API_KEY, FIREBASE_PROJECT_ID,
+FIREBASE_APP_ID, FIREBASE_MESSAGING_SENDER_ID and optional FIREBASE_IOS_BUNDLE_ID.
+APP_ID must identify the registered Android/iOS app being built and match its package/bundle.
+Register apps in the correct Firebase project and enable email/password. SDK initialization
+uses explicit FirebaseOptions; no Admin credentials. Empty templates fail closed.
+See [official Firebase Flutter Authentication setup](https://firebase.google.com/docs/auth/flutter/start).
+
+```sh
+flutter run --dart-define-from-file=config/development.json
+flutter build apk --dart-define-from-file=config/staging.json
+```
+
+Use distinct Firebase/API environments; staging/production require HTTPS. Android main
+manifest grants Internet, debug manifest permits cleartext only for local development. Use
+HTTPS for iOS development; no blanket ATS bypass is shipped. Firebase SDK manages its own
+native session storage; cache holds no password/bearer token. SQLite v2 explicitly upgrades
+the empty v1; injected tests use real SQLite without Firebase network. Native validation
+needs configured Android SDK/devices or macOS/Xcode; host tests do not replace it.
+
+## Historical scaffold baseline (#17)
+
+The remaining sections record the original scaffold and its original validation, rather
+than the current authenticated #42 implementation.
+
 Issue #17 supplies one Flutter app for Android and iOS, following
 ADR-005/012/014. The two modes are navigable placeholders only.
 

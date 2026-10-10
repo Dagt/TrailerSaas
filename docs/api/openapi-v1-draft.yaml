@@ -1546,6 +1546,50 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/driver/me:
+    get:
+      tags: [DriverMobile]
+      operationId: getOwnDriverProfile
+      x-implementation-status: implemented-issue-42
+      summary: Read the authenticated User's active linked Driver profile
+      description: Requires fresh ACTIVE membership and TRIP_VIEW_ASSIGNED. No arbitrary User/Driver IDs, query parameters, Shift, execution state or directory browsing. Missing/inactive link is CAPABILITY_DENIED.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Own operational profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverSelfProfile'
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '500': { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/driver/me/trips:
+    get:
+      tags: [DriverMobile]
+      operationId: listOwnAssignedDriverWork
+      x-implementation-status: implemented-issue-42
+      summary: Read assigned nonterminal work for the authenticated active Driver
+      description: Requires fresh TRIP_VIEW_ASSIGNED and an active linked Driver. Excludes COMPLETED/CANCELLED Trips; ordered createdAt DESC/id DESC. Only cursor/limit supported. Every page reauthorizes. No administrative histories, actor identities, arbitrary Driver filters or physical execution. plannedTrailer is an expectation, not coupling.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Bounded page of own assigned work
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverAssignedWorkPage'
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '500': { $ref: '#/components/responses/Problem' }
+
   /api/v1/tenants/{tenantId}/driver/me/updates:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -1908,6 +1952,82 @@ components:
         nextCursor:
           type: [string, "null"]
 
+    DriverSelfProfile:
+      type: object
+      additionalProperties: false
+      required: [id, name, active, version]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        active: { type: boolean, const: true }
+        version: { type: integer, minimum: 0 }
+
+    DriverAssignedWorkPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          items: { $ref: '#/components/schemas/DriverAssignedTrip' }
+        nextCursor: { type: [string, "null"] }
+
+    DriverAssignedTrip:
+      type: object
+      additionalProperties: false
+      required: [id, status, currentDriverId, currentTractorId, plannedInitialTrailerId, plannedTrailer, version, updatedAt, stops]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING] }
+        currentDriverId: { type: string, format: uuid }
+        currentTractorId: { type: [string, "null"], format: uuid }
+        plannedInitialTrailerId: { type: [string, "null"], format: uuid }
+        plannedTrailer:
+          oneOf:
+            - { type: "null" }
+            - $ref: '#/components/schemas/DriverPlannedTrailer'
+        version: { type: integer, minimum: 0 }
+        updatedAt: { type: string, format: date-time }
+        stops:
+          type: array
+          items: { $ref: '#/components/schemas/DriverCachedStop' }
+
+    DriverPlannedTrailer:
+      type: object
+      additionalProperties: false
+      description: Assigned planning context only. Does not establish physical coupling or grant generic Trailer browse.
+      required: [id, operationalNumber, locationState, loadState, serviceabilityState, active, version]
+      properties:
+        id: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        locationState: { $ref: '#/components/schemas/TrailerLocationState' }
+        loadState: { $ref: '#/components/schemas/TrailerLoadState' }
+        serviceabilityState: { $ref: '#/components/schemas/TrailerServiceabilityState' }
+        active: { type: boolean }
+        version: { type: integer, minimum: 0 }
+
+    DriverCachedStop:
+      type: object
+      additionalProperties: false
+      required: [id, sequenceNumber, stopType, siteId, locationId, siteName, locationName, siteSnapshot, scheduledAt, status, instructions, version, orderIds]
+      properties:
+        id: { type: string, format: uuid }
+        sequenceNumber: { type: integer, minimum: 1 }
+        stopType: { type: string, enum: [BASE_DEPARTURE, PICKUP, DELIVERY, LIVE_LOAD, LIVE_UNLOAD, DROP_HOOK, BASE_RETURN, OTHER] }
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        siteName: { type: [string, "null"] }
+        locationName: { type: [string, "null"] }
+        siteSnapshot: { type: [object, "null"], description: Frozen accepted destination snapshot; never used as authorization. }
+        scheduledAt: { type: [string, "null"], format: date-time }
+        status: { type: string, enum: [PENDING, EN_ROUTE, ARRIVED, IN_SERVICE, EXCEPTION, COMPLETED, CANCELLED] }
+        instructions: { type: [string, "null"] }
+        version: { type: integer, minimum: 0 }
+        orderIds:
+          type: array
+          items: { type: string, format: uuid }
+
     CurrentUserContext:
       type: object
       required: [userId, email, displayName, memberships]
@@ -1919,10 +2039,14 @@ components:
           type: array
           items:
             type: object
-            required: [tenantId, tenantName, status, roles]
+            required: [tenantId, tenantName, status, roles, capabilities]
             properties:
               tenantId: { type: string, format: uuid }
               tenantName: { type: string }
+              capabilities:
+                type: array
+                description: Fresh Tenant-scope capability names for navigation only, empty for inactive memberships. Assignment and resource rules still require authorization on every endpoint. No client claims participate.
+                items: { type: string }
               status:
                 type: string
                 enum: [ACTIVE, SUSPENDED, DISABLED]

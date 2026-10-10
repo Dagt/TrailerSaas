@@ -3,5 +3,5 @@ targets:
     builders:
       drift_dev:
         options:
-          # The empty scaffold has no tables for a generated manager API.
+          # Cache repositories use explicit namespace predicates, not a generic manager API.
           generate_manager: false

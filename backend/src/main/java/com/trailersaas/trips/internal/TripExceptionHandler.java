@@ -16,6 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
     assignableTypes = {
       TripController.class,
       DriverUpdatesController.class,
+      DriverWorkController.class,
       DispatchBoardController.class,
       TripCouplingController.class
     })

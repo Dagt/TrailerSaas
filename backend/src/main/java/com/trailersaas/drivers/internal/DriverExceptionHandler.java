@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes=DriverController.class)
+@RestControllerAdvice(assignableTypes={DriverController.class,DriverSelfController.class})
 @Order(10)
 class DriverExceptionHandler {
     @ExceptionHandler(DriverFailure.class)
