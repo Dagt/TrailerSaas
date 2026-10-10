@@ -689,7 +689,7 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
             entry.getKey().equals("trailer_movements_history")
                 ? 50
                 : entry.getKey().equals("load_manifests_trailer_lookup") ? 20 : 1;
-        assertThat(JsonPath.<Integer>read(plan, "$[0].Plan['Actual Rows']"))
+        assertThat(JsonPath.<Number>read(plan, "$[0].Plan['Actual Rows']").doubleValue())
             .isEqualTo(expectedRows);
         System.out.println(
             "Default PostgreSQL read plan: "
