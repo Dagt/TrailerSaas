@@ -185,3 +185,7 @@ on-device execution require another configured host. iOS builds/device runs
 require macOS/Xcode and cannot be executed here. Host widget tests exercise the
 real app root/navigation with native SQLite; they do not replace device testing
 of the application-support path or native platform integration.
+
+## Road execution (#44)
+
+[Implementation, isolation and foreground recovery](../docs/mobile/issue-44-road-execution.md). Open assigned Trip for authoritative Stops, Tractor, Expected Trailer and real coupling. Camera-only QR identifies equipment; commands require online confirmation. One durable app-private User/Tenant submission receipt protects uncertain outcomes; this is not #46 offline queue/replay. Required Shift/Pre-Trip and finalized POD integrations remain blocked until their owning issues. mobile_scanner 7.4.2 adds the native QR adapter; iOS camera usage text is explicit, with no gallery/GPS permission.

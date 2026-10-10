@@ -205,7 +205,7 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
         var qr=body(req("POST",p,null,TOKEN));String token=(String)qr.get("publicToken");
         replaceRoles(role,role.equals("CUSTOMER_DISPATCHER")?customerA:null);
         var response=scan(token,TOKEN);assertThat(response.statusCode()).as(response.body()).isEqualTo(200);
-        assertThat(body(response)).containsOnlyKeys("trailerId","operationalNumber","trailerType","locationState","loadState","serviceabilityState","active");
+        assertThat(body(response)).containsOnlyKeys("trailerId","operationalNumber","trailerType","locationState","loadState","serviceabilityState","active","version");
         if(!role.equals("TENANT_ADMIN")) {
             problem(req("POST",p,null,TOKEN),403,"CAPABILITY_DENIED");
             problem(req("POST",p+"/"+qr.get("id")+"/revocation",null,TOKEN),403,"CAPABILITY_DENIED");

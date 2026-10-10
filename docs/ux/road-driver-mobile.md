@@ -615,3 +615,7 @@ This flow is ready for visual wireframes when:
 10. Return-to-base is handled as a Stop when required.
 11. Post-Trip and Off Duty remain separate from Trip completion.
 12. Critical actions have defined offline behavior.
+
+## Issue #44 implementation note
+
+The implemented Road detail shows assigned Stops, human destinations/instructions, Tractor, Expected Trailer separately from physical coupling, QR-guided explicit Hook/Drop and state-aware online execution controls. Every action requires confirmation and an authoritative server result. An uncertain submission is recoverable with its saved key; offline downloaded work never claims an action is queued or completed. First departure preserves the required #43 On Duty/Pre-Trip block; Delivery/POD remains #45/#53. See [bounded implementation and deferred integrations](../mobile/issue-44-road-execution.md).

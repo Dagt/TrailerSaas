@@ -3,6 +3,7 @@ package com.trailersaas.trailers.internal;
 import static com.trailersaas.trailers.CouplingCommandRejectedException.Reason.*;
 
 import com.trailersaas.tractors.TractorCouplingPolicy;
+import com.trailersaas.identity.MobileOperationLedger;
 import com.trailersaas.trailers.*;
 import jakarta.persistence.*;
 import java.nio.charset.StandardCharsets;
@@ -12,32 +13,31 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
-import tools.jackson.databind.json.JsonMapper;
+
 
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
 class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions {
   private final EntityManager em;
   private final TractorCouplingPolicy tractors;
-  private final JsonMapper json;
+  private final MobileOperationLedger ledger;
   private final DatabaseTrailerMovementProjection movements;
 
   DatabaseTrailerCouplingTransactions(
       EntityManager em,
       TractorCouplingPolicy tractors,
-      JsonMapper json,
+      MobileOperationLedger ledger,
       DatabaseTrailerMovementProjection movements) {
     this.em = em;
     this.tractors = tractors;
-    this.json = json;
+    this.ledger = ledger;
     this.movements = movements;
   }
 
   public Result hook(
       UUID tenant, UUID user, UUID operation, TripContext trip, UUID actualDriver, Hook r) {
     var hash = hookHash(trip.id(), r);
-    var claim = claim(tenant, user, operation, "TRAILER_HOOK", hash);
-    if (claim == null) return replay(tenant, user, operation, "TRAILER_HOOK", hash);
+    return execute(tenant,user,operation,"TRAILER_HOOK",hash,"TRAILER_COUPLING",r0->r0.coupling().id(),Result.class,()->{
     if (!actualDriver.equals(r.driverId())) throw fail(MISSING);
     state(trip);
     if (!r.trailerId().equals(trip.plannedInitialTrailerId())) throw fail(SUBSTITUTION);
@@ -76,7 +76,8 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     c.createdAt = at;
     em.persist(c);
     flush();
-    return remember(tenant, claim, result(c, trailer, trip, event), at);
+    return result(c, trailer, trip, event);
+    });
   }
 
   public Result drop(
@@ -88,8 +89,7 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
       Drop r,
       Runnable destination) {
     var hash = dropHash(trip.id(), r);
-    var claim = claim(tenant, user, operation, "TRAILER_DROP", hash);
-    if (claim == null) return replay(tenant, user, operation, "TRAILER_DROP", hash);
+    return execute(tenant,user,operation,"TRAILER_DROP",hash,"TRAILER_COUPLING",r0->r0.coupling().id(),Result.class,()->{
     state(trip);
     // Read only the key first. Both commands lock Tractor -> Trailer -> Coupling.
     var initial = activeTrailer(tenant, r.trailerId(), false);
@@ -116,69 +116,14 @@ class DatabaseTrailerCouplingTransactions implements TrailerCouplingTransactions
     c.droppedAt = r.occurredAt();
     c.dropEventId = event.id;
     flush();
-    return remember(tenant, claim, result(c, trailer, trip, event), at);
+    return result(c, trailer, trip, event);
+    });
   }
 
-  private UUID claim(UUID tenant, UUID user, UUID key, String type, String hash) {
-    pinned(tenant);
-    // The unique index arbitrates even while a competing claim is uncommitted.
-    // ON CONFLICT waits for commit/rollback without aborting this transaction.
-    var rows =
-        em.createNativeQuery(
-                "insert into processed_client_operations"
-                    + " (id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at)"
-                    + " values(:id,:tenant,:key,:user,:type,:hash,'PROCESSING',:at) on conflict"
-                    + " (tenant_id,client_operation_id) do nothing returning id",
-                UUID.class)
-            .setParameter("id", UUID.randomUUID())
-            .setParameter("tenant", tenant)
-            .setParameter("key", key)
-            .setParameter("user", user)
-            .setParameter("type", type)
-            .setParameter("hash", hash)
-            .setParameter("at", Instant.now().truncatedTo(ChronoUnit.MICROS))
-            .getResultList();
-    return rows.isEmpty() ? null : (UUID) rows.getFirst();
+  private Result execute(UUID tenant,UUID user,UUID key,String type,String hash,String entityType,java.util.function.Function<Result,UUID> entityId,Class<Result> resultType,java.util.function.Supplier<Result> action) {
+    try { return ledger.execute(tenant,user,key,type,hash,entityType,entityId,resultType,action); }
+    catch(com.trailersaas.identity.IdempotencyKeyReusedException reused) { throw fail(KEY_REUSED); }
   }
-
-  private Result replay(UUID tenant, UUID user, UUID key, String type, String hash) {
-    // New statement after unique arbitration sees the winner's committed terminal row.
-    var row =
-        em.createQuery(
-                "select p from ProcessedClientOperationEntity p where p.tenantId=:tenant and"
-                    + " p.clientOperationId=:key",
-                ProcessedClientOperationEntity.class)
-            .setParameter("tenant", tenant)
-            .setParameter("key", key)
-            .getResultStream()
-            .findFirst();
-    if (row.isEmpty()) throw new IllegalStateException("Operation claim outcome unavailable.");
-    var p = row.get();
-    if (!user.equals(p.userId)
-        || !type.equals(p.operationType)
-        || !hash.equals(p.requestHash)
-        || !"SUCCEEDED".equals(p.status)
-        || p.responseData == null) throw fail(KEY_REUSED);
-    return json.convertValue(p.responseData, Result.class);
-  }
-
-  private Result remember(UUID tenant, UUID claim, Result response, Instant at) {
-    var changed =
-        em.createNativeQuery(
-                "update processed_client_operations set status='SUCCEEDED',processed_at=:at,"
-                    + " result_entity_type='TRAILER_COUPLING',result_entity_id=:entity,"
-                    + " response_data=cast(:response as jsonb)"
-                    + " where tenant_id=:tenant and id=:id and status='PROCESSING'")
-            .setParameter("at", at)
-            .setParameter("entity", response.coupling().id())
-            .setParameter("response", json.writeValueAsString(response))
-            .setParameter("tenant", tenant)
-            .setParameter("id", claim)
-            .executeUpdate();
-    if (changed != 1) throw new IllegalStateException("Operation claim completion failed.");
-    return response;
-  }
-
   private TrailerEntity trailer(UUID tenant, UUID id) {
     return em.createQuery(
             "select t from TrailerEntity t where t.tenantId=:tenant and t.id=:id",

@@ -90,9 +90,7 @@ closing the Trips/dispatch Web wave.
 #39 is merged/complete via [PR #93](https://github.com/Dagt/TrailerSaas/pull/93).
 #40 is merged/complete via [PR #94](https://github.com/Dagt/TrailerSaas/pull/94).
 #41 is merged/complete via [PR #95](https://github.com/Dagt/TrailerSaas/pull/95).
-The Trailer movement/read surface wave is complete. #42 is the current bounded
-Mobile auth/cache implementation, complete only upon merge. Public execution
-and Yard workflows remain separate Issues.
+The Trailer movement/read surface wave is complete. #42 is merged/complete via [PR #96](https://github.com/Dagt/TrailerSaas/pull/96). #44 is the current bounded Driver execution implementation; #43 required duty/inspection integration remains pending. Yard workflows remain separate Issues.
 
 ### Evidence/alerts support
 - #53 after #52
@@ -103,8 +101,8 @@ These streams may overlap according to each Issue's explicit dependencies.
 
 ## Wave 4 — Mobile synchronization foundation
 
-- #42 Mobile auth/cache shell — current bounded implementation
-- #46 Offline command queue/replay
+- #42 Mobile auth/cache shell — complete via PR #96
+- #46 Offline command queue/replay — follows #44, honoring its explicit dependencies
 - #54 Mobile media queue
 
 These should be implemented before relying on offline behavior in completed Road/Yard workflows.
@@ -112,7 +110,7 @@ These should be implemented before relying on offline behavior in completed Road
 ## Wave 5 — Road Driver
 
 - #43 Shift/inspections
-- #44 Trip execution
+- #44 Trip execution — current bounded implementation
 - #45 POD/Fuel/exceptions
 - #47 geofence-assisted arrival/updates
 

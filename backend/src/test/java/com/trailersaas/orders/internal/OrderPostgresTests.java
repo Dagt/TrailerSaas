@@ -29,7 +29,7 @@ class OrderPostgresTests extends PostgresIntegrationTest {
     }
     @Test void exactV10TablesColumnsMilestonesAndNoExecutionTables() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().applied()).extracting(i -> i.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17");
+        assertThat(flyway.info().applied()).extracting(i -> i.getVersion().getVersion()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18");
         try (var c = runtime.getConnection(); var q = c.createStatement(); var r = q.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
             var names = new ArrayList<String>(); while (r.next()) { names.add(r.getString(1)); }
             assertThat(names).containsExactlyInAnyOrder("flyway_schema_history", "users", "tenants", "tenant_memberships", "role_assignments", "customers", "physical_sites", "customer_sites", "operational_locations", "membership_invitations", "invitation_role_assignments", "drivers", "tractors", "trailers", "trailer_qr_identities", "tenant_settings", "orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders", "trips", "trip_stops", "trip_stop_orders", "trip_assignment_events", "trip_operational_events", "trip_driver_updates", "trailer_movement_events", "trailer_couplings", "processed_client_operations");

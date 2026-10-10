@@ -71,7 +71,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
         assertThat(flyway.info().current().getDescription()).isEqualTo("trailer read projection indexes");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {

@@ -36,7 +36,7 @@ class EquipmentPostgresTests extends PostgresIntegrationTest {
     }
     @Test void v7CreatesExactlyDriversAndTractorsAndValidatesPriorChecksums() {
         flyway.validate();
-        assertThat(flyway.info().applied()).extracting(i->i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15", "16", "17");
+        assertThat(flyway.info().applied()).extracting(i->i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15", "16", "17", "18");
         assertThat(manager.createNativeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'",String.class).getResultList())
                 .containsExactlyInAnyOrder("flyway_schema_history","users","tenants","tenant_memberships","role_assignments",
                         "customers","physical_sites","customer_sites","operational_locations","membership_invitations",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'session_controller.dart';
+import '../road/road_trip_screen.dart';
 
 class SessionView extends StatefulWidget {
   const SessionView({super.key, required this.session});
@@ -192,6 +193,18 @@ class _SessionViewState extends State<SessionView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Assigned Trip · ${trip.status}'),
+                              TextButton(
+                                onPressed: () => Navigator.of(context)
+                                    .push<void>(
+                                      MaterialPageRoute(
+                                        builder: (_) => RoadTripScreen(
+                                          session: session,
+                                          cached: trip,
+                                        ),
+                                      ),
+                                    ),
+                                child: const Text('Open assigned Trip'),
+                              ),
                               if (trip.plannedTrailer != null)
                                 Text(
                                   'Expected Trailer: ${trip.plannedTrailer!['operationalNumber']}',

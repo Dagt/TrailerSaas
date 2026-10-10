@@ -40,7 +40,10 @@ class DriverWorkService {
     var rows=repository.assignedWork(tenant,driver.orElseThrow(TripFailure::missing),f.cursor(),f.limit());
     boolean more=rows.size()>f.limit();
     var page=more?rows.subList(0,f.limit()):rows;
-    if(page.isEmpty()) return new Page(List.of(),null);
+    return new Page(project(tenant,page),more?new TripValidation.Position(page.getLast().createdAt,page.getLast().id).encode():null);
+  }
+  List<Work> project(UUID tenant,List<TripEntity> page) {
+    if(page.isEmpty()) return List.of();
     var ids=page.stream().map(t->t.id).toList();
     var stops=repository.stopsForTrips(tenant,ids);
     var mappings=repository.mappingsForTrips(tenant,ids);
@@ -58,6 +61,6 @@ class DriverWorkService {
       var l=labelById.get(s.id);
       return new Stop(s.id,s.sequenceNumber,s.stopType,s.siteId,s.locationId,(String)l.get("site_name"),(String)l.get("location_name"),s.siteSnapshot,s.scheduledAt,s.status,s.instructions,s.version,List.copyOf(new LinkedHashSet<>(grouped.getOrDefault(s.id,List.of()))));
     }).toList())).toList();
-    return new Page(work,more?new TripValidation.Position(page.getLast().createdAt,page.getLast().id).encode():null);
+    return work;
   }
 }

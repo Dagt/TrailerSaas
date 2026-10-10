@@ -20,7 +20,7 @@ final class TrailerDtos {
         static Qr of(TrailerQrEntity q,TrailerEntity t) { return new Qr(q.id,q.trailerId,q.publicToken,t.operationalNumber,q.active,q.issuedAt,q.revokedAt); }
         @Override public String toString() { return "Qr[id="+id+", publicToken=[redacted]]"; }
     }
-    record Scan(UUID trailerId,String operationalNumber,String trailerType,String locationState,String loadState,String serviceabilityState,boolean active) {
-        static Scan of(TrailerEntity t) { return new Scan(t.id,t.operationalNumber,t.trailerType,t.locationState,t.loadState,t.serviceabilityState,t.active); }
+    record Scan(UUID trailerId,String operationalNumber,String trailerType,String locationState,String loadState,String serviceabilityState,boolean active,long version) {
+        static Scan of(TrailerEntity t) { return new Scan(t.id,t.operationalNumber,t.trailerType,t.locationState,t.loadState,t.serviceabilityState,t.active,t.version); }
     }
 }

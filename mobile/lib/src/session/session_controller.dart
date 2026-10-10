@@ -154,6 +154,45 @@ class SessionController extends ChangeNotifier {
     }
   }
 
+  /// Reconcile a confirmed execution projection without granting cached permissions.
+  /// The original validated identity remains mandatory throughout the SQLite write.
+  Future<bool> cacheConfirmedTrip(
+    SessionSnapshot owner,
+    Map<String, dynamic> data,
+  ) async {
+    final generation = _generation;
+    bool current() =>
+        _current(generation, owner.firebaseUid) &&
+        identical(snapshot, owner) &&
+        state == SessionState.ready;
+    if (!current()) return false;
+    final trip = WorkTrip(data);
+    trip.stops;
+    final work = owner.trips.where((t) => t.id != trip.id).toList();
+    if (!{'COMPLETED', 'CANCELLED'}.contains(trip.status)) work.add(trip);
+    final next = SessionSnapshot(
+      owner.firebaseUid,
+      owner.userId,
+      owner.membership,
+      owner.driver,
+      DateTime.now().toUtc(),
+      work,
+    );
+    try {
+      await cache.replace(next, current);
+      if (!current()) return false;
+      owner.trips
+        ..clear()
+        ..addAll(work);
+      _notify();
+      return true;
+    } catch (_) {
+      _cleanupRequired = true;
+      _storageFailure(generation, owner.firebaseUid);
+      return false;
+    }
+  }
+
   Future<void> _bootstrap(
     int generation,
     String uid, {

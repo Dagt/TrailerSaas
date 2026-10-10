@@ -35,6 +35,111 @@ class ApiClient {
   final Uri baseUrl;
   final AuthGateway auth;
   final http.Client client;
+
+  /// One submission only. The caller durably stores an immutable key/payload first.
+  Future<Map<String, dynamic>> post(
+    String path,
+    Map<String, dynamic> body,
+    String key,
+  ) async {
+    final uid = auth.uid;
+    if (uid == null) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    String? token;
+    try {
+      token = await auth.token(forceRefresh: true);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'network-request-failed') throw ApiUnavailable();
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    } catch (_) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    if (auth.uid != uid || token == null) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    http.Response response;
+    try {
+      response = await client
+          .post(
+            Uri.parse(
+              '${baseUrl.toString().replaceFirst(RegExp(r'/$'), '')}/$path',
+            ),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Idempotency-Key': key,
+              'X-Request-Id': List.generate(
+                16,
+                (_) => Random.secure()
+                    .nextInt(256)
+                    .toRadixString(16)
+                    .padLeft(2, '0'),
+              ).join(),
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 20));
+    } on SocketException {
+      throw ApiUnavailable();
+    } on http.ClientException {
+      throw ApiUnavailable();
+    } on TimeoutException {
+      throw ApiUnavailable();
+    }
+    if (auth.uid != uid) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    return _decode(response);
+  }
+
+  Map<String, dynamic> _decode(http.Response response) {
+    Map<String, dynamic> body;
+    try {
+      body = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw ApiProblem(
+        response.statusCode,
+        'UNEXPECTED_RESPONSE',
+        'The server could not complete the request.',
+      );
+    }
+    if (response.statusCode >= 400) {
+      throw ApiProblem(
+        response.statusCode,
+        body['code'] as String? ?? 'UNEXPECTED_FAILURE',
+        response.statusCode >= 500
+            ? 'The server could not complete the request.'
+            : body['detail'] as String? ??
+                  'The request could not be completed.',
+        traceId: body['traceId'] as String?,
+        errors: body['errors'] as List<Object?>? ?? [],
+      );
+    }
+    return body;
+  }
+
   Future<Map<String, dynamic>> get(
     String path, [
     Map<String, String> query = const {},
