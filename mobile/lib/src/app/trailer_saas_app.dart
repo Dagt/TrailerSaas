@@ -29,17 +29,26 @@ class _TrailerSaasAppState extends State<TrailerSaasApp> {
   @override
   void initState() {
     super.initState();
-    _databaseReady = widget.database.initialize();
-    if (widget.session != null) {
-      _databaseReady = _databaseReady.then((_) => widget.session!.start());
-    }
+    _databaseReady = _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await widget.database.initialize();
+    await widget.session?.start();
   }
 
   @override
   void dispose() {
-    unawaited(widget.database.close());
-    widget.session?.dispose();
+    unawaited(_close());
     super.dispose();
+  }
+
+  Future<void> _close() async {
+    await widget.session?.shutdown();
+    // No UI survives disposal, and no request/storage details are logged.
+    try {
+      await widget.database.close();
+    } catch (_) {}
   }
 
   @override
@@ -61,7 +70,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp> {
                     TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          _databaseReady = widget.database.initialize();
+                          _databaseReady = _initialize();
                         });
                       },
                       icon: const Icon(Icons.refresh),

@@ -92,10 +92,14 @@ Map<String, dynamic> work(String id) => {
 };
 
 class MobileFixture {
-  MobileFixture({String? uid = 'firebase-A', AppDatabase? database}) {
+  MobileFixture({
+    String? uid = 'firebase-A',
+    AppDatabase? database,
+    SessionCache Function(AppDatabase)? cacheFactory,
+  }) {
     db = database ?? AppDatabase(NativeDatabase.memory());
     auth = FakeAuth(uid);
-    cache = SessionCache(db);
+    cache = cacheFactory?.call(db) ?? SessionCache(db);
     api = ApiClient(
       AppConfiguration.fromValues().apiBaseUrl,
       auth,
@@ -137,7 +141,8 @@ class MobileFixture {
     headers: {'content-type': 'application/json'},
   );
   Future<void> close() async {
-    session.dispose();
+    await session.shutdown();
+    api.client.close();
     await db.close();
     await auth.events.close();
     await network.events.close();

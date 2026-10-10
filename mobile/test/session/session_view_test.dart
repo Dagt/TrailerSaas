@@ -11,9 +11,12 @@ void main() {
   testWidgets('sign-in labels and safe validation without external Firebase', (
     tester,
   ) async {
-    final f = MobileFixture(uid: null);
-    addTearDown(f.close);
-    await tester.runAsync(f.session.start);
+    final f = (await tester.runAsync(() async {
+      final fixture = MobileFixture(uid: null);
+      await fixture.session.start();
+      return fixture;
+    }))!;
+    addTearDown(() => tester.runAsync(f.close));
     await tester.pumpWidget(MaterialApp(home: SessionView(session: f.session)));
     expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
@@ -26,9 +29,12 @@ void main() {
   testWidgets(
     'Road work uses human destinations and Expected Trailer with no execution buttons',
     (tester) async {
-      final f = MobileFixture();
-      addTearDown(f.close);
-      await tester.runAsync(f.session.start);
+      final f = (await tester.runAsync(() async {
+        final fixture = MobileFixture();
+        await fixture.session.start();
+        return fixture;
+      }))!;
+      addTearDown(() => tester.runAsync(f.close));
       await tester.pumpWidget(
         MaterialApp(home: SessionView(session: f.session)),
       );
@@ -58,9 +64,12 @@ void main() {
   testWidgets(
     'offline cached banner distinguishes server validation from continuity',
     (tester) async {
-      final f = MobileFixture();
-      addTearDown(f.close);
-      await tester.runAsync(f.session.start);
+      final f = (await tester.runAsync(() async {
+        final fixture = MobileFixture();
+        await fixture.session.start();
+        return fixture;
+      }))!;
+      addTearDown(() => tester.runAsync(f.close));
       f.network.status = ConnectivityStatus.unavailable;
       await tester.runAsync(f.session.refresh);
       await tester.pumpWidget(
@@ -78,10 +87,13 @@ void main() {
   testWidgets('no eligible memberships reveal no cached resources', (
     tester,
   ) async {
-    final f = MobileFixture();
-    addTearDown(f.close);
-    f.memberships = [];
-    await tester.runAsync(f.session.start);
+    final f = (await tester.runAsync(() async {
+      final fixture = MobileFixture();
+      fixture.memberships = [];
+      await fixture.session.start();
+      return fixture;
+    }))!;
+    addTearDown(() => tester.runAsync(f.close));
     await tester.pumpWidget(MaterialApp(home: SessionView(session: f.session)));
     expect(find.text('No active mobile access is available.'), findsOneWidget);
     expect(find.text('Expected Trailer: TR-123'), findsNothing);

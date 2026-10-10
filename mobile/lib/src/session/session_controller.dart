@@ -33,6 +33,11 @@ class SessionController extends ChangeNotifier {
   String? _uid;
   bool _disposed = false;
   bool _started = false;
+  bool _cleanupRequired = false;
+  bool _storageBlocked = false;
+  String? _preferredTenant;
+  // Bounded read download, not the command replay worker. Never loop forever on a cursor.
+  static const maxWorkPages = 20;
   StreamSubscription<String?>? _authSubscription;
   StreamSubscription<ConnectivityStatus>? _networkSubscription;
   void _notify() {
@@ -41,6 +46,23 @@ class SessionController extends ChangeNotifier {
 
   bool _current(int generation, String? uid) =>
       !_disposed && generation == _generation && uid == auth.uid;
+  Future<void> _clearCache() async {
+    _cleanupRequired = true;
+    await cache.clear();
+    _cleanupRequired = false;
+    _storageBlocked = false;
+  }
+
+  void _storageFailure(int generation, String? uid) {
+    if (!_current(generation, uid)) return;
+    _storageBlocked = true;
+    snapshot = null;
+    state = SessionState.unavailable;
+    message = 'Local storage could not be accessed. Retry refresh or sign out.';
+    traceId = null;
+    _notify();
+  }
+
   Future<void> start() async {
     if (_started) return;
     _started = true;
@@ -71,14 +93,23 @@ class SessionController extends ChangeNotifier {
     traceId = null;
     state = SessionState.loading;
     _notify();
-    if (previous != null && previous != uid) await cache.clear();
-    if (!_current(generation, uid)) return;
-    if (uid == null) {
-      state = SessionState.signedOut;
-      _notify();
-      return;
+    try {
+      if (previous != uid) _preferredTenant = null;
+      if (uid == null ||
+          (previous != null && previous != uid) ||
+          _cleanupRequired) {
+        await _clearCache();
+      }
+      if (!_current(generation, uid)) return;
+      if (uid == null) {
+        state = SessionState.signedOut;
+        _notify();
+        return;
+      }
+      await _bootstrap(generation, uid);
+    } catch (_) {
+      _storageFailure(generation, uid);
     }
-    await _bootstrap(generation, uid);
   }
 
   Future<void> signIn(String email, String password) async {
@@ -89,6 +120,7 @@ class SessionController extends ChangeNotifier {
     state = SessionState.loading;
     _notify();
     try {
+      if (_cleanupRequired) await _clearCache();
       if (await network.currentStatus() == ConnectivityStatus.unavailable) {
         throw ApiUnavailable();
       }
@@ -114,11 +146,12 @@ class SessionController extends ChangeNotifier {
     message = null;
     traceId = null;
     _notify();
-    await _bootstrap(
-      generation,
-      uid,
-      preferredTenant: snapshot?.membership.tenantId,
-    );
+    try {
+      if (_cleanupRequired) await _clearCache();
+      await _bootstrap(generation, uid, preferredTenant: _preferredTenant);
+    } catch (_) {
+      _storageFailure(generation, uid);
+    }
   }
 
   Future<void> _bootstrap(
@@ -127,6 +160,9 @@ class SessionController extends ChangeNotifier {
     String? preferredTenant,
   }) async {
     try {
+      // Selection is a hint only: it must still occur in the fresh /me directory.
+      final cached = _storageBlocked ? null : await cache.restore(uid);
+      preferredTenant ??= cached?.membership.tenantId;
       if (await network.currentStatus() == ConnectivityStatus.unavailable) {
         throw ApiUnavailable();
       }
@@ -140,7 +176,7 @@ class SessionController extends ChangeNotifier {
       if (preferred != null || me.memberships.length == 1) {
         await _select(preferred ?? me.memberships.single, generation, uid);
       } else {
-        await cache.clear();
+        await _clearCache();
         if (!_current(generation, uid)) return;
         state = SessionState.chooseTenant;
         if (me.memberships.isEmpty) {
@@ -149,24 +185,25 @@ class SessionController extends ChangeNotifier {
         _notify();
       }
     } on ApiUnavailable {
-      final cached = await cache.restore(uid);
-      if (!_current(generation, uid)) return;
-      snapshot = cached;
-      user = null;
-      state = cached == null ? SessionState.unavailable : SessionState.offline;
-      message = cached == null
-          ? 'Connect to validate your session before using this device.'
-          : 'Offline — downloaded work only. Permissions will be revalidated on reconnect.';
-      _notify();
+      try {
+        final cached = _storageBlocked ? null : await cache.restore(uid);
+        if (!_current(generation, uid)) return;
+        snapshot = cached;
+        user = null;
+        state = cached == null
+            ? SessionState.unavailable
+            : SessionState.offline;
+        message = cached == null
+            ? 'Connect to validate your session before using this device.'
+            : 'Offline — downloaded work only. Permissions will be revalidated on reconnect.';
+        _notify();
+      } catch (_) {
+        _storageFailure(generation, uid);
+      }
     } on ApiProblem catch (e) {
       await _failure(e, generation, uid);
     } catch (_) {
-      if (_current(generation, uid)) {
-        snapshot = null;
-        state = SessionState.unavailable;
-        message = 'The session could not be loaded.';
-        _notify();
-      }
+      _storageFailure(generation, uid);
     }
   }
 
@@ -179,20 +216,26 @@ class SessionController extends ChangeNotifier {
       return;
     }
     final generation = ++_generation;
+    final uid = auth.uid!;
     snapshot = null;
     state = SessionState.loading;
     message = null;
     _notify();
-    await cache.clear();
-    if (!_current(generation, auth.uid)) return;
     try {
-      await _select(membership, generation, auth.uid!);
+      if (await network.currentStatus() == ConnectivityStatus.unavailable) {
+        throw ApiUnavailable();
+      }
+      await _clearCache();
+      if (!_current(generation, uid)) return;
+      await _select(membership, generation, uid);
     } on ApiUnavailable {
-      if (_current(generation, auth.uid)) {
+      if (_current(generation, uid)) {
         state = SessionState.unavailable;
         message = 'Connect to validate the selected Tenant.';
         _notify();
       }
+    } catch (_) {
+      _storageFailure(generation, uid);
     }
   }
 
@@ -209,18 +252,32 @@ class SessionController extends ChangeNotifier {
           await api.get('tenants/${membership.tenantId}/driver/me'),
         );
         String? cursor;
+        final seenCursors = <String>{};
+        final seenTrips = <String>{};
+        var pages = 0;
         do {
           final page = await api.get(
             'tenants/${membership.tenantId}/driver/me/trips',
             {'limit': '50', 'cursor': ?cursor},
           );
           if (!_current(generation, uid)) return;
-          trips.addAll(
-            (page['items'] as List).cast<Map<String, dynamic>>().map(
-              WorkTrip.new,
-            ),
-          );
+          final items = (page['items'] as List).cast<Map<String, dynamic>>();
+          if (items.length > 50) throw const FormatException();
+          for (final item in items) {
+            final trip = WorkTrip(item);
+            if (!seenTrips.add(trip.id)) throw const FormatException();
+            // Validate the complete cache shape before attempting a replacement.
+            trip.stops;
+            trips.add(trip);
+          }
           cursor = page['nextCursor'] as String?;
+          pages++;
+          if (cursor != null &&
+              (cursor.isEmpty ||
+                  !seenCursors.add(cursor) ||
+                  pages >= maxWorkPages)) {
+            throw const FormatException();
+          }
         } while (cursor != null);
       }
       if (!_current(generation, uid)) return;
@@ -235,12 +292,21 @@ class SessionController extends ChangeNotifier {
       await cache.replace(next, () => _current(generation, uid));
       if (!_current(generation, uid)) return;
       snapshot = next;
+      _preferredTenant = membership.tenantId;
+      _storageBlocked = false;
       state = SessionState.ready;
       _notify();
     } on ApiProblem catch (e) {
       await _failure(e, generation, uid);
     } on ApiUnavailable {
       rethrow;
+    } on FormatException {
+      if (_current(generation, uid)) {
+        snapshot = null;
+        state = SessionState.unavailable;
+        message = 'Assigned work could not be loaded completely. Refresh to try again.';
+        _notify();
+      }
     }
   }
 
@@ -253,7 +319,12 @@ class SessionController extends ChangeNotifier {
     if (problem.status == 401 ||
         problem.status == 403 ||
         problem.status == 404) {
-      await cache.clear();
+      try {
+        await _clearCache();
+      } catch (_) {
+        _storageFailure(generation, uid);
+        return;
+      }
       if (!_current(generation, uid)) return;
       state = SessionState.invalid;
     } else {
@@ -263,15 +334,37 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    ++_generation;
+    final generation = ++_generation;
     _uid = null;
     snapshot = null;
     user = null;
+    _preferredTenant = null;
     message = null;
     state = SessionState.signedOut;
     _notify();
-    await cache.clear();
-    await auth.signOut();
+    var failed = false;
+    try {
+      await _clearCache();
+    } catch (_) {
+      failed = true;
+      _storageBlocked = true;
+    }
+    try {
+      await auth.signOut();
+    } catch (_) {
+      failed = true;
+    }
+    if (!_disposed && generation == _generation && failed) {
+      state = SessionState.unavailable;
+      message = 'Sign-out cleanup could not be completed. Retry sign out.';
+      _notify();
+    }
+  }
+
+  Future<void> shutdown() async {
+    dispose();
+    await _authSubscription?.cancel();
+    await _networkSubscription?.cancel();
   }
 
   @override

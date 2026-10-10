@@ -105,11 +105,13 @@ void main() {
         "CREATE TRIGGER fail_cache BEFORE INSERT ON cached_stops BEGIN SELECT RAISE(ABORT,'controlled'); END",
       );
       await expectLater(
-        cache.replace(snapshot('firebase-A', 'user-A', 'B'), () => true),
+        cache.replace(snapshot('firebase-A', 'user-A', 'A'), () => true),
         throwsA(isA<Exception>()),
       );
       expect((await cache.restore('firebase-A'))!.membership.tenantId, 'A');
       expect(await db.select(db.cachedTrips).get().then((r) => r.length), 1);
+      expect(await db.select(db.cachedStops).get().then((r) => r.length), 1);
+      expect(await db.select(db.cachedTrailers).get().then((r) => r.length), 1);
     },
   );
   test(

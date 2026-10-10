@@ -52,6 +52,26 @@ shows last refresh and never claims current permission. New Tenant selection req
 validation. Connectivity reports network link, not API reachability. Reconnect/explicit refresh
 revalidates membership, Driver and work. No invented universal offline authorization expiry.
 
+The last selected Tenant survives restart as a cache hint, but online restoration must find
+that Tenant in the fresh ACTIVE `/me` directory before downloading work. An incomplete
+refresh never replaces the previous cache. A download accepts at most 20 pages of 50 Trips;
+repeated cursors, duplicate Trips and malformed pages stop it with a safe refresh error,
+without committing a partial replacement. This is a client read safety limit, not a replay
+protocol or a claim that more work does not exist.
+
+SQLite save/read/cleanup failures leave loading with a safe storage error. Cache fallback is
+blocked after storage failure until recovery. Failed identity/denial cleanup must complete
+before subsequent restoration; sign-out still attempts Firebase logout even if cleanup fails.
+The UI remains empty and offers an explicit retry. This cannot guarantee retrospective
+revocation detection while the device remains offline or storage is unavailable; cached
+read projections never grant server permissions. Future replay reauthorization remains #46.
+
+Widget tests construct and close real SQLite/cache fixtures in the real async zone. A cache
+serialization Future created in Flutter's fake-time zone and then awaited by `runAsync`
+caused the initial CI timeouts; the pending call also caused the following reentrant error.
+The write queue now initializes lazily, fixtures await shutdown, and CI runs the affected
+widget files individually before the unchanged full Flutter suite. No timeout was increased.
+
 ## Deferred and native setup
 
 #46 owns local command queue, dependencies, replay/backoff, sync conflicts and reauthorization

@@ -9,9 +9,9 @@ import 'app_database.dart';
 class SessionCache {
   SessionCache(this.db);
   final AppDatabase db;
-  Future<void> _writes = Future.value();
+  Future<void>? _writes;
   Future<void> _serialize(Future<void> Function() action) {
-    final next = _writes.then((_) => action());
+    final next = _writes == null ? action() : _writes!.then((_) => action());
     _writes = next.catchError((Object _) {});
     return next;
   }
@@ -106,7 +106,7 @@ class SessionCache {
     }),
   );
   Future<SessionSnapshot?> restore(String firebaseUid) async {
-    await _writes;
+    if (_writes != null) await _writes;
     final row =
         await (db.select(db.localSessionContexts)
               ..where((r) => r.firebaseUid.equals(firebaseUid))
