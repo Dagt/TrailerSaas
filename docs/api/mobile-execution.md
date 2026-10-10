@@ -583,8 +583,10 @@ only where supported by history. MATCH requires all six fields known and matchin
 DRIFT means a known field differs; otherwise INSUFFICIENT_HISTORY explicitly tracks
 missing baseline. Number/type/active/purpose/designated Customer/serviceability
 are outside this reconstruction. No synthetic baseline, silent repair or current
-GET replay is introduced. Later unknown event types invalidate earlier derived
-coverage until interpretable facts establish it again.
+GET replay is introduced. Known Accepted MARKED_OOS, RETURNED_TO_SERVICE and
+DESIGNATED_CUSTOMER_CHANGED facts leave all six movement/load fields unchanged;
+serviceability and designation are outside this projection. Truly unknown event
+types invalidate earlier derived coverage until interpretable facts establish it again.
 
 #40 owns authorized correction/mark-unknown/load-state/OOS/return-to-service/
 designation endpoints; #41 owns full Trailer search/detail/timeline Web/API;

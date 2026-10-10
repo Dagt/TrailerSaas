@@ -65,6 +65,9 @@ final class MovementReconciliation {
         if (m.containsKey("newLoadState"))
           d.put(Field.LOAD_STATE, m.get("newLoadState").toString());
       }
+      case "MARKED_OOS", "RETURNED_TO_SERVICE", "DESIGNATED_CUSTOMER_CHANGED" -> {
+        // Known Accepted facts do not affect the movement/load fields owned by this projection.
+      }
       default -> {
         // A later writer we cannot interpret must not produce a false MATCH from earlier facts.
         d.clear();

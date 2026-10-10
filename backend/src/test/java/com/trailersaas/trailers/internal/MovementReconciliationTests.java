@@ -7,6 +7,8 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.Instant;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class MovementReconciliationTests {
   final UUID location = UUID.randomUUID(), driver = UUID.randomUUID();
@@ -83,5 +85,58 @@ class MovementReconciliationTests {
             MovementReconciliation.compare(List.of(e, load, event("FUTURE_FACT", 3)), actual())
                 .status())
         .isEqualTo(Status.INSUFFICIENT_HISTORY);
+  }
+
+  List<TrailerMovementEntity> completeHistory() {
+    var load = event("LOAD_STATE_CHANGED", 2);
+    load.metadata = Map.of("newLoadState", "LOADED");
+    return new ArrayList<>(List.of(event("ARRIVED", 1), load));
+  }
+
+  TrailerMovementEntity nonOwnedEvent(String type, int order) {
+    var e = event(type, order);
+    e.locationId = UUID.randomUUID();
+    e.driverId = UUID.randomUUID();
+    e.occurredAt = at.plusSeconds(100);
+    return e;
+  }
+
+  void assertCompleteMatch(List<TrailerMovementEntity> history) {
+    var comparison = MovementReconciliation.compare(history, actual());
+    assertThat(comparison.status()).isEqualTo(Status.MATCH);
+    assertThat(comparison.derivedFields()).containsExactlyInAnyOrder(Field.values());
+    assertThat(comparison.driftFields()).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"MARKED_OOS", "RETURNED_TO_SERVICE", "DESIGNATED_CUSTOMER_CHANGED"})
+  void knownNonOwnedFactsPreserveCompleteMovementAndLoadDerivation(String type) {
+    var history = completeHistory();
+    assertCompleteMatch(history);
+    history.add(nonOwnedEvent(type, 3));
+    assertCompleteMatch(history);
+  }
+
+  @Test
+  void mixedKnownNonOwnedFactsPreserveCompleteMovementAndLoadDerivation() {
+    var history = completeHistory();
+    history.add(nonOwnedEvent("MARKED_OOS", 3));
+    history.add(nonOwnedEvent("RETURNED_TO_SERVICE", 4));
+    history.add(nonOwnedEvent("DESIGNATED_CUSTOMER_CHANGED", 5));
+    assertCompleteMatch(history);
+  }
+
+  @Test
+  void trulyUnknownFactStillInvalidatesCoverageAfterKnownNonOwnedFacts() {
+    var history = completeHistory();
+    history.add(nonOwnedEvent("MARKED_OOS", 3));
+    history.add(nonOwnedEvent("RETURNED_TO_SERVICE", 4));
+    history.add(nonOwnedEvent("DESIGNATED_CUSTOMER_CHANGED", 5));
+    assertCompleteMatch(history);
+    history.add(event("FUTURE_FACT", 6));
+    var comparison = MovementReconciliation.compare(history, actual());
+    assertThat(comparison.status()).isEqualTo(Status.INSUFFICIENT_HISTORY);
+    assertThat(comparison.derivedFields()).isEmpty();
+    assertThat(comparison.driftFields()).isEmpty();
   }
 }

@@ -248,6 +248,48 @@ class TrailerMovementPostgresTests extends PostgresIntegrationTest {
         .isEqualTo(Status.INSUFFICIENT_HISTORY);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"MARKED_OOS", "RETURNED_TO_SERVICE", "DESIGNATED_CUSTOMER_CHANGED"})
+  void persistedKnownNonOwnedFactsPreserveCompleteReconciliation(String type) throws Exception {
+    baseline(LocationState.IN_TRANSIT, LoadState.UNKNOWN);
+    tx(() -> apply("ARRIVE", 0));
+    tx(
+        () ->
+            movements.changeLoadState(
+                tenant, new LoadChange(target(1), context(), LoadState.LOADED, "Load confirmed")));
+    assertThat(tx(() -> reconciliation.compare(tenant, trailer)).status()).isEqualTo(Status.MATCH);
+    var before = f.db.value("select to_jsonb(t)::text from trailers t where id=?", trailer);
+    var recordedAt =
+        ((java.sql.Timestamp)
+                f.db.value(
+                    "select max(recorded_at) from trailer_movement_events where trailer_id=?",
+                    trailer))
+            .toInstant()
+            .plusSeconds(1);
+    var eventId = UUID.randomUUID();
+    f.db.execute(
+        "insert into trailer_movement_events"
+            + " (id,tenant_id,trailer_id,event_type,actor_type,source_type,actor_user_id,occurred_at,recorded_at)"
+            + " values(?,?,?,?,'HUMAN_USER','USER_ACTION',?,?,?)",
+        eventId,
+        tenant,
+        trailer,
+        type,
+        user,
+        java.sql.Timestamp.from(AT.plusSeconds(60)),
+        java.sql.Timestamp.from(recordedAt));
+    var comparison = tx(() -> reconciliation.compare(tenant, trailer));
+    assertThat(comparison.status()).isEqualTo(Status.MATCH);
+    assertThat(comparison.derivedFields()).containsExactlyInAnyOrder(Field.values());
+    assertThat(comparison.driftFields()).isEmpty();
+    assertThat(f.db.value("select event_type from trailer_movement_events where id=?", eventId))
+        .isEqualTo(type);
+    assertThat(f.db.value("select to_jsonb(t)::text from trailers t where id=?", trailer))
+        .isEqualTo(before);
+    assertThat(version()).isEqualTo(2);
+    assertThat(count()).isEqualTo(3);
+  }
+
   @Test
   void comparisonRefreshesAPreviouslyManagedProjectionUnderSharedLock() throws Exception {
     tx(() -> apply("RECOVER", 0));
