@@ -14,6 +14,9 @@ import 'package:trailersaas_mobile/src/platform/connectivity.dart';
 
 import '../session/fixtures.dart';
 
+import 'package:trailersaas_mobile/src/persistence/session_cache.dart';
+import 'package:trailersaas_mobile/src/session/contracts.dart';
+
 class MemoryJournal implements OnlineCommandJournal {
   final rows = <String, OnlineCommand>{};
   bool fail = false;
@@ -28,6 +31,24 @@ class MemoryJournal implements OnlineCommandJournal {
   @override
   Future<void> clear(String u, String t) async {
     rows.remove('$u|$t');
+  }
+}
+
+// Widget boundary is synchronous; the cache integration tests above exercise real SQLite.
+class WidgetCache extends SessionCache {
+  WidgetCache(super.db);
+  SessionSnapshot? saved;
+  @override
+  Future<void> clear() async {
+    saved = null;
+  }
+
+  @override
+  Future<SessionSnapshot?> restore(String uid) async =>
+      saved?.firebaseUid == uid ? saved : null;
+  @override
+  Future<void> replace(SessionSnapshot next, bool Function() current) async {
+    if (current()) saved = next;
   }
 }
 
@@ -151,7 +172,10 @@ void main() {
             200,
           );
         }
-        return http.Response(jsonEncode(detail()), 200);
+        return http.Response(
+          jsonEncode(detail(status: 'AT_STOP', stopStatus: 'ARRIVED')),
+          200,
+        );
       };
       await c.submit('tenants/A/stops/s/arrivals', {
         'source': 'MANUAL',
@@ -280,7 +304,7 @@ void main() {
       });
       addTearDown(() async {
         await tester.pumpWidget(const SizedBox());
-        await fixture.close();
+        await tester.runAsync(fixture.close);
       });
       await tester.pumpWidget(
         MaterialApp(
@@ -310,7 +334,7 @@ void main() {
     });
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox());
-      await fixture.close();
+      await tester.runAsync(fixture.close);
     });
     await tester.pumpWidget(
       MaterialApp(
@@ -401,7 +425,7 @@ void main() {
     });
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox());
-      await fixture.close();
+      await tester.runAsync(fixture.close);
     });
     await tester.pumpWidget(
       MaterialApp(
@@ -413,7 +437,192 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('Shift and Pre-Trip'), findsOneWidget);
+    expect(find.textContaining('On Duty and Pre-Trip'), findsOneWidget);
     expect(find.text('Confirm first departure'), findsNothing);
   });
+
+  for (final scenario in [
+    ('AT_STOP', 'ARRIVED', 'Start service', 'service-starts', 'IN_SERVICE'),
+    (
+      'AT_STOP',
+      'IN_SERVICE',
+      'Complete non-delivery Stop',
+      'completions',
+      'COMPLETED',
+    ),
+    ('IN_TRANSIT', 'EN_ROUTE', 'Confirm manual arrival', 'arrivals', 'ARRIVED'),
+  ]) {
+    testWidgets(
+      'explicit confirmation submits ${scenario.$4} and reconciles server state',
+      (tester) async {
+        final fixture = MobileFixture(cacheFactory: WidgetCache.new);
+        await fixture.session.start();
+        fixture.session.snapshot!.membership.capabilities.addAll({
+          'TRIP_EXECUTE_ASSIGNED',
+          'ARRIVAL_CONFIRM',
+        });
+        var projection = detail(status: scenario.$1, stopStatus: scenario.$2);
+        final posts = <http.Request>[];
+        fixture.handler = (r) async {
+          if (r.method == 'POST') {
+            posts.add(r);
+            projection = detail(
+              status: scenario.$5 == 'COMPLETED' ? 'COMPLETED' : 'AT_STOP',
+              stopStatus: scenario.$5,
+            );
+          }
+          return http.Response(jsonEncode(projection), 200);
+        };
+        addTearDown(() async {
+          await tester.pumpWidget(const SizedBox());
+          await tester.runAsync(fixture.close);
+        });
+        await tester.pumpWidget(
+          MaterialApp(
+            home: RoadTripScreen(
+              session: fixture.session,
+              cached: fixture.session.snapshot!.trips.first,
+              journal: MemoryJournal(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final button = find.text(scenario.$3);
+        await tester.ensureVisible(button);
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        expect(posts, isEmpty);
+        fixture.auth.forceRefreshes.clear();
+        await tester.tap(find.widgetWithText(FilledButton, 'Confirm'));
+        await tester.pumpAndSettle();
+        expect(posts.length, 1);
+        expect(
+          posts.single.url.path,
+          endsWith('/stops/stop-trip-A/${scenario.$4}'),
+        );
+        expect(posts.single.headers['Idempotency-Key'], isNotEmpty);
+        expect(posts.single.headers['X-Request-Id'], isNotEmpty);
+        expect(fixture.auth.forceRefreshes, [true, false]);
+        expect(find.text('Confirmed by server.'), findsOneWidget);
+        expect(
+          find.textContaining(
+            'Trip · ${scenario.$5 == 'COMPLETED' ? 'COMPLETED' : 'AT_STOP'}',
+          ),
+          findsOneWidget,
+        );
+        if (scenario.$5 == 'COMPLETED') {
+          expect(
+            find.text(
+              'Trip completion confirmed by server. Shift remains separate.',
+            ),
+            findsOneWidget,
+          );
+        }
+      },
+    );
+  }
+  testWidgets('QR mismatch blocks Hook without a manual ID bypass', (
+    tester,
+  ) async {
+    final fixture = MobileFixture(cacheFactory: WidgetCache.new);
+    await fixture.session.start();
+    fixture.session.snapshot!.membership.capabilities.addAll({
+      'TRIP_EXECUTE_ASSIGNED',
+      'TRAILER_HOOK',
+    });
+    fixture.handler = (r) async => r.url.path.contains('trailer-qr')
+        ? http.Response(
+            '{"trailerId":"different","operationalNumber":"TR-OTHER","version":0}',
+            200,
+          )
+        : http.Response(jsonEncode(detail()), 200);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(fixture.close);
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RoadTripScreen(
+          session: fixture.session,
+          cached: fixture.session.snapshot!.trips.first,
+          journal: MemoryJournal(),
+          scanner: Scan('abcdefghijklmnopqrstuv'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scan Trailer and confirm Hook'));
+    await tester.pumpAndSettle();
+    expect(find.text('Trailer not authorized'), findsOneWidget);
+    expect(find.textContaining('Contact dispatch'), findsOneWidget);
+    expect(fixture.requests.where((r) => r.method == 'POST'), isEmpty);
+    expect(find.byType(TextField), findsNothing);
+  });
+  testWidgets(
+    'QR identifies the physical Trailer before explicit Hook payload',
+    (tester) async {
+      final fixture = MobileFixture(cacheFactory: WidgetCache.new);
+      await fixture.session.start();
+      fixture.session.snapshot!.membership.capabilities.addAll({
+        'TRIP_EXECUTE_ASSIGNED',
+        'TRAILER_HOOK',
+      });
+      var projection = detail();
+      http.Request? post;
+      fixture.handler = (r) async {
+        if (r.url.path.contains('trailer-qr')) {
+          return http.Response(
+            '{"trailerId":"trailer","operationalNumber":"TR-123","version":7}',
+            200,
+          );
+        }
+        if (r.method == 'POST') {
+          post = r;
+          projection['currentCoupling'] = {
+            'trailerId': 'trailer',
+            'operationalNumber': 'TR-123',
+            'tractorId': 'tractor',
+            'driverId': 'driver',
+          };
+        }
+        return http.Response(jsonEncode(projection), 200);
+      };
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox());
+        await tester.runAsync(fixture.close);
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RoadTripScreen(
+            session: fixture.session,
+            cached: fixture.session.snapshot!.trips.first,
+            journal: MemoryJournal(),
+            scanner: Scan('abcdefghijklmnopqrstuv'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Scan Trailer and confirm Hook'));
+      await tester.pumpAndSettle();
+      expect(post, isNull);
+      expect(find.text('Confirm Hook TR-123'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Confirm'));
+      await tester.pumpAndSettle();
+      final payload = jsonDecode(post!.body) as Map;
+      expect(
+        payload.keys,
+        unorderedEquals([
+          'occurredAt',
+          'trailerId',
+          'tractorId',
+          'driverId',
+          'expectedTrailerVersion',
+        ]),
+      );
+      expect(payload['expectedTrailerVersion'], 7);
+      expect(payload['driverId'], 'driver');
+      expect(find.text('Physical coupling: TR-123'), findsOneWidget);
+      expect(find.text('Scan Trailer and confirm Hook'), findsNothing);
+    },
+  );
 }

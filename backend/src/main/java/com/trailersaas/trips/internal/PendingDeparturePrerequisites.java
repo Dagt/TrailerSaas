@@ -7,5 +7,7 @@ import org.springframework.stereotype.Component;
 /** Fail closed: no fabricated Shift/inspection or configurable production bypass. */
 @Component
 class PendingDeparturePrerequisites implements TripDeparturePrerequisites {
-  public boolean satisfied(UUID tenant, UUID driver, UUID tractor, UUID trip) { return false; }
+  public boolean satisfied(UUID tenant, UUID driver, UUID tractor, UUID trip) {
+    return false;
+  }
 }

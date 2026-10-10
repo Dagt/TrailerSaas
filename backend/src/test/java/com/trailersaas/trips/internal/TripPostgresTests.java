@@ -297,9 +297,8 @@ class TripPostgresTests extends PostgresIntegrationTest {
         .isEqualTo(false);
     assertThat(f.db.value("SELECT has_schema_privilege(?,'public','CREATE')", RUNTIME_USERNAME))
         .isEqualTo(false);
-    for (var table : List.of("trip_stop_events")) {
-      assertThat(f.db.value("SELECT to_regclass(?)", table)).isNull();
-    }
+    assertThat(f.db.value("SELECT to_regclass('trip_stop_events')::text")).isEqualTo("trip_stop_events");
+    assertThat(f.db.value("SELECT count(*) FROM trip_stop_events WHERE tenant_id=?",tenant)).isEqualTo(0L);
     assertThat(f.db.value("SELECT count(*) FROM trailer_couplings WHERE tenant_id=?",tenant)).isEqualTo(0L);
     assertThat(f.db.value("SELECT count(*) FROM trailer_movement_events WHERE tenant_id=?",tenant)).isEqualTo(0L);
   }

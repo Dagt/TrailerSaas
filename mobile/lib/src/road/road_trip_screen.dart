@@ -154,7 +154,24 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
           ),
         );
       }
-      final trip = controller.trip ?? widget.cached.data;
+      final downloaded = s.trips
+          .where((t) => t.id == widget.cached.id)
+          .firstOrNull;
+      if (controller.trip == null && downloaded == null) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Trip')),
+          body: Column(
+            children: [
+              const Text('This Trip is no longer in downloaded assigned work.'),
+              TextButton(
+                onPressed: controller.sending ? null : controller.load,
+                child: const Text('Reload authoritative state'),
+              ),
+            ],
+          ),
+        );
+      }
+      final trip = controller.trip ?? downloaded!.data;
       final stops = (trip['stops'] as List).cast<Map<String, dynamic>>();
       final active = stops
           .where(
@@ -199,9 +216,13 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
               'Trip · ${trip['status']}',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            if (!controller.online)
+            if (session.state == SessionState.offline)
               const Text(
                 'Offline — downloaded work only. Execution requires connectivity; no command is queued.',
+              ),
+            if (session.state == SessionState.loading)
+              const Text(
+                'Refreshing session and assigned work. Execution is unavailable.',
               ),
             Text(
               'Tractor: ${controller.detail?['tractorOperationalNumber'] ?? 'Not refreshed'}',

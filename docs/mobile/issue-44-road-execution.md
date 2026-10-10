@@ -72,7 +72,7 @@ new mutation. Changed action/resource/payload/User conflicts. Infrastructure rem
 
 Actions require a freshly loaded detail, connectivity and current capability hints;
 server still re-authorizes. UI confirms physical action, displays sending and only
-publishes confirmed server response. Stale/denied state requires authoritative reload.
+publishes a fresh own-Trip read after confirmation. A replay response may describe an earlier state and never re-enables actions or overwrites cache by itself. Confirmed terminal Trips leave the assigned-work cache transactionally. Stale/denied state requires authoritative reload.
 Offline displays downloaded work with no execution controls and queues no command.
 
 Before POST, a single unresolved foreground receipt is durably flushed to app-private

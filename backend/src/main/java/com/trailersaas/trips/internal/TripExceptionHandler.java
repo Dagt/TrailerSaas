@@ -57,17 +57,20 @@ class TripExceptionHandler {
   }
 
   @ExceptionHandler(com.trailersaas.identity.IdempotencyKeyReusedException.class)
-  ProblemDetail reused(Exception ignored) { return failure(TripFailure.physical("IDEMPOTENCY_KEY_REUSED")); }
+  ProblemDetail reused(Exception ignored) {
+    return failure(TripFailure.physical("IDEMPOTENCY_KEY_REUSED"));
+  }
 
   @ExceptionHandler(com.trailersaas.trailers.TrailerMovementRejectedException.class)
   ProblemDetail movement(com.trailersaas.trailers.TrailerMovementRejectedException e) {
-    return failure(switch(e.reason()) {
-      case RESOURCE_NOT_FOUND -> TripFailure.missing();
-      case STALE_VERSION -> TripFailure.stale();
-      case INVALID_STATE_TRANSITION -> TripFailure.tripState();
-      case VALIDATION_FAILED -> TripFailure.invalid("body");
-      default -> TripFailure.conflict();
-    });
+    return failure(
+        switch (e.reason()) {
+          case RESOURCE_NOT_FOUND -> TripFailure.missing();
+          case STALE_VERSION -> TripFailure.stale();
+          case INVALID_STATE_TRANSITION -> TripFailure.tripState();
+          case VALIDATION_FAILED -> TripFailure.invalid("body");
+          default -> TripFailure.conflict();
+        });
   }
 
   @ExceptionHandler(com.trailersaas.orders.OrderPlanningRejectedException.class)

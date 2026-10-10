@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'dart:async';
+
 import '../session/session_controller.dart';
 import '../session/contracts.dart';
 import '../session/api_client.dart';
@@ -8,6 +10,7 @@ import 'online_command_journal.dart';
 class RoadTripController extends ChangeNotifier {
   RoadTripController(this.session, this.tripId, this.journal) {
     _snapshot = session.snapshot;
+    _owner = session.snapshot;
     session.addListener(_sessionChanged);
   }
   final SessionController session;
@@ -20,6 +23,7 @@ class RoadTripController extends ChangeNotifier {
   int _generation = 0;
   bool _disposed = false;
   SessionSnapshot? _snapshot;
+  late final SessionSnapshot? _owner;
   bool get online =>
       session.state == SessionState.ready && session.snapshot?.driver != null;
   Map<String, dynamic>? get trip => detail?['trip'] as Map<String, dynamic>?;
@@ -42,6 +46,12 @@ class RoadTripController extends ChangeNotifier {
     message = null;
     traceId = null;
     _notify();
+    if (online &&
+        _snapshot?.userId == _owner?.userId &&
+        _snapshot?.firebaseUid == _owner?.firebaseUid &&
+        _snapshot?.membership.tenantId == _owner?.membership.tenantId) {
+      unawaited(load());
+    }
   }
 
   Future<void> load() async {
@@ -167,11 +177,7 @@ class RoadTripController extends ChangeNotifier {
     int generation,
   ) async {
     try {
-      final result = await session.api.post(
-        command.path,
-        command.body,
-        command.id,
-      );
+      await session.api.post(command.path, command.body, command.id);
       // The saved receipt belongs to its original namespace, even if identity changed during HTTP.
       if (!_current(generation, s)) return;
       await journal.clear(s.userId, s.membership.tenantId);
@@ -179,12 +185,11 @@ class RoadTripController extends ChangeNotifier {
       pending = null;
       message = 'Confirmed by server.';
       try {
-        final refreshed =
-            result['trip'] is Map && (result['trip'] as Map)['stops'] is List
-            ? result
-            : await session.api.get(
-                'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
-              );
+        // A saved replay response can describe an earlier state. Re-read before enabling
+        // another action or replacing offline work, including after Hook/Drop.
+        final refreshed = await session.api.get(
+          'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
+        );
         if (!_current(generation, s)) return;
         if ((refreshed['trip'] as Map)['id'] != tripId) {
           throw const FormatException();
