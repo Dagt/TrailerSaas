@@ -505,3 +505,89 @@ delete intervals, rewrite immutable interval fields, own tables or bypass RLS.
 Trip assignment/operational timeline. #44 owns departure and normal Trip execution,
 arrival/service/POD and Driver flows; #46 owns client queue/dependencies/retries.
 No Flutter/Web execution UI, Shift, inspection, outbox or generic Audit is added.
+
+## Issue #39 implementation boundary
+
+This is a reusable backend domain boundary, not new HTTP execution/correction APIs.
+`TrailerMovementProjection` supplies typed depart, arrive, yardMove, correctLocation,
+markLocationUnknown, recoverLocation and changeLoadState operations. No arbitrary
+event name/metadata input is accepted. Each joins the caller's runtime transaction
+and requires its Tenant context plus expected Trailer version. The orchestrator
+must already authorize the workflow and lock Trip/equipment parents; the engine
+then locks Trailer and validates physical Location identity through Customers' public
+directory. It never takes a reverse Trip/equipment lock or independently claims an
+offline key. Optional clientOperationId belongs to the enclosing winner transaction.
+
+| Operation / fixed fact | Required location state | Projection effect |
+|---|---|---|
+| DEPARTED | AT_LOCATION with current location | IN_TRANSIT, current NULL, lastKnown origin, physical observation |
+| ARRIVED | IN_TRANSIT | AT_LOCATION, current/lastKnown destination, physical observation |
+| YARD_MOVED | AT_LOCATION; matching origin and distinct destination | AT_LOCATION at destination, physical observation |
+| LOCATION_CORRECTED | Any valid state; nonblank reason | AT_LOCATION at corrected destination; observation only when explicitly confirmed |
+| LOCATION_MARKED_UNKNOWN | AT_LOCATION or IN_TRANSIT; nonblank reason | LOCATION_UNKNOWN/current NULL; preserve lastKnown/lastSeen/lastDriver |
+| LOCATION_RECOVERED | LOCATION_UNKNOWN | AT_LOCATION at recovered location, physical observation |
+| LOAD_STATE_CHANGED | Any valid location; different accepted load state | Only load state changes; manual USER_ACTION requires nonblank reason |
+
+All six distinct EMPTY/LOADED/UNKNOWN transitions are supported. Same-load requests
+are deterministic RESOURCE_CONFLICT and append nothing. Departure/arrival/Yard/
+correction/recovery never infer load state; no serviceability/designation mutation
+is implemented. Every resulting AT_LOCATION has a real current location; IN_TRANSIT
+and LOCATION_UNKNOWN have current NULL. No fake Location or snapshot is physical
+identity. Missing Driver preserves the last real Driver; administrative corrections
+and mark-unknown preserve physical lastSeen. Server updatedAt is separate.
+
+Hook remains observation without departure; Drop remains AT_LOCATION and preserves
+load. Their existing authority, replay and response shapes are unchanged. The same
+writer appends the fact and projection atomically, flushing the authoritative
+@Version once. Safe domain reasons include STALE_VERSION and INVALID_STATE_TRANSITION;
+infrastructure errors remain infrastructure failures. No force update exists.
+
+### Provenance, metadata and chronology
+
+Typed provenance separates responsible actor from causal source: HUMAN_USER with
+USER_ACTION or MOBILE_AUTOMATION requires a real User; SYSTEM/SYSTEM_PROCESS and
+INTEGRATION/EXTERNAL_INTEGRATION require no fabricated User. The future server
+orchestrator derives these values; no new client-controlled actor fields exist.
+Confirmed geofence arrival can carry typed GEOFENCE_CONFIRMED only with human
+MOBILE_AUTOMATION provenance. A suggestion cannot invoke a physical fact by itself.
+
+Internally generated JSONB metadata is bounded by type:
+
+- DEPARTED: previousLocationId (also event.locationId is the origin).
+- ARRIVED: destinationLocationId, optional typed arrivalSource.
+- YARD_MOVED: previousLocationId, newLocationId.
+- LOCATION_CORRECTED: previousLocationState/previousLocationId/
+  previousLastKnownLocationId/newLocationId, physicalObservation; a non-observational
+  correction also records preservedLastSeenAt/preservedLastDriverId, including NULL.
+- LOCATION_MARKED_UNKNOWN: previousLocationState/previousLocationId,
+  preservedLastKnownLocationId/preservedLastSeenAt/preservedLastDriverId.
+- LOCATION_RECOVERED: previousLocationState, recoveredLocationId.
+- LOAD_STATE_CHANGED: previousLoadState, newLoadState.
+- HOOKED/DROPPED: type, Location, actual Driver and occurrence explain their effect;
+  no fabricated location transition or arbitrary metadata dump.
+
+occurredAt remains operational time, recordedAt is server persistence chronology.
+Under the exclusive Trailer lock the writer uses microsecond server time, advancing
+past the last recorded timestamp if equal/backward readings occur. Reconciliation
+orders recordedAt ASC, id ASC, never occurredAt. Late occurrence is retained only
+after expected-version/state preconditions pass; a stale offline attempt neither
+appends a fact nor overwrites projection. This is not latest-occurrence-wins.
+
+### Diagnostic comparison and deferments
+
+Reconciliation derives locationState/current/lastKnown/lastSeen/lastDriver/load
+only where supported by history. MATCH requires all six fields known and matching;
+DRIFT means a known field differs; otherwise INSUFFICIENT_HISTORY explicitly tracks
+missing baseline. Number/type/active/purpose/designated Customer/serviceability
+are outside this reconstruction. No synthetic baseline, silent repair or current
+GET replay is introduced. Later unknown event types invalidate earlier derived
+coverage until interpretable facts establish it again.
+
+#40 owns authorized correction/mark-unknown/load-state/OOS/return-to-service/
+designation endpoints; #41 owns full Trailer search/detail/timeline Web/API;
+#44 owns Driver departure/arrival and Trip/Stop orchestration; #48 owns Yard Move
+API/mobile. LOCATION_UNKNOWN's returned fixed movement summary lets a later caller
+persist its alert intent in the same transaction when #56/#57 infrastructure exists;
+no alert/outbox is fabricated here. #61 still owns generic Audit. No new OpenAPI
+endpoint, Web/Flutter UI, coupling rule, physical execution command or capability
+is delivered by #39.

@@ -86,9 +86,10 @@ closing the Trips/dispatch Web wave.
 ### Trailer movement
 - #38 → #39 → #40 → #41
 
-#38 is the current bounded implementation: physical Hook/Drop coupling transactions,
-movement facts and server replay. Complete only upon its PR merge. #39 is next;
-general movement/projection, corrections and execution remain separate Issues.
+#38 is merged/complete via [PR #92](https://github.com/Dagt/TrailerSaas/pull/92).
+#39 is the current bounded movement/projection core implementation; complete only
+upon its PR merge. #40 is next for correction/OOS/load-state commands. Public
+execution, Yard workflows and Trailer timeline remain separate Issues.
 
 ### Evidence/alerts support
 - #53 after #52
