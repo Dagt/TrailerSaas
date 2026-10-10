@@ -946,5 +946,34 @@ PostgreSQL 18 regressions cover the transition/load matrices, provenance, locati
 integrity, preservation, stale offline facts, history comparison, both write-failure
 rollbacks and real lock waits, including movement versus Hook/Drop. The complete
 #38 suite is preserved. Local Docker availability is required for the full suite.
-Alerts/outbox, correction endpoints, physical Trip/Stop execution, Yard mobile,
+Alerts/outbox, physical Trip/Stop execution, Yard mobile,
 full Trailer timeline and generic Audit remain their later bounded Issues.
+
+## Explicit Trailer commands (#40)
+
+Six POST commands under /api/v1/tenants/{tenantId}/trailers/{trailerId} return
+the authoritative Trailer DTO: location-corrections, mark-location-unknown,
+load-state-changes, out-of-service, return-to-service and customer-designation-changes.
+Typed strict bodies reject unknown fields and scalar coercion. Every command
+requires expectedVersion and nonblank reason (comment for OOS), uses fresh
+capability authorization and a locked/refreshed Trailer, and commits event plus
+current row plus @Version atomically. Generic PATCH remains metadata/active only.
+
+Location/load operations reuse TrailerMovementProjection. The internal typed
+TrailerEventWriter shares #38/#39 chronology/provenance with the three
+administrative facts; it queries chronology before dirtying Trailer, avoiding
+multiple version increments. HUMAN_USER/USER_ACTION/authenticated User and
+server command time are derived exclusively by the server. Before/after metadata
+is fixed per event; history is append-only. No migration or privilege change.
+
+CustomerIdentityPolicy exposes only same-Tenant existence with a shared target
+lock, no internal entity or invented active-status restriction. Designation
+changes immediately affect fresh scoped reads. OOS is independent of load,
+location, designation and coupling: planning/new Hook rejects it, existing Drop
+continues to close the interval. OQ-054 stays unresolved; 57 capabilities and
+all role mappings are unchanged.
+
+No Alerts/outbox (#57), evidence/documentIds (#49/#53 after #52), timeline (#41),
+Yard/offline UI (#48/#49), second ledger or generic Audit (#61) is implemented.
+Movement reconciliation preserves its six-field coverage across the three
+known non-owned administrative facts.

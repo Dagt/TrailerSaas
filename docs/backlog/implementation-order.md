@@ -87,9 +87,10 @@ closing the Trips/dispatch Web wave.
 - #38 → #39 → #40 → #41
 
 #38 is merged/complete via [PR #92](https://github.com/Dagt/TrailerSaas/pull/92).
-#39 is the current bounded movement/projection core implementation; complete only
-upon its PR merge. #40 is next for correction/OOS/load-state commands. Public
-execution, Yard workflows and Trailer timeline remain separate Issues.
+#39 is merged/complete via [PR #93](https://github.com/Dagt/TrailerSaas/pull/93).
+#40 is the current bounded correction/OOS/load-state/designation command
+implementation; complete only upon merge. #41 Trailer search/detail/timeline is
+next. Public execution and Yard workflows remain separate Issues.
 
 ### Evidence/alerts support
 - #53 after #52

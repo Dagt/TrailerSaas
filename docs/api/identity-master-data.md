@@ -470,10 +470,21 @@ No-op retains version; stale/racing updates return STALE_VERSION, normalized
 duplicate or invalid/cross-Tenant Customer FK returns safe RESOURCE_CONFLICT.
 Generic PATCH cannot change designation or any physical state/provenance.
 
-### Deferred operational commands
+### Explicit operational commands — implemented by #40
 
-The following approved contracts are future implementation, not #29 endpoints.
-They require their own domain/history/audit behavior. OQ-054 remains open.
+These six commands return 200 with the authoritative Trailer DTO. Every body is
+strict, requires expectedVersion >= 0 and rejects client actor/source/time hints.
+Authorization is fresh ACTIVE membership plus the named capability. Trailer is
+locked and refreshed before checking version; event/current row/version commit
+atomically. Stale yields STALE_VERSION; invalid lifecycle action yields
+INVALID_STATE_TRANSITION; same designation yields RESOURCE_CONFLICT.
+Missing/invisible Trailer/Customer/Location yields safe RESOURCE_NOT_FOUND.
+OQ-054 remains open; conservative role grants are unchanged.
+
+History is durable trailer_movement_events, with server-derived HUMAN_USER,
+USER_ACTION, authenticated User, occurredAt/server command time, recordedAt/server
+chronology, reason and fixed before/after metadata. Generic Audit remains #61.
+No V17, physical-state PATCH, second idempotency ledger or automatic retry exists.
 
 ### POST /trailers/{trailerId}/customer-designation-changes
 
@@ -500,8 +511,7 @@ Request:
 ```json
 {
   "expectedVersion": 12,
-  "comment": "Damage found",
-  "documentIds": ["uuid"]
+  "comment": "Damage found"
 }
 ```
 
@@ -509,7 +519,20 @@ Request:
 
 Capability: `TRAILER_RETURN_TO_SERVICE`.
 
-Authority/role mapping remains OQ-054; the endpoint exists at capability level without deciding which role owns that capability.
+Request:
+
+```json
+{"expectedVersion": 17, "reason": "Repairs completed and inspected"}
+```
+
+IN_SERVICE -> OUT_OF_SERVICE and OUT_OF_SERVICE -> IN_SERVICE are the only
+serviceability transitions. Same-state actions reject. Metadata retains
+previousServiceabilityState/newServiceabilityState. OOS makes normal planning
+UNAVAILABLE and blocks a new Hook; it neither closes an existing coupling nor
+blocks its Drop. Return removes only the serviceability barrier; inactive/scope
+checks remain. OQ-054 final return authority is unresolved, with baseline mapping
+preserved. Evidence/documentIds is deferred to #49/#53 after Documents #52;
+documentIds is an unknown field in #40. No photo/upload placeholder is persisted.
 
 ### POST /trailers/{trailerId}/location-corrections
 
@@ -525,17 +548,46 @@ Request:
 }
 ```
 
-Preserves prior location/history.
+This is a physically confirmed correction using the #39 engine with
+physicalObservation=true: AT_LOCATION, new current/lastKnownLocationId and server
+lastSeenAt, preserving last Driver when none is resolved. Canonical newLocationId
+is required; observedLocationId is not an alias. The Location must be real and
+same-Tenant. Prior history is retained.
 
 ### POST /trailers/{trailerId}/mark-location-unknown
 
-Used by authorized Yard reconciliation/operations flow.
+Capability: TRAILER_LOCATION_CORRECT.
+
+```json
+{"expectedVersion": 14, "reason": "Trailer could not be physically located"}
+```
+
+AT_LOCATION/IN_TRANSIT -> LOCATION_UNKNOWN only; already unknown rejects.
+currentLocationId becomes null. lastSeenAt never becomes command time: the last
+physical observation remains. LOCATION_MARKED_UNKNOWN is the durable fact future
+Alerts #57 will consume; no fake alert/outbox/notification is created.
 
 Response preserves:
 
 - lastKnownLocation;
 - lastSeenAt;
 - lastDriver.
+
+### POST /trailers/{trailerId}/load-state-changes
+
+Capability: TRAILER_STATE_CORRECT.
+
+```json
+{"expectedVersion": 15, "loadState": "EMPTY", "reason": "Confirmed after unloading"}
+```
+
+All six distinct EMPTY/LOADED/UNKNOWN transitions are allowed; same-state rejects
+with RESOURCE_CONFLICT, without event/version change. LOAD_STATE_CHANGED retains previousLoadState and
+newLoadState. No location/coupling/serviceability/Customer/Trip/Manifest side effect.
+Customer reassignment requires a same-Tenant existing Customer, including inactive
+master data; it records previousDesignatedCustomerId (including null) and
+newDesignatedCustomerId and immediately changes fresh Customer-scoped visibility.
+No implicit location/load/Order/Manifest/Trip/coupling change.
 
 ## 12. Trailer QR
 

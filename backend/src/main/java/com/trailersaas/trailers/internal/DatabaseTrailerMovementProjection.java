@@ -7,7 +7,6 @@ import com.trailersaas.customers.OperationalLocationDirectory;
 import com.trailersaas.trailers.TrailerMovementProjection;
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import org.springframework.stereotype.Service;
@@ -18,10 +17,13 @@ import org.springframework.transaction.annotation.*;
 class DatabaseTrailerMovementProjection implements TrailerMovementProjection {
   private final EntityManager em;
   private final OperationalLocationDirectory locations;
+  private final TrailerEventWriter writer;
 
-  DatabaseTrailerMovementProjection(EntityManager em, OperationalLocationDirectory locations) {
+  DatabaseTrailerMovementProjection(
+      EntityManager em, OperationalLocationDirectory locations, TrailerEventWriter writer) {
     this.em = em;
     this.locations = locations;
+    this.writer = writer;
   }
 
   public Result depart(UUID tenant, Departure c) {
@@ -124,36 +126,7 @@ class DatabaseTrailerMovementProjection implements TrailerMovementProjection {
   }
 
   private TrailerMovementEntity write(TrailerEntity t, Context c, Change change) {
-    var e = new TrailerMovementEntity();
-    e.id = UUID.randomUUID();
-    e.tenantId = t.tenantId;
-    e.trailerId = t.id;
-    e.tripId = c.tripId();
-    e.tripStopId = c.tripStopId();
-    e.driverId = c.driverId();
-    e.tractorId = c.tractorId();
-    e.locationId = change.locationId();
-    e.eventType = change.type();
-    e.reason = change.reason();
-    e.metadata = change.metadata();
-    e.actorType = c.provenance().actorType().name();
-    e.sourceType = c.provenance().sourceType().name();
-    e.actorUserId = c.provenance().actorUserId();
-    e.occurredAt = c.occurredAt();
-    e.clientOperationId = c.clientOperationId();
-    // Serialize event persistence chronology under the same Trailer lock. Microsecond precision
-    // matches PostgreSQL; equal/backward server-clock readings cannot reorder accepted facts.
-    var last =
-        em.createQuery(
-                "select max(e.recordedAt) from TrailerMovementEntity e where e.tenantId=:tenant and"
-                    + " e.trailerId=:trailer",
-                Instant.class)
-            .setParameter("tenant", t.tenantId)
-            .setParameter("trailer", t.id)
-            .getSingleResult();
-    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
-    e.recordedAt = last != null && !now.isAfter(last) ? last.plus(1, ChronoUnit.MICROS) : now;
-    em.persist(e);
+    var e = writer.movement(t, c, change);
     var after = change.state();
     t.locationState = after.locationState().name();
     t.currentLocationId = after.currentLocationId();
@@ -161,8 +134,6 @@ class DatabaseTrailerMovementProjection implements TrailerMovementProjection {
     t.lastSeenAt = after.lastSeenAt();
     t.lastDriverId = after.lastDriverId();
     t.loadState = after.loadState().name();
-    // Dirty even for an observation with identical operational values; @Version remains sole owner.
-    t.updatedAt = now.isAfter(t.updatedAt) ? now : t.updatedAt.plus(1, ChronoUnit.MICROS);
     return e;
   }
 

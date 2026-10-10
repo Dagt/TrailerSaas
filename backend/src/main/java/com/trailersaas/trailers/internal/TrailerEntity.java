@@ -10,7 +10,7 @@ class TrailerEntity {
     @Column(name="tenant_id",nullable=false,updatable=false) UUID tenantId;
     @Column(name="operational_number",nullable=false) String operationalNumber;
     @Column(name="operational_number_normalized",insertable=false,updatable=false) String normalizedNumber;
-    @Column(name="designated_customer_id",updatable=false) UUID designatedCustomerId;
+    @Column(name="designated_customer_id") UUID designatedCustomerId;
     @Column(name="trailer_type") String trailerType;
     @Column(name="capability_notes",columnDefinition="text") String capabilityNotes;
     @Column(name="location_state",nullable=false) String locationState="LOCATION_UNKNOWN";

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes={TrailerController.class,TrailerQrController.class})
+@RestControllerAdvice(assignableTypes={TrailerController.class,TrailerQrController.class,TrailerAdministrativeCommandController.class})
 @Order(10)
 class TrailerExceptionHandler {
     @ExceptionHandler(TrailerFailure.class)
@@ -28,6 +28,16 @@ class TrailerExceptionHandler {
     }
     @ExceptionHandler({OptimisticLockingFailureException.class,OptimisticLockException.class})
     ProblemDetail stale(Exception ignored) { return failure(TrailerFailure.stale()); }
+    @ExceptionHandler(com.trailersaas.trailers.TrailerMovementRejectedException.class)
+    ProblemDetail movement(com.trailersaas.trailers.TrailerMovementRejectedException rejected) {
+        return failure(switch(rejected.reason()) {
+            case VALIDATION_FAILED -> TrailerFailure.invalid();
+            case RESOURCE_NOT_FOUND -> TrailerFailure.missing();
+            case STALE_VERSION -> TrailerFailure.stale();
+            case INVALID_STATE_TRANSITION -> TrailerFailure.transition();
+            case RESOURCE_CONFLICT -> TrailerFailure.conflict();
+        });
+    }
     @ExceptionHandler({HttpMessageNotReadableException.class,MethodArgumentTypeMismatchException.class})
     ProblemDetail invalid(Exception ignored) { return failure(TrailerFailure.invalid()); }
 }

@@ -761,6 +761,210 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/location-corrections:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Trailers]
+      operationId: correctTrailerLocation
+      x-implementation-status: implemented-issue-40
+      description: >
+        TRAILER_LOCATION_CORRECT, fresh ACTIVE membership and capability required.
+        Confirmed physical observation: AT_LOCATION, current/last-known destination and lastSeenAt server time; previous history is preserved.
+        Strict body; actor/source/time are server-derived HUMAN_USER/USER_ACTION.
+        expectedVersion mandatory; stale yields STALE_VERSION. Invalid state yields INVALID_STATE_TRANSITION.
+        Unknown/malformed fields yield VALIDATION_FAILED; invisible parents yield RESOURCE_NOT_FOUND.
+        Event/current row/version commit atomically. No replay guarantee or automatic retry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrectTrailerLocationRequest'
+      responses:
+        '200':
+          description: Authoritative current Trailer, including new version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/mark-location-unknown:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Trailers]
+      operationId: markTrailerLocationUnknown
+      x-implementation-status: implemented-issue-40
+      description: >
+        TRAILER_LOCATION_CORRECT, fresh ACTIVE membership and capability required.
+        AT_LOCATION or IN_TRANSIT to LOCATION_UNKNOWN. Preserves last-known Location, lastSeenAt and lastDriver; no fake physical observation. Durable fact will feed future Alerts.
+        Strict body; actor/source/time are server-derived HUMAN_USER/USER_ACTION.
+        expectedVersion mandatory; stale yields STALE_VERSION. Invalid state yields INVALID_STATE_TRANSITION.
+        Unknown/malformed fields yield VALIDATION_FAILED; invisible parents yield RESOURCE_NOT_FOUND.
+        Event/current row/version commit atomically. No replay guarantee or automatic retry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkTrailerLocationUnknownRequest'
+      responses:
+        '200':
+          description: Authoritative current Trailer, including new version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/load-state-changes:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Trailers]
+      operationId: changeTrailerLoadState
+      x-implementation-status: implemented-issue-40
+      description: >
+        TRAILER_STATE_CORRECT, fresh ACTIVE membership and capability required.
+        Distinct EMPTY/LOADED/UNKNOWN transitions only; same load state yields RESOURCE_CONFLICT without event/version change. Location, serviceability, designation, coupling and Manifest remain unchanged.
+        Strict body; actor/source/time are server-derived HUMAN_USER/USER_ACTION.
+        expectedVersion mandatory; stale yields STALE_VERSION. Invalid state yields INVALID_STATE_TRANSITION.
+        Unknown/malformed fields yield VALIDATION_FAILED; invisible parents yield RESOURCE_NOT_FOUND.
+        Event/current row/version commit atomically. No replay guarantee or automatic retry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeTrailerLoadStateRequest'
+      responses:
+        '200':
+          description: Authoritative current Trailer, including new version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/out-of-service:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Trailers]
+      operationId: markTrailerOutOfService
+      x-implementation-status: implemented-issue-40
+      description: >
+        TRAILER_OOS_MARK, fresh ACTIVE membership and capability required.
+        IN_SERVICE to OUT_OF_SERVICE; preserves coupling and every unrelated dimension. Evidence/document linking is deferred to #49/#53 after Documents infrastructure #52. documentIds is rejected.
+        Strict body; actor/source/time are server-derived HUMAN_USER/USER_ACTION.
+        expectedVersion mandatory; stale yields STALE_VERSION. Invalid state yields INVALID_STATE_TRANSITION.
+        Unknown/malformed fields yield VALIDATION_FAILED; invisible parents yield RESOURCE_NOT_FOUND.
+        Event/current row/version commit atomically. No replay guarantee or automatic retry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkTrailerOutOfServiceRequest'
+      responses:
+        '200':
+          description: Authoritative current Trailer, including new version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/return-to-service:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Trailers]
+      operationId: returnTrailerToService
+      x-implementation-status: implemented-issue-40
+      description: >
+        TRAILER_RETURN_TO_SERVICE, fresh ACTIVE membership and capability required.
+        OUT_OF_SERVICE to IN_SERVICE. Existing conservative role mapping is retained; OQ-054 final authority remains unresolved. No persisted availability flag.
+        Strict body; actor/source/time are server-derived HUMAN_USER/USER_ACTION.
+        expectedVersion mandatory; stale yields STALE_VERSION. Invalid state yields INVALID_STATE_TRANSITION.
+        Unknown/malformed fields yield VALIDATION_FAILED; invisible parents yield RESOURCE_NOT_FOUND.
+        Event/current row/version commit atomically. No replay guarantee or automatic retry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReturnTrailerToServiceRequest'
+      responses:
+        '200':
+          description: Authoritative current Trailer, including new version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/customer-designation-changes:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Trailers]
+      operationId: changeTrailerDesignatedCustomer
+      x-implementation-status: implemented-issue-40
+      description: >
+        TRAILER_CUSTOMER_REASSIGN, fresh ACTIVE membership and capability required.
+        Required same-Tenant Customer UUID, without an invented active-status restriction. Designation is independent of ownership, location, load, coupling, Trip and Order. Same-Customer reassignment is RESOURCE_CONFLICT.
+        Strict body; actor/source/time are server-derived HUMAN_USER/USER_ACTION.
+        expectedVersion mandatory; stale yields STALE_VERSION. Invalid state yields INVALID_STATE_TRANSITION.
+        Unknown/malformed fields yield VALIDATION_FAILED; invisible parents yield RESOURCE_NOT_FOUND.
+        Event/current row/version commit atomically. No replay guarantee or automatic retry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeTrailerCustomerDesignationRequest'
+      responses:
+        '200':
+          description: Authoritative current Trailer, including new version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /api/v1/tenants/{tenantId}/trailers/{trailerId}/qr-identities:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -2914,6 +3118,58 @@ components:
         currentTractorId: { type: [string, "null"], format: uuid }
         plannedInitialTrailerId: { type: [string, "null"], format: uuid }
         version: { type: integer, format: int64 }
+
+    CorrectTrailerLocationRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, newLocationId, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        newLocationId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    MarkTrailerLocationUnknownRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    ChangeTrailerLoadStateRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, loadState, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        loadState:
+          $ref: '#/components/schemas/TrailerLoadState'
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    MarkTrailerOutOfServiceRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, comment]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        comment: { type: string, minLength: 1, pattern: '\S' }
+
+    ReturnTrailerToServiceRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 1, pattern: '\S' }
+
+    ChangeTrailerCustomerDesignationRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, newCustomerId, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        newCustomerId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, pattern: '\S' }
 
     HookTrailerRequest:
       type: object
