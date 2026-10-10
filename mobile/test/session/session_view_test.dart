@@ -8,6 +8,37 @@ import 'package:trailersaas_mobile/src/platform/connectivity.dart';
 import 'fixtures.dart';
 
 void main() {
+  testWidgets(
+    'SQLite save failure shows safe refresh action and recovers without raw diagnostics',
+    (tester) async {
+      final f = (await tester.runAsync(() async {
+        final fixture = MobileFixture();
+        await fixture.db.initialize();
+        await fixture.db.customStatement(
+          "CREATE TRIGGER fail_widget_cache BEFORE INSERT ON cached_stops BEGIN SELECT RAISE(ABORT,'private-storage-message'); END",
+        );
+        await fixture.session.start();
+        return fixture;
+      }))!;
+      addTearDown(() => tester.runAsync(f.close));
+      await tester.pumpWidget(
+        MaterialApp(home: SessionView(session: f.session)),
+      );
+      expect(
+        find.textContaining('Local storage could not be accessed'),
+        findsOneWidget,
+      );
+      expect(find.text('Refresh session'), findsOneWidget);
+      expect(find.textContaining('private-storage-message'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      await tester.runAsync(() async {
+        await f.db.customStatement('DROP TRIGGER fail_widget_cache');
+        await f.session.refresh();
+      });
+      await tester.pump();
+      expect(find.text('Road Mode — Jane Driver'), findsOneWidget);
+    },
+  );
   testWidgets('sign-in labels and safe validation without external Firebase', (
     tester,
   ) async {

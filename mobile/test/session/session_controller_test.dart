@@ -10,6 +10,47 @@ import 'package:trailersaas_mobile/src/session/contracts.dart';
 import 'fixtures.dart';
 
 void main() {
+  test('online email/password login bootstraps fresh server context', () async {
+    final f = MobileFixture(uid: null);
+    addTearDown(f.close);
+    await f.session.start();
+    expect(f.session.state, SessionState.signedOut);
+    await f.session.signIn('driver@example.test', 'not-stored');
+    expect(f.session.state, SessionState.ready);
+    expect(f.session.snapshot!.userId, 'user-A');
+    expect(f.requests.every((r) => r.method == 'GET'), isTrue);
+  });
+  test(
+    'complete keyset download commits all pages in one cache replacement',
+    () async {
+      final f = MobileFixture();
+      addTearDown(f.close);
+      var page = 0;
+      f.handler = (r) async {
+        if (r.url.path.endsWith('/api/v1/me')) {
+          return f.response({'userId': 'user-A', 'memberships': f.memberships});
+        }
+        if (r.url.path.endsWith('/driver/me')) {
+          return f.response({
+            'id': 'driver',
+            'name': 'Driver',
+            'active': true,
+            'version': 0,
+          });
+        }
+        page++;
+        expect(r.url.queryParameters['cursor'], page == 1 ? null : 'page-two');
+        return f.response({
+          'items': [work('trip-$page')],
+          'nextCursor': page == 1 ? 'page-two' : null,
+        });
+      };
+      await f.session.start();
+      expect(f.session.snapshot!.trips.map((t) => t.id), ['trip-1', 'trip-2']);
+      expect((await f.cache.restore('firebase-A'))!.trips.length, 2);
+      expect((await f.db.select(f.db.cachedStops).get()).length, 2);
+    },
+  );
   for (final failure in ['replace', 'restore', 'clear']) {
     test(
       'SQLite $failure failure leaves loading and recovers on explicit refresh',
