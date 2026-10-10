@@ -600,3 +600,26 @@ This flow is ready for wireframing when:
 6. Trailer search exposes trustworthy current + last-known state.
 7. Alerts are actionable.
 8. No screen depends on arbitrary status-field editing.
+
+## Issue #41 implementation note
+
+Operations adds `/operations/trailers`, `/operations/trailers/:trailerId` and a
+read-only `/operations/orders/:orderId`. Dashboard quick search forwards the
+unchanged operational number to an explicit exact-normalized backend search.
+The shared Operations/Admin detail presents current versus last-known Location,
+physical current/latest coupling, authoritative last Driver, derived last
+Tractor, Manifest / planned load and a paginated movement timeline. Resource
+names come from the bounded enriched read projection, without per-row catalog
+requests. Planned load does not assert physical cargo.
+
+Timeline uses physical occurredAt ordering, with recordedAt as secondary context.
+Load more fetches one page; a failure preserves loaded facts and offers read
+retry. Tenant-namespaced queries are covered by existing Operations cancellation
+and cache removal on Tenant/identity changes. This surface introduces no new
+commands or state editor. Designation commands exist in #40 but these views are
+read-only. Documents/evidence remain #49/#52/#53; no fake documents or maps.
+The Evidence section identifies the pending integration rather than claiming
+that a Trailer has no evidence. Manifest previews label omitted authorized
+Orders as a bounded preview, never as "No Orders allocated".
+Customer Portal remains #58+, Driver execution #44, Yard Move #48, Alerts #56,
+and generic Audit #61.

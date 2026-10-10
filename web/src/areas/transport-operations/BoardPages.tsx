@@ -1,4 +1,5 @@
 import { MasterDataStatus } from './MasterDataStatus'
+import { TrailerQuickSearch } from './TrailerPages'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
@@ -12,6 +13,7 @@ export function Dashboard() {
   const [customerId, customer] = useState(''), [driverId, driver] = useState(''), [status, state] = useState('')
   const query = useQuery({ queryKey: key(tenantId, 'dashboard', { customerId, driverId, status }), queryFn: ({ signal }) => api.board({ customerId, driverId, status }, signal) })
   return <><PageHeader title="Dispatch dashboard" description="Current planning, assignments and work needing attention." />
+    <TrailerQuickSearch />
     <MasterDataStatus queries={[names.customers, names.drivers, names.tractors, names.trailers, names.sites]} /><div className="operations-filters"><label>Customer <select value={customerId} onChange={e => customer(e.target.value)}><option value="">All Customers</option>{names.customers.data?.items.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
       <label>Driver <select value={driverId} onChange={e => driver(e.target.value)}><option value="">All Drivers</option>{names.drivers.data?.items.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
       <label>Trip status <select value={status} onChange={e => state(e.target.value)}><option value="">All active Trips</option>{tripStatuses.filter(s => !['COMPLETED', 'CANCELLED'].includes(s)).map(s => <option key={s}>{s}</option>)}</select></label></div>

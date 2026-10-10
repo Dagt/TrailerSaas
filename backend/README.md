@@ -977,3 +977,29 @@ No Alerts/outbox (#57), evidence/documentIds (#49/#53 after #52), timeline (#41)
 Yard/offline UI (#48/#49), second ledger or generic Audit (#61) is implemented.
 Movement reconciliation preserves its six-field coverage across the three
 known non-owned administrative facts.
+
+### Issue #41 Trailer read surface
+
+V17 creates only trailer_couplings_trailer_history and
+load_manifests_trailer_lookup indexes. V1–V16, grants, RLS and command behavior
+are unchanged. TrailerReadRepository is a Trailers-owned native cross-domain
+read model: same-Tenant joins for display labels, no foreign internal Java APIs,
+no writes and no event replay. Repeatable-read read-only transactions keep
+projection/coupling/Manifest reads consistent. List/detail/timeline are covered
+by fixed-query-count, index-path, fresh Customer scope and mixed-Manifest tests
+on PostgreSQL 18. Timeline keyset ordering is occurredAt/id (physical chronology),
+while reconciliation remains recordedAt/id (server chronology).
+
+GET list adds derived coupling/filter/labels; GET detail retains the basic DTO
+fields and adds bounded summaries. Command responses remain the original basic
+Trailer DTO. OPEN Manifest previews cap at 20 parents/50 visible Orders total;
+scoped readers never receive hidden counts or restriction hints. Administrative
+reasons, Trip references and location-change IDs are conservatively redacted for
+scoped timeline readers. No actor User IDs or raw metadata are public.
+
+Per-Manifest `ordersTruncated` distinguishes visible allocations omitted by the
+global preview limit from genuinely empty allocations, without hidden Customer
+counts or flags. Parent existence checks and the 51-row child lookahead remain
+inside the same bounded queries. PostgreSQL tests also record default-planner
+EXPLAIN ANALYZE/BUFFERS node/index evidence and verify bounded returned rows,
+separately from ordered-index eligibility diagnostics, without exact cost assertions.

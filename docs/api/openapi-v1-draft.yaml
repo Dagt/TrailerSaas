@@ -662,8 +662,9 @@ paths:
     get:
       tags: [Trailers]
       operationId: listTrailers
+      x-implementation-status: implemented-issue-41
       description: >
-        Fresh TRAILER_VIEW_ALL Tenant scope or TRAILER_VIEW_CUSTOMER_SCOPED Customer IDs. Exact normalized operationalNumber; filters AND together with scope. Foreign designatedCustomerId filter returns CUSTOMER_SCOPE_DENIED. No pagination; unknown filters rejected. Order normalized number/id.
+        Fresh TRAILER_VIEW_ALL Tenant scope or TRAILER_VIEW_CUSTOMER_SCOPED Customer IDs. Exact normalized operationalNumber; filters AND together with scope. Foreign designatedCustomerId filter returns CUSTOMER_SCOPE_DENIED. coupled=true means an open physical coupling interval exists; false means none. No pagination; unknown filters rejected. Order normalized number/id.
       parameters:
         - name: operationalNumber
           in: query
@@ -687,6 +688,9 @@ paths:
           schema:
             $ref: '#/components/schemas/TrailerServiceabilityState'
         - name: active
+          in: query
+          schema: { type: boolean }
+        - name: coupled
           in: query
           schema: { type: boolean }
       responses:
@@ -729,15 +733,16 @@ paths:
     get:
       tags: [Trailers]
       operationId: getTrailer
+      x-implementation-status: implemented-issue-41
       description: >
         Fresh Trailer read scope. Nonexistent, cross-Tenant or outside Customer scope returns RESOURCE_NOT_FOUND, including unassigned Trailers for Dispatcher.
       responses:
         '200':
-          description: Trailer
+          description: TrailerDetail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Trailer'
+                $ref: '#/components/schemas/TrailerDetail'
         default:
           $ref: '#/components/responses/Problem'
     patch:
@@ -758,6 +763,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Trailer'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/timeline:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: trailerId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Trailers]
+      operationId: getTrailerTimeline
+      x-implementation-status: implemented-issue-41
+      description: >
+        Fresh TRAILER_VIEW_ALL or TRAILER_VIEW_CUSTOMER_SCOPED scope on every page.
+        Missing/foreign/out-of-scope Trailer returns generic RESOURCE_NOT_FOUND even with an old cursor after designation changes.
+        Durable movement/admin facts ordered occurredAt DESC/id DESC; recordedAt is secondary server chronology.
+        Strict cursor/limit only; unknown parameters rejected. No replay or mutation.
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: Safe movement timeline page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailerTimelinePage'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -2499,6 +2537,250 @@ components:
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
 
+    TrailerReadItem:
+      type: object
+      additionalProperties: false
+      description: All original Trailer fields plus derived labels and physical coupling. Customer-owned Location references outside fresh scope are null.
+      required: [id, operationalNumber, designatedCustomerId, trailerType, capabilityNotes, locationState, currentLocationId, lastKnownLocationId, lastSeenAt, lastDriverId, loadState, serviceabilityState, usagePurpose, active, version, createdAt, updatedAt, designatedCustomerName, currentLocationName, lastKnownLocationName, couplingState, currentDriverId, currentDriverName, currentTractorId, currentTractorOperationalNumber, lastDriverName, lastTractorId, lastTractorOperationalNumber]
+      properties:
+        id: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        designatedCustomerId: { type: [string, "null"], format: uuid }
+        trailerType: { type: [string, "null"] }
+        capabilityNotes: { type: [string, "null"] }
+        locationState:
+          $ref: '#/components/schemas/TrailerLocationState'
+        currentLocationId: { type: [string, "null"], format: uuid }
+        lastKnownLocationId: { type: [string, "null"], format: uuid }
+        lastSeenAt: { type: [string, "null"], format: date-time }
+        lastDriverId: { type: [string, "null"], format: uuid }
+        loadState:
+          $ref: '#/components/schemas/TrailerLoadState'
+        serviceabilityState:
+          $ref: '#/components/schemas/TrailerServiceabilityState'
+        usagePurpose:
+          $ref: '#/components/schemas/TrailerUsagePurpose'
+        active: { type: boolean }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        designatedCustomerName: { type: [string, "null"] }
+        currentLocationName: { type: [string, "null"] }
+        lastKnownLocationName: { type: [string, "null"] }
+        couplingState: { type: string, enum: [COUPLED, UNCOUPLED] }
+        currentDriverId: { type: [string, "null"], format: uuid }
+        currentDriverName: { type: [string, "null"] }
+        currentTractorId: { type: [string, "null"], format: uuid }
+        currentTractorOperationalNumber: { type: [string, "null"] }
+        lastDriverName: { type: [string, "null"] }
+        lastTractorId: { type: [string, "null"], format: uuid }
+        lastTractorOperationalNumber: { type: [string, "null"] }
+
+    TrailerDetail:
+      type: object
+      additionalProperties: false
+      description: Current projection from trailers; coupling from physical intervals, never planned Trip expectations. OPEN Manifest preview is planning, not physical load. Maximum 20 Manifests and 50 visible Orders total. Scoped callers receive only authorized Orders, omit empty Manifests, and always receive manifestSummaryTruncated=false without hidden counts. Scoped coupling Trip references are null.
+      required: [id, operationalNumber, designatedCustomerId, trailerType, capabilityNotes, locationState, currentLocationId, lastKnownLocationId, lastSeenAt, lastDriverId, loadState, serviceabilityState, usagePurpose, active, version, createdAt, updatedAt, designatedCustomerName, currentLocationName, lastKnownLocationName, couplingState, currentDriverId, currentDriverName, currentTractorId, currentTractorOperationalNumber, lastDriverName, lastTractorId, lastTractorOperationalNumber, designatedCustomer, currentLocation, lastKnownLocation, lastDriver, currentTractor, lastTractor, currentCoupling, lastCoupling, openManifests, manifestSummaryTruncated]
+      properties:
+        id: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        designatedCustomerId: { type: [string, "null"], format: uuid }
+        trailerType: { type: [string, "null"] }
+        capabilityNotes: { type: [string, "null"] }
+        locationState:
+          $ref: '#/components/schemas/TrailerLocationState'
+        currentLocationId: { type: [string, "null"], format: uuid }
+        lastKnownLocationId: { type: [string, "null"], format: uuid }
+        lastSeenAt: { type: [string, "null"], format: date-time }
+        lastDriverId: { type: [string, "null"], format: uuid }
+        loadState:
+          $ref: '#/components/schemas/TrailerLoadState'
+        serviceabilityState:
+          $ref: '#/components/schemas/TrailerServiceabilityState'
+        usagePurpose:
+          $ref: '#/components/schemas/TrailerUsagePurpose'
+        active: { type: boolean }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        designatedCustomerName: { type: [string, "null"] }
+        currentLocationName: { type: [string, "null"] }
+        lastKnownLocationName: { type: [string, "null"] }
+        couplingState: { type: string, enum: [COUPLED, UNCOUPLED] }
+        currentDriverId: { type: [string, "null"], format: uuid }
+        currentDriverName: { type: [string, "null"] }
+        currentTractorId: { type: [string, "null"], format: uuid }
+        currentTractorOperationalNumber: { type: [string, "null"] }
+        lastDriverName: { type: [string, "null"] }
+        lastTractorId: { type: [string, "null"], format: uuid }
+        lastTractorOperationalNumber: { type: [string, "null"] }
+        designatedCustomer:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerNamedReference'
+            - type: 'null'
+        currentLocation:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerLocationSummary'
+            - type: 'null'
+        lastKnownLocation:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerLocationSummary'
+            - type: 'null'
+        lastDriver:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerNamedReference'
+            - type: 'null'
+        currentTractor:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerNumberedReference'
+            - type: 'null'
+        lastTractor:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerNumberedReference'
+            - type: 'null'
+        currentCoupling:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerCouplingSummary'
+            - type: 'null'
+        lastCoupling:
+          anyOf:
+            - $ref: '#/components/schemas/TrailerCouplingSummary'
+            - type: 'null'
+        openManifests:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/TrailerManifestSummary'
+        manifestSummaryTruncated: { type: boolean }
+
+    TrailerNamedReference:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+
+    TrailerNumberedReference:
+      type: object
+      additionalProperties: false
+      required: [id, operationalNumber]
+      properties:
+        id: { type: string, format: uuid }
+        operationalNumber: { type: string }
+
+    TrailerLocationSummary:
+      type: object
+      additionalProperties: false
+      description: Current location is current physical assertion; last-known is the last physical observation and must not be presented as current when unknown/in transit.
+      required: [id, name, type, siteId, siteName]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string }
+        siteId: { type: string, format: uuid }
+        siteName: { type: string }
+
+    TrailerCouplingSummary:
+      type: object
+      additionalProperties: false
+      description: currentCoupling has droppedAt=null. lastCoupling is greatest hookedAt/id and may be the same interval. Current Driver/Tractor derive from active coupling; last Driver is trailers.last_driver_id; last Tractor derives from latest coupling.
+      required: [id, driverId, driverName, tractorId, tractorOperationalNumber, tripId, hookedAt, droppedAt]
+      properties:
+        id: { type: string, format: uuid }
+        driverId: { type: string, format: uuid }
+        driverName: { type: string }
+        tractorId: { type: string, format: uuid }
+        tractorOperationalNumber: { type: string }
+        tripId: { type: [string, "null"], format: uuid }
+        hookedAt: { type: string, format: date-time }
+        droppedAt: { type: [string, "null"], format: date-time }
+
+    TrailerManifestSummary:
+      type: object
+      additionalProperties: false
+      required: [id, status, version, updatedAt, orders, ordersTruncated]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, const: OPEN }
+        version: { type: integer, format: int64, minimum: 0 }
+        updatedAt: { type: string, format: date-time }
+        ordersTruncated:
+          type: boolean
+          description: True only when authorized Orders in this Manifest are omitted by the global 50-Order preview limit. Never indicates hidden Customer allocations. An empty orders array with true is a limited preview, not an empty Manifest.
+        orders:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/TrailerPlannedOrder'
+
+    TrailerPlannedOrder:
+      type: object
+      additionalProperties: false
+      required: [id, customerId, customerName, orderNumber, status]
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        customerName: { type: string }
+        orderNumber: { type: string }
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+
+    TrailerTimelineChanges:
+      type: object
+      additionalProperties: false
+      description: Whitelisted known changes only. Customer designation values are omitted; scoped readers also omit location-change IDs. No arbitrary metadata.
+      properties:
+        previousLocationState:
+          $ref: '#/components/schemas/TrailerLocationState'
+        previousLoadState:
+          $ref: '#/components/schemas/TrailerLoadState'
+        newLoadState:
+          $ref: '#/components/schemas/TrailerLoadState'
+        previousServiceabilityState:
+          $ref: '#/components/schemas/TrailerServiceabilityState'
+        newServiceabilityState:
+          $ref: '#/components/schemas/TrailerServiceabilityState'
+        previousLocationId: { type: [string, "null"], format: uuid }
+        newLocationId: { type: [string, "null"], format: uuid }
+
+    TrailerTimelineItem:
+      type: object
+      additionalProperties: false
+      description: Safe durable facts only. No actor User ID, Tenant ID, client operation ID or raw metadata. Scoped readers receive reason/tripId/tripStopId=null and foreign Customer-owned locations are omitted.
+      required: [id, eventType, actorType, sourceType, occurredAt, recordedAt, reason, locationId, locationName, driverId, driverName, tractorId, tractorOperationalNumber, tripId, tripStopId, changes]
+      properties:
+        id: { type: string, format: uuid }
+        eventType: { type: string }
+        actorType: { type: string, enum: [HUMAN_USER, SYSTEM, INTEGRATION] }
+        sourceType: { type: string, enum: [USER_ACTION, MOBILE_AUTOMATION, SYSTEM_PROCESS, EXTERNAL_INTEGRATION] }
+        occurredAt: { type: string, format: date-time }
+        recordedAt: { type: string, format: date-time }
+        reason: { type: [string, "null"] }
+        locationId: { type: [string, "null"], format: uuid }
+        locationName: { type: [string, "null"] }
+        driverId: { type: [string, "null"], format: uuid }
+        driverName: { type: [string, "null"] }
+        tractorId: { type: [string, "null"], format: uuid }
+        tractorOperationalNumber: { type: [string, "null"] }
+        tripId: { type: [string, "null"], format: uuid }
+        tripStopId: { type: [string, "null"], format: uuid }
+        changes:
+          $ref: '#/components/schemas/TrailerTimelineChanges'
+
+    TrailerTimelinePage:
+      type: object
+      additionalProperties: false
+      description: Physical chronology occurredAt DESC/id DESC, not reconciliation recordedAt chronology. Late offline facts keep original occurredAt. Cursor is an opaque position, never authorization.
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/TrailerTimelineItem'
+        nextCursor: { type: [string, "null"] }
+
     TrailerList:
       type: object
       additionalProperties: false
@@ -2507,7 +2789,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Trailer'
+            $ref: '#/components/schemas/TrailerReadItem'
 
     CreateTrailerRequest:
       type: object

@@ -88,9 +88,11 @@ closing the Trips/dispatch Web wave.
 
 #38 is merged/complete via [PR #92](https://github.com/Dagt/TrailerSaas/pull/92).
 #39 is merged/complete via [PR #93](https://github.com/Dagt/TrailerSaas/pull/93).
-#40 is the current bounded correction/OOS/load-state/designation command
-implementation; complete only upon merge. #41 Trailer search/detail/timeline is
-next. Public execution and Yard workflows remain separate Issues.
+#40 is merged/complete via [PR #94](https://github.com/Dagt/TrailerSaas/pull/94).
+#41 is the current bounded Trailer search/detail/timeline implementation;
+complete only upon merge. After #41 merges, the Trailer movement/read surface
+wave is complete and #42 Mobile auth/cache foundation is next. Public execution
+and Yard workflows remain separate Issues.
 
 ### Evidence/alerts support
 - #53 after #52

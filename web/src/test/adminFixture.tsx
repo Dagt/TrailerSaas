@@ -58,6 +58,7 @@ export function adminFixture(path = '/admin', memberships = [admin()], auth = fa
       if (method === 'POST') { const qr = { id: qrs.length ? crypto.randomUUID() : qrId, trailerId: resourceId, publicToken, operationalNumber: 'T114', active: true, issuedAt: stamps.createdAt, revokedAt: null }; qrs = [qr, ...qrs]; return response(qr, 201) }
       return response({ items: qrs })
     }
+    if (kind === 'trailers' && parts[2] === 'timeline') return response({ items: [], nextCursor: null })
     const locationList = kind === 'sites' && parts[2] === 'locations'
     const resource = locationList ? 'locations' : kind
     const list = rows[resource] ?? []

@@ -42,7 +42,9 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
                 .containsEntry("lastSeenAt",null).containsEntry("lastDriverId",null).containsEntry("operationalNumber"," t114 ")
                 .doesNotContainKeys("tenantId","operationalNumberNormalized");
         String p="/trailers/"+t.get("id");
-        assertThat(body(req("GET",p,null,TOKEN))).isEqualTo(t);
+        assertThat(body(req("GET",p,null,TOKEN))).containsAllEntriesOf(t)
+                .containsKeys("currentLocation", "lastKnownLocation", "currentCoupling", "lastCoupling", "openManifests")
+                .doesNotContainKeys("tenantId", "operationalNumberNormalized");
         assertThat(body(req("PATCH",p,Map.of("expectedVersion",0),TOKEN))).isEqualTo(t);
         var patch=new HashMap<String,Object>();patch.put("expectedVersion",0);patch.put("trailerType",null);patch.put("capabilityNotes",null);patch.put("usagePurpose",null);patch.put("active",false);
         assertThat(body(req("PATCH",p,patch,TOKEN))).containsEntry("version",1).containsEntry("active",false).containsEntry("usagePurpose",null).containsEntry("trailerType",null).containsEntry("capabilityNotes",null);

@@ -155,7 +155,7 @@ class MasterDataPostgresTests extends PostgresIntegrationTest {
 
     @Test
     void schemaAndClosedCatalogsMatchV5WithoutPrematureDomains() throws Exception {
-        assertThat(flyway.info().applied()).extracting(i -> i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16");
+        assertThat(flyway.info().applied()).extracting(i -> i.getVersion().getVersion()).containsExactly("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15", "16", "17");
         try (var c = flyway.getConfiguration().getDataSource().getConnection(); var q = c.createStatement()) {
             try (var rows = q.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
                 var names = new java.util.ArrayList<String>();
