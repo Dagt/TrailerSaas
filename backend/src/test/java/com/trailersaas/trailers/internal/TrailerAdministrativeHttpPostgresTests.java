@@ -596,9 +596,15 @@ class TrailerAdministrativeHttpPostgresTests extends PostgresIntegrationTest {
 
   void assertIndependent(
       Map<String, Object> before, Map<String, Object> after, Set<String> changed) {
+    var commandFields =
+        Arrays.stream(TrailerDtos.Trailer.class.getRecordComponents())
+            .map(java.lang.reflect.RecordComponent::getName)
+            .collect(java.util.stream.Collectors.toSet());
+    // GET now adds read-only summaries. Every original command/projection field remains checked.
     before.forEach(
         (key, value) -> {
-          if (!changed.contains(key)) assertThat(after).containsEntry(key, value);
+          if (commandFields.contains(key) && !changed.contains(key))
+            assertThat(after).containsEntry(key, value);
         });
   }
 

@@ -56,7 +56,7 @@ export function operationsFixture(path = '/operations', options: { memberships?:
       currentTrip = { ...trip(), status: body?.driverId && body?.tractorId ? 'ASSIGNED' : 'PLANNED', currentDriverId: body?.driverId as string | null, currentTractorId: body?.tractorId as string | null, plannedInitialTrailerId: body?.plannedInitialTrailerId as string | null }
       return response(currentTrip, 201)
     }
-    if (path.endsWith('/timeline')) return response({ items: [...currentTrip.assignmentHistory, ...currentTrip.operationalHistory] })
+    if (path.startsWith('/trips/') && path.endsWith('/timeline')) return response({ items: [...currentTrip.assignmentHistory, ...currentTrip.operationalHistory] })
     if (path === `/trips/${tripId}`) return response(currentTrip)
     if (path.startsWith(`/trips/${tripId}/`) && method === 'POST') {
       const endpoint = path.split('/')[3]

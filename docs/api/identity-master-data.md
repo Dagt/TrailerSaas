@@ -200,11 +200,11 @@ associations have POST/DELETE but no complete GET directory, so Web offers
 explicit association and removal of a server-confirmed pair during the current
 visit; it never infers associations from addresses or Locations. Driver unlink
 is supported; new linking waits for an approved account picker/directory.
-Trailer metadata PATCH excludes designation and physical state. The disabled
-designation entry point requires the future audited reassignment command (#40).
-Current/last Location IDs cannot be resolved directly through a detail GET today;
-Web does not invent one or display fake location names. Site detail has its real
-Operational Location list, including neutral versus Customer-context Locations.
+Trailer metadata PATCH excludes designation and physical state. #40 implements
+the audited designation command; #41 keeps the designation view read-only.
+#41 enriched Trailer reads resolve current/last-known Location names directly,
+without client-side per-row lookups. Site detail has its real Operational
+Location list, including neutral versus Customer-context Locations.
 
 ## 5. Customers
 
@@ -459,7 +459,7 @@ IDs return 404 RESOURCE_NOT_FOUND. Yard/Driver have no generic browse.
 
 GET list returns items ordered by normalized number/id, without pagination.
 Exact filters: operationalNumber (normalized exact match), designatedCustomerId,
-locationState, currentLocationId, loadState, serviceabilityState, active. Filters
+locationState, currentLocationId, loadState, serviceabilityState, active, coupled. Filters
 AND with each other and the mandatory Customer scope. Invalid/unknown filters
 return 400; explicit outside-scope Customer filter returns 403 CUSTOMER_SCOPE_DENIED.
 
@@ -631,8 +631,60 @@ Deactivation does not revoke or change the QR; the same active QR resolves again
 after Trailer reactivation. Invalid syntax is 400; missing/
 invalid bearer is 401. QR tokens are redacted from error instances and HTTP logs.
 
-### Deferred timeline
+### Operational read projection — implemented by #41
+
+List items retain the original Trailer fields and add designatedCustomerName,
+currentLocationName, lastKnownLocationName, couplingState, currentDriverId/name,
+currentTractorId/operationalNumber, lastDriverName and lastTractorId/operationalNumber.
+Exact number lookup uses the existing V8 tenant/normalized-number unique index.
+`coupled=true` means an interval with dropped_at NULL exists; false means none.
+There is no persisted coupled flag and no relationship to planned Trailer IDs.
+
+Detail retains all original fields and adds designatedCustomer {id,name},
+currentLocation/lastKnownLocation {id,name,type,siteId,siteName}, lastDriver,
+currentTractor/lastTractor, currentCoupling, lastCoupling and openManifests.
+Current location is the current physical assertion; last-known is the last
+physical observation, never presented as current when unknown/in transit.
+Current Driver/Tractor come only from the active physical coupling. Last Driver
+uses trailers.last_driver_id; last Tractor comes from the greatest hooked_at/id
+coupling. Current and last coupling can be the same interval.
+
+OPEN Manifest preview is planning, not physically loaded cargo: at most 20
+Manifests and 50 visible Orders total. Each Order exposes id, customerId,
+customerName, orderNumber and status. Customer-scoped callers see only fresh
+authorized Customers' Orders; empty visible Manifests are omitted. No hidden
+counts/restriction flags are exposed. manifestSummaryTruncated indicates overflow
+only for Tenant-wide callers; it is always false for scoped callers, whose fixed
+preview bounds still apply.
+
+The Trailers-owned native SQL read model joins same-Tenant display data without
+Java internal-module dependencies, entity sharing or mutations. List uses one
+projection query; detail uses one projection plus at most two Manifest queries;
+timeline uses a visibility query plus one page query, in addition to fresh
+authorization. A read-only REPEATABLE READ transaction provides a consistent
+snapshot. V17 adds only coupling-history and Manifest-lookup indexes. V16's
+movement-history index is reused; no duplicate operational-number index.
+
+### Movement timeline — implemented by #41
 
 ### GET /trailers/{trailerId}/timeline
 
-Returns cursor-paginated customer/role-authorized movement history suitable for Trailer detail screens.
+Accepts only cursor and limit (default 50, minimum 1, maximum 200). Opaque keyset
+position uses occurredAt/id; it is never authorization. Every page rechecks fresh
+membership and current designation; a cursor obtained before reassignment cannot
+retain access and returns generic RESOURCE_NOT_FOUND afterward.
+
+Returns {items,nextCursor}, ordered occurredAt DESC/id DESC. A late offline fact
+keeps its original physical occurrence position despite a recent recordedAt.
+This differs intentionally from #39 reconciliation's recordedAt ASC/id ASC
+server chronology. Detail reads current projection; timeline never replays facts
+to reconstruct it.
+
+Items expose id, eventType, actorType, sourceType, occurredAt, recordedAt, nullable
+reason, locationId/name, driverId/name, tractorId/operationalNumber, tripId,
+tripStopId and a whitelist of known changes. No Tenant ID, actor User ID, client
+operation ID, claims or raw metadata. Customer designation before/after values
+are omitted. Scoped readers conservatively receive reason/tripId/tripStopId NULL
+and no location-change IDs; Customer-owned Location references outside scope are
+redacted from detail/list/timeline. Foreign/missing/out-of-scope Trailers are 404.
+Generic Audit remains #61; evidence remains #49/#52/#53, Customer Portal #58+.

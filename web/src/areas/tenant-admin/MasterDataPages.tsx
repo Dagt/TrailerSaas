@@ -12,6 +12,9 @@ import type { ResourceKind } from './resources'
 import type { MasterRecord, Items, Driver, Site, Location, Trailer, CustomerSite, Settings } from './contracts'
 import { TrailerFilters } from './TrailerFilters'
 import { QrManagement } from './QrManagement'
+import type { TrailerDetail, TrailerListItem } from '../../shared/trailers/contracts'
+import { TrailerReadView } from '../../shared/trailers/TrailerReadView'
+import { currentLocationLabel } from '../../shared/trailers/display'
 
 const routeFor = (kind: ResourceKind, id: string) => `/admin/${kind}/${id}`
 export function MasterList({ kind }: { kind: Exclude<ResourceKind, 'locations' | 'settings'> }) {
@@ -26,12 +29,12 @@ export function MasterList({ kind }: { kind: Exclude<ResourceKind, 'locations' |
     {create && <RecordEditor kind={kind} path={`/${kind}`} customers={customers.data?.items ?? []} created={() => setCreate(false)} reconcile={() => query.refetch({ throwOnError: true })} />}
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorBanner error={query.error} retry={() => void query.refetch()} />
       : !query.data.items.length ? <EmptyState>No {definitions[kind].singular.toLowerCase()} records found.</EmptyState>
-        : <DataTable caption={definitions[kind].title} headings={[kind === 'tractors' || kind === 'trailers' ? 'Operational number' : 'Name', 'Status', ...(kind === 'sites' ? ['Address', 'Timezone', 'Geofence configured'] : []), ...(kind === 'drivers' ? ['License number', 'Certificate', 'Account'] : []), ...(kind === 'trailers' ? ['Designated Customer', 'Location', 'Load', 'Serviceability', 'Last seen'] : [])]}>
+        : <DataTable caption={definitions[kind].title} headings={[kind === 'tractors' || kind === 'trailers' ? 'Operational number' : 'Name', 'Status', ...(kind === 'sites' ? ['Address', 'Timezone', 'Geofence configured'] : []), ...(kind === 'drivers' ? ['License number', 'Certificate', 'Account'] : []), ...(kind === 'trailers' ? ['Designated Customer', 'Current location', 'Location state', 'Load', 'Coupling', 'Serviceability', 'Last seen', 'Current Driver', 'Last Driver'] : [])]}>
           {query.data.items.map(record => <tr key={record.id}><td><Link to={routeFor(kind, record.id)}>{recordName(record)}</Link></td>
             <td><StatusBadge>{isActive(record) ? 'Active' : 'Inactive'}</StatusBadge></td>
             {kind === 'sites' && <><td>{addressSummary(record as Site)}</td><td>{(record as Site).timezone}</td><td>{geofenceConfigured(record as Site) ? 'Yes' : 'No'}</td></>}
             {kind === 'drivers' && <><td>{(record as Driver).licenseNumber ?? 'Not provided'}</td><td>{certificate(record as Driver)}</td><td>{(record as Driver).userId ? 'Linked account' : 'No linked account'}</td></>}
-            {kind === 'trailers' && <><td>{(record as Trailer).designatedCustomerId ? customers.data?.items.find(c => c.id === (record as Trailer).designatedCustomerId)?.name ?? 'Customer details unavailable' : 'None'}</td><td>{(record as Trailer).locationState}</td><td>{(record as Trailer).loadState}</td><td>{(record as Trailer).serviceabilityState}</td><td>{(record as Trailer).lastSeenAt ?? 'Not provided'}</td></>}
+            {kind === 'trailers' && <><td>{(record as TrailerListItem).designatedCustomerName ?? ((record as Trailer).designatedCustomerId ? customers.data?.items.find(c => c.id === (record as Trailer).designatedCustomerId)?.name ?? 'Customer details unavailable' : 'None')}</td><td>{currentLocationLabel(record as TrailerListItem)}</td><td>{(record as Trailer).locationState}</td><td>{(record as Trailer).loadState}</td><td>{(record as TrailerListItem).couplingState === 'COUPLED' ? 'Coupled' : 'Uncoupled'}</td><td>{(record as Trailer).serviceabilityState}</td><td>{(record as Trailer).lastSeenAt ?? 'Not provided'}</td><td>{(record as TrailerListItem).currentDriverName ?? 'Not coupled'}</td><td>{(record as TrailerListItem).lastDriverName ?? 'Not recorded'}</td></>}
           </tr>)}
         </DataTable>}
   </>
@@ -64,7 +67,7 @@ export function MasterDetail({ kind }: { kind: Exclude<ResourceKind, 'locations'
     {kind === 'customers' && <CustomerAssociations customerId={id} />}
     {kind === 'sites' && <SiteLocations site={record as Site} />}
     {kind === 'drivers' && <DriverAccount driver={record as Driver} reload={reload} />}
-    {kind === 'trailers' && <TrailerDetails trailer={record as Trailer} customers={customers.data?.items ?? []} />}
+    {kind === 'trailers' && <TrailerDetails trailer={record as TrailerDetail} />}
   </>
 }
 function CustomerAssociations({ customerId }: { customerId: string }) {
@@ -116,19 +119,14 @@ function DriverAccount({ driver, reload }: { driver: Driver; reload: () => Promi
     {confirm && <ConfirmDialog title="Unlink Driver account?" confirmLabel="Unlink" busy={unlink.isPending} onCancel={() => setConfirm(false)} onConfirm={() => unlink.mutate()}><p>The User, membership and roles will be kept.</p></ConfirmDialog>}
   </section>
 }
-function TrailerDetails({ trailer, customers }: { trailer: Trailer; customers: import('./contracts').Customer[] }) {
-  const driver = useTenantQuery<Driver>(`/drivers/${trailer.lastDriverId}`, Boolean(trailer.lastDriverId))
+function TrailerDetails({ trailer }: { trailer: TrailerDetail }) {
+  const { tenantId } = useAdminTenant()
   return <>
-    <section><h2>Current designated Customer</h2><p>{trailer.designatedCustomerId ? customers.find(c => c.id === trailer.designatedCustomerId)?.name ?? 'Customer' : 'None'}</p>
+    <section><h2>Current designated Customer</h2><p>{trailer.designatedCustomer?.name ?? 'None'}</p>
       <button type="button" disabled aria-describedby="designation-unavailable">Change designated Customer</button>
-      <p id="designation-unavailable">Designation changes require the audited reassignment workflow, which is not available yet.</p>
+      <p id="designation-unavailable">Audited designation changes are supported by the backend. This view is read-only; metadata editing does not change designation.</p>
     </section>
-    <section><h2>Current state</h2><DetailList items={[
-      ['Location', trailer.locationState], ['Current location', trailer.currentLocationId ? 'Recorded location (details unavailable)' : 'Not recorded'],
-      ['Last known location', trailer.lastKnownLocationId ? 'Recorded location (details unavailable)' : 'Not recorded'],
-      ['Last seen', trailer.lastSeenAt], ['Last Driver', driver.data?.name ?? (trailer.lastDriverId ? 'Not available' : 'Not recorded')],
-      ['Load', trailer.loadState], ['Serviceability', trailer.serviceabilityState], ['Usage purpose', trailer.usagePurpose],
-    ]} /></section><QrManagement trailerId={trailer.id} />
+    <TrailerReadView trailer={trailer} tenantId={tenantId} namespace="tenant" /><QrManagement trailerId={trailer.id} />
   </>
 }
 export function SettingsPage() {

@@ -4,7 +4,7 @@ import type { Customer, Items, Site, Location } from './contracts'
 import { useTenantQuery } from './hooks'
 import { operationalNumber } from './resources'
 
-const empty = { operationalNumber: '', designatedCustomerId: '', locationState: '', currentLocationId: '', loadState: '', serviceabilityState: '', active: '' }
+const empty = { operationalNumber: '', designatedCustomerId: '', locationState: '', currentLocationId: '', loadState: '', serviceabilityState: '', active: '', coupled: '' }
 export function TrailerFilters({ customers, onApply }: { customers: Customer[]; onApply(query: string): void }) {
   const [values, setValues] = useState(empty)
   const [site, setSite] = useState('')
@@ -36,6 +36,7 @@ export function TrailerFilters({ customers, onApply }: { customers: Customer[]; 
     {select('loadState', 'Load state', choices(['EMPTY', 'LOADED', 'UNKNOWN']))}
     {select('serviceabilityState', 'Serviceability', choices(['IN_SERVICE', 'OUT_OF_SERVICE']))}
     {select('active', 'Active filter', [{ value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive' }])}
+    {select('coupled', 'Coupling filter', [{ value: 'true', label: 'Coupled' }, { value: 'false', label: 'Uncoupled' }])}
     <div className="actions"><button>Apply filters</button>
       <button type="button" onClick={() => { const next = { ...values, serviceabilityState: 'OUT_OF_SERVICE' }; setValues(next); apply(next) }}>Out of Service</button>
       <button type="button" onClick={() => { const next = { ...values, locationState: 'LOCATION_UNKNOWN' }; setValues(next); apply(next) }}>Location Unknown</button>

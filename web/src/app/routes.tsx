@@ -31,6 +31,9 @@ export const appRoutes: RouteObject[] = [
       { path: 'operations', Component: TransportOperationsArea, children: [
         { index: true, lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).Dashboard }) },
         { path: 'orders', lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).OrdersQueue }) },
+        { path: 'orders/:orderId', lazy: async () => ({ Component: (await import('../areas/transport-operations/TrailerPages')).OperationalOrderDetail }) },
+        { path: 'trailers', lazy: async () => ({ Component: (await import('../areas/transport-operations/TrailerPages')).TrailerSearchPage }) },
+        { path: 'trailers/:trailerId', lazy: async () => ({ Component: (await import('../areas/transport-operations/TrailerPages')).OperationalTrailerDetail }) },
         { path: 'trips', lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).TripsList }) },
         { path: 'trips/new', lazy: async () => ({ Component: (await import('../areas/transport-operations/PlanTrip')).PlanTrip }) },
         { path: 'trips/:tripId', lazy: async () => ({ Component: (await import('../areas/transport-operations/TripDetailPage')).TripDetailPage }) },

@@ -226,3 +226,14 @@ Driver scan execution exists. Expected Trailer never claims physical coupling/cu
 location. There are no status editors, fake records, execution bypass buttons, maps,
 GPS, Alerts, POD, Hook/Drop, mobile flows, Customer Portal or generic Audit. See
 [the exact API/UI boundary](../docs/api/orders-dispatch.md#issue-37-implementation-boundary).
+
+## Trailer reads (#41)
+
+Operations now includes exact Trailer search, rich read-only detail and movement
+timeline under /operations/trailers, plus supporting read-only Order detail.
+Admin reuses the same Trailer detail/timeline components. Search preserves user
+input; backend amendment-I normalization is the authority. Enriched API display
+labels avoid Driver/Location/Tractor requests per result row. Current versus
+last-known Location and physical versus planned Trailer/load are explicit.
+Timeline uses Tenant/trailer query keys and Load more, retaining loaded rows on
+page failure. No new mutation forms, Customer Portal or evidence integration.
