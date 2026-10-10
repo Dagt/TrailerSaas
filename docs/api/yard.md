@@ -75,7 +75,7 @@ Request:
 ```json
 {
   "expectedVersion": 12,
-  "observedLocationId": "uuid",
+  "newLocationId": "uuid",
   "reason": "Trailer physically found at Dock 17"
 }
 ```
@@ -279,3 +279,15 @@ The correction is explicit and auditable.
 Starting a new Yard Check while offline is allowed only if the server-generated expected snapshot was already obtained and a valid Check ID exists.
 
 The mobile app must not invent expected inventory from stale cached Trailer lists.
+
+## Issue #40 implementation boundary
+
+The generic Trailer location-corrections and load-state-changes backend commands
+are implemented, using the #39 transactional engine. Correction accepts only
+newLocationId (not observedLocationId); it represents a confirmed physical
+observation. Both require reason/expectedVersion, fresh capabilities, server
+actor/time and durable history. No generic physical-state PATCH or offline replay
+wrapper is added here. Mark unknown preserves the last physical observation.
+
+Yard Move remains #48; discrepancy UI/OOS evidence remains #49; Yard Check and
+its scoped reconciliation remain #50/#51. No Yard UI or Documents is implemented.
