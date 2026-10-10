@@ -610,6 +610,49 @@ void main() {
     expect(fixture.requests.where((r) => r.method == 'POST'), isEmpty);
     expect(find.byType(TextField), findsNothing);
   });
+  testWidgets('active cancellation cannot complete ordinary Stop service', (
+    tester,
+  ) async {
+    final fixture = MobileFixture(cacheFactory: WidgetCache.new);
+    await fixture.session.start();
+    fixture.session.snapshot!.membership.capabilities.addAll({
+      'TRIP_EXECUTE_ASSIGNED',
+      'DEPARTURE_CONFIRM',
+      'ARRIVAL_CONFIRM',
+      'TRAILER_HOOK',
+      'TRAILER_DROP',
+    });
+    fixture.handler = (r) async => fixture.response(
+      detail(status: 'CANCELLING', stopStatus: 'IN_SERVICE', type: 'DROP_HOOK'),
+    );
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(fixture.close);
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RoadTripScreen(
+          session: fixture.session,
+          cached: fixture.session.snapshot!.trips.first,
+          journal: MemoryJournal(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Trip · CANCELLING'), findsOneWidget);
+    for (final label in [
+      'Complete non-delivery Stop',
+      'Depart to next Stop',
+      'Start service',
+      'Confirm manual arrival',
+      'Confirm first departure',
+      'Scan Trailer and confirm Hook',
+      'Confirm Drop of coupled Trailer',
+    ]) {
+      expect(find.text(label), findsNothing);
+    }
+    expect(fixture.requests.where((r) => r.method == 'POST'), isEmpty);
+  });
   testWidgets(
     'QR identifies the physical Trailer before explicit Hook payload',
     (tester) async {

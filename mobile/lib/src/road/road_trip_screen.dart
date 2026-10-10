@@ -99,7 +99,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
       {
         'trailerId': resolved['trailerId'],
         'tractorId': trip['currentTractorId'],
-        'driverId': owner.driver!.id,
+        'driverId': widget.session.snapshot!.driver!.id,
         'expectedTrailerVersion': resolved['version'],
       },
     );
@@ -304,6 +304,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
                 child: const Text('Start service'),
               ),
             if (execute &&
+                trip['status'] == 'AT_STOP' &&
                 active?['status'] == 'IN_SERVICE' &&
                 active?['stopType'] == 'DROP_HOOK') ...[
               const Text(
@@ -321,6 +322,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
                 'Delivery completion requires finalized POD. Evidence integration is not available yet.',
               ),
             if (execute &&
+                trip['status'] == 'AT_STOP' &&
                 active?['status'] == 'IN_SERVICE' &&
                 active?['stopType'] != 'DELIVERY')
               FilledButton(
