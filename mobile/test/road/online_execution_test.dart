@@ -703,8 +703,9 @@ void main() {
       fixture.handler = (request) async {
         if (request.url.path.contains('trailer-qr')) {
           final afterDrop = posts.isNotEmpty;
-          if (!afterDrop)
+          if (!afterDrop) {
             return http.Response('{"code":"RESOURCE_NOT_FOUND"}', 404);
+          }
           return http.Response(
             jsonEncode({
               'trailerId': afterDrop ? 'replacement' : 'original',
