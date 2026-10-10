@@ -559,6 +559,29 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
 
   @Test
   void queryPlansHaveIndexBackedLookupPathsWithoutExactCostAssertions() throws Exception {
+    // Empty relations can legitimately tie with unrelated indexes plus a sort.
+    // Exercise the ordered access paths on representative history and current data.
+    f.db.execute(
+        "insert into trailer_movement_events(id,tenant_id,trailer_id,event_type,actor_type,"
+            + "source_type,actor_user_id,occurred_at,recorded_at) select gen_random_uuid(),?,?,"
+            + "'ARRIVED','HUMAN_USER','USER_ACTION',?,?::timestamptz+g*interval '1 second',"
+            + "?::timestamptz+g*interval '1 second' from generate_series(1,1000) g",
+        tenant,
+        trailer,
+        user,
+        Timestamp.from(TIME),
+        Timestamp.from(TIME));
+    for (int i = 0; i < 40; i++) coupling(driver, tractor, TIME.plusSeconds(i * 2L), true, null);
+    coupling(driver, tractor, TIME.plusSeconds(100), false, null);
+    f.db.execute(
+        "insert into load_manifests(id,tenant_id,trailer_id,status,created_at,updated_at)"
+            + " select gen_random_uuid(),?,?,'OPEN',now(),now()+g*interval '1 second'"
+            + " from generate_series(1,100) g",
+        tenant,
+        trailer);
+    for (String table :
+        List.of("trailers", "trailer_couplings", "trailer_movement_events", "load_manifests"))
+      f.db.execute("analyze " + table);
     try (var c = runtime.getConnection();
         var s = c.createStatement()) {
       c.setAutoCommit(false);
