@@ -1989,8 +1989,9 @@ paths:
       x-implementation-status: implemented-issue-52
       description: >-
         Fresh DOCUMENT_VIEW_ALL or DOCUMENT_VIEW_CUSTOMER_SCOPED plus linked-resource scope;
-        Driver own assigned work uses TRIP_VIEW_ASSIGNED. Uploaders may inspect their own upload
-        with current POD_UPLOAD and active Driver identity, which does not confer download access.
+        Driver own assigned work uses TRIP_VIEW_ASSIGNED. Uploaders may inspect only their own
+        genuinely unlinked upload with current POD_UPLOAD and active Driver identity; this does
+        not confer download access. Linked documents always require current resource authority.
         Customer-scoped readers must see every Customer served by every linked Stop.
         Missing, foreign or invisible documents return safe 404. No object keys or uploader UUIDs.
       responses:
@@ -2015,6 +2016,7 @@ paths:
       x-implementation-status: implemented-issue-52
       description: >-
         Requires uploader identity, fresh POD_UPLOAD and active own Driver, including on replay.
+        Existing links must remain fully authorized before returning finalized metadata or ledger replay.
         Copies the temporary object to a new private publication key, verifies actual bytes,
         size, content type and SHA-256, and atomically commits UPLOADED and the existing ledger
         result. A reusable old PUT cannot modify published bytes. Missing object gives

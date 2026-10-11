@@ -130,3 +130,38 @@ candidate objects require future prefix enumeration with reference revalidation.
 OQ-057 still blocks destructive retention. A published object is not proof of a
 valid POD, inspection, image format or virus-free file. No delivery_evidence,
 physical state changes or evidence UI are introduced.
+
+## PR #99 linked-uploader authorization correction
+
+The review identified a flaw in metadata management: the empty result of
+`visibleLinks` also represents unauthorized links, not only an unlinked upload.
+The original uploader could therefore retain metadata access after Trip
+unassignment. A real HTTP/PostgreSQL 18 regression reproduced the incorrect 200
+before the fix.
+
+`metadata` now loads the actual links once in its existing consistent read
+transaction. Only an actually unlinked document permits uploader management,
+with the same fresh upload capability and active Driver checks. Every linked
+resource must remain authorized; one visible Stop never grants partial access.
+Tenant-wide read authority and additive Customer/Driver grants are preserved.
+
+The related review found that completion replay also returns metadata. It now
+checks every existing link before calling the unchanged operation ledger, so
+historical uploader identity or a saved key cannot bypass revoked assignment.
+Reinstating assignment allows the same key to replay the original result without
+another copy, publication, timestamp or ledger change. No new locks or reverse
+Trip/Driver lock acquisition are introduced.
+
+The five-endpoint review confirms: initialization requires current upload
+authority; completion additionally checks ownership and existing resource access;
+linking requires the current assigned Driver for the target; metadata management
+is limited to truly unlinked uploads; download always requires full current
+linked-resource access. Read capabilities never grant upload/link permission.
+
+Nine new PostgreSQL/HTTP cases cover pending/uploaded unlinked management,
+unassignment and restored access, reassignment and completion replay, multiple
+Stops with partial loss of authority, membership suspension/disablement, role
+revocation and inactive Driver. Existing mixed-Customer, cross-Tenant, all-five
+endpoint revocation and storage/idempotency/concurrency suites remain intact.
+404 assertions exclude foreign references, private keys and signed URLs. V19,
+R2 publication/SHA-256, the ledger, capability mappings and public DTOs are unchanged.

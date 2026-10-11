@@ -51,6 +51,10 @@ class DocumentService {
     var row=repository.find(tenant,document,true);
     if(!actor.userId().equals(row.uploader())) throw DocumentFailure.missing();
     if(row.status()!=Status.PENDING && row.status()!=Status.UPLOADED) throw DocumentFailure.conflict("RESOURCE_CONFLICT");
+    var linked=repository.links(tenant,document);
+    // A saved completion result contains metadata too: authorize linked resources before ledger replay.
+    if(!linked.isEmpty() && visibleLinks(actor,tenant,linked,access.readScope(actor,tenant)).isEmpty())
+      throw DocumentFailure.missing();
     String hash=HexFormat.of().formatHex(R2ObjectStorage.sha256().digest((document+"|"+Objects.toString(supplied,"null")).getBytes(StandardCharsets.UTF_8)));
     return ledger.execute(tenant,actor.userId(),operation,"DOCUMENT_UPLOAD_COMPLETION",hash,"DOCUMENT",Metadata::id,Metadata.class,()-> {
       if(row.status()==Status.UPLOADED) {
@@ -92,8 +96,10 @@ class DocumentService {
   Metadata metadata(AuthenticatedUserPrincipal actor,UUID tenant,UUID document) {
     var scope=access.readScope(actor,tenant);
     var row=repository.find(tenant,document,false);
-    var visible=visibleLinks(actor,tenant,document,scope);
-    boolean managing=!scope.tenantWide() && visible.isEmpty() && scope.assignedWork() && actor.userId().equals(row.uploader());
+    var linked=repository.links(tenant,document);
+    var visible=visibleLinks(actor,tenant,linked,scope);
+    // Authorship allows managing an unlinked upload, never bypassing authorization of existing links.
+    boolean managing=!scope.tenantWide() && linked.isEmpty() && scope.assignedWork() && actor.userId().equals(row.uploader());
     if(managing) uploadAuthority(actor,tenant,false);
     if(!scope.tenantWide() && visible.isEmpty() && !managing) throw DocumentFailure.missing();
     return DocumentRepository.metadata(row,visible);
@@ -103,15 +109,14 @@ class DocumentService {
   Download download(AuthenticatedUserPrincipal actor,UUID tenant,UUID document) {
     var scope=access.readScope(actor,tenant);
     var row=repository.find(tenant,document,false);
-    if(visibleLinks(actor,tenant,document,scope).isEmpty()) throw DocumentFailure.missing();
+    if(visibleLinks(actor,tenant,repository.links(tenant,document),scope).isEmpty()) throw DocumentFailure.missing();
     if(row.status()!=Status.UPLOADED) throw DocumentFailure.conflict("UPLOAD_NOT_COMPLETE");
     if(!storage.exists(row.key())) throw DocumentFailure.storage();
     var signed=storage.get(row.key(),settings.downloadTtl());return new Download(signed.url(),signed.expiresAt());
   }
 
-  private List<Link> visibleLinks(AuthenticatedUserPrincipal actor,UUID tenant,UUID document,DocumentAccessPolicy.ReadScope scope) {
+  private List<Link> visibleLinks(AuthenticatedUserPrincipal actor,UUID tenant,List<Link> linked,DocumentAccessPolicy.ReadScope scope) {
     UUID driver=scope.assignedWork()?drivers.activeForUser(tenant,actor.userId()).orElse(null):null;
-    var linked=repository.links(tenant,document);
     var visible=linked.stream().filter(link-> {
       var stop=stops.find(tenant,link.entityId(),false);
       if(stop.isEmpty()) return false;

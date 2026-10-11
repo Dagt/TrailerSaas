@@ -181,7 +181,7 @@ client provenance are rejected. Binary PUT/GET goes directly to private R2.
 | Link | Same upload authority plus `TRIP_VIEW_ASSIGNED` | UPLOADED, own document, current Driver assignment to same-Tenant TRIP_STOP; maximum 50 links |
 | Tenant read | `DOCUMENT_VIEW_ALL` | Existing same-Tenant linked Stops; metadata can inspect unlinked documents |
 | Customer read | `DOCUMENT_VIEW_CUSTOMER_SCOPED` | Every linked Stop and all its mapped Customers must be within fresh scope; empty/ambiguous context denied |
-| Driver read | `TRIP_VIEW_ASSIGNED`, active own Driver | Every linked Trip currently assigned; own upload metadata may also be inspected with current `POD_UPLOAD` |
+| Driver read | `TRIP_VIEW_ASSIGNED`, active own Driver | Every linked Trip currently assigned; only a document with no actual links permits uploader metadata management with current `POD_UPLOAD` |
 | Download | Read authority above | UPLOADED and valid authorized links mandatory; uploader alone is insufficient |
 
 Read permissions never authorize uploading/linking. No roles, capabilities or
@@ -221,6 +221,14 @@ Temporary objects and unpublished candidates are not deleted by #52.
 ### Downloads and cleanup
 
 Metadata excludes object keys, Tenant/uploader identities and storage credentials.
+Uploader metadata management applies only when the document has no actual links,
+whether PENDING or UPLOADED. An empty authorized-link result is not proof that a
+document is unlinked. Once linked, every resource must remain authorized; removing
+or changing a Driver assignment denies metadata and download with safe 404.
+Restoring assignment re-evaluates current permissions on the next request.
+Completion also revalidates all existing links before returning an already
+finalized result or replaying its ledger response; historical authorship and a
+saved Idempotency-Key do not bypass current linked-resource authority.
 `download-url` returns `{downloadUrl, expiresAt}` for an authorized published object.
 URLs are temporary bearer grants: default download TTL 60 seconds (maximum 300),
 upload TTL 300 (maximum 900). Already-issued URLs remain usable until expiry even

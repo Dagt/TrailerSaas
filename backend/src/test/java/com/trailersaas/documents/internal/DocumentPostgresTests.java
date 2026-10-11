@@ -180,6 +180,87 @@ class DocumentPostgresTests extends PostgresIntegrationTest {
   @Test void unlinkedDocumentCannotBeDownloadedEvenByUploaderOrAdmin() throws Exception {
     var id=uploaded();for(String token:List.of("driver","admin")) assertProblem(http(token,"POST",base()+"/"+id+"/download-url","{}",null),404,"RESOURCE_NOT_FOUND");
   }
+  @Test void linkedUploaderCannotReadAfterUnassignmentAndCanReadAfterRestoration() throws Exception {
+    var id=uploaded();assertThat(link(id,stop).statusCode()).isEqualTo(200);
+    assertThat(http("driver","GET",base()+"/"+id,null,null).statusCode()).isEqualTo(200);
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);
+    var hidden=http("driver","GET",base()+"/"+id,null,null);
+    assertProblem(hidden,404,"RESOURCE_NOT_FOUND");
+    String key=(String)db.value("SELECT object_key FROM documents WHERE id=?",id);
+    assertThat(hidden.body()).doesNotContain(key,trip.toString(),stop.toString(),driver.toString(),customerA.toString(),"tenant/","uploadUrl","downloadUrl");
+    assertProblem(http("driver","POST",base()+"/"+id+"/download-url","{}",null),404,"RESOURCE_NOT_FOUND");
+    assertProblem(link(id,stop),404,"RESOURCE_NOT_FOUND");
+    assertThat(db.value("SELECT count(*) FROM document_links WHERE document_id=?",id)).isEqualTo(1L);
+    assertThat(http("admin","GET",base()+"/"+id,null,null).statusCode()).isEqualTo(200);
+    db.execute("UPDATE trips SET current_driver_id=? WHERE id=?",driver,trip);
+    assertThat(JsonPath.<List<?>>read(http("driver","GET",base()+"/"+id,null,null).body(),"$.links")).hasSize(1);
+    assertThat(http("driver","POST",base()+"/"+id+"/download-url","{}",null).statusCode()).isEqualTo(200);
+  }
+  @ParameterizedTest @ValueSource(strings={"PENDING","UPLOADED"})
+  void uploaderCanManageOnlyActuallyUnlinkedMetadata(String status) throws Exception {
+    var id=status.equals("PENDING")?pending():uploaded();
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);
+    var response=http("driver","GET",base()+"/"+id,null,null);
+    assertThat(response.statusCode()).withFailMessage(response.body()).isEqualTo(200);
+    assertThat(JsonPath.<String>read(response.body(),"$.uploadStatus")).isEqualTo(status);
+    assertThat(JsonPath.<List<?>>read(response.body(),"$.links")).isEmpty();
+    assertThat(response.body()).doesNotContain("tenantId","objectKey","uploadedByUserId","sourceType",peer.secret,peer.access);
+    assertProblem(http("driver","POST",base()+"/"+id+"/download-url","{}",null),404,"RESOURCE_NOT_FOUND");
+    assertProblem(link(id,stop),404,"RESOURCE_NOT_FOUND");
+    assertThat(db.value("SELECT count(*) FROM document_links WHERE document_id=?",id)).isEqualTo(0L);
+    var stranger=db.user();db.membership(tenant,stranger,"ACTIVE","DRIVER");db.driver(tenant,stranger);
+    when(verifier.verify("stranger-driver")).thenReturn(new VerifiedFirebaseIdentity("fixture-"+stranger,null,null));
+    assertProblem(http("stranger-driver","GET",base()+"/"+id,null,null),404,"RESOURCE_NOT_FOUND");
+  }
+  @Test void reassignedUploaderCannotReadOrReplayLinkedCompletionUntilAssignmentRestored() throws Exception {
+    var id=pending();var operation=UUID.randomUUID();var original=complete(id,operation,null);
+    assertThat(original.statusCode()).isEqualTo(200);assertThat(link(id,stop).statusCode()).isEqualTo(200);
+    int copies=peer.copies.get();String publication=(String)db.value("SELECT object_key FROM documents WHERE id=?",id);
+    var replacementUser=db.user();db.membership(tenant,replacementUser,"ACTIVE","DRIVER");var replacement=db.driver(tenant,replacementUser);
+    when(verifier.verify("replacement-driver")).thenReturn(new VerifiedFirebaseIdentity("fixture-"+replacementUser,null,null));
+    db.execute("UPDATE trips SET current_driver_id=? WHERE id=?",replacement,trip);
+    var hidden=http("driver","GET",base()+"/"+id,null,null);assertProblem(hidden,404,"RESOURCE_NOT_FOUND");
+    assertThat(hidden.body()).doesNotContain(replacementUser.toString(),replacement.toString(),trip.toString(),stop.toString(),publication,"tenant/","links");
+    assertProblem(http("driver","POST",base()+"/"+id+"/download-url","{}",null),404,"RESOURCE_NOT_FOUND");
+    assertProblem(link(id,stop),404,"RESOURCE_NOT_FOUND");
+    assertProblem(complete(id,operation,null),404,"RESOURCE_NOT_FOUND");
+    assertProblem(complete(id,UUID.randomUUID(),null),404,"RESOURCE_NOT_FOUND");
+    assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE tenant_id=? AND operation_type='DOCUMENT_UPLOAD_COMPLETION'",tenant)).isEqualTo(1L);
+    assertThat(http("replacement-driver","GET",base()+"/"+id,null,null).statusCode()).isEqualTo(200);
+    assertThat(http("replacement-driver","POST",base()+"/"+id+"/download-url","{}",null).statusCode()).isEqualTo(200);
+    assertThat(http("admin","GET",base()+"/"+id,null,null).statusCode()).isEqualTo(200);
+    db.execute("UPDATE trips SET current_driver_id=? WHERE id=?",driver,trip);
+    assertThat(http("driver","GET",base()+"/"+id,null,null).statusCode()).isEqualTo(200);
+    assertThat(complete(id,operation,null).body()).isEqualTo(original.body());
+    assertThat(peer.copies.get()).isEqualTo(copies);
+    assertThat(db.value("SELECT object_key FROM documents WHERE id=?",id)).isEqualTo(publication);
+  }
+  @Test void uploaderCannotUseOneAuthorizedStopToReadPartiallyUnauthorizedLinkedDocument() throws Exception {
+    var id=pending();var operation=UUID.randomUUID();assertThat(complete(id,operation,null).statusCode()).isEqualTo(200);
+    assertThat(link(id,stop).statusCode()).isEqualTo(200);
+    var secondTrip=UUID.randomUUID();var secondStop=UUID.randomUUID();
+    db.execute("INSERT INTO trips(id,tenant_id,status,current_driver_id,created_at,updated_at) VALUES(?,?,'ASSIGNED',?,now(),now())",secondTrip,tenant,driver);
+    db.execute("INSERT INTO trip_stops(id,tenant_id,trip_id,sequence_number,stop_type,status,site_snapshot,created_at,updated_at) VALUES(?,?,?,1,'DELIVERY','PENDING','{\"name\":\"Second Trip\"}',now(),now())",secondStop,tenant,secondTrip);
+    assertThat(link(id,secondStop).statusCode()).isEqualTo(200);
+    assertThat(JsonPath.<List<?>>read(http("driver","GET",base()+"/"+id,null,null).body(),"$.links")).hasSize(2);
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",secondTrip);
+    var hidden=http("driver","GET",base()+"/"+id,null,null);assertProblem(hidden,404,"RESOURCE_NOT_FOUND");
+    assertThat(hidden.body()).doesNotContain(secondTrip.toString(),secondStop.toString(),stop.toString(),"links","objectKey");
+    assertProblem(http("driver","POST",base()+"/"+id+"/download-url","{}",null),404,"RESOURCE_NOT_FOUND");
+    assertProblem(complete(id,operation,null),404,"RESOURCE_NOT_FOUND");
+    assertThat(JsonPath.<List<?>>read(http("admin","GET",base()+"/"+id,null,null).body(),"$.links")).hasSize(2);
+    assertThat(db.value("SELECT count(*) FROM document_links WHERE document_id=?",id)).isEqualTo(2L);
+  }
+  @ParameterizedTest @ValueSource(strings={"SUSPENDED","DISABLED","ROLE_REVOKED","DRIVER_INACTIVE"})
+  void unlinkedUploaderFallbackNeverBypassesRevokedAuthority(String revocation) throws Exception {
+    var pending=pending();var uploaded=uploaded();
+    if(revocation.equals("ROLE_REVOKED")) db.execute("DELETE FROM role_assignments WHERE membership_id=?",membership);
+    else if(revocation.equals("DRIVER_INACTIVE")) db.execute("UPDATE drivers SET active=false WHERE id=?",driver);
+    else db.execute("UPDATE tenant_memberships SET status=? WHERE id=?",revocation,membership);
+    String code=Set.of("SUSPENDED","DISABLED").contains(revocation)?"TENANT_ACCESS_DENIED":"CAPABILITY_DENIED";
+    for(var id:List.of(pending,uploaded)) assertProblem(http("driver","GET",base()+"/"+id,null,null),403,code);
+    assertThat(http("admin","GET",base()+"/"+uploaded,null,null).statusCode()).isEqualTo(200);
+  }
   @Test void targetAndDocumentAreTenantSafeAndLinkDuplicateIsStable() throws Exception {
     var id=uploaded();var first=link(id,stop);var second=link(id,stop);assertThat(first.statusCode()).isEqualTo(200);assertThat(second.body()).isEqualTo(first.body());
     assertThat(db.value("SELECT count(*) FROM document_links WHERE document_id=?",id)).isEqualTo(1L);
