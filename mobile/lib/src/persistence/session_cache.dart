@@ -5,10 +5,53 @@ import 'package:drift/drift.dart';
 import '../session/contracts.dart';
 import 'app_database.dart';
 
-/// Only read projections; command/media retention and replay remain #46/#54.
+/// Only read projections. Clearing session cache NEVER deletes pending commands.
 class SessionCache {
   SessionCache(this.db);
   final AppDatabase db;
+
+  Future<void> rememberIdentifiedTrailer(
+    SessionSnapshot owner,
+    String token,
+    Map<String, dynamic> identified,
+    bool Function() current,
+  ) => _serialize(() async {
+    if (!current()) return;
+    final id = identified['trailerId'] as String;
+    await db
+        .into(db.cachedTrailers)
+        .insertOnConflictUpdate(
+          CachedTrailersCompanion.insert(
+            userId: owner.userId,
+            tenantId: owner.membership.tenantId,
+            id: id,
+            serverVersion: identified['version'] as int,
+            projectionJson: jsonEncode({...identified, 'qrPublicToken': token}),
+            refreshedAt: DateTime.now().toUtc(),
+          ),
+        );
+  });
+
+  Future<Map<String, dynamic>?> identifiedTrailer(
+    SessionSnapshot owner,
+    String token,
+  ) async {
+    final rows =
+        await (db.select(db.cachedTrailers)..where(
+              (r) =>
+                  r.userId.equals(owner.userId) &
+                  r.tenantId.equals(owner.membership.tenantId),
+            ))
+            .get();
+    for (final row in rows) {
+      final projection = jsonDecode(row.projectionJson) as Map<String, dynamic>;
+      if (projection['qrPublicToken'] == token) {
+        return projection..remove('qrPublicToken');
+      }
+    }
+    return null;
+  }
+
   Future<void>? _writes;
   Future<void> _serialize(Future<void> Function() action) {
     final next = _writes == null ? action() : _writes!.then((_) => action());
@@ -32,6 +75,9 @@ class SessionCache {
       if (!stillCurrent()) return;
       final user = snapshot.userId;
       final tenant = snapshot.membership.tenantId;
+      final oldTrailers = await (db.select(
+        db.cachedTrailers,
+      )..where((r) => r.userId.equals(user) & r.tenantId.equals(tenant))).get();
       await (db.delete(
         db.cachedStops,
       )..where((r) => r.userId.equals(user) & r.tenantId.equals(tenant))).go();
@@ -73,6 +119,12 @@ class SessionCache {
         }
         final trailer = trip.plannedTrailer;
         if (trailer != null) {
+          final old = oldTrailers
+              .where((r) => r.id == trailer['id'])
+              .firstOrNull;
+          final token = old == null
+              ? null
+              : (jsonDecode(old.projectionJson) as Map)['qrPublicToken'];
           await db
               .into(db.cachedTrailers)
               .insertOnConflictUpdate(
@@ -81,7 +133,11 @@ class SessionCache {
                   tenantId: tenant,
                   id: trailer['id'] as String,
                   serverVersion: trailer['version'] as int,
-                  projectionJson: jsonEncode(trailer),
+                  projectionJson: jsonEncode({
+                    ...trailer,
+                    'qrPublicToken': ?token,
+                    'trailerId': trailer['id'],
+                  }),
                   refreshedAt: snapshot.refreshedAt,
                 ),
               );

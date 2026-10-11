@@ -4,11 +4,19 @@ import 'session_controller.dart';
 import '../road/road_trip_screen.dart';
 import '../road/command_recovery_panel.dart';
 import '../road/online_command_journal.dart';
+import '../sync/replay_worker.dart';
+import '../sync/sync_panel.dart';
 
 class SessionView extends StatefulWidget {
-  const SessionView({super.key, required this.session, this.journal});
+  const SessionView({
+    super.key,
+    required this.session,
+    this.journal,
+    this.worker,
+  });
   final OnlineCommandJournal? journal;
   final SessionController session;
+  final ReplayWorker? worker;
   @override
   State<SessionView> createState() => _SessionViewState();
 }
@@ -193,13 +201,20 @@ class _SessionViewState extends State<SessionView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Road Mode — ${snapshot.driver?.name ?? ''}'),
-                    if (road)
+                    if (road && widget.worker == null)
                       CommandRecoveryPanel(
                         key: ValueKey(
                           '${snapshot.firebaseUid}|${snapshot.userId}|${snapshot.membership.tenantId}|$_recoveryRevision',
                         ),
                         session: session,
                         journal: _journal,
+                      ),
+                    if (road && widget.worker != null)
+                      SyncPanel(
+                        key: ValueKey(
+                          '${snapshot.userId}|${snapshot.membership.tenantId}',
+                        ),
+                        worker: widget.worker!,
                       ),
                     if (snapshot.trips.isEmpty)
                       const Text('No assigned work downloaded.'),
@@ -220,6 +235,7 @@ class _SessionViewState extends State<SessionView> {
                                               session: session,
                                               cached: trip,
                                               journal: _journal,
+                                              worker: widget.worker,
                                             ),
                                           ),
                                         )

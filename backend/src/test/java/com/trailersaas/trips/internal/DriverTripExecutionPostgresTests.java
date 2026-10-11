@@ -229,6 +229,64 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
     assertThat(f.db.value("select count(*) from trip_stops where trip_id=?", trip)).isEqualTo(3L);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"OTHER", "BASE_RETURN"})
+  void delayedOfflineSequenceReplaysEveryOriginalKeyWithoutDuplicatePhysicalFacts(String finalType)
+      throws Exception {
+    var next = stop(7, finalType);
+    // First departure occurs online with the existing test-only prerequisite seam.
+    // Production still requires real #43 records; the offline sequence starts IN_TRANSIT.
+    depart();
+    var paths = List.of(
+        "/stops/" + stop + "/arrivals",
+        "/stops/" + stop + "/service-starts",
+        "/stops/" + stop + "/completions",
+        "/stops/" + stop + "/departures",
+        "/stops/" + next + "/arrivals",
+        "/stops/" + next + "/service-starts",
+        "/stops/" + next + "/completions");
+    var keys = new ArrayList<String>();
+    var bodies = new ArrayList<Map<String, Object>>();
+    var responses = new ArrayList<String>();
+    for (int i = 0; i < paths.size(); i++) {
+      var body = new LinkedHashMap<String, Object>();
+      body.put("occurredAt", at.plusSeconds(i).toString());
+      if (paths.get(i).endsWith("/arrivals")) body.put("source", "MANUAL");
+      if (paths.get(i).endsWith("/departures")) body.put("nextStopId", next.toString());
+      var key = UUID.randomUUID().toString();
+      keys.add(key);
+      bodies.add(body);
+      var first = post(paths.get(i), key, body);
+      ok(first);
+      responses.add(first.body());
+      // Simulate a lost committed response: retry exactly the durable offline intent.
+      var recovered = post(paths.get(i), key, body);
+      ok(recovered);
+      assertThat(json.readTree(recovered.body())).isEqualTo(json.readTree(first.body()));
+    }
+    assertThat(value("trips", "status", trip)).isEqualTo("COMPLETED");
+    assertThat(value("trip_stops", "status", stop)).isEqualTo("COMPLETED");
+    assertThat(value("trip_stops", "status", next)).isEqualTo("COMPLETED");
+    assertThat(f.db.value("select count(*) from trip_stop_events where trip_id=?", trip))
+        .isEqualTo(9L);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trip_id=?", trip))
+        .isEqualTo(5L);
+    assertThat(f.db.value("select count(*) from trailer_couplings where trip_id=?", trip))
+        .isEqualTo(1L);
+    assertThat(f.db.value(
+            "select count(*) from trip_stop_events where trip_id=? and occurred_at < recorded_at",
+            trip)).isEqualTo(9L);
+    // Earlier saved projections are logical acknowledgments, not current work.
+    for (int i = 0; i < paths.size(); i++) {
+      var late = post(paths.get(i), keys.get(i), bodies.get(i));
+      ok(late);
+      assertThat(json.readTree(late.body())).isEqualTo(json.readTree(responses.get(i)));
+    }
+    assertThat(value("trips", "status", trip)).isEqualTo("COMPLETED");
+    assertThat(f.db.value("select count(*) from trip_stop_events where trip_id=?", trip))
+        .isEqualTo(9L);
+  }
+
   @Test
   void missingDutyOrPreTripEvidenceBlocksFirstDepartureWithoutWrites() throws Exception {
     hook();

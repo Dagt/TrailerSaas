@@ -6,6 +6,9 @@ import '../platform/qr_scanner.dart';
 import '../platform/native_qr_scanner.dart';
 import 'online_command_journal.dart';
 import 'road_trip_controller.dart';
+import '../sync/replay_worker.dart';
+import '../sync/offline_actions.dart';
+import '../sync/sync_panel.dart';
 
 class RoadTripScreen extends StatefulWidget {
   const RoadTripScreen({
@@ -14,11 +17,13 @@ class RoadTripScreen extends StatefulWidget {
     required this.cached,
     this.journal,
     this.scanner,
+    this.worker,
   });
   final SessionController session;
   final WorkTrip cached;
   final OnlineCommandJournal? journal;
   final QrScanner? scanner;
+  final ReplayWorker? worker;
   @override
   State<RoadTripScreen> createState() => _RoadTripScreenState();
 }
@@ -34,6 +39,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
       widget.session,
       widget.cached.id,
       widget.journal ?? FileOnlineCommandJournal(),
+      worker: widget.worker,
     );
     controller.load();
   }
@@ -70,7 +76,9 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
   ) async {
     if (await confirm(
       title,
-      'Record this action only after it physically happened. Wait for server confirmation.',
+      widget.worker == null
+          ? 'Record this action only after it physically happened. Wait for server confirmation.'
+          : 'Record only an action that physically happened. It is saved on this device, pending server confirmation.',
     )) {
       await controller.submit(path, {
         'occurredAt': DateTime.now().toUtc().toIso8601String(),
@@ -105,15 +113,17 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
     );
   }
 
-  Future<void> dropCoupled() async {
+  Future<void> dropCoupled([Map<String, dynamic>? recordedStop]) async {
     final trip = controller.trip;
     final coupling =
         controller.detail?['currentCoupling'] as Map<String, dynamic>?;
     if (trip == null || coupling == null) return;
-    final stop = (trip['stops'] as List)
-        .cast<Map<String, dynamic>>()
-        .where((s) => s['status'] == 'IN_SERVICE')
-        .firstOrNull;
+    final stop =
+        recordedStop ??
+        (trip['stops'] as List)
+            .cast<Map<String, dynamic>>()
+            .where((s) => s['status'] == 'IN_SERVICE')
+            .firstOrNull;
     if (stop == null || stop['locationId'] == null) {
       await confirm(
         'Location required',
@@ -187,8 +197,9 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
           )
           .lastOrNull;
       final enabled =
-          controller.online &&
+          (widget.worker == null ? controller.online : controller.canRecord) &&
           controller.detail != null &&
+          !controller.hasQueued &&
           !controller.sending &&
           controller.pending == null;
       final capabilities = s.membership.capabilities;
@@ -216,8 +227,10 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             if (session.state == SessionState.offline)
-              const Text(
-                'Offline — downloaded work only. Execution requires connectivity; no command is queued.',
+              Text(
+                widget.worker == null
+                    ? 'Offline — downloaded work only. Execution requires connectivity; no command is queued.'
+                    : 'Offline — downloaded server state. Recorded actions remain pending until synchronized.',
               ),
             if (session.state == SessionState.loading)
               const Text(
@@ -237,6 +250,17 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
               Semantics(liveRegion: true, child: Text(controller.message!)),
             if (controller.traceId != null)
               Text('Support reference: ${controller.traceId}'),
+            if (widget.worker != null) ...[
+              SyncPanel(worker: widget.worker!),
+              OfflineActions(
+                key: ObjectKey(session.snapshot),
+                worker: widget.worker!,
+                trip: downloaded ?? widget.cached,
+                coupling: coupled,
+                onDrop: dropCoupled,
+                onHook: scan,
+              ),
+            ],
             if (controller.pending != null)
               FilledButton(
                 onPressed: !controller.canRecover

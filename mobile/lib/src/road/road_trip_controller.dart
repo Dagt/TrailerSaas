@@ -6,6 +6,10 @@ import '../session/session_controller.dart';
 import '../session/contracts.dart';
 import '../session/api_client.dart';
 import 'online_command_journal.dart';
+import '../sync/replay_worker.dart';
+import '../sync/road_command_capture.dart';
+import '../persistence/app_database.dart';
+import '../sync/command_store.dart';
 
 class RoadTripController extends ChangeNotifier {
   RoadTripController(
@@ -13,14 +17,51 @@ class RoadTripController extends ChangeNotifier {
     this.tripId,
     this.journal, {
     this.recoveryOnly = false,
+    this.worker,
   }) {
     _snapshot = session.snapshot;
     _owner = session.snapshot;
     session.addListener(_sessionChanged);
+    hasQueued =
+        worker !=
+        null; // Fail closed until the initial persisted queue read completes.
+    if (worker != null && _owner != null) {
+      _queueSubscription = worker!.store
+          .watch(_owner.userId, _owner.membership.tenantId)
+          .listen(
+            (rows) {
+              if (_disposed ||
+                  session.auth.uid != _owner.firebaseUid ||
+                  session.snapshot?.userId != _owner.userId ||
+                  session.snapshot?.membership.tenantId !=
+                      _owner.membership.tenantId) {
+                return;
+              }
+              hasQueued = rows.any(
+                (c) =>
+                    c.tripId == tripId &&
+                    c.state != CommandState.acknowledged.value,
+              );
+              _notify();
+            },
+            onError: (Object _) {
+              hasQueued =
+                  true; // Storage uncertainty must not open duplicate controls.
+              message = 'Saved operations could not be read. Retry sync before acting.';
+              _notify();
+            },
+          );
+    }
   }
   final SessionController session;
   final String tripId;
   final bool recoveryOnly;
+  final ReplayWorker? worker;
+  StreamSubscription<List<LocalCommand>>? _queueSubscription;
+  bool hasQueued = false;
+  bool get canRecord =>
+      session.snapshot?.driver != null &&
+      {SessionState.ready, SessionState.offline}.contains(session.state);
   DateTime? retryNotBefore;
   Timer? _retryTimer;
   bool get canRecover =>
@@ -67,7 +108,7 @@ class RoadTripController extends ChangeNotifier {
     traceId = null;
     _retryTimer?.cancel();
     _notify();
-    if (online &&
+    if ((online || (worker != null && canRecord)) &&
         _snapshot?.userId == _owner?.userId &&
         _snapshot?.firebaseUid == _owner?.firebaseUid &&
         _snapshot?.membership.tenantId == _owner?.membership.tenantId) {
@@ -77,13 +118,26 @@ class RoadTripController extends ChangeNotifier {
 
   Future<void> load() async {
     final s = session.snapshot;
+    if (worker != null && s != null && !online && canRecord) {
+      final cached = s.trips.where((t) => t.id == tripId).firstOrNull;
+      if (cached != null) {
+        detail = {
+          'trip': cached.data,
+          ...(cached.data['executionContext'] as Map<String, dynamic>? ?? {}),
+        };
+        _notify();
+      }
+      return;
+    }
     if (s == null || (!online && !recoveryOnly)) return;
     final generation = ++_generation;
     sending = true;
     message = null;
     _notify();
     try {
-      final saved = await journal.read(s.userId, s.membership.tenantId);
+      final saved = worker == null
+          ? await journal.read(s.userId, s.membership.tenantId)
+          : null;
       if (saved != null && !saved.belongsTo(s.membership.tenantId)) {
         throw const FormatException();
       }
@@ -95,6 +149,17 @@ class RoadTripController extends ChangeNotifier {
         );
         if (!_readCurrent(generation, s)) return;
         detail = data;
+        if (worker != null) {
+          await session.cacheConfirmedTrip(s, {
+            ...data['trip'] as Map<String, dynamic>,
+            'executionContext': {
+              'currentCoupling': data['currentCoupling'],
+              'tractorOperationalNumber': data['tractorOperationalNumber'],
+              'departurePrerequisitesSatisfied':
+                  data['departurePrerequisitesSatisfied'],
+            },
+          });
+        }
       }
       if (saved != null) {
         message = saved.tripId == tripId
@@ -124,11 +189,28 @@ class RoadTripController extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> identify(String token) async {
     final s = session.snapshot;
+    if (worker != null && s != null && canRecord && !online) {
+      final identified = await session.cache.identifiedTrailer(s, token);
+      if (!_readCurrent(_generation, s)) return null;
+      if (identified == null) {
+        message = 'This QR identity was not downloaded. Connect to identify and authorize the Trailer.';
+        _notify();
+      }
+      return identified;
+    }
     if (s == null || !online || sending) return null;
     final generation = _generation;
     try {
       final resolved = await session.api.get('trailer-qr/$token');
       if (!_current(generation, s)) return null;
+      if (worker != null) {
+        await session.cache.rememberIdentifiedTrailer(
+          s,
+          token,
+          resolved,
+          () => _current(generation, s),
+        );
+      }
       return resolved;
     } on ApiProblem catch (e) {
       if (_current(generation, s)) {
@@ -147,6 +229,23 @@ class RoadTripController extends ChangeNotifier {
 
   Future<void> submit(String path, Map<String, dynamic> body) async {
     final s = session.snapshot;
+    if (worker != null && s != null && canRecord && !sending) {
+      sending = true;
+      _notify();
+      try {
+        await RoadCommandCapture(
+          session,
+          worker!,
+        ).record(s, tripId, path, body);
+        if (_readCurrent(_generation, s)) message = 'Saved on this device — pending synchronization. Server state is unchanged until confirmed.';
+      } catch (_) {
+        if (_readCurrent(_generation, s)) message = 'The action could not be safely recorded. Refresh work or review pending operations.';
+      } finally {
+        sending = false;
+        _notify();
+      }
+      return;
+    }
     if (s == null || !online || sending || pending != null || detail == null) {
       return;
     }
@@ -335,6 +434,7 @@ class RoadTripController extends ChangeNotifier {
 
   @override
   void dispose() {
+    unawaited(_queueSubscription?.cancel());
     _retryTimer?.cancel();
     _disposed = true;
     ++_generation;

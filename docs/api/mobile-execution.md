@@ -612,3 +612,13 @@ is delivered by #39.
 ## Issue #44 implementation boundary
 
 See [Driver execution implementation](../mobile/issue-44-road-execution.md) for the five strict execution commands, own assigned detail, V18 Stop facts, physical projection and foreground idempotent recovery. First departure fails closed pending real #43 duty/Pre-Trip validation; no fabricated prerequisites. Ordinary Delivery completion remains EVIDENCE_REQUIRED until #45/#53 finalized POD. Manual arrival only; geofence assistance remains #47. QR identification adds version for the existing Hook contract. #46 follows #44 for the offline replay worker. All capabilities and #38 physical contracts remain unchanged.
+
+## Issue #46 client replay boundary
+
+Flutter persists immutable command intents in Drift and replays the implemented
+#38/#44 endpoints with the SAME Idempotency-Key and original occurrence/payload.
+No public API, capability or domain state machine changes. A ledger replay response
+is an acknowledgment; current own-Driver/work/detail reads reconcile state afterward.
+See [queue migration, dependencies and response policy](../mobile/issue-46-command-replay.md).
+First departure remains blocked pending real #43 prerequisites and Delivery completion
+remains blocked pending #45/#53 finalized evidence. No generic /sync or media workflow.

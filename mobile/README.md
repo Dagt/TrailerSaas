@@ -189,3 +189,14 @@ of the application-support path or native platform integration.
 ## Road execution (#44)
 
 [Implementation, isolation and foreground recovery](../docs/mobile/issue-44-road-execution.md). Open assigned Trip for authoritative Stops, Tractor, Expected Trailer and real coupling. Camera-only QR identifies equipment; commands require online confirmation. One durable app-private User/Tenant submission receipt protects uncertain outcomes; this is not #46 offline queue/replay. Required Shift/Pre-Trip and finalized POD integrations remain blocked until their owning issues. mobile_scanner 7.4.2 adds the native QR adapter; iOS camera usage text is explicit, with no gallery/GPS permission.
+
+## Issue #46 command queue
+
+Production Road records immutable intent in Drift schema v3 (`local_commands` and
+`local_sync_issues`) and replays through existing explicit command endpoints. Cache
+projections stay unchanged until authoritative refresh. Sync runs at foreground
+startup/resume, reconnect and manual Sync now. Prior #97 file receipts are imported
+crash-safely with the original UUID/path/body; session cache cleanup preserves queue
+rows while hiding other identities/Tenants. No OS background guarantee, media queue,
+first-departure prerequisite bypass or Delivery evidence bypass. See
+[implementation, migration, security and retry policy](../docs/mobile/issue-46-command-replay.md).

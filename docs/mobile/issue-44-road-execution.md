@@ -147,3 +147,12 @@ UX; #52/#53 finalized documents/evidence; #54 media queue. Native Android/iOS pe
 camera lifecycle and physical end-to-end validation on devices remain deployment gates.
 No production demo states, forced transitions, fake evidence, Shift auto-completion,
 Yard workflow or authorization bypass are present.
+
+## Issue #46 successor
+
+The foreground-only recovery described above is the #44 baseline. Production Road
+now transitions to the [persistent Drift command queue and foreground replay worker](issue-46-command-replay.md)
+implemented by #46. Old file receipts migrate with the original identity; legacy
+controllers remain compatibility/test boundaries. The new intent guide never mutates
+cached Trip/Stop/Trailer state. #43 start prerequisites and #45/#53 Delivery evidence
+blocks remain unchanged.
