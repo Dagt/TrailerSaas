@@ -392,7 +392,7 @@ class DocumentPostgresTests extends PostgresIntegrationTest {
   @Test void providerFailuresNeverCreateFakeUploadOrDownloadSuccess() throws Exception {
     peer.failHead=true;
     assertProblem(initialize(initBody("BOL"),"driver"),503,"OBJECT_STORAGE_UNAVAILABLE");
-    assertThat(db.value("SELECT count(*) FROM documents WHERE tenant_id=?",tenant)).isZero();
+    assertThat(db.value("SELECT count(*) FROM documents WHERE tenant_id=?",tenant)).isEqualTo(0L);
     peer.failHead=false;var id=uploaded();link(id,stop);peer.failHead=true;
     assertProblem(http("driver","POST",base()+"/"+id+"/download-url","{}",null),503,"OBJECT_STORAGE_UNAVAILABLE");
     assertThat(db.value("SELECT upload_status FROM documents WHERE id=?",id)).isEqualTo("UPLOADED");
