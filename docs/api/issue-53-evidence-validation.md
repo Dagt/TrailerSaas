@@ -51,3 +51,23 @@ partial #53 implementation or stash was found. Branch:
 evidence policy/resource facts, type-specific authorization, then real SQL/HTTP
 and transaction-harness tests. No production workflows from #43/#45/#49/#54/#55
 are implemented by this plan.
+
+## Implementation checkpoint: policies and persistence
+
+V20, typed public evidence policy, type-specific upload authority and public
+Trip/Trailer resource facts are implemented. The #52 staging/publication adapter,
+SHA-256 verification and ledger are unchanged. Pre-Trip/Fuel/Driver damage now
+have their existing capability gates; public Trailer/OOS attachment remains blocked.
+The joint delivery port additionally verifies that both the Stop row and completion
+event were written by its current PostgreSQL transaction, using tuple transaction
+identity (including the 32-bit xid wrap), not a caller-supplied approval flag.
+
+Initial affected validation: 164 tests passed with 0 failures/errors/skipped,
+including 40 new evidence tests, all 100 Documents/R2 tests, runtime RLS and module
+boundaries. The tuple transaction-identity check is being verified next. OpenAPI
+validation and 9 contract tests passed. Historical exact schema inventories were
+extended for V20 and delivery_evidence; no test assertion was dropped.
+
+Remaining: strengthen edge-case tests and independent security review, full clean
+verify and four-job final-head CI, then one open PR. This checkpoint does not
+claim the issue merged or the future operational workflows implemented.

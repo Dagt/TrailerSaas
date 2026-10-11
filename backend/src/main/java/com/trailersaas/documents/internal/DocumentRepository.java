@@ -19,6 +19,10 @@ class DocumentRepository {
         (r,n)->row(r),tenant,id);
     if(rows.isEmpty()) throw DocumentFailure.missing();return rows.getFirst();
   }
+  Row shared(UUID tenant,UUID id) {
+    var rows=jdbc.query("SELECT * FROM documents WHERE tenant_id=? AND id=? FOR SHARE",(r,n)->row(r),tenant,id);
+    if(rows.isEmpty()) throw DocumentFailure.missing();return rows.getFirst();
+  }
   private Row row(ResultSet r) throws SQLException {
     return new Row(r.getObject("id",UUID.class),r.getObject("tenant_id",UUID.class),r.getString("object_key"),
         Type.valueOf(r.getString("document_type")),r.getString("content_type"),r.getObject("size_bytes",Long.class),

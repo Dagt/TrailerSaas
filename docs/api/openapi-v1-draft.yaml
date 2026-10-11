@@ -1956,8 +1956,9 @@ paths:
       operationId: initializeDocumentUpload
       x-implementation-status: implemented-issue-52
       description: >-
-        Requires fresh POD_UPLOAD and an active own Driver. Only BOL, POD and DELIVERY_PHOTO
-        upload workflows are authorized in #52; other accepted types await #43/#45/#53.
+        Requires an active own Driver and fresh type-specific authority: POD_UPLOAD for BOL/POD/DELIVERY_PHOTO,
+        PRETRIP_CREATE for the four Pre-Trip positions, FUEL_EVENT_CREATE for FUEL_RECEIPT and
+        EXCEPTION_REPORT for Driver DAMAGE_PHOTO. Read grants do not authorize upload.
         Returns a short-lived PUT grant for a temporary object. Send the accepted Content-Type
         and exact Content-Length directly to private R2. The JSON API never receives binary data.
       requestBody:
@@ -1990,7 +1991,7 @@ paths:
       description: >-
         Fresh DOCUMENT_VIEW_ALL or DOCUMENT_VIEW_CUSTOMER_SCOPED plus linked-resource scope;
         Driver own assigned work uses TRIP_VIEW_ASSIGNED. Uploaders may inspect only their own
-        genuinely unlinked upload with current POD_UPLOAD and active Driver identity; this does
+        genuinely unlinked upload with current type-specific upload authority and active Driver identity; this does
         not confer download access. Linked documents always require current resource authority.
         Customer-scoped readers must see every Customer served by every linked Stop.
         Missing, foreign or invisible documents return safe 404. No object keys or uploader UUIDs.
@@ -2015,7 +2016,8 @@ paths:
       operationId: completeDocumentUpload
       x-implementation-status: implemented-issue-52
       description: >-
-        Requires uploader identity, fresh POD_UPLOAD and active own Driver, including on replay.
+        Requires uploader identity, fresh authority for the persisted document type and active own Driver,
+        including on replay (POD_UPLOAD, PRETRIP_CREATE, FUEL_EVENT_CREATE or EXCEPTION_REPORT).
         Existing links must remain fully authorized before returning finalized metadata or ledger replay.
         Copies the temporary object to a new private publication key, verifies actual bytes,
         size, content type and SHA-256, and atomically commits UPLOADED and the existing ledger
@@ -2049,11 +2051,12 @@ paths:
       operationId: linkDocument
       x-implementation-status: implemented-issue-52
       description: >-
-        Requires UPLOADED BOL/POD/DELIVERY_PHOTO, uploader with current POD_UPLOAD and active own
-        Driver assigned to the target Stop's Trip, and TRIP_VIEW_ASSIGNED. TRIP_STOP is the only
-        implemented target; unsupported types are rejected. Same-Tenant target is validated
-        through Trips public API. Identical links return the existing reference; at most 50
-        links per document. This is attachment infrastructure, not evidence approval/completion #53.
+        Requires UPLOADED documents, uploader with current type-specific upload authority and active own
+        Driver assigned to the target Trip, and TRIP_VIEW_ASSIGNED. TRIP_STOP supports delivery and Driver
+        damage; TRIP supports Pre-Trip, fuel and Driver damage. Unsupported targets, including public
+        Trailer/OOS attachment, are rejected. Same-Tenant target is validated through Trips public API.
+        Identical links return the existing reference; at most 50 links per document. Attachment itself
+        does not approve evidence or complete a Stop; #53 exposes synchronous policies for future workflows.
       requestBody:
         required: true
         content:
@@ -4071,7 +4074,7 @@ components:
         documentType:
           type: string
           enum: [BOL, POD, DELIVERY_PHOTO, PRETRIP_FRONT, PRETRIP_REAR, PRETRIP_DRIVER_SIDE, PRETRIP_PASSENGER_SIDE, DAMAGE_PHOTO, FUEL_RECEIPT]
-          description: Only BOL/POD/DELIVERY_PHOTO currently have upload authority; others return 403.
+          description: "#53: POD_UPLOAD for BOL/POD/DELIVERY_PHOTO; PRETRIP_CREATE for four Pre-Trip images; FUEL_EVENT_CREATE for receipts; EXCEPTION_REPORT for Driver damage. Active own Driver required; Yard/OOS producer remains #49."
         contentType:
           type: string
           enum: [image/jpeg, image/png, application/pdf]
@@ -4107,7 +4110,7 @@ components:
       additionalProperties: false
       required: [entityType, entityId]
       properties:
-        entityType: { type: string, enum: [TRIP_STOP] }
+        entityType: { type: string, enum: [TRIP_STOP, TRIP], description: "TRIP_STOP for delivery/Driver damage; TRIP for Pre-Trip/fuel/Driver damage. No public Trailer/OOS attachment yet." }
         entityId: { type: string, format: uuid }
 
     DocumentLinkImplemented:
@@ -4116,7 +4119,7 @@ components:
       required: [id, entityType, entityId, createdAt]
       properties:
         id: { type: string, format: uuid }
-        entityType: { type: string, enum: [TRIP_STOP] }
+        entityType: { type: string, enum: [TRIP_STOP, TRIP, TRAILER], description: "TRAILER is reserved for the future authorized #49 attachment workflow; public link requests reject it." }
         entityId: { type: string, format: uuid }
         createdAt: { type: string, format: date-time }
 

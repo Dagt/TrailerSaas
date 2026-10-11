@@ -622,3 +622,16 @@ is an acknowledgment; current own-Driver/work/detail reads reconcile state after
 See [queue migration, dependencies and response policy](../mobile/issue-46-command-replay.md).
 First departure remains blocked pending real #43 prerequisites and Delivery completion
 remains blocked pending #45/#53 finalized evidence. No generic /sync or media workflow.
+
+## Issue #53 evidence policy integration
+
+Backend `OperationalEvidencePolicy` now validates the four finalized Pre-Trip
+positions, signed BOL/no-receiver delivery, Driver damage and Fuel receipts from
+Tenant-pinned PostgreSQL state. This does not implement the future inspection,
+delivery-completions, Fuel or exception endpoints above. #43 still owns real
+Shift/inspection context and departure prerequisites. #45 must invoke the typed
+policy inside its command/ledger transaction and coordinate Stop event, fulfillment
+and Trip effects. Its high-level application orchestration calls Documents and
+Trips public APIs; Trips does not import Documents. #49 owns the contextual public
+Yard/OOS evidence workflow; #54 owns media upload sequencing on the client.
+See [server policy and joint transaction contract](issue-53-evidence-validation.md).
