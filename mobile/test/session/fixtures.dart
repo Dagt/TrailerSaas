@@ -41,8 +41,13 @@ class FakeAuth implements AuthGateway {
 class FakeNetwork implements Connectivity {
   ConnectivityStatus status = ConnectivityStatus.available;
   final events = StreamController<ConnectivityStatus>.broadcast(sync: true);
+  Object? error;
   @override
-  Future<ConnectivityStatus> currentStatus() async => status;
+  Future<ConnectivityStatus> currentStatus() async {
+    if (error != null) throw error!;
+    return status;
+  }
+
   @override
   Stream<ConnectivityStatus> get changes => events.stream;
 }
@@ -96,6 +101,7 @@ class MobileFixture {
     String? uid = 'firebase-A',
     AppDatabase? database,
     SessionCache Function(AppDatabase)? cacheFactory,
+    DateTime Function()? apiClock,
   }) {
     db = database ?? AppDatabase(NativeDatabase.memory());
     auth = FakeAuth(uid);
@@ -122,6 +128,7 @@ class MobileFixture {
         }
         return response({'items': trips, 'nextCursor': null});
       }),
+      clock: apiClock,
     );
     session = SessionController(auth, api, cache, network);
   }

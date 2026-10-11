@@ -7,6 +7,8 @@ import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import '../session/session_view.dart';
 import '../road/online_command_journal.dart';
+import '../sync/command_store.dart';
+import '../sync/replay_worker.dart';
 
 class TrailerSaasApp extends StatefulWidget {
   const TrailerSaasApp({
@@ -26,27 +28,45 @@ class TrailerSaasApp extends StatefulWidget {
   State<TrailerSaasApp> createState() => _TrailerSaasAppState();
 }
 
-class _TrailerSaasAppState extends State<TrailerSaasApp> {
+class _TrailerSaasAppState extends State<TrailerSaasApp>
+    with WidgetsBindingObserver {
   late Future<void> _databaseReady;
+  ReplayWorker? _worker;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _databaseReady = _initialize();
   }
 
   Future<void> _initialize() async {
     await widget.database.initialize();
     await widget.session?.start();
+    if (widget.session != null && widget.journal == null) {
+      _worker ??= ReplayWorker(
+        widget.session!,
+        CommandStore(widget.database),
+        FileOnlineCommandJournal(),
+      );
+      _worker!.start();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(_close());
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_worker?.sync());
+  }
+
   Future<void> _close() async {
+    await _worker?.shutdown();
     await widget.session?.shutdown();
     // No UI survives disposal, and no request/storage details are logged.
     try {
@@ -95,7 +115,11 @@ class _TrailerSaasAppState extends State<TrailerSaasApp> {
                     child: Text('Authentication configuration is required.'),
                   ),
                 )
-              : SessionView(session: widget.session!, journal: widget.journal);
+              : SessionView(
+                  session: widget.session!,
+                  journal: widget.journal,
+                  worker: _worker,
+                );
         },
       ),
     );

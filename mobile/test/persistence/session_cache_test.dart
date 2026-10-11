@@ -19,37 +19,42 @@ void main() {
         DateTime.utc(2026, 10, 10),
         [WorkTrip(work('trip-$tenant'))],
       );
-  test('real SQLite v1 upgrades to four exact cache tables', () async {
-    final dir = await Directory.systemTemp.createTemp('mobile-v1-');
-    addTearDown(() => dir.delete(recursive: true));
-    final file = File('${dir.path}/v1.sqlite');
-    // Seed the actual empty deployed v1 schema before Drift opens/version checks it.
-    final v1 = sqlite.sqlite3.open(file.path);
-    v1.execute('PRAGMA user_version=1');
-    v1.close();
-    final upgraded = AppDatabase(NativeDatabase(file));
-    addTearDown(upgraded.close);
-    await upgraded.initialize();
-    expect(
-      (await upgraded.customSelect('PRAGMA user_version').getSingle())
-          .read<int>('user_version'),
-      2,
-    );
-    final tables =
-        (await upgraded
-                .customSelect(
-                  "select name from sqlite_master where type='table'",
-                )
-                .get())
-            .map((r) => r.read<String>('name'))
-            .toSet();
-    expect(tables, {
-      'local_session_context',
-      'cached_trips',
-      'cached_stops',
-      'cached_trailers',
-    });
-  });
+  test(
+    'real SQLite v1 upgrades to six exact cache and command tables',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('mobile-v1-');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/v1.sqlite');
+      // Seed the actual empty deployed v1 schema before Drift opens/version checks it.
+      final v1 = sqlite.sqlite3.open(file.path);
+      v1.execute('PRAGMA user_version=1');
+      v1.close();
+      final upgraded = AppDatabase(NativeDatabase(file));
+      addTearDown(upgraded.close);
+      await upgraded.initialize();
+      expect(
+        (await upgraded.customSelect('PRAGMA user_version').getSingle())
+            .read<int>('user_version'),
+        3,
+      );
+      final tables =
+          (await upgraded
+                  .customSelect(
+                    "select name from sqlite_master where type='table'",
+                  )
+                  .get())
+              .map((r) => r.read<String>('name'))
+              .toSet();
+      expect(tables, {
+        'local_session_context',
+        'cached_trips',
+        'cached_stops',
+        'cached_trailers',
+        'local_commands',
+        'local_sync_issues',
+      });
+    },
+  );
   test('file reopen restores only matching Firebase User namespace', () async {
     final dir = await Directory.systemTemp.createTemp('mobile-cache-');
     addTearDown(() => dir.delete(recursive: true));

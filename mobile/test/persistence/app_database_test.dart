@@ -5,25 +5,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trailersaas_mobile/src/persistence/app_database.dart';
 
 void main() {
-  test('opens SQLite and creates the exact version 2 cache schema', () async {
-    final database = AppDatabase(NativeDatabase.memory());
-    addTearDown(database.close);
+  test(
+    'opens SQLite and creates the exact version 3 cache and command schema',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
 
-    await database.initialize();
-    final version = await database
-        .customSelect('PRAGMA user_version')
-        .getSingle();
-    expect(version.read<int>('user_version'), 2);
-    final tables = await database
-        .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
-        .get();
-    expect(tables.map((row) => row.read<String>('name')).toSet(), {
-      'local_session_context',
-      'cached_trips',
-      'cached_stops',
-      'cached_trailers',
-    });
-  });
+      await database.initialize();
+      final version = await database
+          .customSelect('PRAGMA user_version')
+          .getSingle();
+      expect(version.read<int>('user_version'), 3);
+      final tables = await database
+          .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+          .get();
+      expect(tables.map((row) => row.read<String>('name')).toSet(), {
+        'local_session_context',
+        'cached_trips',
+        'cached_stops',
+        'cached_trailers',
+        'local_commands',
+        'local_sync_issues',
+      });
+    },
+  );
 
   test('persists schema version across a file close and reopen', () async {
     final directory = await Directory.systemTemp.createTemp(
@@ -45,7 +50,7 @@ void main() {
     final version = await reopened
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(version.read<int>('user_version'), 2);
-    expect(reopened.allTables.length, 4);
+    expect(version.read<int>('user_version'), 3);
+    expect(reopened.allTables.length, 6);
   });
 }

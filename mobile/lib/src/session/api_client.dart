@@ -33,18 +33,21 @@ class ApiUnavailable implements Exception {
 }
 
 class ApiClient {
-  ApiClient(this.baseUrl, this.auth, this.client);
+  ApiClient(this.baseUrl, this.auth, this.client, {DateTime Function()? clock})
+    : now = clock ?? (() => DateTime.now().toUtc());
   final Uri baseUrl;
   final AuthGateway auth;
   final http.Client client;
+  final DateTime Function() now;
   final _postNotBefore = <String, DateTime>{};
 
   /// One submission only. The caller durably stores an immutable key/payload first.
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> body,
-    String key,
-  ) async {
+    String key, {
+    bool forceRefresh = true,
+  }) async {
     final uid = auth.uid;
     if (uid == null) {
       throw const ApiProblem(
@@ -55,7 +58,7 @@ class ApiClient {
     }
     final receipt = '$uid|$path|$key';
     final notBefore = _postNotBefore[receipt];
-    if (notBefore != null && DateTime.now().toUtc().isBefore(notBefore)) {
+    if (notBefore != null && now().isBefore(notBefore)) {
       throw ApiProblem(
         429,
         'RATE_LIMITED',
@@ -65,7 +68,7 @@ class ApiClient {
     }
     String? token;
     try {
-      token = await auth.token(forceRefresh: true);
+      token = await auth.token(forceRefresh: forceRefresh);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'network-request-failed') throw ApiUnavailable();
       throw const ApiProblem(
@@ -138,9 +141,7 @@ class ApiClient {
     if (value == null) return null;
     final seconds = int.tryParse(value);
     if (seconds != null) {
-      return seconds < 0
-          ? null
-          : DateTime.now().toUtc().add(Duration(seconds: seconds));
+      return seconds < 0 ? null : now().add(Duration(seconds: seconds));
     }
     try {
       return HttpDate.parse(value).toUtc();
