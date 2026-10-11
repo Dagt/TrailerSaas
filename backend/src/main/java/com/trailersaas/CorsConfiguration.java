@@ -18,7 +18,7 @@ class CorsConfiguration {
         var config = new org.springframework.web.cors.CorsConfiguration();
         config.setAllowedOrigins(origins(environment.getProperty("trailersaas.cors.allowed-origins", ""), local));
         config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Request-Id"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Request-Id", "Idempotency-Key"));
         config.setExposedHeaders(List.of("X-Request-Id"));
         config.setAllowCredentials(false);
         var source = new UrlBasedCorsConfigurationSource();

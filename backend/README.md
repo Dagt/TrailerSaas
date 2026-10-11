@@ -1007,3 +1007,19 @@ separately from ordered-index eligibility diagnostics, without exact cost assert
 ## Driver execution (#44)
 
 [Execution boundary](../docs/mobile/issue-44-road-execution.md) documents V18 immutable Stop events, the shared V16 ledger, own assigned Trip detail and five typed internal execution commands. Production first departure fails closed until #43 validates duty/inspection; tests substitute only the prerequisite seam. Delivery is blocked pending finalized POD. No capability catalog, physical Hook/Drop contract or historical migration changes.
+## Private documents (#52)
+
+Enable `R2_ENABLED=true` only with that environment's private R2 bucket and all
+five R2 variables in `.env.example`. The AWS SDK v2 S3 adapter uses region `auto`,
+Signature V4, strict TLS and bucket readiness validation. No public URL fallback,
+test storage or embedded credentials exists in the application. Disabled storage
+fails document APIs safely; CI injects an explicit test-only HTTP S3 peer.
+
+Initialization returns a signed temporary PUT. Clients send bytes directly to
+R2, then finalize with UUID `Idempotency-Key`. Finalization copies to a fresh
+private key, hashes the actual bytes and publishes its database identity only
+after verification. A reusable upload grant cannot rewrite finalized bytes.
+
+See [document contracts/security matrix](../docs/api/documents.md) and
+[implementation traceability](../docs/api/issue-52-document-storage.md).
+No evidence approval, mobile media queue, cleanup worker or retention is enabled.

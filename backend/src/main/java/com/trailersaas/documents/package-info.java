@@ -1,5 +1,5 @@
 /**
- * Documents and evidence module boundary reserved for later implementation issues.
+ * Private object storage; evidence workflow validation remains owned by later issues.
  */
-@org.springframework.modulith.ApplicationModule
+@org.springframework.modulith.ApplicationModule(allowedDependencies={"identity","drivers","trips"})
 package com.trailersaas.documents;

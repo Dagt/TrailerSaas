@@ -61,6 +61,8 @@ logging:
       console: logstash
   level:
     org.springframework.web: WARN
+    # Signed storage requests are bearer grants. SDK diagnostics must not log URLs/signatures.
+    software.amazon.awssdk: OFF
 
 trailersaas:
   cors:

@@ -1316,7 +1316,7 @@ class TrailerCouplingPostgresTests extends PostgresIntegrationTest {
   @Test
   void schemaAndClosedIntervalHistoryRemainProtectedAtDatabaseBoundary() throws Exception {
     flyway.validate();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("19");
     assertThat(columns("trailer_couplings"))
         .containsExactly(
             "id",
