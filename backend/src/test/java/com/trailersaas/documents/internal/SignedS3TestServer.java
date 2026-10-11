@@ -40,7 +40,10 @@ final class SignedS3TestServer implements AutoCloseable {
       if(!valid(exchange)) { error(exchange,403,"SignatureDoesNotMatch");return; }
       String path=exchange.getRequestURI().getPath();String prefix="/"+bucket;
       if(path.equals(prefix) || path.equals(prefix+"/")) {
-        if(exchange.getRequestMethod().equals("HEAD")) { exchange.sendResponseHeaders(200,-1);return; }
+        if(exchange.getRequestMethod().equals("HEAD")) {
+          if(failHead) { error(exchange,503,"ServiceUnavailable");return; }
+          exchange.sendResponseHeaders(200,-1);return;
+        }
         error(exchange,405,"MethodNotAllowed");return;
       }
       if(!path.startsWith(prefix+"/")) { error(exchange,404,"NoSuchBucket");return; }
