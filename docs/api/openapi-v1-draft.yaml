@@ -1954,21 +1954,148 @@ paths:
     post:
       tags: [Documents]
       operationId: initializeDocumentUpload
+      x-implementation-status: implemented-issue-52
+      description: >-
+        Requires fresh POD_UPLOAD and an active own Driver. Only BOL, POD and DELIVERY_PHOTO
+        upload workflows are authorized in #52; other accepted types await #43/#45/#53.
+        Returns a short-lived PUT grant for a temporary object. Send the accepted Content-Type
+        and exact Content-Length directly to private R2. The JSON API never receives binary data.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InitializeUploadRequest'
+              $ref: '#/components/schemas/InitializeUploadRequestImplemented'
       responses:
         '201':
           description: Upload initialized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InitializeUploadResponse'
+                $ref: '#/components/schemas/InitializeUploadResponseImplemented'
         default:
           $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/documents/{documentId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: documentId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Documents]
+      operationId: getDocumentMetadata
+      x-implementation-status: implemented-issue-52
+      description: >-
+        Fresh DOCUMENT_VIEW_ALL or DOCUMENT_VIEW_CUSTOMER_SCOPED plus linked-resource scope;
+        Driver own assigned work uses TRIP_VIEW_ASSIGNED. Uploaders may inspect only their own
+        genuinely unlinked upload with current POD_UPLOAD and active Driver identity; this does
+        not confer download access. Linked documents always require current resource authority.
+        Customer-scoped readers must see every Customer served by every linked Stop.
+        Missing, foreign or invisible documents return safe 404. No object keys or uploader UUIDs.
+      responses:
+        '200':
+          description: Safe current document metadata and authorized references
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentMetadataImplemented' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/documents/{documentId}/upload-completion:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: documentId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Documents]
+      operationId: completeDocumentUpload
+      x-implementation-status: implemented-issue-52
+      description: >-
+        Requires uploader identity, fresh POD_UPLOAD and active own Driver, including on replay.
+        Existing links must remain fully authorized before returning finalized metadata or ledger replay.
+        Copies the temporary object to a new private publication key, verifies actual bytes,
+        size, content type and SHA-256, and atomically commits UPLOADED and the existing ledger
+        result. A reusable old PUT cannot modify published bytes. Missing object gives
+        409 UPLOAD_NOT_COMPLETE; incompatible content gives 409 UPLOAD_CONTENT_MISMATCH;
+        incompatible UUID reuse gives 409 IDEMPOTENCY_KEY_REUSED. Infrastructure gives safe 503
+        OBJECT_STORAGE_UNAVAILABLE or safe 5xx. Retry an uncertain completion with the original
+        key and identical request. Already uploaded documents never replace bytes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompleteUploadRequestImplemented' }
+      responses:
+        '200':
+          description: Verified document metadata; replay preserves the saved logical result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentMetadataImplemented' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/documents/{documentId}/links:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: documentId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Documents]
+      operationId: linkDocument
+      x-implementation-status: implemented-issue-52
+      description: >-
+        Requires UPLOADED BOL/POD/DELIVERY_PHOTO, uploader with current POD_UPLOAD and active own
+        Driver assigned to the target Stop's Trip, and TRIP_VIEW_ASSIGNED. TRIP_STOP is the only
+        implemented target; unsupported types are rejected. Same-Tenant target is validated
+        through Trips public API. Identical links return the existing reference; at most 50
+        links per document. This is attachment infrastructure, not evidence approval/completion #53.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DocumentLinkRequestImplemented' }
+      responses:
+        '200':
+          description: Existing or created authorized attachment
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentLinkImplemented' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/documents/{documentId}/download-url:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: documentId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Documents]
+      operationId: createDocumentDownloadUrl
+      x-implementation-status: implemented-issue-52
+      description: >-
+        Fresh document/resource read authorization on every call. UPLOADED and at least one
+        valid linked resource required; uploader identity alone is insufficient. Scoped readers
+        must see all linked work and every Customer served by shared Stops. An issued GET URL
+        is a temporary bearer grant (default 60 seconds, configured maximum 300); permission
+        revocation cannot revoke an already-issued URL. Never log or share signed URLs.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false, properties: {} }
+      responses:
+        '200':
+          description: Short-lived private signed GET URL
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentDownloadImplemented' }
+        default: { $ref: '#/components/responses/Problem' }
 
   /api/v1/tenants/{tenantId}/alerts:
     parameters:
@@ -3935,6 +4062,91 @@ components:
         contentType: { type: string }
         sizeBytes: { type: integer, format: int64 }
         checksumSha256: { type: [string, "null"] }
+
+    InitializeUploadRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [documentType, contentType, sizeBytes]
+      properties:
+        documentType:
+          type: string
+          enum: [BOL, POD, DELIVERY_PHOTO, PRETRIP_FRONT, PRETRIP_REAR, PRETRIP_DRIVER_SIDE, PRETRIP_PASSENGER_SIDE, DAMAGE_PHOTO, FUEL_RECEIPT]
+          description: Only BOL/POD/DELIVERY_PHOTO currently have upload authority; others return 403.
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, application/pdf]
+          description: PDF only for BOL/POD; photos require JPEG/PNG. No content sniffing/evidence approval claim.
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 104857600
+          description: Deployment bound defaults to 25 MiB; configurable up to 100 MiB. Exact bytes verified.
+        checksumSha256:
+          type: [string, "null"]
+          pattern: '^[0-9a-fA-F]{64}$'
+
+    InitializeUploadResponseImplemented:
+      type: object
+      additionalProperties: false
+      required: [documentId, uploadStatus, uploadUrl, expiresAt]
+      properties:
+        documentId: { type: string, format: uuid }
+        uploadStatus: { type: string, enum: [PENDING] }
+        uploadUrl: { type: string, format: uri }
+        expiresAt: { type: string, format: date-time }
+
+    CompleteUploadRequestImplemented:
+      type: object
+      additionalProperties: false
+      properties:
+        checksumSha256: { type: [string, "null"], pattern: '^[0-9a-fA-F]{64}$' }
+
+    DocumentLinkRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [entityType, entityId]
+      properties:
+        entityType: { type: string, enum: [TRIP_STOP] }
+        entityId: { type: string, format: uuid }
+
+    DocumentLinkImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, entityType, entityId, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        entityType: { type: string, enum: [TRIP_STOP] }
+        entityId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+
+    DocumentMetadataImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, documentType, contentType, sizeBytes, checksumSha256, uploadStatus, createdAt, uploadedAt, links]
+      properties:
+        id: { type: string, format: uuid }
+        documentType:
+          type: string
+          enum: [BOL, POD, DELIVERY_PHOTO, PRETRIP_FRONT, PRETRIP_REAR, PRETRIP_DRIVER_SIDE, PRETRIP_PASSENGER_SIDE, DAMAGE_PHOTO, FUEL_RECEIPT]
+        contentType: { type: [string, "null"] }
+        sizeBytes: { type: [integer, "null"], format: int64 }
+        checksumSha256: { type: [string, "null"] }
+        uploadStatus: { type: string, enum: [PENDING, UPLOADED, FAILED, DELETED_BY_RETENTION] }
+        createdAt: { type: string, format: date-time }
+        uploadedAt: { type: [string, "null"], format: date-time }
+        links:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/DocumentLinkImplemented' }
+
+    DocumentDownloadImplemented:
+      type: object
+      additionalProperties: false
+      required: [downloadUrl, expiresAt]
+      properties:
+        downloadUrl: { type: string, format: uri }
+        expiresAt: { type: string, format: date-time }
 
     InitializeUploadResponse:
       type: object

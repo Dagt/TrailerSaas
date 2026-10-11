@@ -59,7 +59,7 @@ Can proceed with controlled parallelism after Wave 1:
 - #30 Tenant settings/Admin master-data Web — merged/complete in [PR #84](https://github.com/Dagt/TrailerSaas/pull/84)
 
 ### File/job infrastructure
-- #52 R2 document transport
+- #52 R2 document transport — current bounded implementation after #46 / PR #98; pending review/merge
 - #55 PostgreSQL outbox/job worker
 
 Exit: equipment/locations exist and durable evidence/background infrastructure is available.
@@ -102,7 +102,7 @@ These streams may overlap according to each Issue's explicit dependencies.
 ## Wave 4 — Mobile synchronization foundation
 
 - #42 Mobile auth/cache shell — complete via PR #96
-- #46 Offline command queue/replay — current bounded implementation after merged #42/#44, honoring its explicit dependencies
+- #46 Offline command queue/replay — merged/complete via [PR #98](https://github.com/Dagt/TrailerSaas/pull/98)
 - #54 Mobile media queue
 
 These should be implemented before relying on offline behavior in completed Road/Yard workflows.

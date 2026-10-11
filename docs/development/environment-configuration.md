@@ -123,15 +123,20 @@ These names do not mandate a future SDK provisioning strategy. Native
 `google-services.json` / `GoogleService-Info.plist` are ignored pending the relevant
 integration; no actual client IDs or service-account file is committed.
 
-### Reserved R2 / Sentry / Deployment
+### R2 document storage (#52) / reserved Sentry and Deployment
 
 | Name | Intended consumer | Purpose | Environments | Required now | Classification | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `R2_ACCOUNT_ID` | Backend | Storage account | D/S/P | No | Server config | Reserved #52 |
-| `R2_ENDPOINT` | Backend | S3-compatible R2 endpoint | D/S/P | No | Server config | Reserved #52 |
-| `R2_BUCKET` | Backend | Environment-isolated bucket | D/S/P | No | Server config | Reserved #52 |
-| `R2_ACCESS_KEY_ID` | Backend | Restricted storage credential | D/S/P | No | Secret | Reserved #52 |
-| `R2_SECRET_ACCESS_KEY` | Backend | Storage secret | D/S/P | No | Secret | Reserved #52 |
+| `R2_ENABLED` | Backend | Explicit storage enablement; default false | D/S/P | For document APIs | Non-secret config | Active #52 |
+| `R2_ACCOUNT_ID` | Backend | Storage account | D/S/P | When enabled | Server config | Active #52 |
+| `R2_ENDPOINT` | Backend | S3-compatible R2 endpoint | D/S/P | When enabled | Server config | Active #52 |
+| `R2_BUCKET` | Backend | Environment-isolated private bucket | D/S/P | When enabled | Server config | Active #52 |
+| `R2_ACCESS_KEY_ID` | Backend | Restricted storage credential | D/S/P | When enabled | Secret | Active #52 |
+| `R2_SECRET_ACCESS_KEY` | Backend | Storage secret | D/S/P | When enabled | Secret | Active #52 |
+| `DOCUMENT_MAX_SIZE_BYTES` | Backend | Maximum positive upload bytes; default 26214400, ceiling 104857600 | D/S/P | No | Non-secret config | Active #52 |
+| `DOCUMENT_ALLOWED_CONTENT_TYPES` | Backend | Comma-separated subset of image/jpeg,image/png,application/pdf; defaults to all three | D/S/P | No | Non-secret config | Active #52 |
+| `DOCUMENT_UPLOAD_TTL_SECONDS` | Backend | PUT lifetime; default 300, maximum 900 | D/S/P | No | Non-secret config | Active #52 |
+| `DOCUMENT_DOWNLOAD_TTL_SECONDS` | Backend | GET lifetime; default 60, maximum 300 | D/S/P | No | Non-secret config | Active #52 |
 | `R2_PUBLIC_BASE_URL` | Backend / generated public links if approved | Optional public asset URL; not private evidence access | D/S/P | No | Public config if used | Reserved #52 |
 | `SENTRY_ENVIRONMENT` | Backend only | Optional future server Sentry environment | D/S/P | No | Restricted server config | Reserved; not implemented in #21 |
 | `SENTRY_DSN` | Backend only | Optional future server ingestion endpoint | D/S/P | No | Restricted server ingestion config | Reserved; not implemented in #21 |
@@ -211,7 +216,7 @@ WEB_ALLOWED_ORIGINS supplies exact origins, no wildcard/path/query/credentials.
 Local defaults allow only http://127.0.0.1:5173 and http://localhost:5173; explicitly
 set another loopback origin if needed. Outside local, only non-loopback HTTPS
 origins are accepted; empty disables cross-origin requests. Allow credentials=false,
-methods GET/POST/PATCH/DELETE/OPTIONS, headers Authorization/Content-Type/X-Request-Id,
+methods GET/POST/PATCH/DELETE/OPTIONS, headers Authorization/Content-Type/X-Request-Id/Idempotency-Key,
 and expose X-Request-Id. CORS never replaces bearer/capability authorization.
 
 VITE_QR_PUBLIC_BASE_URL is optional configuration for print preview. When supplied
@@ -239,6 +244,34 @@ device needs a reachable development-host URL. Native packaging/signing remains
 deferred. No tokens, private keys or server secrets belong in these files.
 
 ## Isolation and Storage Policy
+
+### Private R2 setup and failure behavior
+
+Provision a separate private bucket and least-privilege object read/write token
+per environment. Disable public `r2.dev` access/custom public domains; no ACL or
+public URL is created by the backend. Use the global S3 endpoint
+`https://<32-character-account-id>.r2.cloudflarestorage.com` and region `auto`.
+Staging/Production reject non-TLS, loopback, mismatched account host, credentials
+in URL, ports, path/query/fragment and incomplete configuration. Enabled startup
+verifies bucket access/existence with signed HEAD; failures never print values.
+HTTP loopback is allowed only for a local controlled protocol peer.
+
+No Cloudflare values are needed for CI. `R2_ENABLED=false` is an explicit disabled
+adapter returning safe storage-unavailable errors; the HTTP S3 peer exists only
+in tests. It is never selected as a production fallback. Credentials remain
+server-side. SDK request logging is disabled to protect signed grants; application
+errors retain safe codes/traceId. Connection timeout 5s, socket 20s, attempt 30s,
+overall SDK call 45s, no automatic SDK retries. Operators must keep bucket and
+credentials matched to the selected environment; syntax cannot prove ownership.
+
+For browser direct PUT, configure bucket CORS with exact approved Web origins,
+method PUT, allowed Content-Type and only necessary headers; expose ETag only if
+the client needs it. Never use a wildcard or enable public access to fix CORS.
+The backend API allows Idempotency-Key preflight while retaining its exact origin
+allowlist. Content-Length is supplied by the HTTP client and is bound to the signed
+grant. URLs are temporary bearer credentials; never log them or send to telemetry.
+`R2_PUBLIC_BASE_URL` is not consumed for private evidence. Read the
+[document publication/retry design](../api/documents.md) before client integration.
 
 Staging and Production require separate PostgreSQL databases/roles, Firebase
 projects, R2 buckets/credentials (separate buckets preferred), Railway backend
