@@ -75,4 +75,16 @@ class R2ObjectStorageTests {
     assertThat(request("GET",signed.url(),null,null).statusCode()).isEqualTo(200);
     peer.timeOffset=Duration.ofSeconds(62);assertThat(request("GET",signed.url(),null,null).statusCode()).isEqualTo(403);
   }
+  @Test void pendingPutGrantCannotCopyAnotherPrivateObjectWithUnsignedSourceHeader() throws Exception {
+    peer.objects.put("foreign-private",new SignedS3TestServer.Blob(new byte[]{9,8,7},"image/jpeg"));
+    var upload=storage.put("own-staging","image/jpeg",3,Duration.ofMinutes(5));
+    var response=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(upload.url()))
+        .header("Content-Type","image/jpeg").header("x-amz-copy-source",peer.bucket+"/foreign-private")
+        .PUT(HttpRequest.BodyPublishers.ofByteArray(new byte[3])).build(),HttpResponse.BodyHandlers.discarding());
+    assertThat(response.statusCode()).isEqualTo(403);
+    assertThat(peer.objects).doesNotContainKey("own-staging");
+    assertThat(peer.copies.get()).isZero();
+    // The backend's separately signed COPY is still valid and verifies actual bytes.
+    assertThat(storage.copyAndVerify("foreign-private","backend-copy",3).sha256()).isEqualTo(SignedS3TestServer.sha(new byte[]{9,8,7}));
+  }
 }

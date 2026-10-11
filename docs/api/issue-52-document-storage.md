@@ -110,6 +110,13 @@ and storing/copying actual bytes. The peer covers the critical protocol subset;
 it is test-only, not a production fallback or full R2 emulator. No Cloudflare
 credentials are needed in CI.
 
+The peer also rejects adding an unsigned `x-amz-copy-source` to a pending PUT:
+it cannot turn that one-object grant into a copy of another private object.
+The backend's independently signed COPY remains permitted. This follows the
+[S3 CopyObject signed-header requirement](https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html)
+and [R2 Signature V4 presigned transport](https://developers.cloudflare.com/r2/api/s3/presigned-urls/).
+Include this negative case in the staging provider smoke check as well.
+
 For staging, configure a separate private R2 bucket and bucket-scoped credentials,
 disable public access/R2.dev, set the reserved environment variables and
 `R2_ENABLED=true`, and restrict browser PUT CORS to the exact staging origins and

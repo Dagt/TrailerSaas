@@ -104,6 +104,10 @@ final class SignedS3TestServer implements AutoCloseable {
         if(payload==null) payload=sha(new byte[0]);
       }
       if(credential==null || !credential.startsWith(access+"/")) return false;
+      // S3 CopyObject requires x-amz-copy-source to be signed. A plain PUT grant
+      // cannot be promoted to a server-side copy of a different private object.
+      if(e.getRequestHeaders().containsKey("x-amz-copy-source")
+          && !Arrays.asList(headers.split(";")).contains("x-amz-copy-source")) return false;
       String scope=credential.substring(access.length()+1);
       StringBuilder canonicalHeaders=new StringBuilder();
       for(String name:headers.split(";")) {
