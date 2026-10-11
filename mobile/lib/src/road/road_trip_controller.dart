@@ -8,13 +8,27 @@ import '../session/api_client.dart';
 import 'online_command_journal.dart';
 
 class RoadTripController extends ChangeNotifier {
-  RoadTripController(this.session, this.tripId, this.journal) {
+  RoadTripController(
+    this.session,
+    this.tripId,
+    this.journal, {
+    this.recoveryOnly = false,
+  }) {
     _snapshot = session.snapshot;
     _owner = session.snapshot;
     session.addListener(_sessionChanged);
   }
   final SessionController session;
   final String tripId;
+  final bool recoveryOnly;
+  DateTime? retryNotBefore;
+  Timer? _retryTimer;
+  bool get canRecover =>
+      online &&
+      !sending &&
+      pending != null &&
+      (retryNotBefore == null ||
+          !DateTime.now().toUtc().isBefore(retryNotBefore!));
   final OnlineCommandJournal journal;
   Map<String, dynamic>? detail;
   OnlineCommand? pending;
@@ -31,7 +45,13 @@ class RoadTripController extends ChangeNotifier {
       !_disposed &&
       generation == _generation &&
       identical(session.snapshot, s) &&
+      session.auth.uid == s.firebaseUid &&
       online;
+  bool _readCurrent(int generation, SessionSnapshot s) =>
+      !_disposed &&
+      generation == _generation &&
+      identical(session.snapshot, s) &&
+      session.auth.uid == s.firebaseUid;
   void _notify() {
     if (!_disposed) notifyListeners();
   }
@@ -45,6 +65,7 @@ class RoadTripController extends ChangeNotifier {
     sending = false;
     message = null;
     traceId = null;
+    _retryTimer?.cancel();
     _notify();
     if (online &&
         _snapshot?.userId == _owner?.userId &&
@@ -56,30 +77,32 @@ class RoadTripController extends ChangeNotifier {
 
   Future<void> load() async {
     final s = session.snapshot;
-    if (s == null || !online) return;
+    if (s == null || (!online && !recoveryOnly)) return;
     final generation = ++_generation;
     sending = true;
     message = null;
     _notify();
     try {
       final saved = await journal.read(s.userId, s.membership.tenantId);
-      if (saved != null &&
-          !saved.path.startsWith('tenants/${s.membership.tenantId}/')) {
+      if (saved != null && !saved.belongsTo(s.membership.tenantId)) {
         throw const FormatException();
       }
-      final data = await session.api.get(
-        'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
-      );
-      if (!_current(generation, s)) return;
-      detail = data;
+      if (!_readCurrent(generation, s)) return;
       pending = saved;
+      if (!recoveryOnly) {
+        final data = await session.api.get(
+          'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
+        );
+        if (!_readCurrent(generation, s)) return;
+        detail = data;
+      }
       if (saved != null) {
         message = saved.tripId == tripId
             ? 'A previous submission needs recovery before another action.'
             : 'Another Trip has an uncertain submission. Recover that saved submission before another action.';
       }
     } on ApiProblem catch (e) {
-      if (_current(generation, s)) {
+      if (_readCurrent(generation, s)) {
         message = e.detail;
         traceId = e.traceId;
         if (e.status == 401 || e.status == 403 || e.status == 404) {
@@ -87,12 +110,12 @@ class RoadTripController extends ChangeNotifier {
         }
       }
     } catch (_) {
-      if (_current(generation, s)) {
+      if (_readCurrent(generation, s)) {
         message =
             'Work could not be refreshed. Connect and reload before acting.';
       }
     } finally {
-      if (_current(generation, s)) {
+      if (_readCurrent(generation, s)) {
         sending = false;
         _notify();
       }
@@ -149,7 +172,7 @@ class RoadTripController extends ChangeNotifier {
 
   Future<void> recover() async {
     final s = session.snapshot, command = pending;
-    if (s == null || command == null || !online || sending) {
+    if (s == null || command == null || !canRecover) {
       return;
     }
     final generation = ++_generation;
@@ -173,17 +196,28 @@ class RoadTripController extends ChangeNotifier {
     int generation,
   ) async {
     try {
+      if (!command.belongsTo(s.membership.tenantId)) {
+        message = 'The saved submission does not match this Tenant or an accepted command. No request was sent.';
+        return;
+      }
       await session.api.post(command.path, command.body, command.id);
       // The saved receipt belongs to its original namespace, even if identity changed during HTTP.
       if (!_current(generation, s)) return;
-      await journal.clear(s.userId, s.membership.tenantId);
+      await journal.clear(
+        s.userId,
+        s.membership.tenantId,
+        operationId: command.id,
+      );
       if (!_current(generation, s)) return;
       pending = null;
       message = 'Confirmed by server.';
-      if (command.tripId != tripId) {
+      if (recoveryOnly || command.tripId != tripId) {
         // Reconcile the entire assigned-work set after recovering another Trip.
         // Its saved result must never replace the currently displayed Trip.
-        await session.refresh();
+        await _reconcile(
+          s,
+          'Confirmed by server. Assigned work has been refreshed.',
+        );
         return;
       }
       try {
@@ -214,21 +248,94 @@ class RoadTripController extends ChangeNotifier {
       if (!_current(generation, s)) return;
       message = e.detail;
       traceId = e.traceId;
-      if (e.status >= 400 && e.status < 500) {
-        await journal.clear(s.userId, s.membership.tenantId);
-        if (!_current(generation, s)) return;
-        pending = null;
-        if (e.status == 401 || e.status == 403 || e.status == 404) {
+      // Only a recognized application denial proves that this submission was rejected.
+      // Proxy/malformed responses and key-reuse conflicts cannot establish its outcome.
+      final authorizationDenied = e.status == 401 || e.status == 403;
+      final definitive =
+          (e.status == 400 && e.code == 'VALIDATION_FAILED') ||
+          (e.status == 409 &&
+              {
+                'INVALID_STATE_TRANSITION',
+                'RESOURCE_CONFLICT',
+                'STALE_VERSION',
+                'EVIDENCE_REQUIRED',
+              }.contains(e.code));
+      if (e.status == 429) {
+        retryNotBefore = e.retryAfter;
+        _retryTimer?.cancel();
+        final wait = retryNotBefore?.difference(DateTime.now().toUtc());
+        if (wait != null && wait > Duration.zero) {
+          // UI eligibility only: this timer never submits a command.
+          _retryTimer = Timer(wait, _notify);
+        }
+        message =
+            'The server limited this request. The saved submission is retained. '
+            'Recover explicitly after the retry time.';
+      }
+      final assignmentDenied =
+          e.status == 404 && e.code == 'RESOURCE_NOT_FOUND';
+      if (authorizationDenied || assignmentDenied) {
+        // Authorization precedes ledger replay on the server: denial cannot prove
+        // whether an earlier uncertain submission committed. Keep its identity.
+        detail = null;
+        if (authorizationDenied) {
+          await session.rejectOperationalContext(e);
+        } else {
           await session.refresh();
         }
+        _resultAfterRefresh(
+          s,
+          'Recovery was denied: ${e.detail} '
+          'Assigned work was revalidated. The earlier outcome remains unconfirmed; its receipt is retained.',
+          e.traceId,
+        );
+      } else if (definitive) {
+        await journal.clear(
+          s.userId,
+          s.membership.tenantId,
+          operationId: command.id,
+        );
+        if (!_current(generation, s)) return;
+        pending = null;
+        detail = null;
+        await _reconcile(
+          s,
+          'The command was rejected: ${e.detail} Assigned work has been refreshed.',
+          e.traceId,
+        );
       }
     } catch (_) {
       if (_current(generation, s)) message = 'Result not confirmed. Reload and recover the same submission; do not repeat the physical action.';
     }
   }
 
+  bool _sameOwner(SessionSnapshot s) =>
+      !_disposed &&
+      session.auth.uid == s.firebaseUid &&
+      session.snapshot?.userId == s.userId &&
+      session.snapshot?.membership.tenantId == s.membership.tenantId;
+
+  Future<void> _reconcile(
+    SessionSnapshot s,
+    String result, [
+    String? trace,
+  ]) async {
+    detail = null;
+    await session.refresh();
+    _resultAfterRefresh(s, result, trace);
+  }
+
+  void _resultAfterRefresh(SessionSnapshot s, String result, String? trace) {
+    session.reportOperationalResult(s, result, trace);
+    if (!_sameOwner(s)) return;
+    message = result;
+    traceId = trace;
+    _notify();
+  }
+
   @override
   void dispose() {
+    _retryTimer?.cancel();
     _disposed = true;
     ++_generation;
     session.removeListener(_sessionChanged);

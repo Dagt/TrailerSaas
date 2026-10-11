@@ -14,12 +14,14 @@ class ApiProblem implements Exception {
     this.code,
     this.detail, {
     this.traceId,
+    this.retryAfter,
     this.errors = const [],
   });
   final int status;
   final String code;
   final String detail;
   final String? traceId;
+  final DateTime? retryAfter;
   final List<Object?> errors;
   @override
   String toString() => 'ApiProblem($status, $code)';
@@ -35,6 +37,7 @@ class ApiClient {
   final Uri baseUrl;
   final AuthGateway auth;
   final http.Client client;
+  final _postNotBefore = <String, DateTime>{};
 
   /// One submission only. The caller durably stores an immutable key/payload first.
   Future<Map<String, dynamic>> post(
@@ -48,6 +51,16 @@ class ApiClient {
         401,
         'AUTHENTICATION_REQUIRED',
         'Sign in to continue.',
+      );
+    }
+    final receipt = '$uid|$path|$key';
+    final notBefore = _postNotBefore[receipt];
+    if (notBefore != null && DateTime.now().toUtc().isBefore(notBefore)) {
+      throw ApiProblem(
+        429,
+        'RATE_LIMITED',
+        'Wait before recovering this submission.',
+        retryAfter: notBefore,
       );
     }
     String? token;
@@ -111,7 +124,29 @@ class ApiClient {
         'Sign in to continue.',
       );
     }
+    if (response.statusCode == 429) {
+      final notBefore = _retryAfter(response);
+      if (notBefore != null) _postNotBefore[receipt] = notBefore;
+    } else {
+      _postNotBefore.remove(receipt);
+    }
     return _decode(response);
+  }
+
+  DateTime? _retryAfter(http.Response response) {
+    final value = response.headers['retry-after'];
+    if (value == null) return null;
+    final seconds = int.tryParse(value);
+    if (seconds != null) {
+      return seconds < 0
+          ? null
+          : DateTime.now().toUtc().add(Duration(seconds: seconds));
+    }
+    try {
+      return HttpDate.parse(value).toUtc();
+    } catch (_) {
+      return null;
+    }
   }
 
   Map<String, dynamic> _decode(http.Response response) {
@@ -123,6 +158,7 @@ class ApiClient {
         response.statusCode,
         'UNEXPECTED_RESPONSE',
         'The server could not complete the request.',
+        retryAfter: _retryAfter(response),
       );
     }
     if (response.statusCode >= 400) {
@@ -133,6 +169,7 @@ class ApiClient {
             ? 'The server could not complete the request.'
             : body['detail'] as String? ??
                   'The request could not be completed.',
+        retryAfter: _retryAfter(response),
         traceId: body['traceId'] as String?,
         errors: body['errors'] as List<Object?>? ?? [],
       );

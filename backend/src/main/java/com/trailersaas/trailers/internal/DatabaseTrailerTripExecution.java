@@ -119,19 +119,37 @@ class DatabaseTrailerTripExecution implements TrailerTripExecution {
     if (!Set.of("DROP_HOOK", "LIVE_LOAD", "LIVE_UNLOAD").contains(type)) return true;
     var c = current(tenant, trip);
     if (c == null) return false;
-    if (!type.equals("DROP_HOOK")) return !c.hookedAt().isAfter(at);
+    if (!type.equals("DROP_HOOK")) {
+      // BR-051: the same interval must remain coupled throughout live service.
+      // Drop/re-Hook cannot stand in for uninterrupted live service.
+      if (c.hookedAt().isAfter(at)) return false;
+      return !Boolean.TRUE.equals(
+          em.createNativeQuery(
+                  "select exists(select 1 from trailer_couplings where tenant_id=:tenant"
+                      + " and trip_id=:trip and dropped_at>=:at)",
+                  Boolean.class)
+              .setParameter("tenant", tenant)
+              .setParameter("trip", trip)
+              .setParameter("at", at)
+              .getSingleResult());
+    }
     return Boolean.TRUE.equals(
         em.createNativeQuery(
                 "select exists(select 1 from trailer_couplings old join trailer_movement_events e"
-                    + " on e.tenant_id=old.tenant_id and e.id=old.drop_event_id where"
+                    + " on e.tenant_id=old.tenant_id and e.id=old.drop_event_id join"
+                    + " trailer_couplings replacement on replacement.tenant_id=old.tenant_id and"
+                    + " replacement.id=:coupling join trailer_movement_events h on"
+                    + " h.tenant_id=replacement.tenant_id and h.id=replacement.hook_event_id where"
                     + " old.tenant_id=:tenant and old.trip_id=:trip and e.trip_stop_id=:stop and"
-                    + " old.dropped_at>=:at and old.dropped_at<=:hooked and"
-                    + " old.trailer_id<>:replacement)",
+                    + " e.event_type='DROPPED' and h.event_type='HOOKED'"
+                    + " and h.trip_id=:trip and replacement.hooked_at>=:at and old.dropped_at>=:at"
+                    + " and old.dropped_at<=:hooked and old.trailer_id<>:replacement)",
                 Boolean.class)
             .setParameter("tenant", tenant)
             .setParameter("trip", trip)
             .setParameter("stop", stop)
             .setParameter("at", at)
+            .setParameter("coupling", c.id())
             .setParameter("hooked", c.hookedAt())
             .setParameter("replacement", c.trailerId())
             .getSingleResult());

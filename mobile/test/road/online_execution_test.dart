@@ -29,7 +29,8 @@ class MemoryJournal implements OnlineCommandJournal {
   }
 
   @override
-  Future<void> clear(String u, String t) async {
+  Future<void> clear(String u, String t, {String? operationId}) async {
+    if (operationId != null && rows['$u|$t']?.id != operationId) return;
     rows.remove('$u|$t');
   }
 }
@@ -262,9 +263,9 @@ void main() {
       expect(posts.single.url.path, endsWith('/stops/previous-stop/arrivals'));
       expect(posts.single.headers['Idempotency-Key'], saved.id);
       expect(jsonDecode(posts.single.body), saved.body);
-      expect(await journal.read('user-A', 'A'), isNull);
+      expect((await journal.read('user-A', 'A'))!.id, saved.id);
       expect(f.session.snapshot!.trips.single.id, 'trip-A');
-      expect(c.pending, isNull);
+      expect(c.pending!.id, saved.id);
       expect(c.sending, isFalse);
     },
   );
@@ -277,7 +278,7 @@ void main() {
       posts++;
       return http.Response('{}', 200);
     };
-    await c.submit('path', {});
+    await c.submit('tenants/A/stops/s/arrivals', {});
     expect(posts, 0);
     expect(c.detail, isNull);
     expect(journal.rows, isEmpty);
@@ -293,7 +294,7 @@ void main() {
         if (!started.isCompleted) started.complete();
         return response.future;
       };
-      final send = c.submit('path', {});
+      final send = c.submit('tenants/A/stops/s/arrivals', {});
       await started.future;
       f.auth.uid = 'firebase-B';
       f.auth.events.add('firebase-B');
@@ -314,10 +315,10 @@ void main() {
       posts++;
       throw http.ClientException('offline');
     };
-    await c.submit('path', {});
-    await c.submit('other', {});
+    await c.submit('tenants/A/stops/s/arrivals', {});
+    await c.submit('tenants/A/stops/s/completions', {});
     expect(posts, 1);
-    expect(c.pending!.path, 'path');
+    expect(c.pending!.path, 'tenants/A/stops/s/arrivals');
   });
   test(
     'QR adapter accepts only token or HTTPS label and never arbitrary URL',

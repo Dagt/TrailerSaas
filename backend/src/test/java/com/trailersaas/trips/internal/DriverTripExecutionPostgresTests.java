@@ -500,6 +500,100 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
         .isEqualTo(replacement);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"LIVE_LOAD", "LIVE_UNLOAD"})
+  void liveServiceCompletesOnlyWithUninterruptedSameCoupling(String type) throws Exception {
+    f.db.execute("update trip_stops set stop_type=? where id=?", type, stop);
+    depart();
+    service(stop);
+    var coupling =
+        f.db.value("select id from trailer_couplings where trip_id=? and dropped_at is null", trip);
+    var load = value("trailers", "load_state", trailer);
+    ok(action("/stops/" + stop + "/completions", Map.of("notes", "Service completed")));
+    assertThat(
+            f.db.value(
+                "select id from trailer_couplings where trip_id=? and dropped_at is null", trip))
+        .isEqualTo(coupling);
+    assertThat(value("trailers", "load_state", trailer)).isEqualTo(load);
+    assertThat(
+            f.db.value(
+                "select count(*) from trailer_movement_events where trip_id=? and"
+                    + " event_type='LOAD_STATE_CHANGED'",
+                trip))
+        .isEqualTo(0L);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"LIVE_LOAD", "LIVE_UNLOAD"})
+  void liveServiceRejectsDropAndRehookEvenWithSameTrailer(String type) throws Exception {
+    f.db.execute("update trip_stops set stop_type=? where id=?", type, stop);
+    depart();
+    service(stop);
+    ok(
+        action(
+            "/trips/" + trip + "/drops",
+            Map.of(
+                "trailerId",
+                trailer.toString(),
+                "stopId",
+                stop.toString(),
+                "locationId",
+                location.toString())));
+    problem(action("/stops/" + stop + "/completions", Map.of()), 409, "RESOURCE_CONFLICT");
+    var version = value("trailers", "version", trailer);
+    ok(
+        action(
+            "/trips/" + trip + "/hooks",
+            Map.of(
+                "trailerId",
+                trailer.toString(),
+                "tractorId",
+                tractor.toString(),
+                "driverId",
+                driver.toString(),
+                "expectedTrailerVersion",
+                version)));
+    problem(action("/stops/" + stop + "/completions", Map.of()), 409, "RESOURCE_CONFLICT");
+    assertThat(value("trip_stops", "status", stop)).isEqualTo("IN_SERVICE");
+    assertThat(
+            f.db.value(
+                "select count(*) from trip_stop_events where trip_stop_id=? and"
+                    + " event_type='COMPLETED'",
+                stop))
+        .isEqualTo(0L);
+  }
+
+  @Test
+  void dropHookCannotCompleteByRehookingOriginalTrailer() throws Exception {
+    f.db.execute("update trip_stops set stop_type='DROP_HOOK' where id=?", stop);
+    depart();
+    service(stop);
+    ok(
+        action(
+            "/trips/" + trip + "/drops",
+            Map.of(
+                "trailerId",
+                trailer.toString(),
+                "stopId",
+                stop.toString(),
+                "locationId",
+                location.toString())));
+    ok(
+        action(
+            "/trips/" + trip + "/hooks",
+            Map.of(
+                "trailerId",
+                trailer.toString(),
+                "tractorId",
+                tractor.toString(),
+                "driverId",
+                driver.toString(),
+                "expectedTrailerVersion",
+                value("trailers", "version", trailer))));
+    problem(action("/stops/" + stop + "/completions", Map.of()), 409, "RESOURCE_CONFLICT");
+    assertThat(value("trip_stops", "status", stop)).isEqualTo("IN_SERVICE");
+  }
+
   @Test
   void concurrentIdenticalKeyReturnsOneDurableResult() throws Exception {
     depart();

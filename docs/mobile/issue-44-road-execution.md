@@ -30,7 +30,8 @@ Stop events record previous/new Trip state, so final completion is a durable fac
 Orders and Manifests are not automatically completed or physically unloaded.
 Delivery always rejects ordinary completion with EVIDENCE_REQUIRED; #45/#53 will
 validate finalized POD. Live service requires the same coupling to remain present
-from service start. DROP_HOOK requires a real Drop at that Stop during service and
+from service start, with no intervening Drop/re-Hook even of the same Trailer.
+DROP_HOOK requires a real Drop at that Stop during service and
 a later different authorized replacement Hook. Both reuse #38 endpoints and ledger.
 
 ## Mandatory start integration remains blocked
@@ -89,9 +90,43 @@ ignore late results. The original namespace's unresolved receipt remains isolate
 later authorized reconciliation rather than silently being replayed under another account.
 An uncertain submission from another Trip can be explicitly recovered without navigating
 to work that is no longer assigned. The original key/path/body still go through fresh
-server authorization; a definitive denial clears the receipt and refreshes assigned work.
+server authorization. Road has a dedicated recovery panel independent of the assigned
+Trip list, including an empty list, and rechecks its namespace when resumed or returning
+from Trip detail. Original work need not remain assigned. Recovery requires an online
+server-validated context and never claims that a cached replay response is current.
+A denied assignment refreshes work but cannot prove whether an earlier attempt committed:
+that receipt is retained, with a clear unconfirmed-outcome message.
 A successful recovery of another Trip refreshes the full work set and never substitutes
 its saved response for the currently displayed Trip.
+
+### Explicit response policy
+
+| Result | Foreground receipt and recovery |
+|---|---|
+| Transport error, timeout, 408, 5xx | Retain exact UUID/path/body; explicit recovery only |
+| 429 | Retain; honor Retry-After seconds or HTTP-date with an in-memory eligibility gate, shared across foreground controllers; no timer sends a POST and no delay is persisted |
+| 401/403 | Retain because fresh authorization precedes replay lookup; invalidate operational snapshot and clear cached authorization/work before refreshing /me and assigned work; refresh outage cannot restore denied permissions |
+| 404 RESOURCE_NOT_FOUND | Retain because lost assignment can conceal a prior committed result; refresh current assigned work, show denial without claiming the physical action failed |
+| 400 VALIDATION_FAILED | Recognized definitive rejection; clear only the matching receipt and reconcile current work |
+| 409 INVALID_STATE_TRANSITION / RESOURCE_CONFLICT / STALE_VERSION / EVIDENCE_REQUIRED | Recognized semantic rejection after authorized replay lookup; clear only the matching receipt and reconcile current work |
+| Key-reuse conflict, unknown/malformed 4xx or response | Retain; cannot establish the original operation's outcome |
+| Success | Clear only the acknowledged UUID, then re-read authoritative detail/work before enabling actions; never apply a saved POST projection as current state |
+
+A receipt that remains inaccessible after assignment/permission revocation deliberately
+blocks another foreground command for that User/Tenant. It does not manufacture a new key,
+a confirmation or an abandonment/replay protocol. Later authorized reconciliation remains
+possible; generalized operation resolution and offline replay belong to #46.
+Strict stored endpoint checks prohibit other-Tenant or relative/traversal paths. Account/Tenant
+switches ignore late responses; acknowledgement cannot erase a newer receipt. The journal
+and camera are injectable widget boundaries; file and SQLite integration tests retain real
+persistence coverage without filesystem I/O inside Flutter's fake widget clock.
+
+Live Load/Unload completion is the explicit manual service completion for non-POD Stop types
+under the current API. It requires an uninterrupted physical coupling and does not infer or
+write load state or evidence. DELIVERY remains blocked by EVIDENCE_REQUIRED. Drop & Hook
+requires immutable Drop and authorized replacement Hook facts linked to actual intervals;
+Hook's #38 contract has no stopId, so it is correlated by Trip, service time and coupling
+rather than inventing a request field. POD/document-specific completion remains #45/#53.
 
 QR scanning uses mobile_scanner 7.4.2 with camera-only permission. No manual UUID/number
 bypass, gallery/media workflow or continuous location tracking. Only opaque token is

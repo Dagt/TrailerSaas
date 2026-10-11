@@ -21,6 +21,28 @@ class OnlineCommand {
       );
   final String id, tripId, path;
   final Map<String, dynamic> body;
+
+  /// Never replay a malformed, relative or other-Tenant endpoint from storage.
+  bool belongsTo(String tenant) {
+    final parts = path.split('/');
+    if (parts.length != 5 ||
+        parts[0] != 'tenants' ||
+        parts[1] != tenant ||
+        !RegExp(r'^[a-zA-Z0-9-]+$').hasMatch(parts[3])) {
+      return false;
+    }
+    return (parts[2] == 'trips' &&
+            parts[3] == tripId &&
+            {'hooks', 'drops', 'departures'}.contains(parts[4])) ||
+        (parts[2] == 'stops' &&
+            {
+              'arrivals',
+              'service-starts',
+              'completions',
+              'departures',
+            }.contains(parts[4]));
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'tripId': tripId,
@@ -38,7 +60,7 @@ class OnlineCommand {
 abstract interface class OnlineCommandJournal {
   Future<OnlineCommand?> read(String user, String tenant);
   Future<void> save(String user, String tenant, OnlineCommand command);
-  Future<void> clear(String user, String tenant);
+  Future<void> clear(String user, String tenant, {String? operationId});
 }
 
 /// One recoverable foreground submission per User/Tenant, not an offline replay queue.
@@ -93,8 +115,17 @@ class FileOnlineCommandJournal implements OnlineCommandJournal {
       });
 
   @override
-  Future<void> clear(String user, String tenant) => _serial(() async {
-    final file = await _file(user, tenant);
-    if (await file.exists()) await file.delete();
-  });
+  Future<void> clear(String user, String tenant, {String? operationId}) =>
+      _serial(() async {
+        final file = await _file(user, tenant);
+        if (await file.exists()) {
+          if (operationId != null) {
+            final saved = OnlineCommand.fromJson(
+              jsonDecode(await file.readAsString()) as Map<String, dynamic>,
+            );
+            if (saved.id != operationId) return;
+          }
+          await file.delete();
+        }
+      });
 }

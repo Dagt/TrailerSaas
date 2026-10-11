@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'session_controller.dart';
 import '../road/road_trip_screen.dart';
+import '../road/command_recovery_panel.dart';
+import '../road/online_command_journal.dart';
 
 class SessionView extends StatefulWidget {
-  const SessionView({super.key, required this.session});
+  const SessionView({super.key, required this.session, this.journal});
+  final OnlineCommandJournal? journal;
   final SessionController session;
   @override
   State<SessionView> createState() => _SessionViewState();
@@ -15,6 +18,9 @@ class _SessionViewState extends State<SessionView> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   int _mode = 0;
+  int _recoveryRevision = 0;
+  late final OnlineCommandJournal _journal =
+      widget.journal ?? FileOnlineCommandJournal();
   @override
   void dispose() {
     _email.dispose();
@@ -142,6 +148,10 @@ class _SessionViewState extends State<SessionView> {
                     : 'Connected — server validated',
               ),
               Text('Last refreshed: ${snapshot.refreshedAt.toLocal()}'),
+              if (session.message != null)
+                Semantics(liveRegion: true, child: Text(session.message!)),
+              if (session.traceId != null)
+                Text('Support reference: ${session.traceId}'),
               if (session.state != SessionState.offline &&
                   (session.user?.memberships.length ?? 0) > 1)
                 TextButton(
@@ -183,6 +193,14 @@ class _SessionViewState extends State<SessionView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Road Mode — ${snapshot.driver?.name ?? ''}'),
+                    if (road)
+                      CommandRecoveryPanel(
+                        key: ValueKey(
+                          '${snapshot.firebaseUid}|${snapshot.userId}|${snapshot.membership.tenantId}|$_recoveryRevision',
+                        ),
+                        session: session,
+                        journal: _journal,
+                      ),
                     if (snapshot.trips.isEmpty)
                       const Text('No assigned work downloaded.'),
                     ...snapshot.trips.map(
@@ -194,15 +212,22 @@ class _SessionViewState extends State<SessionView> {
                             children: [
                               Text('Assigned Trip · ${trip.status}'),
                               TextButton(
-                                onPressed: () => Navigator.of(context)
-                                    .push<void>(
-                                      MaterialPageRoute(
-                                        builder: (_) => RoadTripScreen(
-                                          session: session,
-                                          cached: trip,
-                                        ),
-                                      ),
-                                    ),
+                                onPressed: () =>
+                                    Navigator.of(context)
+                                        .push<void>(
+                                          MaterialPageRoute(
+                                            builder: (_) => RoadTripScreen(
+                                              session: session,
+                                              cached: trip,
+                                              journal: _journal,
+                                            ),
+                                          ),
+                                        )
+                                        .then((_) {
+                                          if (mounted) {
+                                            setState(() => _recoveryRevision++);
+                                          }
+                                        }),
                                 child: const Text('Open assigned Trip'),
                               ),
                               if (trip.plannedTrailer != null)

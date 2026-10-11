@@ -239,7 +239,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
               Text('Support reference: ${controller.traceId}'),
             if (controller.pending != null)
               FilledButton(
-                onPressed: controller.sending || !controller.online
+                onPressed: !controller.canRecover
                     ? null
                     : () async {
                         if (await confirm(
