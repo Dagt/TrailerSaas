@@ -47,11 +47,21 @@ remain injectable for compatibility/regression tests; production Road uses Drift
 
 One foreground service owns synchronization for the app's single SQLite connection.
 Worker passes share a serialized lane, so no Trip/Trailer/Tractor sends overlap.
-SQLite compare-and-set claims QUEUED/RETRYABLE_FAILURE as SENDING before HTTP. On
-restart/namespace activation, interrupted SENDING is restored as retryable with the
-same immutable key. Account/Tenant changes pause the old namespace. Late responses
+SQLite compare-and-set claims QUEUED/RETRYABLE_FAILURE as SENDING before HTTP. Every
+new worker pass first awaits the previous database lane, including its entire POST
+and result handling. Only after that fence, with fresh ready User/Tenant context,
+remaining SENDING in the current namespace is restored as retryable with the same
+immutable key. This also covers same-scope ready → offline/loading → ready recovery,
+not just restart/namespace activation. Reconnect/resume callbacks request another
+pass; they never reset a live claim. A transport timeout ends the client attempt;
+the unchanged key and server ledger protect an original commit that finishes late.
+Account/Tenant changes pause the old namespace. Late responses
 cannot acknowledge or restore another identity's context; later authorized replay
 uses the backend ledger to resolve an uncertain committed result.
+A valid ACK stays acknowledged if the following authoritative refresh fails. The
+worker pauses dependent sends until fresh ready context returns. Same-scope offline
+notifications do not self-schedule repeated refreshes on an unavailable API; a
+connectivity event, foreground resume or explicit sync can retry validation.
 
 New commands can depend on several earlier commands in the same namespace. Missing,
 self, duplicate and cross-namespace dependencies are rejected. Only earlier immutable

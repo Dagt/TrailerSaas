@@ -37,7 +37,7 @@ class ReplayWorker extends ChangeNotifier {
   StreamSubscription<ConnectivityStatus>? _network;
   bool _started = false, _disposed = false;
   bool _requested = false;
-  String? _scope, _recoveredScope;
+  String? _scope;
   bool _wasReady = false;
   String? message;
   bool get sending => _running != null;
@@ -65,14 +65,17 @@ class ReplayWorker extends ChangeNotifier {
     final changed = next != _scope;
     if (changed) {
       _scope = next;
-      _recoveredScope = null;
       _timer?.cancel();
       message = null;
       if (!_disposed) notifyListeners();
     }
+    // Same-scope offline notifications pause sending, not request another pass.
+    // Otherwise a failed authoritative refresh on an available network link can
+    // repeatedly schedule itself. Reconnect/resume/manual sync retries explicitly;
+    // initial offline namespace activation still imports its legacy receipt.
     final shouldSync =
-        (ready || session.state == SessionState.offline) &&
-        (changed || !_wasReady);
+        (ready && (changed || !_wasReady)) ||
+        (session.state == SessionState.offline && changed);
     _wasReady = ready;
     if (shouldSync) unawaited(sync());
   }
@@ -92,6 +95,9 @@ class ReplayWorker extends ChangeNotifier {
       return _running!;
     }
     _timer?.cancel();
+    // This lane includes the entire previous cycle and every awaited POST, even
+    // when its session becomes offline/loading or changes identity mid-request.
+    // A reconnect/resume can request another pass, but cannot overtake live HTTP.
     final previous = _lanes[store.db] ?? Future.value();
     final requestedScope = scope;
     final run = previous
@@ -140,10 +146,12 @@ class ReplayWorker extends ChangeNotifier {
           !_current(owner)) {
         return;
       }
-      if (_recoveredScope != scope) {
-        await store.recoverSending(owner.userId, owner.membership.tenantId);
-        _recoveredScope = scope;
-      }
+      // We now own the database lane: all prior sends have settled or timed out.
+      // Any remaining SENDING in this fresh namespace is abandoned, including a
+      // same-scope offline/loading interruption. Recover on EVERY pass, not just
+      // namespace activation; never reset claims from session/network callbacks.
+      // The immutable request and backend ledger resolve an uncertain commit.
+      await store.recoverSending(owner.userId, owner.membership.tenantId);
       // Bound one foreground pass; another timer/manual/reconnect pass continues
       // a larger backlog. No unlimited mutation burst.
       for (var sent = 0; sent < 100 && _current(owner); sent++) {

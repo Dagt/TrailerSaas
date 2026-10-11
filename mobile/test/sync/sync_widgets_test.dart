@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trailersaas_mobile/src/session/session_controller.dart';
+import 'package:trailersaas_mobile/src/platform/connectivity.dart';
 import 'package:trailersaas_mobile/src/session/session_view.dart';
 import 'package:trailersaas_mobile/src/sync/command_store.dart';
 import 'package:trailersaas_mobile/src/sync/offline_actions.dart';
@@ -217,6 +222,90 @@ void main() {
       expect(button.onPressed, isNull);
       expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
       expect(find.text('Pending synchronization'), findsOneWidget);
+      await close(tester);
+    },
+  );
+
+  testWidgets(
+    'foreground resume recovers an abandoned same-scope send without timers',
+    (tester) async {
+      await setup(tester);
+      late Completer<void> entered;
+      late Completer<http.Response> response;
+      late Future<void> first;
+      late String key;
+      var posts = 0;
+      await tester.runAsync(() async {
+        // Create asynchronous gates in the real-I/O zone used by Drift/HTTP.
+        entered = Completer<void>();
+        response = Completer<http.Response>();
+        final command = intent();
+        key = command.command.id;
+        await store.enqueue('user-A', 'A', command);
+        f.handler = (request) async {
+          if (request.method == 'POST') {
+            posts++;
+            if (posts == 1) {
+              entered.complete();
+              return response.future;
+            }
+            return f.response({'trip': work('trip-A')});
+          }
+          if (request.url.path.endsWith('/api/v1/me')) {
+            return f.response({
+              'userId': 'user-A',
+              'memberships': f.memberships,
+            });
+          }
+          if (request.url.path.endsWith('/driver/me')) {
+            return f.response({'id': 'driver', 'name': 'Jane', 'active': true});
+          }
+          if (request.url.path.contains('/driver/me/trips/')) {
+            return f.response({
+              'trip': work('trip-A'),
+              'currentCoupling': null,
+            });
+          }
+          return f.response({'items': f.trips, 'nextCursor': null});
+        };
+        first = worker.sync();
+        await entered.future;
+      });
+      await tester.runAsync(
+        () => tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: SyncPanel(worker: worker)),
+          ),
+        ),
+      );
+      await tester.runAsync(() async {
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        f.network.status = ConnectivityStatus.unavailable;
+        f.network.events.add(ConnectivityStatus.unavailable);
+        expect(f.session.state, SessionState.offline);
+        response.completeError(
+          const SocketException('response lost while paused'),
+        );
+        await first;
+        expect((await store.list('user-A', 'A')).single.state, 'SENDING');
+        // Only resume triggers replay: no network event, manual sync or timer.
+        f.network.status = ConnectivityStatus.available;
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await store
+            .watch('user-A', 'A')
+            .firstWhere((rows) => rows.single.state == 'ACKNOWLEDGED');
+      });
+      await settleReads(tester);
+      expect(posts, 2);
+      expect(
+        f.requests
+            .where((r) => r.method == 'POST')
+            .map((r) => r.headers['Idempotency-Key'])
+            .toSet(),
+        {key},
+      );
       await close(tester);
     },
   );
