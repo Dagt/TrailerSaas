@@ -71,3 +71,94 @@ extended for V20 and delivery_evidence; no test assertion was dropped.
 Remaining: strengthen edge-case tests and independent security review, full clean
 verify and four-job final-head CI, then one open PR. This checkpoint does not
 claim the issue merged or the future operational workflows implemented.
+
+## Implemented ports and workflow ownership
+
+`OperationalEvidencePolicy` exposes context-bound Pre-Trip, delivery, Driver damage,
+Trailer OOS and Fuel checks, plus attachment-free Pre-Trip/Fuel upload checks for a
+NEW future inspection/event. Accepted inspections allow nullable trip_id: #43 must
+authorize its real Shift/Tractor first, validate the four own unlinked uploads,
+then create the inspection and authorized attachments in one transaction. The
+upload-only checks cannot approve a Shift, inspection, event or departure. Already
+linked documents cannot be repurposed through this path.
+
+For existing Trip context, Pre-Trip/Fuel checks require exact Trip attachment,
+current Driver and current active Tractor, using the existing TractorPlanningPolicy.
+#43 additionally validates its Shift/inspection identities; #45 owns Shift-only
+Fuel context. The policy does not infer which equipment an image visually depicts.
+
+For #45, call `validateDeliveryForReplay` BEFORE the existing ledger. It locks the
+Trip exclusively, revalidates all documents/resources and allows a COMPLETED Stop
+only with an actual delivery_evidence record for committed replay. The ledger
+then either returns its saved result or invokes `recordDelivery` with the owning
+workflow's completion action. This ordering prevents concurrent shared-lock
+upgrades from deadlocking against a claimed idempotency row. The application
+boundary maps the existing public IdempotencyKeyReusedException; no new ledger is
+introduced. The real PostgreSQL HTTP harness verifies identical lost-ACK replay,
+incompatible keys, fresh revoked-assignment denial and concurrent same-key calls.
+
+The harness exists only in test sources and is excluded from component scanning;
+it is explicitly imported for evidence tests. It performs guarded runtime SQL for
+the valid IN_SERVICE -> COMPLETED transition and inserts the authenticated durable
+completion event. No mocked validator approves it, and no production delivery
+endpoint or Stop state mutation is added to Documents.
+
+## Authorization and error boundary
+
+Type mapping is BOL/POD/DELIVERY_PHOTO -> POD_UPLOAD; four PRETRIP positions ->
+PRETRIP_CREATE; FUEL_RECEIPT -> FUEL_EVENT_CREATE; Driver DAMAGE_PHOTO ->
+EXCEPTION_REPORT. All require the active own Driver. Concrete Trailer OOS checks
+separately require TRAILER_OOS_MARK and exact Trailer attachment; its public
+producer remains #49 because the generic init request has no authorized Trailer
+context. Read grants confer no upload permission and role mappings are unchanged.
+
+Driver delivery requires BOL (generic POD is not a signed-BOL substitute), plus a
+distinct DELIVERY_PHOTO and normalized nonblank comment for NO_RECEIVER_AVAILABLE.
+Both require the exact IN_SERVICE DELIVERY Stop on the current AT_STOP Trip and
+all linked-resource access. Unicode surrounding/blank spacing is normalized;
+comments are not treated as signature recognition. Document UUIDs are locked in
+sorted order. Authorization is re-evaluated after lock waits before validation or
+ledger replay, preserving the #52 linked-uploader correction.
+
+Errors are safe EVIDENCE_REQUIRED, UPLOAD_NOT_COMPLETE, VALIDATION_FAILED,
+RESOURCE_NOT_FOUND, CAPABILITY_DENIED, INVALID_STATE_TRANSITION or RESOURCE_CONFLICT.
+Infrastructure exceptions remain safe 5xx, never evidence success. V20 grants only
+SELECT/INSERT on delivery_evidence; no runtime UPDATE/DELETE, ownership, bypass,
+PUBLIC grants or destructive cascade. Its unique Tenant/Stop index serves lookup
+and concurrency; no speculative read indexes are added.
+
+## Second security/architecture review
+
+Reviewed the policy, transport changes, V20, resource ports, every modified test
+inventory and OpenAPI. The review strengthened: permission checks after locks;
+current-transaction completion/event proof; optional-Trip inspection staging;
+exclusive-parent-before-ledger order; and whitespace-only comments.
+
+The evidence and transaction suites prove persisted UPLOADED/type/owner checks,
+exact context, shared-Customer denial, revocation, pending/foreign data rejection,
+insert-only RLS history, uniqueness, joint rollback, lost-ACK recovery and no
+duplicate event. Sources contain no foreign-module internal imports. Trips remains
+independent of Documents, and module tests verify this direction. R2 adapter,
+publication keys, SHA-256, ledger implementation and the 57 capabilities are intact.
+
+No #43/#45/#49 production workflow, #54 media, #55 jobs, OCR/signature recognition,
+antivirus or retention is implemented. #53's policy does not certify a valid visual
+signature or photograph; future operational domains retain their own preconditions.
+
+## Final local validation checkpoint
+
+186 affected tests passed: 51 real PostgreSQL evidence tests, 11 unit normalization/
+capability cases, all 100 existing Documents/R2 tests, 17 RLS tests and 7 application/
+module tests; 0 failures, errors or skipped, BUILD SUCCESS. OpenAPI validation and
+9 tests passed. The old six denied-type expectations were replaced by stronger
+type-authority coverage of successful Driver upload/finalize/metadata/link/download,
+read-role denial and revoked assignment/role replay; the test count is preserved.
+
+The workflow harness originally needed its own HTTP mapping for the public ledger
+exception because existing production advice is controller-scoped. It now reuses
+the existing Documents error mapping at its test-only application boundary; no
+production error contract or ledger implementation changed. Both same-key
+concurrency and incompatible-key cases pass against real PostgreSQL.
+
+Next checkpoint: publish reviewed changes, run complete four-job CI on that HEAD,
+inspect exact totals/reviews, then mark the single PR Ready for Review. No merge.

@@ -8,8 +8,8 @@ CREATE TABLE delivery_evidence (
     completed_at timestamptz NOT NULL,
     UNIQUE (tenant_id,trip_stop_id),
     FOREIGN KEY (tenant_id,trip_stop_id) REFERENCES trip_stops(tenant_id,id),
-    CHECK (comment IS NULL OR btrim(comment) <> ''),
-    CHECK (evidence_mode <> 'NO_RECEIVER_AVAILABLE' OR (comment IS NOT NULL AND btrim(comment) <> ''))
+    CHECK (comment IS NULL OR comment ~ '[^[:space:]]'),
+    CHECK (evidence_mode <> 'NO_RECEIVER_AVAILABLE' OR (comment IS NOT NULL AND comment ~ '[^[:space:]]'))
 );
 ALTER TABLE delivery_evidence ENABLE ROW LEVEL SECURITY;
 CREATE POLICY delivery_evidence_tenant ON delivery_evidence TO "${runtimeRole}"

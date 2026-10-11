@@ -53,6 +53,7 @@ class DocumentService {
     var identity=repository.find(tenant,document,false);
     uploads.require(actor,tenant,identity.type(),true);
     var row=repository.find(tenant,document,true);
+    uploads.require(actor,tenant,row.type(),false);
     if(!actor.userId().equals(row.uploader())) throw DocumentFailure.missing();
     if(row.status()!=Status.PENDING && row.status()!=Status.UPLOADED) throw DocumentFailure.conflict("RESOURCE_CONFLICT");
     var linked=repository.links(tenant,document);
@@ -97,6 +98,7 @@ class DocumentService {
     if(!driver.equals(assigned)) throw DocumentFailure.missing();
     authorization.requireAssignedWorkCapability(actor,tenant,Capability.TRIP_VIEW_ASSIGNED,true);
     var row=repository.find(tenant,document,true);
+    uploads.require(actor,tenant,row.type(),false);
     if(!actor.userId().equals(row.uploader())) throw DocumentFailure.missing();
     if(row.status()!=Status.UPLOADED) throw DocumentFailure.conflict("UPLOAD_NOT_COMPLETE");
     var existing=repository.links(tenant,document);

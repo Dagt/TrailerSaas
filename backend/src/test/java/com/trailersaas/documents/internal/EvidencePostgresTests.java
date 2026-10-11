@@ -27,11 +27,13 @@ import static com.trailersaas.documents.OperationalEvidencePolicy.*;
 class EvidencePostgresTests extends DocumentHttpPostgresFixture {
   @Autowired OperationalEvidencePolicy policy;
   @Autowired PlatformTransactionManager manager;
+  @Autowired Harness workflow;
   UUID tractor;
   @BeforeEach void operationalContext() throws Exception {
     tractor=db.tractor(tenant,"Evidence-"+UUID.randomUUID());
     db.execute("UPDATE trips SET current_tractor_id=?,status='AT_STOP',started_at=now() WHERE id=?",tractor,trip);
     db.execute("UPDATE trip_stops SET status='IN_SERVICE',arrived_at=now(),service_started_at=now() WHERE id=?",stop);
+    workflow.beforeCompletion=()->{};
   }
   AuthenticatedUserPrincipal actor() { return new AuthenticatedUserPrincipal(user,"fixture-"+user,null,null); }
   void tx(Runnable action) { new TransactionTemplate(manager).executeWithoutResult(s->action.run()); }
@@ -43,6 +45,7 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     var id=UUID.fromString(JsonPath.read(response.body(),"$.documentId"));
     peer.objects.put(DocumentService.temporary(tenant,id),new SignedS3TestServer.Blob(bytes,"image/jpeg"));
     assertThat(complete(id,UUID.randomUUID(),null).statusCode()).isEqualTo(200);
+    if(target==null) return id;
     var linked=http("driver","POST",base()+"/"+id+"/links","{\"entityType\":\""+target+"\",\"entityId\":\""+resource+"\"}",null);
     assertThat(linked.statusCode()).withFailMessage(linked.body()).isEqualTo(200);return id;
   }
@@ -55,6 +58,23 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
   void pretrip(PreTripPhotos p) { policy.validatePreTrip(actor(),tenant,trip,tractor,p); }
   @Test void fourPreTripImagesValidateRealAssignedContextWithoutCreatingInspectionOrShift() throws Exception {
     var p=photos();tx(()->pretrip(p));assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+  }
+  @Test void attachmentFreePreTripSetSupportsFutureInspectionWithoutInventedTrip() throws Exception {
+    var uploads=new PreTripPhotos(document("PRETRIP_FRONT",null,null),document("PRETRIP_REAR",null,null),document("PRETRIP_DRIVER_SIDE",null,null),document("PRETRIP_PASSENGER_SIDE",null,null));
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);
+    tx(()->policy.validatePreTripUploads(actor(),tenant,uploads));
+    assertThat(db.value("SELECT count(*) FROM document_links WHERE tenant_id=?",tenant)).isEqualTo(0L);
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+    assertProblem(http("driver","POST",base()+"/"+uploads.front()+"/download-url","{}",null),404,"RESOURCE_NOT_FOUND");
+    db.execute("UPDATE trips SET current_driver_id=? WHERE id=?",driver,trip);
+    assertThat(http("driver","POST",base()+"/"+uploads.front()+"/links","{\"entityType\":\"TRIP\",\"entityId\":\""+trip+"\"}",null).statusCode()).isEqualTo(200);
+    rejected(()->policy.validatePreTripUploads(actor(),tenant,uploads),EvidenceValidationException.Code.RESOURCE_NOT_FOUND);
+  }
+  @Test void attachmentFreeFuelReceiptDoesNotApproveOrCreateFutureShiftFuelEvent() throws Exception {
+    var receipt=document("FUEL_RECEIPT",null,null);tx(()->policy.validateFuelUpload(actor(),tenant,receipt));
+    assertThat(db.value("SELECT count(*) FROM document_links WHERE document_id=?",receipt)).isEqualTo(0L);
+    assertThat(http("driver","POST",base()+"/"+receipt+"/links","{\"entityType\":\"TRIP\",\"entityId\":\""+trip+"\"}",null).statusCode()).isEqualTo(200);
+    rejected(()->policy.validateFuelUpload(actor(),tenant,receipt),EvidenceValidationException.Code.RESOURCE_NOT_FOUND);
   }
   @ParameterizedTest @ValueSource(ints={0,1,2,3})
   void eachMissingPreTripPositionRejects(int missing) throws Exception {
@@ -171,9 +191,15 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     assertThat(db.value("SELECT serviceability_state FROM trailers WHERE id=?",trailer)).isEqualTo("IN_SERVICE");
   }
 
+  @org.springframework.boot.test.context.TestComponent
   @RestController static class Harness {
     private final OperationalEvidencePolicy policy;private final TransactionTemplate tx;private final JdbcTemplate jdbc;
-    Harness(OperationalEvidencePolicy p,PlatformTransactionManager m,JdbcTemplate j) { policy=p;tx=new TransactionTemplate(m);jdbc=j; }
+    private final MobileOperationLedger ledger;
+    volatile Runnable beforeCompletion=()->{};
+    Harness(OperationalEvidencePolicy p,PlatformTransactionManager m,JdbcTemplate j,MobileOperationLedger l) { policy=p;tx=new TransactionTemplate(m);jdbc=j;ledger=l; }
+    // The application orchestration owns its HTTP boundary; reuse the existing safe error mapping.
+    @ExceptionHandler(IdempotencyKeyReusedException.class)
+    org.springframework.http.ProblemDetail reused(IdempotencyKeyReusedException e) { return new DocumentExceptionHandler().reused(e); }
     @PostMapping("/api/v1/tenants/{tenant}/evidence-test/{stop}/validate")
     Map<String,Boolean> validate(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenant,@PathVariable UUID stop,@RequestBody Delivery delivery) {
       tx.executeWithoutResult(s->policy.validateDelivery(actor,tenant,stop,delivery));return Map.of("validated",true);
@@ -182,7 +208,21 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     Receipt record(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenant,@PathVariable UUID stop,@RequestBody Delivery delivery,
         @RequestParam(defaultValue="false") boolean fail,@RequestParam(defaultValue="false") boolean noop,@RequestParam(defaultValue="false") boolean noEvent) {
       return tx.execute(s->policy.recordDelivery(actor,tenant,stop,delivery,()-> {
-        if(noop) return;
+        complete(actor,tenant,stop,fail,noop,noEvent);
+      }));
+    }
+    @PostMapping("/api/v1/tenants/{tenant}/evidence-test/{stop}/ledger")
+    Receipt ledger(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenant,@PathVariable UUID stop,@RequestBody Delivery delivery,@RequestHeader("Idempotency-Key") UUID key) {
+      return tx.execute(s->{
+        policy.validateDeliveryForReplay(actor,tenant,stop,delivery);
+        var canonical=stop+"|"+delivery.mode()+"|"+delivery.bolDocumentId()+"|"+delivery.deliveryPhotoDocumentId()+"|"+DatabaseOperationalEvidencePolicy.comment(delivery.comment());
+        var hash=SignedS3TestServer.sha(canonical.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return ledger.execute(tenant,actor.userId(),key,"DELIVERY_EVIDENCE_TEST",hash,"TRIP_STOP",Receipt::stopId,Receipt.class,
+            ()->policy.recordDelivery(actor,tenant,stop,delivery,()->complete(actor,tenant,stop,false,false,false)));
+      });
+    }
+    private void complete(AuthenticatedUserPrincipal actor,UUID tenant,UUID stop,boolean fail,boolean noop,boolean noEvent) {
+        beforeCompletion.run();if(noop) return;
         int updated=jdbc.update("UPDATE trip_stops SET status='COMPLETED',completed_at=now(),updated_at=now(),version=version+1 WHERE tenant_id=? AND id=? AND status='IN_SERVICE'",tenant,stop);
         assertThat(updated).isEqualTo(1);
         if(!noEvent) jdbc.update("""
@@ -190,7 +230,6 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
             SELECT ?,tenant_id,id,trip_id,'COMPLETED','HUMAN_USER','USER_ACTION',?,completed_at,now() FROM trip_stops WHERE tenant_id=? AND id=?
             """,UUID.randomUUID(),actor.userId(),tenant,stop);
         if(fail) throw new IllegalStateException("Test-only downstream failure");
-      }));
     }
   }
   String deliveryJson(Delivery d) { return "{\"mode\":\""+d.mode()+"\",\"bolDocumentId\":\""+d.bolDocumentId()+"\",\"deliveryPhotoDocumentId\":"+(d.deliveryPhotoDocumentId()==null?"null":"\""+d.deliveryPhotoDocumentId()+"\"")+",\"comment\":"+(d.comment()==null?"null":"\""+d.comment()+"\"")+"}"; }
@@ -235,7 +274,7 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     try(var executor=Executors.newVirtualThreadPerTaskExecutor()) {
       var owner=executor.submit(()->new TransactionTemplate(manager).execute(s->policy.recordDelivery(actor(),tenant,stop,delivery,()-> {
         holding.countDown();try {if(!release.await(10,TimeUnit.SECONDS)) throw new AssertionError("Latch timeout");} catch(InterruptedException e) {throw new AssertionError(e);}
-        new Harness(policy,manager,new JdbcTemplate(runtime)).jdbc.update("UPDATE trip_stops SET status='COMPLETED',completed_at=now(),version=version+1 WHERE tenant_id=? AND id=?",tenant,stop);
+        new JdbcTemplate(runtime).update("UPDATE trip_stops SET status='COMPLETED',completed_at=now(),version=version+1 WHERE tenant_id=? AND id=?",tenant,stop);
         new JdbcTemplate(runtime).update("INSERT INTO trip_stop_events(id,tenant_id,trip_stop_id,trip_id,event_type,actor_type,source_type,actor_user_id,occurred_at,recorded_at) SELECT ?,tenant_id,id,trip_id,'COMPLETED','HUMAN_USER','USER_ACTION',?,completed_at,now() FROM trip_stops WHERE tenant_id=? AND id=?",UUID.randomUUID(),user,tenant,stop);
       })));
       assertThat(holding.await(10,TimeUnit.SECONDS)).isTrue();
@@ -279,5 +318,95 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
       assertThatThrownBy(()->q.executeUpdate("UPDATE delivery_evidence SET comment='changed'")).isInstanceOf(SQLException.class);c.rollback();
       assertThatThrownBy(()->q.executeUpdate("DELETE FROM delivery_evidence")).isInstanceOf(SQLException.class);c.rollback();
     }
+  }
+  @Test void noReceiverRequiresFinalizedCorrectPhotoAndNoPartialRecord() throws Exception {
+    var valid=noReceiver();var response=initialize(initBody("DELIVERY_PHOTO"),"driver");var pending=UUID.fromString(JsonPath.read(response.body(),"$.documentId"));
+    rejected(()->policy.validateDelivery(actor(),tenant,stop,new Delivery(Mode.NO_RECEIVER_AVAILABLE,valid.bolDocumentId(),pending,"comment")),EvidenceValidationException.Code.UPLOAD_NOT_COMPLETE);
+    var wrong=document("BOL",DocumentContracts.Target.TRIP_STOP,stop);
+    rejected(()->policy.validateDelivery(actor(),tenant,stop,new Delivery(Mode.NO_RECEIVER_AVAILABLE,valid.bolDocumentId(),wrong,"comment")),EvidenceValidationException.Code.VALIDATION_FAILED);
+    assertProblem(http("driver","POST",harness("record"),"{\"mode\":\"SIGNED_BOL\"}",null),409,"EVIDENCE_REQUIRED");
+    assertThat(db.value("SELECT status FROM trip_stops WHERE id=?",stop)).isEqualTo("IN_SERVICE");
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+  }
+  @Test void actualForeignDeliveryStopIsInvisibleDespiteValidOwnEvidence() throws Exception {
+    var valid=signed();var foreignTrip=UUID.randomUUID();var foreignStop=UUID.randomUUID();
+    db.execute("INSERT INTO trips(id,tenant_id,status,created_at,updated_at) VALUES(?,?,'AT_STOP',now(),now())",foreignTrip,other);
+    db.execute("INSERT INTO trip_stops(id,tenant_id,trip_id,sequence_number,stop_type,status,site_snapshot,created_at,updated_at) VALUES(?,?,?,1,'DELIVERY','IN_SERVICE','{\"name\":\"Foreign\"}',now(),now())",foreignStop,other,foreignTrip);
+    var hidden=http("driver","POST","/api/v1/tenants/"+tenant+"/evidence-test/"+foreignStop+"/validate",deliveryJson(valid),null);
+    assertProblem(hidden,404,"RESOURCE_NOT_FOUND");assertThat(hidden.body()).doesNotContain(foreignTrip.toString(),other.toString(),"tenant/");
+  }
+  @Test void damageMissingPendingAndDuplicatesCannotApproveContext() throws Exception {
+    rejected(()->policy.validateDriverDamage(actor(),tenant,trip,stop,List.of()),EvidenceValidationException.Code.EVIDENCE_REQUIRED);
+    var response=initialize(initBody("DAMAGE_PHOTO"),"driver");var pending=UUID.fromString(JsonPath.read(response.body(),"$.documentId"));
+    rejected(()->policy.validateDriverDamage(actor(),tenant,trip,stop,List.of(pending)),EvidenceValidationException.Code.UPLOAD_NOT_COMPLETE);
+    var photo=document("DAMAGE_PHOTO",DocumentContracts.Target.TRIP_STOP,stop);
+    rejected(()->policy.validateDriverDamage(actor(),tenant,trip,stop,List.of(photo,photo)),EvidenceValidationException.Code.VALIDATION_FAILED);
+  }
+  @Test void uploadedReceiptOfAnotherDriverIsNotReusable() throws Exception {
+    var stranger=db.user();db.membership(tenant,stranger,"ACTIVE","DRIVER");db.driver(tenant,stranger);
+    org.mockito.Mockito.when(verifier.verify("receipt-stranger")).thenReturn(new VerifiedFirebaseIdentity("fixture-"+stranger,null,null));
+    var init=initialize(initBody("FUEL_RECEIPT"),"receipt-stranger");assertThat(init.statusCode()).isEqualTo(201);
+    var receipt=UUID.fromString(JsonPath.read(init.body(),"$.documentId"));peer.objects.put(DocumentService.temporary(tenant,receipt),new SignedS3TestServer.Blob(bytes,"image/jpeg"));
+    assertThat(http("receipt-stranger","POST",base()+"/"+receipt+"/upload-completion","{}",UUID.randomUUID()).statusCode()).isEqualTo(200);
+    rejected(()->policy.validateFuel(actor(),tenant,trip,tractor,receipt),EvidenceValidationException.Code.RESOURCE_NOT_FOUND);
+    assertProblem(http("driver","GET",base()+"/"+receipt,null,null),404,"RESOURCE_NOT_FOUND");
+  }
+  @Test void validationRequiresExistingTransactionAndRejectsPriorCompletionProof() throws Exception {
+    var valid=signed();
+    assertThatThrownBy(()->policy.validateDelivery(actor(),tenant,stop,valid)).isInstanceOf(org.springframework.transaction.IllegalTransactionStateException.class);
+    Instant old=Instant.now().minusSeconds(30);
+    db.execute("INSERT INTO trip_stop_events(id,tenant_id,trip_stop_id,trip_id,event_type,actor_type,source_type,actor_user_id,occurred_at,recorded_at) VALUES(?,?,?,?,'COMPLETED','HUMAN_USER','USER_ACTION',?,?,now())",UUID.randomUUID(),tenant,stop,trip,user,Timestamp.from(old));
+    rejected(()->policy.recordDelivery(actor(),tenant,stop,valid,()->new JdbcTemplate(runtime).update("UPDATE trip_stops SET status='COMPLETED',version=version+1,completed_at=? WHERE tenant_id=? AND id=?",Timestamp.from(old),tenant,stop)),EvidenceValidationException.Code.INVALID_STATE_TRANSITION);
+    assertThat(db.value("SELECT status FROM trip_stops WHERE id=?",stop)).isEqualTo("IN_SERVICE");
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+    assertThat(db.value("SELECT count(*) FROM trip_stop_events WHERE tenant_id=?",tenant)).isEqualTo(1L);
+  }
+  @Test void capabilityRevokedDuringDocumentLockWaitIsRevalidated() throws Exception {
+    var valid=signed();
+    try(var connection=flyway.getConfiguration().getDataSource().getConnection();var q=connection.createStatement();var executor=Executors.newVirtualThreadPerTaskExecutor()) {
+      connection.setAutoCommit(false);q.executeQuery("SELECT id FROM documents WHERE id='"+valid.bolDocumentId()+"' FOR UPDATE").close();
+      var validation=executor.submit(()->http("driver","POST",harness("validate"),deliveryJson(valid),null));
+      long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);boolean waiting=false;
+      while(System.nanoTime()<until) { if((Long)db.value("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type='Lock' AND query ILIKE '%documents%' AND query ILIKE '%FOR SHARE%'")>0) {waiting=true;break;}Thread.onSpinWait(); }
+      assertThat(waiting).isTrue();db.execute("DELETE FROM role_assignments WHERE membership_id=?",membership);connection.commit();
+      assertProblem(validation.get(15,TimeUnit.SECONDS),403,"CAPABILITY_DENIED");
+    }
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+  }
+  @Test void newEvidenceTableHasNoPublicOwnerBypassOrCascadePrivileges() throws Exception {
+    try(var c=flyway.getConfiguration().getDataSource().getConnection();var q=c.createStatement()) {
+      try(var r=q.executeQuery("SELECT relrowsecurity,relowner=(SELECT oid FROM pg_roles WHERE rolname='"+RUNTIME_USERNAME+"') FROM pg_class WHERE relname='delivery_evidence'")) {r.next();assertThat(r.getBoolean(1)).isTrue();assertThat(r.getBoolean(2)).isFalse();}
+      try(var r=q.executeQuery("SELECT count(*) FROM information_schema.role_table_grants WHERE table_name='delivery_evidence' AND grantee='PUBLIC'")) {r.next();assertThat(r.getLong(1)).isZero();}
+      try(var r=q.executeQuery("SELECT count(*) FROM pg_constraint WHERE conrelid='delivery_evidence'::regclass AND contype='f' AND confdeltype='c'")) {r.next();assertThat(r.getLong(1)).isZero();}
+    }
+    assertThatThrownBy(()->db.execute("INSERT INTO delivery_evidence VALUES(?,?,?,'NO_RECEIVER_AVAILABLE',?, ?,now())",UUID.randomUUID(),tenant,stop," \t\n ",user)).isInstanceOf(SQLException.class);
+  }
+  @Test void futureWorkflowReusesExistingLedgerAfterLostAckAndStillRevalidatesAccess() throws Exception {
+    var delivery=signed();var key=UUID.randomUUID();var first=http("driver","POST",harness("ledger"),deliveryJson(delivery),key);
+    assertThat(first.statusCode()).withFailMessage(first.body()).isEqualTo(200);
+    var replay=http("driver","POST",harness("ledger"),deliveryJson(delivery),key);
+    assertThat(replay.statusCode()).isEqualTo(200);assertThat(replay.body()).isEqualTo(first.body());
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(1L);
+    assertThat(db.value("SELECT count(*) FROM trip_stop_events WHERE tenant_id=?",tenant)).isEqualTo(1L);
+    var alternative=signed();assertProblem(http("driver","POST",harness("ledger"),deliveryJson(alternative),key),409,"IDEMPOTENCY_KEY_REUSED");
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);
+    assertProblem(http("driver","POST",harness("ledger"),deliveryJson(delivery),key),404,"RESOURCE_NOT_FOUND");
+    db.execute("UPDATE trips SET current_driver_id=? WHERE id=?",driver,trip);
+    db.execute("DELETE FROM role_assignments WHERE membership_id=?",membership);
+    assertProblem(http("driver","POST",harness("ledger"),deliveryJson(delivery),key),403,"CAPABILITY_DENIED");
+  }
+  @Test void concurrentSameKeyWorkflowClaimsAfterExclusiveTripLockWithoutUpgradeDeadlock() throws Exception {
+    var delivery=signed();var key=UUID.randomUUID();var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+    workflow.beforeCompletion=()->{entered.countDown();try {if(!release.await(10,TimeUnit.SECONDS)) throw new AssertionError("Completion wait timeout");} catch(InterruptedException e) {throw new AssertionError(e);} };
+    try(var executor=Executors.newVirtualThreadPerTaskExecutor()) {
+      var first=executor.submit(()->http("driver","POST",harness("ledger"),deliveryJson(delivery),key));assertThat(entered.await(10,TimeUnit.SECONDS)).isTrue();
+      var second=executor.submit(()->http("driver","POST",harness("ledger"),deliveryJson(delivery),key));
+      long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);boolean waiting=false;
+      while(System.nanoTime()<until) {if((Long)db.value("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type='Lock' AND query ILIKE '%trips%' AND query ILIKE '%FOR UPDATE%'")>0) {waiting=true;break;}Thread.onSpinWait();}
+      assertThat(waiting).isTrue();release.countDown();var one=first.get(15,TimeUnit.SECONDS);var two=second.get(15,TimeUnit.SECONDS);
+      assertThat(one.statusCode()).withFailMessage(one.body()).isEqualTo(200);assertThat(two.statusCode()).withFailMessage(two.body()).isEqualTo(200);assertThat(two.body()).isEqualTo(one.body());
+    } finally {release.countDown();workflow.beforeCompletion=()->{};}
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(1L);
+    assertThat(db.value("SELECT count(*) FROM trip_stop_events WHERE tenant_id=?",tenant)).isEqualTo(1L);
   }
 }

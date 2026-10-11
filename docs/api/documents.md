@@ -270,6 +270,10 @@ rear, Driver-side and passenger-side types, same Tenant/uploader and exact Trip
 attachment. #43 must additionally validate real Shift/inspection identity and
 equipment workflow before marking an inspection complete; no such rows are faked.
 Fuel requires one finalized own FUEL_RECEIPT in the authorized Trip/Tractor context.
+Attachment-free upload-set variants support a NEW future inspection or Shift-only
+Fuel Event when its owning domain has already authorized the real Shift/Tractor.
+They reject already-linked uploads and validate files only; they neither approve
+nor create an inspection/event. A Trip is not fabricated for nullable-trip workflows.
 Damage requires own finalized DAMAGE_PHOTO in the exact assigned work context.
 The separate OOS validator requires TRAILER_OOS_MARK and exact Trailer attachment;
 it changes no Trailer state and does not grant Driver generic Trailer access.
@@ -285,6 +289,10 @@ authenticated completion event, then inserts one immutable delivery_evidence row
 No-op/failing transitions and missing evidence roll back everything. #45 owns the
 actual completion/fulfillment and existing ledger replay; repeated direct policy
 calls conflict safely and cannot create a second evidence row.
+Before claiming the ledger, #45 calls `validateDeliveryForReplay`: exclusive Trip
+parent lock plus fresh full document/resource authority, including committed replay.
+This avoids shared-lock upgrade/ledger deadlocks; the committed Stop and event must
+belong to the same PostgreSQL transaction as new evidence persistence.
 
 Errors: 409 EVIDENCE_REQUIRED or UPLOAD_NOT_COMPLETE; 400 VALIDATION_FAILED for
 malformed sets/types/duplicates; safe 404 RESOURCE_NOT_FOUND for invisible context;
