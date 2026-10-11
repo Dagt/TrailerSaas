@@ -375,4 +375,43 @@ class DocumentPostgresTests extends PostgresIntegrationTest {
     db.execute("UPDATE drivers SET active=true WHERE id=?",driver);
     assertThat(http("driver","POST",base()+"/"+id+"/download-url","{}",null).statusCode()).isEqualTo(200);
   }
+
+  @Test void everyEndpointRequiresAuthenticationAndFreshMembership() throws Exception {
+    var id=uploaded();link(id,stop);
+    var paths=List.of("/uploads","/"+id+"/upload-completion","/"+id+"/links","/"+id,"/"+id+"/download-url");
+    var methods=List.of("POST","POST","POST","GET","POST");
+    var bodies=Arrays.asList(initBody("BOL"),"{}","{\"entityType\":\"TRIP_STOP\",\"entityId\":\""+stop+"\"}",null,"{}");
+    for(int i=0;i<paths.size();i++) assertThat(http(null,methods.get(i),base()+paths.get(i),bodies.get(i),UUID.randomUUID()).statusCode()).isEqualTo(401);
+    db.execute("UPDATE tenant_memberships SET status='SUSPENDED' WHERE id=?",membership);
+    for(int i=0;i<paths.size();i++) assertProblem(http("driver",methods.get(i),base()+paths.get(i),bodies.get(i),UUID.randomUUID()),403,"TENANT_ACCESS_DENIED");
+    db.execute("UPDATE tenant_memberships SET status='ACTIVE' WHERE id=?",membership);
+    db.execute("DELETE FROM role_assignments WHERE membership_id=?",membership);
+    for(int i=0;i<paths.size();i++) assertProblem(http("driver",methods.get(i),base()+paths.get(i),bodies.get(i),UUID.randomUUID()),403,"CAPABILITY_DENIED");
+  }
+
+  @Test void providerFailuresNeverCreateFakeUploadOrDownloadSuccess() throws Exception {
+    peer.failHead=true;
+    assertProblem(initialize(initBody("BOL"),"driver"),503,"OBJECT_STORAGE_UNAVAILABLE");
+    assertThat(db.value("SELECT count(*) FROM documents WHERE tenant_id=?",tenant)).isZero();
+    peer.failHead=false;var id=uploaded();link(id,stop);peer.failHead=true;
+    assertProblem(http("driver","POST",base()+"/"+id+"/download-url","{}",null),503,"OBJECT_STORAGE_UNAVAILABLE");
+    assertThat(db.value("SELECT upload_status FROM documents WHERE id=?",id)).isEqualTo("UPLOADED");
+    peer.failHead=false;
+    assertThat(http("driver","POST",base()+"/"+id+"/download-url","{}",null).statusCode()).isEqualTo(200);
+  }
+
+  @Test void orphanInspectionWaitsForPublicationAndCannotTreatCommittedDocumentAsPending() throws Exception {
+    var id=pending();db.execute("UPDATE documents SET created_at=now()-interval '2 days' WHERE id=?",id);
+    var cutoff=Instant.now().minus(Duration.ofDays(1));assertThat(inspection.candidates(tenant,cutoff,20)).containsExactly(id);
+    var copied=new CountDownLatch(1);var release=new CountDownLatch(1);
+    peer.afterCopy=()-> {copied.countDown();try {if(!release.await(10,TimeUnit.SECONDS)) throw new AssertionError("Publication latch timed out");} catch(InterruptedException e) {Thread.currentThread().interrupt();throw new AssertionError(e);} };
+    try(var executor=Executors.newVirtualThreadPerTaskExecutor()) {
+      var completion=executor.submit(()->complete(id,UUID.randomUUID(),null));assertThat(copied.await(10,TimeUnit.SECONDS)).isTrue();
+      var inspectionResult=executor.submit(()->inspection.inspect(tenant,id,cutoff));awaitDocumentLock();release.countDown();
+      assertThat(completion.get(15,TimeUnit.SECONDS).statusCode()).isEqualTo(200);
+      assertThat(inspectionResult.get(15,TimeUnit.SECONDS)).isEmpty();
+      assertThat(inspection.candidates(tenant,cutoff,20)).isEmpty();
+      assertThat(db.value("SELECT upload_status FROM documents WHERE id=?",id)).isEqualTo("UPLOADED");
+    } finally {release.countDown();peer.afterCopy=()->{};}
+  }
 }
