@@ -1,3 +1,5 @@
+import '../road/online_execution_test.dart' show MemoryJournal;
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +26,7 @@ void main() {
           configuration: AppConfiguration.fromValues(),
           database: database,
           session: fixture.session,
+          journal: MemoryJournal(),
         ),
       );
       await tester.pumpAndSettle();

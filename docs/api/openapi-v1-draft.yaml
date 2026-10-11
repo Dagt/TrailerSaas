@@ -1717,15 +1717,163 @@ paths:
     post:
       tags: [DriverMobile]
       operationId: confirmStopArrival
+      x-implementation-status: implemented-issue-44
+      description: >-
+        Requires ARRIVAL_CONFIRM; manual arrival only. Coordinates are optional evidence. A normalized authorized Operational Location permits physical Trailer arrival; an ad-hoc snapshot never invents physical location.
+        Fresh ACTIVE membership, own active linked Driver and current Trip assignment are
+        required with TRIP_EXECUTE_ASSIGNED. Unknown body/query fields are rejected.
+        Same key and logical request replays its saved result only after fresh authorization;
+        changed payload/type returns IDEMPOTENCY_KEY_REUSED. State conflicts are 409
+        INVALID_STATE_TRANSITION; infrastructure remains safe 5xx. No automatic retries.
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/ArrivalRequest'
+            schema: { $ref: '#/components/schemas/ManualArrivalRequestImplemented' }
       responses:
         '200':
-          description: Arrival recorded
+          description: Authoritative assigned execution projection or saved successful result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverExecutionDetail' }
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/stops/{stopId}/service-starts:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/StopId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: startStopService
+      x-implementation-status: implemented-issue-44
+      description: >-
+        ARRIVED to IN_SERVICE for the active Stop only.
+        Fresh ACTIVE membership, own active linked Driver and current Trip assignment are
+        required with TRIP_EXECUTE_ASSIGNED. Unknown body/query fields are rejected.
+        Same key and logical request replays its saved result only after fresh authorization;
+        changed payload/type returns IDEMPOTENCY_KEY_REUSED. State conflicts are 409
+        INVALID_STATE_TRANSITION; infrastructure remains safe 5xx. No automatic retries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StopOccurrenceRequestImplemented' }
+      responses:
+        '200':
+          description: Authoritative assigned execution projection or saved successful result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverExecutionDetail' }
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/stops/{stopId}/completions:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/StopId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: completeOperationalStop
+      x-implementation-status: implemented-issue-44
+      description: >-
+        IN_SERVICE to COMPLETED for non-delivery services. DELIVERY always returns EVIDENCE_REQUIRED until finalized POD exists (#45/#53). Live service preserves coupling; DROP_HOOK requires separate Drop then authorized replacement Hook. Trip completes only after all planned mandatory Stops are terminal, including explicit BASE_RETURN; Shift is untouched.
+        Fresh ACTIVE membership, own active linked Driver and current Trip assignment are
+        required with TRIP_EXECUTE_ASSIGNED. Unknown body/query fields are rejected.
+        Same key and logical request replays its saved result only after fresh authorization;
+        changed payload/type returns IDEMPOTENCY_KEY_REUSED. State conflicts are 409
+        INVALID_STATE_TRANSITION; infrastructure remains safe 5xx. No automatic retries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompleteOperationalStopRequestImplemented' }
+      responses:
+        '200':
+          description: Authoritative assigned execution projection or saved successful result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverExecutionDetail' }
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/stops/{stopId}/departures:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/StopId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: departOperationalStop
+      x-implementation-status: implemented-issue-44
+      description: >-
+        Requires DEPARTURE_CONFIRM. Completed current Stop departs toward the next ordered PENDING Stop, never skipping intermediate work.
+        Fresh ACTIVE membership, own active linked Driver and current Trip assignment are
+        required with TRIP_EXECUTE_ASSIGNED. Unknown body/query fields are rejected.
+        Same key and logical request replays its saved result only after fresh authorization;
+        changed payload/type returns IDEMPOTENCY_KEY_REUSED. State conflicts are 409
+        INVALID_STATE_TRANSITION; infrastructure remains safe 5xx. No automatic retries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StopDepartureRequestImplemented' }
+      responses:
+        '200':
+          description: Authoritative assigned execution projection or saved successful result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverExecutionDetail' }
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/departures:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: recordFirstTripDeparture
+      x-implementation-status: implemented-issue-44
+      description: >-
+        Requires DEPARTURE_CONFIRM, ASSIGNED Trip, active current Tractor, expected physically coupled Trailer when planned, and verified On Duty/Pre-Trip. Production fails closed pending #43. No fabricated Shift/inspection or configurable bypass.
+        Fresh ACTIVE membership, own active linked Driver and current Trip assignment are
+        required with TRIP_EXECUTE_ASSIGNED. Unknown body/query fields are rejected.
+        Same key and logical request replays its saved result only after fresh authorization;
+        changed payload/type returns IDEMPOTENCY_KEY_REUSED. State conflicts are 409
+        INVALID_STATE_TRANSITION; infrastructure remains safe 5xx. No automatic retries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FirstTripDepartureRequestImplemented' }
+      responses:
+        '200':
+          description: Authoritative assigned execution projection or saved successful result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverExecutionDetail' }
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/driver/me/trips/{tripId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [DriverMobile]
+      operationId: getOwnAssignedTripExecution
+      x-implementation-status: implemented-issue-44
+      description: Fresh TRIP_VIEW_ASSIGNED and own active Driver/current assignment. Includes terminal result for this assigned Trip. No administrative history or generic directory. Invisible direct Trip is safe 404. No query fields.
+      responses:
+        '200':
+          description: Bounded assigned execution detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverExecutionDetail' }
         default:
           $ref: '#/components/responses/Problem'
 
@@ -1952,6 +2100,77 @@ components:
         nextCursor:
           type: [string, "null"]
 
+    StopOccurrenceRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [occurredAt]
+      properties:
+        occurredAt: { type: string, format: date-time }
+    FirstTripDepartureRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [occurredAt, nextStopId]
+      properties:
+        occurredAt: { type: string, format: date-time }
+        fromStopId: { type: [string, "null"], format: uuid, description: First departure requires null/omitted origin Stop. }
+        nextStopId: { type: string, format: uuid, description: Must be first nonterminal planned Stop. }
+    ManualArrivalRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [occurredAt, source]
+      properties:
+        occurredAt: { type: string, format: date-time }
+        source: { type: string, enum: [MANUAL], description: "Confirmed geofence assistance remains #47." }
+        coordinates:
+          type: [object, "null"]
+          additionalProperties: false
+          required: [latitude, longitude, accuracyM]
+          properties:
+            latitude: { type: number, minimum: -90, maximum: 90 }
+            longitude: { type: number, minimum: -180, maximum: 180 }
+            accuracyM: { type: number, minimum: 0 }
+    CompleteOperationalStopRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [occurredAt]
+      properties:
+        occurredAt: { type: string, format: date-time }
+        notes: { type: [string, "null"] }
+    StopDepartureRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [occurredAt, nextStopId]
+      properties:
+        occurredAt: { type: string, format: date-time }
+        nextStopId: { type: string, format: uuid }
+    DriverExecutionDetail:
+      type: object
+      additionalProperties: false
+      required: [trip, tractorOperationalNumber, currentCoupling, startedAt, completedAt, departurePrerequisitesSatisfied]
+      properties:
+        trip: { $ref: '#/components/schemas/DriverAssignedTrip' }
+        tractorOperationalNumber: { type: [string, "null"] }
+        startedAt: { type: [string, "null"], format: date-time }
+        completedAt: { type: [string, "null"], format: date-time }
+        departurePrerequisitesSatisfied: { type: boolean, description: "Fail closed until #43 supplies fresh required On Duty/Pre-Trip validation. Navigation hint only." }
+        currentCoupling:
+          oneOf:
+            - { type: "null" }
+            - $ref: '#/components/schemas/DriverPhysicalCoupling'
+    DriverPhysicalCoupling:
+      type: object
+      additionalProperties: false
+      required: [id, trailerId, operationalNumber, tractorId, driverId, hookedAt, trailerVersion, locationId]
+      properties:
+        id: { type: string, format: uuid }
+        trailerId: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        tractorId: { type: string, format: uuid }
+        driverId: { type: string, format: uuid }
+        hookedAt: { type: string, format: date-time }
+        trailerVersion: { type: integer, minimum: 0 }
+        locationId: { type: [string, "null"], format: uuid }
+
     DriverSelfProfile:
       type: object
       additionalProperties: false
@@ -1979,7 +2198,7 @@ components:
       required: [id, status, currentDriverId, currentTractorId, plannedInitialTrailerId, plannedTrailer, version, updatedAt, stops]
       properties:
         id: { type: string, format: uuid }
-        status: { type: string, enum: [PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING] }
+        status: { type: string, enum: [PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING, COMPLETED, CANCELLED] }
         currentDriverId: { type: string, format: uuid }
         currentTractorId: { type: [string, "null"], format: uuid }
         plannedInitialTrailerId: { type: [string, "null"], format: uuid }
@@ -2984,7 +3203,7 @@ components:
       type: object
       additionalProperties: false
       description: Identification only. No token, Tenant, Customer metadata, roles, scopes or history.
-      required: [trailerId, operationalNumber, trailerType, locationState, loadState, serviceabilityState, active]
+      required: [trailerId, operationalNumber, trailerType, locationState, loadState, serviceabilityState, active, version]
       properties:
         trailerId: { type: string, format: uuid }
         operationalNumber: { type: string }
@@ -2996,6 +3215,7 @@ components:
         serviceabilityState:
           $ref: '#/components/schemas/TrailerServiceabilityState'
         active: { type: boolean }
+        version: { type: integer, minimum: 0, description: Fresh version for the existing Hook command; scan alone grants no authority. }
 
     OrderSummary:
       type: object

@@ -1003,3 +1003,7 @@ counts or flags. Parent existence checks and the 51-row child lookahead remain
 inside the same bounded queries. PostgreSQL tests also record default-planner
 EXPLAIN ANALYZE/BUFFERS node/index evidence and verify bounded returned rows,
 separately from ordered-index eligibility diagnostics, without exact cost assertions.
+
+## Driver execution (#44)
+
+[Execution boundary](../docs/mobile/issue-44-road-execution.md) documents V18 immutable Stop events, the shared V16 ledger, own assigned Trip detail and five typed internal execution commands. Production first departure fails closed until #43 validates duty/inspection; tests substitute only the prerequisite seam. Delivery is blocked pending finalized POD. No capability catalog, physical Hook/Drop contract or historical migration changes.

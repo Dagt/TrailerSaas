@@ -154,6 +154,85 @@ class SessionController extends ChangeNotifier {
     }
   }
 
+  /// A command denial revokes local continuity before any permission refresh.
+  Future<void> rejectOperationalContext(ApiProblem problem) async {
+    final uid = auth.uid;
+    if (uid == null) return;
+    final generation = ++_generation;
+    snapshot = null;
+    user = null;
+    state = SessionState.invalid;
+    message = problem.detail;
+    traceId = problem.traceId;
+    _notify();
+    try {
+      await _clearCache();
+      if (_current(generation, uid)) await refresh();
+    } catch (_) {
+      _storageFailure(generation, uid);
+    }
+  }
+
+  /// A foreground result survives replacement of the Road view during refresh.
+  /// It carries no permissions and can only appear in the freshly validated namespace.
+  void reportOperationalResult(
+    SessionSnapshot owner,
+    String result,
+    String? trace,
+  ) {
+    final current = snapshot;
+    if (_disposed ||
+        state != SessionState.ready ||
+        current == null ||
+        auth.uid != owner.firebaseUid ||
+        current.userId != owner.userId ||
+        current.membership.tenantId != owner.membership.tenantId) {
+      return;
+    }
+    message = result;
+    traceId = trace;
+    _notify();
+  }
+
+  /// Reconcile a confirmed execution projection without granting cached permissions.
+  /// The original validated identity remains mandatory throughout the SQLite write.
+  Future<bool> cacheConfirmedTrip(
+    SessionSnapshot owner,
+    Map<String, dynamic> data,
+  ) async {
+    final generation = _generation;
+    bool current() =>
+        _current(generation, owner.firebaseUid) &&
+        identical(snapshot, owner) &&
+        state == SessionState.ready;
+    if (!current()) return false;
+    final trip = WorkTrip(data);
+    trip.stops;
+    final work = owner.trips.where((t) => t.id != trip.id).toList();
+    if (!{'COMPLETED', 'CANCELLED'}.contains(trip.status)) work.add(trip);
+    final next = SessionSnapshot(
+      owner.firebaseUid,
+      owner.userId,
+      owner.membership,
+      owner.driver,
+      DateTime.now().toUtc(),
+      work,
+    );
+    try {
+      await cache.replace(next, current);
+      if (!current()) return false;
+      owner.trips
+        ..clear()
+        ..addAll(work);
+      _notify();
+      return true;
+    } catch (_) {
+      _cleanupRequired = true;
+      _storageFailure(generation, owner.firebaseUid);
+      return false;
+    }
+  }
+
   Future<void> _bootstrap(
     int generation,
     String uid, {

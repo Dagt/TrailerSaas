@@ -1,3 +1,5 @@
+import '../road/online_execution_test.dart' show MemoryJournal;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trailersaas_mobile/src/configuration/app_configuration.dart';
@@ -22,7 +24,9 @@ void main() {
       }))!;
       addTearDown(() => tester.runAsync(f.close));
       await tester.pumpWidget(
-        MaterialApp(home: SessionView(session: f.session)),
+        MaterialApp(
+          home: SessionView(session: f.session, journal: MemoryJournal()),
+        ),
       );
       expect(
         find.textContaining('Local storage could not be accessed'),
@@ -48,7 +52,11 @@ void main() {
       return fixture;
     }))!;
     addTearDown(() => tester.runAsync(f.close));
-    await tester.pumpWidget(MaterialApp(home: SessionView(session: f.session)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SessionView(session: f.session, journal: MemoryJournal()),
+      ),
+    );
     expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
     await tester.tap(find.text('Sign in'));
@@ -67,7 +75,9 @@ void main() {
       }))!;
       addTearDown(() => tester.runAsync(f.close));
       await tester.pumpWidget(
-        MaterialApp(home: SessionView(session: f.session)),
+        MaterialApp(
+          home: SessionView(session: f.session, journal: MemoryJournal()),
+        ),
       );
       expect(find.text('Road Mode — Jane Driver'), findsOneWidget);
       expect(find.text('Expected Trailer: TR-123'), findsOneWidget);
@@ -104,7 +114,9 @@ void main() {
       f.network.status = ConnectivityStatus.unavailable;
       await tester.runAsync(f.session.refresh);
       await tester.pumpWidget(
-        MaterialApp(home: SessionView(session: f.session)),
+        MaterialApp(
+          home: SessionView(session: f.session, journal: MemoryJournal()),
+        ),
       );
       expect(
         find.text('Offline — cached, not current authorization'),
@@ -125,7 +137,11 @@ void main() {
       return fixture;
     }))!;
     addTearDown(() => tester.runAsync(f.close));
-    await tester.pumpWidget(MaterialApp(home: SessionView(session: f.session)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SessionView(session: f.session, journal: MemoryJournal()),
+      ),
+    );
     expect(find.text('No active mobile access is available.'), findsOneWidget);
     expect(find.text('Expected Trailer: TR-123'), findsNothing);
     expect(find.byType(NavigationBar), findsNothing);

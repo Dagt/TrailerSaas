@@ -6,6 +6,7 @@ import '../configuration/app_configuration.dart';
 import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import '../session/session_view.dart';
+import '../road/online_command_journal.dart';
 
 class TrailerSaasApp extends StatefulWidget {
   const TrailerSaasApp({
@@ -13,11 +14,13 @@ class TrailerSaasApp extends StatefulWidget {
     required this.configuration,
     required this.database,
     this.session,
+    this.journal,
   });
 
   final AppConfiguration configuration;
   final AppDatabase database;
   final SessionController? session;
+  final OnlineCommandJournal? journal;
 
   @override
   State<TrailerSaasApp> createState() => _TrailerSaasAppState();
@@ -92,7 +95,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp> {
                     child: Text('Authentication configuration is required.'),
                   ),
                 )
-              : SessionView(session: widget.session!);
+              : SessionView(session: widget.session!, journal: widget.journal);
         },
       ),
     );

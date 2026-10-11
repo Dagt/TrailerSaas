@@ -14,12 +14,14 @@ class ApiProblem implements Exception {
     this.code,
     this.detail, {
     this.traceId,
+    this.retryAfter,
     this.errors = const [],
   });
   final int status;
   final String code;
   final String detail;
   final String? traceId;
+  final DateTime? retryAfter;
   final List<Object?> errors;
   @override
   String toString() => 'ApiProblem($status, $code)';
@@ -35,6 +37,146 @@ class ApiClient {
   final Uri baseUrl;
   final AuthGateway auth;
   final http.Client client;
+  final _postNotBefore = <String, DateTime>{};
+
+  /// One submission only. The caller durably stores an immutable key/payload first.
+  Future<Map<String, dynamic>> post(
+    String path,
+    Map<String, dynamic> body,
+    String key,
+  ) async {
+    final uid = auth.uid;
+    if (uid == null) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    final receipt = '$uid|$path|$key';
+    final notBefore = _postNotBefore[receipt];
+    if (notBefore != null && DateTime.now().toUtc().isBefore(notBefore)) {
+      throw ApiProblem(
+        429,
+        'RATE_LIMITED',
+        'Wait before recovering this submission.',
+        retryAfter: notBefore,
+      );
+    }
+    String? token;
+    try {
+      token = await auth.token(forceRefresh: true);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'network-request-failed') throw ApiUnavailable();
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    } catch (_) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    if (auth.uid != uid || token == null) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    http.Response response;
+    try {
+      response = await client
+          .post(
+            Uri.parse(
+              '${baseUrl.toString().replaceFirst(RegExp(r'/$'), '')}/$path',
+            ),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Idempotency-Key': key,
+              'X-Request-Id': List.generate(
+                16,
+                (_) => Random.secure()
+                    .nextInt(256)
+                    .toRadixString(16)
+                    .padLeft(2, '0'),
+              ).join(),
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 20));
+    } on SocketException {
+      throw ApiUnavailable();
+    } on http.ClientException {
+      throw ApiUnavailable();
+    } on TimeoutException {
+      throw ApiUnavailable();
+    }
+    if (auth.uid != uid) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    if (response.statusCode == 429) {
+      final notBefore = _retryAfter(response);
+      if (notBefore != null) _postNotBefore[receipt] = notBefore;
+    } else {
+      _postNotBefore.remove(receipt);
+    }
+    return _decode(response);
+  }
+
+  DateTime? _retryAfter(http.Response response) {
+    final value = response.headers['retry-after'];
+    if (value == null) return null;
+    final seconds = int.tryParse(value);
+    if (seconds != null) {
+      return seconds < 0
+          ? null
+          : DateTime.now().toUtc().add(Duration(seconds: seconds));
+    }
+    try {
+      return HttpDate.parse(value).toUtc();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic> _decode(http.Response response) {
+    Map<String, dynamic> body;
+    try {
+      body = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw ApiProblem(
+        response.statusCode,
+        'UNEXPECTED_RESPONSE',
+        'The server could not complete the request.',
+        retryAfter: _retryAfter(response),
+      );
+    }
+    if (response.statusCode >= 400) {
+      throw ApiProblem(
+        response.statusCode,
+        body['code'] as String? ?? 'UNEXPECTED_FAILURE',
+        response.statusCode >= 500
+            ? 'The server could not complete the request.'
+            : body['detail'] as String? ??
+                  'The request could not be completed.',
+        retryAfter: _retryAfter(response),
+        traceId: body['traceId'] as String?,
+        errors: body['errors'] as List<Object?>? ?? [],
+      );
+    }
+    return body;
+  }
+
   Future<Map<String, dynamic>> get(
     String path, [
     Map<String, String> query = const {},

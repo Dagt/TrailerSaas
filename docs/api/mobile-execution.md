@@ -608,3 +608,7 @@ persist its alert intent in the same transaction when #56/#57 infrastructure exi
 no alert/outbox is fabricated here. #61 still owns generic Audit. No new OpenAPI
 endpoint, Web/Flutter UI, coupling rule, physical execution command or capability
 is delivered by #39.
+
+## Issue #44 implementation boundary
+
+See [Driver execution implementation](../mobile/issue-44-road-execution.md) for the five strict execution commands, own assigned detail, V18 Stop facts, physical projection and foreground idempotent recovery. First departure fails closed pending real #43 duty/Pre-Trip validation; no fabricated prerequisites. Ordinary Delivery completion remains EVIDENCE_REQUIRED until #45/#53 finalized POD. Manual arrival only; geofence assistance remains #47. QR identification adds version for the existing Hook contract. #46 follows #44 for the offline replay worker. All capabilities and #38 physical contracts remain unchanged.

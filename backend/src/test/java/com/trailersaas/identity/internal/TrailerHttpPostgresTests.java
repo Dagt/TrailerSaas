@@ -183,7 +183,9 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(reactivated.statusCode()).isEqualTo(200);
         assertThat(body(reactivated)).containsEntry("id",trailerId.toString()).containsEntry("active",true).containsEntry("version",2);
         var restored=scan(token,TOKEN);assertThat(restored.statusCode()).isEqualTo(200);
-        assertThat(body(restored)).isEqualTo(body(originalScan));
+        var expectedScan=new LinkedHashMap<>(body(originalScan));
+        assertThat(expectedScan).containsEntry("version",0);expectedScan.put("version",2);
+        assertThat(body(restored)).isEqualTo(expectedScan);
         assertThat(f.db.value("SELECT row_to_json(q)::text FROM trailer_qr_identities q WHERE id=?",qrId)).isEqualTo(qrSnapshot);
         assertThat(items(req("GET",qrPath,null,TOKEN))).isEqualTo(history);
         assertThat(output.getAll()).doesNotContain(token,TOKEN);
@@ -205,7 +207,7 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
         var qr=body(req("POST",p,null,TOKEN));String token=(String)qr.get("publicToken");
         replaceRoles(role,role.equals("CUSTOMER_DISPATCHER")?customerA:null);
         var response=scan(token,TOKEN);assertThat(response.statusCode()).as(response.body()).isEqualTo(200);
-        assertThat(body(response)).containsOnlyKeys("trailerId","operationalNumber","trailerType","locationState","loadState","serviceabilityState","active");
+        assertThat(body(response)).containsOnlyKeys("trailerId","operationalNumber","trailerType","locationState","loadState","serviceabilityState","active","version");
         if(!role.equals("TENANT_ADMIN")) {
             problem(req("POST",p,null,TOKEN),403,"CAPABILITY_DENIED");
             problem(req("POST",p+"/"+qr.get("id")+"/revocation",null,TOKEN),403,"CAPABILITY_DENIED");
