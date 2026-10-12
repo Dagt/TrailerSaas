@@ -162,3 +162,35 @@ concurrency and incompatible-key cases pass against real PostgreSQL.
 
 Next checkpoint: publish reviewed changes, run complete four-job CI on that HEAD,
 inspect exact totals/reviews, then mark the single PR Ready for Review. No merge.
+
+## PR #100 recovery and strict CI repair
+
+Resumed from published `646fe9e30a63fbdb965495a859cbfc00988db4a3` without
+reimplementing the policy or replacing the PR. Run `38183876750` failed only
+because six historical exact table inventories omitted V20's `delivery_evidence`.
+EquipmentPostgresTests, TrailerPostgresTests, MasterDataPostgresTests,
+InvitationPostgresTests, TenancyPostgresTests and OrderPostgresTests now append
+that table to their existing `containsExactlyInAnyOrder` inventories. All prior
+tables, column checks, constraints and historical checksum assertions remain.
+Their full classes pass: 131 tests, 0 failures/errors/skipped, BUILD SUCCESS,
+PostgreSQL 18.4 and Flyway validation through V20.
+
+Two additional regressions preserve the public policy's safe error boundary for
+future workflow controllers: an inactive own Driver produces CAPABILITY_DENIED
+(403), and an oversized attachment set fails closed with RESOURCE_NOT_FOUND
+(404). Internal Documents exceptions must not turn these decisions into an
+unhandled infrastructure error outside its controller. The 404 asserts the exact
+allowed Problem Details fields and excludes storage keys and attachment counts.
+
+The subsequent affected suite passes 188 tests: 53 PostgreSQL evidence, 11 unit,
+68 Documents, 32 R2, 17 RLS and 7 application/module tests; 0 failures/errors/
+skipped, BUILD SUCCESS. OpenAPI validation and all 9 tests pass. Compared with
+main there are 64 new Backend tests and 1 new OpenAPI test. The shared Documents
+fixture retains its original SQL setup, real S3 transport, HTTP helpers and
+privacy assertions; all 68 cases remain, including PR #99's revocation regressions.
+
+V20 is unchanged by this recovery. V1–V19, R2 adapter/publication/checksum code,
+the ledger, capability catalog and role mappings are unchanged from main.
+No disabled tests, weaker exact inventories, workflow shortcuts or additional
+production endpoints are introduced. The four-job CI of the final pushed HEAD
+is the remaining release gate; its exact run and totals are recorded in PR #100.

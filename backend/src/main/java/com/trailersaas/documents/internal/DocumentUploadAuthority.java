@@ -23,6 +23,6 @@ class DocumentUploadAuthority {
   UUID require(AuthenticatedUserPrincipal actor,UUID tenant,Type type,boolean lock) {
     authorization.requireTenantCapability(actor,tenant,capability(type));
     return (lock?drivers.lockActiveForUser(tenant,actor.userId()):drivers.activeForUser(tenant,actor.userId()))
-        .orElseThrow(()->new DocumentFailure(403,"CAPABILITY_DENIED","The requested action is not permitted."));
+        .orElseThrow(()->new com.trailersaas.documents.EvidenceValidationException(com.trailersaas.documents.EvidenceValidationException.Code.CAPABILITY_DENIED));
   }
 }

@@ -149,7 +149,9 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
       if(!actor.userId().equals(document.uploader())) throw failure(RESOURCE_NOT_FOUND);
       if(document.type()!=expected.get(id)) throw failure(VALIDATION_FAILED);
       if(document.status()!=Status.UPLOADED) throw failure(UPLOAD_NOT_COMPLETE);
-      var links=documents.links(tenant,id);
+      List<Link> links;
+      try { links=documents.links(tenant,id); }
+      catch(DocumentFailure e) { if(e.status==404) throw failure(RESOURCE_NOT_FOUND);throw e; }
       if(target==null) {
         if(!links.isEmpty()) throw failure(RESOURCE_NOT_FOUND);
         continue;

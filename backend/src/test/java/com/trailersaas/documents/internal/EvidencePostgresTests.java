@@ -409,4 +409,19 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(1L);
     assertThat(db.value("SELECT count(*) FROM trip_stop_events WHERE tenant_id=?",tenant)).isEqualTo(1L);
   }
+  @Test void publicWorkflowMapsInactiveDriverToCapabilityDenialNotInfrastructureFailure() throws Exception {
+    var delivery=signed();db.execute("UPDATE drivers SET active=false WHERE id=?",driver);
+    assertProblem(http("driver","POST",harness("validate"),deliveryJson(delivery),null),403,"CAPABILITY_DENIED");
+    rejected(()->policy.validateFuelUpload(actor(),tenant,delivery.bolDocumentId()),EvidenceValidationException.Code.CAPABILITY_DENIED);
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+  }
+  @Test void oversizedCorruptAttachmentSetFailsClosedAtPublicWorkflowBoundary() throws Exception {
+    var delivery=signed();
+    for(int i=0;i<50;i++) db.execute("INSERT INTO document_links VALUES(?,?,?,'TRIP_STOP',?,now())",UUID.randomUUID(),tenant,delivery.bolDocumentId(),UUID.randomUUID());
+    var denied=http("driver","POST",harness("validate"),deliveryJson(delivery),null);
+    assertProblem(denied,404,"RESOURCE_NOT_FOUND");
+    assertThat(JsonPath.<Map<String,Object>>read(denied.body(),"$")).containsOnlyKeys("type","title","status","detail","instance","code","traceId");
+    assertThat(denied.body()).doesNotContain("\"links\"","\"count\"","tenant/");
+    assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+  }
 }
