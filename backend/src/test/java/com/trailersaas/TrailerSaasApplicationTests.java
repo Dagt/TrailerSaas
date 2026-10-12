@@ -72,7 +72,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
-        assertThat(flyway.info().current().getDescription()).isEqualTo("operational delivery evidence");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("driver shifts inspections");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
