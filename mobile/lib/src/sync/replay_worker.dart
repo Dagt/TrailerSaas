@@ -11,6 +11,8 @@ import '../session/api_client.dart';
 import '../session/contracts.dart';
 import '../session/session_controller.dart';
 import 'command_store.dart';
+import '../media/media_processor.dart';
+import '../media/media_dependencies.dart';
 
 /// Foreground/reconnect worker. A single serialized lane for this SQLite database
 /// prevents overlapping Trip/Trailer/Tractor sends, including independent chains.
@@ -23,6 +25,8 @@ class ReplayWorker extends ChangeNotifier {
     double Function()? jitter,
     Timer Function(Duration, void Function())? timerFactory,
     this.scheduleTimers = true,
+    this.media,
+    this.futureEvidence,
   }) : jitter = jitter ?? Random.secure().nextDouble,
        timerFactory = timerFactory ?? ((delay, work) => Timer(delay, work));
   final SessionController session;
@@ -31,9 +35,13 @@ class ReplayWorker extends ChangeNotifier {
   final double Function() jitter;
   final Timer Function(Duration, void Function()) timerFactory;
   final bool scheduleTimers;
+  final MediaProcessor? media;
+  final EvidenceReplayPort? futureEvidence;
+  MediaDependencies get bindings => MediaDependencies(store);
   static final _lanes = Expando<Future<void>>();
   Future<void>? _running;
   Timer? _timer;
+  DateTime? _scheduledAt;
   StreamSubscription<ConnectivityStatus>? _network;
   bool _started = false, _disposed = false;
   bool _requested = false;
@@ -95,6 +103,7 @@ class ReplayWorker extends ChangeNotifier {
       return _running!;
     }
     _timer?.cancel();
+    _scheduledAt = null;
     // This lane includes the entire previous cycle and every awaited POST, even
     // when its session becomes offline/loading or changes identity mid-request.
     // A reconnect/resume can request another pass, but cannot overtake live HTTP.
@@ -102,7 +111,10 @@ class ReplayWorker extends ChangeNotifier {
     final requestedScope = scope;
     final run = previous
         .catchError((Object _) {})
-        .then((_) => _cycle())
+        .then(
+          (_) =>
+              media == null ? _cycle() : media!.store.files.exclusive(_cycle),
+        )
         .catchError((Object _) {
           if (!_disposed && scope == requestedScope) {
             message = 'Synchronization could not access saved operations or connectivity. They are retained. Retry sync.';
@@ -152,12 +164,29 @@ class ReplayWorker extends ChangeNotifier {
       // namespace activation; never reset claims from session/network callbacks.
       // The immutable request and backend ledger resolve an uncertain commit.
       await store.recoverSending(owner.userId, owner.membership.tenantId);
+      if (media != null) {
+        final before = (await media!.store.list(
+          owner.userId,
+          owner.membership.tenantId,
+        )).where((r) => r.state == 'FINALIZED').length;
+        await media!.process(session, owner, () => _current(owner));
+        if (!_current(owner)) return;
+        final after = (await media!.store.list(
+          owner.userId,
+          owner.membership.tenantId,
+        )).where((r) => r.state == 'FINALIZED').length;
+        if (after > before) {
+          await session.refresh();
+          if (!_current(owner)) return;
+        }
+      }
       // Bound one foreground pass; another timer/manual/reconnect pass continues
       // a larger backlog. No unlimited mutation burst.
       for (var sent = 0; sent < 100 && _current(owner); sent++) {
         final rows = await store.list(owner.userId, owner.membership.tenantId);
         if (!_current(owner)) return;
         await _dependencies(rows);
+        await _mediaDependencies(rows);
         final fresh = await store.list(owner.userId, owner.membership.tenantId);
         final byId = {for (final r in fresh) r.clientOperationId: r};
         final candidate = fresh
@@ -177,13 +206,16 @@ class ReplayWorker extends ChangeNotifier {
             .firstOrNull;
         if (candidate == null) {
           _schedule(fresh);
+          await _scheduleMedia(owner);
           return;
         }
+        final body = await bindings.materialize(candidate);
+        if (body == null || !_current(owner)) continue;
         if (!await store.claim(candidate)) continue;
         if (!_current(owner)) {
           return; // SENDING is recovered in its original namespace.
         }
-        await _send(candidate, owner);
+        await _send(candidate, owner, body);
         if (!_current(owner)) return;
       }
       if (_current(owner)) {
@@ -195,6 +227,53 @@ class ReplayWorker extends ChangeNotifier {
     } catch (_) {
       if (!_current(owner)) return;
       message = 'Synchronization could not access saved operations. They are retained. Retry sync.';
+    }
+  }
+
+  Future<void> _mediaDependencies(List<LocalCommand> rows) async {
+    for (final c in rows) {
+      if (EvidenceCommandIntent.kindFor(c) == null ||
+          {
+            'ACKNOWLEDGED',
+            'SENDING',
+            'CONFLICT',
+            'PERMANENT_FAILURE',
+          }.contains(c.state)) {
+        continue;
+      }
+      final ready = await bindings.ready(c);
+      final code = !ready
+          ? 'EVIDENCE_PENDING'
+          : futureEvidence == null
+          ? 'FUTURE_WORKFLOW'
+          : null;
+      if (code != null) {
+        await store.result(
+          c,
+          CommandState.blocked,
+          code: code,
+          category: 'MEDIA',
+        );
+      } else if (c.state == 'BLOCKED' &&
+          {'EVIDENCE_PENDING', 'FUTURE_WORKFLOW'}.contains(c.lastErrorCode)) {
+        await store.result(c, CommandState.queued);
+      }
+    }
+  }
+
+  Future<void> _scheduleMedia(SessionSnapshot owner) async {
+    if (media == null || !scheduleTimers || !_current(owner)) return;
+    final at = await media!.nextRetry(owner.userId, owner.membership.tenantId);
+    if (at != null && (_scheduledAt == null || at.isBefore(_scheduledAt!))) {
+      final delay = at.difference(store.now());
+      // Wake both queues at the earlier eligibility. Persisted retry dates keep
+      // an early wake from sending too soon; there is no self-retry on offline.
+      _timer?.cancel();
+      _scheduledAt = at;
+      _timer = timerFactory(
+        delay > Duration.zero ? delay : const Duration(seconds: 1),
+        () => unawaited(sync()),
+      );
     }
   }
 
@@ -272,16 +351,28 @@ class ReplayWorker extends ChangeNotifier {
     }
   }
 
-  Future<void> _send(LocalCommand c, SessionSnapshot owner) async {
+  Future<void> _send(
+    LocalCommand c,
+    SessionSnapshot owner,
+    Map<String, dynamic> frozenBody,
+  ) async {
     OnlineCommand command;
     try {
       command = OnlineCommand(
         c.clientOperationId,
         c.tripId,
         c.endpointPath,
-        jsonDecode(c.payloadJson) as Map<String, dynamic>,
+        frozenBody,
       );
-      CommandIntent(command).validate(c.tenantId);
+      final kind = EvidenceCommandIntent.kindFor(c);
+      if (kind == null) {
+        CommandIntent(command).validate(c.tenantId);
+      } else {
+        if (futureEvidence == null) {
+          throw const FormatException('Workflow not implemented');
+        }
+        EvidenceCommandIntent(kind, command).validate(c.tenantId);
+      }
     } catch (_) {
       if (_current(owner)) {
         await store.result(
@@ -296,20 +387,26 @@ class ReplayWorker extends ChangeNotifier {
     try {
       Map<String, dynamic> response;
       try {
-        response = await session.api.post(
-          command.path,
-          command.body,
-          command.id,
-          forceRefresh: false,
-        );
+        response =
+            futureEvidence != null && EvidenceCommandIntent.kindFor(c) != null
+            ? await futureEvidence!.send(c, frozenBody)
+            : await session.api.post(
+                command.path,
+                command.body,
+                command.id,
+                forceRefresh: false,
+              );
       } on ApiProblem catch (e) {
         if (e.status != 401 || !_current(owner)) rethrow;
-        response = await session.api.post(
-          command.path,
-          command.body,
-          command.id,
-          forceRefresh: true,
-        );
+        response =
+            futureEvidence != null && EvidenceCommandIntent.kindFor(c) != null
+            ? await futureEvidence!.send(c, frozenBody)
+            : await session.api.post(
+                command.path,
+                command.body,
+                command.id,
+                forceRefresh: true,
+              );
       }
       if (!_current(owner)) return;
       _validateResponse(c, response);
@@ -487,6 +584,9 @@ class ReplayWorker extends ChangeNotifier {
         ? null
         : retryTimes.first.difference(store.now());
     if (delay != null) {
+      _scheduledAt = store.now().add(
+        delay > Duration.zero ? delay : const Duration(seconds: 1),
+      );
       _timer = timerFactory(
         delay > Duration.zero ? delay : const Duration(seconds: 1),
         () => unawaited(sync()),

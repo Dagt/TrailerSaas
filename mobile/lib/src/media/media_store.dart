@@ -235,12 +235,51 @@ class MediaStore {
             : 'FINALIZE_PENDING',
       ),
       updatedAt: Value(now()),
-      lastErrorCode: Value(CommandStore.safeCode(code)),
+      lastErrorCode: Value(safeCode(code)),
       lastHttpStatus: Value(status),
       nextRetryAt: Value(retryAt),
       reviewRequired: Value(review),
     ),
   );
+
+  static String? safeCode(String? code) =>
+      {
+        'FILE_CHANGED',
+        'FILE_MISSING',
+        'FILE_UNAVAILABLE',
+        'INVALID_FILE_SIZE',
+        'UPLOAD_URL_EXPIRED',
+        'UNSAFE_UPLOAD_URL',
+        'UPLOAD_NOT_COMPLETE',
+        'UPLOAD_CONTENT_MISMATCH',
+        'UPLOAD_TRANSPORT_FAILED',
+        'REQUEST_FROZEN',
+        'PREVIOUS_UPLOAD_SUPERSEDED',
+      }.contains(code)
+      ? code
+      : CommandStore.safeCode(code);
+
+  Future<void> retryReviewed(String user, String tenant, String id) async {
+    final row = await find(user, tenant, id);
+    if (row == null ||
+        row.state != 'FAILED' ||
+        row.lastErrorCode == 'IDEMPOTENCY_KEY_REUSED') {
+      return;
+    }
+    await verify(row);
+    await change(
+      row,
+      LocalMediaCompanion(
+        state: Value(
+          row.serverDocumentId == null ? 'INIT_PENDING' : 'FINALIZE_PENDING',
+        ),
+        reviewRequired: const Value(false),
+        nextRetryAt: Value(now()),
+        updatedAt: Value(now()),
+      ),
+    );
+  }
+
   Future<void> newAttempt(LocalMediaData row) async {
     final used = await db
         .customSelect(
@@ -249,6 +288,10 @@ class MediaStore {
         )
         .get();
     if (used.isNotEmpty) throw const MediaFileProblem('REQUEST_FROZEN');
+    if (row.serverDocumentId == null ||
+        row.lastErrorCode != 'UPLOAD_NOT_COMPLETE') {
+      throw const MediaFileProblem('RESULT_UNCERTAIN');
+    }
     final previous = List<Object?>.from(
       jsonDecode(row.attemptHistoryJson) as List,
     );
@@ -272,6 +315,18 @@ class MediaStore {
   }
 
   /// Filesystem removal uses a durable tombstone. A crash never makes a missing
+  Future<void> releaseOfflineUse(String user, String tenant, String id) async {
+    await (db.update(db.localMedia)..where(
+          (r) =>
+              r.id.equals(id) &
+              r.userId.equals(user) &
+              r.tenantId.equals(tenant) &
+              r.state.equals('FINALIZED'),
+        ))
+        .write(const LocalMediaCompanion(retainOffline: Value(false)));
+  }
+
+  /// Filesystem removal uses a durable tombstone. A crash never makes a missing
   /// file look available; retries complete REMOVING without initiating upload.
   Future<int> cleanup(
     String user,
@@ -287,6 +342,7 @@ class MediaStore {
         final current = await find(user, tenant, row.id);
         if (current == null ||
             current.state != 'FINALIZED' ||
+            current.retainOffline ||
             current.finalizedAt == null ||
             now().difference(current.finalizedAt!) < grace ||
             current.fileState == 'REMOVED') {

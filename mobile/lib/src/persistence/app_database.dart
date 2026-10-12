@@ -123,6 +123,7 @@ class LocalMedia extends Table {
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get finalizedAt => dateTime().nullable()();
   TextColumn get fileState => text().withDefault(const Constant('PRESENT'))();
+  BoolColumn get retainOffline => boolean().withDefault(const Constant(true))();
   @override
   Set<Column> get primaryKey => {id};
   @override
@@ -253,6 +254,16 @@ class AppDatabase extends _$AppDatabase {
       BEFORE UPDATE OF server_document_id,finalize_key,finalized_at,state ON local_media
       WHEN OLD.state='FINALIZED'
       BEGIN SELECT RAISE(ABORT, 'Finalized media is immutable'); END''');
+    await customStatement('''CREATE TRIGGER local_media_attempt_identity_guard
+      BEFORE UPDATE OF server_document_id,finalize_key ON local_media
+      WHEN (OLD.server_document_id IS NOT NULL AND
+          (NEW.server_document_id IS NOT OLD.server_document_id OR NEW.finalize_key<>OLD.finalize_key))
+        OR (OLD.server_document_id IS NULL AND NEW.finalize_key<>OLD.finalize_key)
+      BEGIN
+        SELECT CASE WHEN NOT (OLD.server_document_id IS NOT NULL AND OLD.last_error_code='UPLOAD_NOT_COMPLETE'
+          AND NEW.server_document_id IS NULL AND NEW.state='INIT_PENDING')
+          THEN RAISE(ABORT, 'Uncertain upload identity is immutable') END;
+      END''');
     for (final table in [
       'materialized_requests',
       'command_media_dependencies',

@@ -45,7 +45,7 @@ class ApiClient {
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> body,
-    String key, {
+    String? key, {
     bool forceRefresh = true,
   }) async {
     final uid = auth.uid;
@@ -101,7 +101,7 @@ class ApiClient {
               'Authorization': 'Bearer $token',
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-              'Idempotency-Key': key,
+              'Idempotency-Key': ?key,
               'X-Request-Id': List.generate(
                 16,
                 (_) => Random.secure()

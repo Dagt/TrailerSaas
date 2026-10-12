@@ -9,6 +9,10 @@ import '../session/session_view.dart';
 import '../road/online_command_journal.dart';
 import '../sync/command_store.dart';
 import '../sync/replay_worker.dart';
+import '../media/media_file_store.dart';
+import '../media/media_store.dart';
+import '../media/media_processor.dart';
+import '../media/documents_client.dart';
 
 class TrailerSaasApp extends StatefulWidget {
   const TrailerSaasApp({
@@ -48,6 +52,11 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
         widget.session!,
         CommandStore(widget.database),
         FileOnlineCommandJournal(),
+        media: MediaProcessor(
+          MediaStore(widget.database, PrivateMediaFileStore()),
+          DocumentsClient(widget.session!.api),
+          R2SignedPutTransport(),
+        ),
       );
       _worker!.start();
     }

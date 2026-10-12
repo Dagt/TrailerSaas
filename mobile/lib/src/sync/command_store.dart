@@ -344,11 +344,14 @@ class CommandStore {
           'DEPENDENCY_FAILED',
           'INTERRUPTED',
           'RATE_LIMITED',
+          'EVIDENCE_PENDING',
+          'FUTURE_WORKFLOW',
         }.contains(code)
       ? code
       : 'UNEXPECTED_FAILURE';
 
   static String safeMessage(String category) => switch (category) {
+    'MEDIA' => 'Blocked by evidence or a workflow that is not implemented yet. Files and intent are retained.',
     'AUTHORIZATION' => 'Access or assignment changed. Refresh work and contact dispatch before retrying.',
     'DEPENDENCY' => 'Blocked by a previous operation that requires review.',
     'INVALID_SEQUENCE' =>

@@ -4,6 +4,7 @@ import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import 'command_store.dart';
 import 'replay_worker.dart';
+import '../media/media_sync_panel.dart';
 
 class SyncPanel extends StatefulWidget {
   const SyncPanel({super.key, required this.worker});
@@ -139,6 +140,7 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
                   if (w.message != null)
                     Semantics(liveRegion: true, child: Text(w.message!)),
                   if (rows.isEmpty) const Text('No recorded operations.'),
+                  if (w.media != null) MediaSyncPanel(worker: w),
                   StreamBuilder<List<LocalSyncIssue>>(
                     stream: _issues,
                     builder: (context, issues) => Column(
@@ -158,7 +160,7 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
                         (c) => ListTile(
                           title: Text(commandLabel(c.commandType)),
                           subtitle: Text(
-                            '${stateLabel(c.state)}${c.lastErrorCode == null ? '' : '\n${issueMessage(c)}'}'
+                            '${{'EVIDENCE_PENDING', 'FUTURE_WORKFLOW'}.contains(c.lastErrorCode) ? 'Blocked by evidence or pending workflow' : stateLabel(c.state)}${c.lastErrorCode == null ? '' : '\n${issueMessage(c)}'}'
                             '${c.nextRetryAt == null ? '' : '\nNext retry: ${c.nextRetryAt!.toLocal()}'}',
                           ),
                           trailing:

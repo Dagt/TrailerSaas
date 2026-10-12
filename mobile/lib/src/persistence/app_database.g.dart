@@ -3787,6 +3787,21 @@ class $LocalMediaTable extends LocalMedia
     requiredDuringInsert: false,
     defaultValue: const Constant('PRESENT'),
   );
+  static const VerificationMeta _retainOfflineMeta = const VerificationMeta(
+    'retainOffline',
+  );
+  @override
+  late final GeneratedColumn<bool> retainOffline = GeneratedColumn<bool>(
+    'retain_offline',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("retain_offline" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3811,6 +3826,7 @@ class $LocalMediaTable extends LocalMedia
     updatedAt,
     finalizedAt,
     fileState,
+    retainOffline,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4013,6 +4029,15 @@ class $LocalMediaTable extends LocalMedia
         fileState.isAcceptableOrUnknown(data['file_state']!, _fileStateMeta),
       );
     }
+    if (data.containsKey('retain_offline')) {
+      context.handle(
+        _retainOfflineMeta,
+        retainOffline.isAcceptableOrUnknown(
+          data['retain_offline']!,
+          _retainOfflineMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4110,6 +4135,10 @@ class $LocalMediaTable extends LocalMedia
         DriftSqlType.string,
         data['${effectivePrefix}file_state'],
       )!,
+      retainOffline: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}retain_offline'],
+      )!,
     );
   }
 
@@ -4142,6 +4171,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
   final DateTime updatedAt;
   final DateTime? finalizedAt;
   final String fileState;
+  final bool retainOffline;
   const LocalMediaData({
     required this.id,
     required this.userId,
@@ -4165,6 +4195,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     required this.updatedAt,
     this.finalizedAt,
     required this.fileState,
+    required this.retainOffline,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4203,6 +4234,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
       map['finalized_at'] = Variable<DateTime>(finalizedAt);
     }
     map['file_state'] = Variable<String>(fileState);
+    map['retain_offline'] = Variable<bool>(retainOffline);
     return map;
   }
 
@@ -4242,6 +4274,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
           ? const Value.absent()
           : Value(finalizedAt),
       fileState: Value(fileState),
+      retainOffline: Value(retainOffline),
     );
   }
 
@@ -4275,6 +4308,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       finalizedAt: serializer.fromJson<DateTime?>(json['finalizedAt']),
       fileState: serializer.fromJson<String>(json['fileState']),
+      retainOffline: serializer.fromJson<bool>(json['retainOffline']),
     );
   }
   @override
@@ -4303,6 +4337,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'finalizedAt': serializer.toJson<DateTime?>(finalizedAt),
       'fileState': serializer.toJson<String>(fileState),
+      'retainOffline': serializer.toJson<bool>(retainOffline),
     };
   }
 
@@ -4329,6 +4364,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     DateTime? updatedAt,
     Value<DateTime?> finalizedAt = const Value.absent(),
     String? fileState,
+    bool? retainOffline,
   }) => LocalMediaData(
     id: id ?? this.id,
     userId: userId ?? this.userId,
@@ -4358,6 +4394,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     updatedAt: updatedAt ?? this.updatedAt,
     finalizedAt: finalizedAt.present ? finalizedAt.value : this.finalizedAt,
     fileState: fileState ?? this.fileState,
+    retainOffline: retainOffline ?? this.retainOffline,
   );
   LocalMediaData copyWithCompanion(LocalMediaCompanion data) {
     return LocalMediaData(
@@ -4409,6 +4446,9 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
           ? data.finalizedAt.value
           : this.finalizedAt,
       fileState: data.fileState.present ? data.fileState.value : this.fileState,
+      retainOffline: data.retainOffline.present
+          ? data.retainOffline.value
+          : this.retainOffline,
     );
   }
 
@@ -4436,7 +4476,8 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
           ..write('capturedAt: $capturedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('finalizedAt: $finalizedAt, ')
-          ..write('fileState: $fileState')
+          ..write('fileState: $fileState, ')
+          ..write('retainOffline: $retainOffline')
           ..write(')'))
         .toString();
   }
@@ -4465,6 +4506,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     updatedAt,
     finalizedAt,
     fileState,
+    retainOffline,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -4491,7 +4533,8 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
           other.capturedAt == this.capturedAt &&
           other.updatedAt == this.updatedAt &&
           other.finalizedAt == this.finalizedAt &&
-          other.fileState == this.fileState);
+          other.fileState == this.fileState &&
+          other.retainOffline == this.retainOffline);
 }
 
 class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
@@ -4517,6 +4560,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
   final Value<DateTime> updatedAt;
   final Value<DateTime?> finalizedAt;
   final Value<String> fileState;
+  final Value<bool> retainOffline;
   final Value<int> rowid;
   const LocalMediaCompanion({
     this.id = const Value.absent(),
@@ -4541,6 +4585,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     this.updatedAt = const Value.absent(),
     this.finalizedAt = const Value.absent(),
     this.fileState = const Value.absent(),
+    this.retainOffline = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalMediaCompanion.insert({
@@ -4566,6 +4611,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     required DateTime updatedAt,
     this.finalizedAt = const Value.absent(),
     this.fileState = const Value.absent(),
+    this.retainOffline = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
@@ -4602,6 +4648,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? finalizedAt,
     Expression<String>? fileState,
+    Expression<bool>? retainOffline,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4628,6 +4675,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (finalizedAt != null) 'finalized_at': finalizedAt,
       if (fileState != null) 'file_state': fileState,
+      if (retainOffline != null) 'retain_offline': retainOffline,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4655,6 +4703,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     Value<DateTime>? updatedAt,
     Value<DateTime?>? finalizedAt,
     Value<String>? fileState,
+    Value<bool>? retainOffline,
     Value<int>? rowid,
   }) {
     return LocalMediaCompanion(
@@ -4680,6 +4729,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
       updatedAt: updatedAt ?? this.updatedAt,
       finalizedAt: finalizedAt ?? this.finalizedAt,
       fileState: fileState ?? this.fileState,
+      retainOffline: retainOffline ?? this.retainOffline,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4753,6 +4803,9 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     if (fileState.present) {
       map['file_state'] = Variable<String>(fileState.value);
     }
+    if (retainOffline.present) {
+      map['retain_offline'] = Variable<bool>(retainOffline.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4784,6 +4837,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('finalizedAt: $finalizedAt, ')
           ..write('fileState: $fileState, ')
+          ..write('retainOffline: $retainOffline, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();

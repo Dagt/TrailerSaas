@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -21,6 +22,7 @@ class StoredMediaFile {
 }
 
 abstract interface class MediaFileStore {
+  Future<T> exclusive<T>(Future<T> Function() work);
   Future<StoredMediaFile> capture(
     String user,
     String tenant,
@@ -40,6 +42,37 @@ class PrivateMediaFileStore implements MediaFileStore {
   PrivateMediaFileStore([Future<Directory> Function()? directory])
     : directory = directory ?? getApplicationSupportDirectory;
   final Future<Directory> Function() directory;
+  static final _lanes = <String, Future<void>>{};
+  @override
+  Future<T> exclusive<T>(Future<T> Function() work) async {
+    final root = await directory();
+    await root.create(recursive: true);
+    final key = await root.resolveSymbolicLinks();
+    final previous = _lanes[key] ?? Future<void>.value(),
+        release = Completer<void>();
+    _lanes[key] = release.future;
+    await previous;
+    RandomAccessFile? lock;
+    try {
+      final file = File('$key/media-sync.lock');
+      final type = await FileSystemEntity.type(file.path, followLinks: false);
+      if (type != FileSystemEntityType.notFound &&
+          type != FileSystemEntityType.file) {
+        throw const MediaFileProblem('UNSAFE_FILE');
+      }
+      lock = await file.open(mode: FileMode.append);
+      await lock.lock(FileLock.blockingExclusive);
+      return await work();
+    } finally {
+      try {
+        await lock?.close();
+      } finally {
+        release.complete();
+        if (identical(_lanes[key], release.future)) _lanes.remove(key);
+      }
+    }
+  }
+
   Future<Directory> _namespace(String user, String tenant) async {
     if (!uuidPattern.hasMatch(user) || !uuidPattern.hasMatch(tenant)) {
       throw const MediaFileProblem('INVALID_NAMESPACE');

@@ -38,3 +38,28 @@ The already locked crypto 3.0.7 is now a direct dependency; no version is upgrad
 32 storage/migration/cache/command tests pass. Drift generation and static analysis
 are checked locally. Next: finish typed R2 transport, recovery and HTTP failure
 tests (B), then integrate media passes/materialization in ReplayWorker (C).
+
+### Checkpoints B/C
+
+Typed initialization/finalization and a separate unauthenticated streaming R2 PUT
+are implemented. Signed grants are ephemeral. Real HTTP tests verify actual bytes,
+headers, lost init/final ACK, stable keys, restart, expired/missing uploads,
+408/429/5xx, 401 refresh, authorization review, redirect refusal and late responses.
+An old identity is superseded only after a definitive UPLOAD_NOT_COMPLETE result;
+SQLite also guards uncertain and finalized identities. Init itself is not idempotent.
+
+MediaProcessor is called inside ReplayWorker's existing lane. A shared private
+filesystem fence additionally serializes separate database connections/workers;
+the OS releases its lock after process death. Recovery never overtakes live HTTP.
+Immutable command-media edges and materialized_requests preserve original intent,
+then freeze server Document IDs before the first POST. Future #43/#45 commands
+remain blocked in production: no EvidenceReplayPort is installed. Controlled test
+adapters prove release/replay without adding a production endpoint.
+
+112 media/sync regressions passed before final edge-case additions. The full suite
+retained its prior tests; three new widget fixtures needed localhost HTTP and real
+async SQLite stream initialization. All four media widget tests now pass individually;
+no timeout was extended and no assertion/test was removed. Cleanup is conservative:
+explicit offline-use release, finalized server identity, all dependent ACKs, seven-day
+default grace and a durable REMOVING tombstone. Next: complete the crash/security
+matrix, documentation and all four final-head CI jobs (D). No merge.
