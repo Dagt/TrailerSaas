@@ -21,7 +21,7 @@ class EvidenceCommandIntent extends CommandIntent {
   static String path(
     EvidenceCommandKind kind,
     String tenant,
-    String trip,
+    String? trip,
     String? stop,
   ) => switch (kind) {
     EvidenceCommandKind.preTrip =>
@@ -41,7 +41,9 @@ class EvidenceCommandIntent extends CommandIntent {
     final parts = command.path.split('/');
     final stop = parts.length == 5 && parts[2] == 'stops' ? parts[3] : null;
     if (command.path != path(kind, tenant, command.tripId, stop) ||
-        !RegExp(r'^[a-zA-Z0-9-]+$').hasMatch(command.tripId) ||
+        (command.tripId == null
+            ? kind != EvidenceCommandKind.preTrip
+            : !RegExp(r'^[a-zA-Z0-9-]+$').hasMatch(command.tripId!)) ||
         stop != null && !RegExp(r'^[a-zA-Z0-9-]+$').hasMatch(stop)) {
       throw const FormatException('Invalid evidence endpoint');
     }
@@ -119,6 +121,7 @@ class EvidenceCommandIntent extends CommandIntent {
 /// Future workflow-owned adapter. None is installed in production before #43/
 /// #45. Tests use a controlled actual HTTP peer; this is not a generic executor.
 abstract interface class EvidenceReplayPort {
+  bool supports(LocalCommand intent);
   Future<Map<String, dynamic>> send(
     LocalCommand intent,
     Map<String, dynamic> frozenBody,

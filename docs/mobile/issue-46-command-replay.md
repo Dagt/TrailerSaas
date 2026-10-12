@@ -153,3 +153,11 @@ with both OTHER and explicit BASE_RETURN, including every duplicate and old save
 projection after terminal completion. The existing authorization, concurrency, ledger,
 Hook/Drop and physical-history suites remain intact. No H2 substitute or weakened test
 is used. Backend/Web/Mobile/OpenAPI jobs remain required.
+
+## Issue #43 extension
+
+ShiftReplay is installed in the same worker for typed non-Trip commands and generated
+Shift-ID bindings. Schema v5 preserves v3/v4 queues. Physical command response checks,
+SENDING fencing/reconnect, immutable request and User/Tenant isolation remain intact.
+The media phase precedes Pre-Trip; real On Duty ACK and all four finalized images
+must resolve before request freezing. See issue-43-shift-inspections.md.

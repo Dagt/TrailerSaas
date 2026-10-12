@@ -199,7 +199,7 @@ class TripPostgresTests extends PostgresIntegrationTest {
 
   @Test
   void migrationHasExactObjectsCatalogsGrantsAndNoCascade() throws Exception {
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("20");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
     var expected =
         Map.of(
             "trips",

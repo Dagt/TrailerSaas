@@ -65,7 +65,7 @@ void main() {
   });
   tearDown(() => db.close());
 
-  test('real v2 file migration preserves all cache rows and adds indexed v4 queues', () async {
+  test('real v2 file migration preserves all cache rows and adds indexed v5 queues', () async {
     final dir = await Directory.systemTemp.createTemp('mobile-v2-queue-');
     addTearDown(() => dir.delete(recursive: true));
     final file = File('${dir.path}/device.sqlite');
@@ -96,7 +96,7 @@ void main() {
     expect(
       (await upgraded.customSelect('PRAGMA user_version').getSingle())
           .read<int>('user_version'),
-      4,
+      5,
     );
     for (final table in before.keys) {
       expect(

@@ -34,15 +34,15 @@ from service start, with no intervening Drop/re-Hook even of the same Trailer.
 DROP_HOOK requires a real Drop at that Stop during service and
 a later different authorized replacement Hook. Both reuse #38 endpoints and ledger.
 
-## Mandatory start integration remains blocked
+## Mandatory start integration implemented by #43
 
-BR-040 requires On Duty/Pre-Trip for normal Road Mode. #43 has not created those
-authoritative records. `TripDeparturePrerequisites` is a narrow Trip-owned integration
-boundary; its production implementation fails closed. No fake Shift, inspection,
-configurable bypass or client statement satisfies it. Departure's accepted transition
-is exercised with a test-only substituted prerequisite policy, not a production override.
-The full live from-start sequence therefore awaits #43. This is an explicit integration
-gap, not a claim that Shift/inspections or a usable production first departure exists.
+BR-040 requires real On Duty/Pre-Trip for normal Road Mode. #43 supplies the
+Inspections-owned implementation of the Trip-owned TripDeparturePrerequisites port:
+own open Shift and matching current Driver/Tractor/Shift Pre-Trip with four finalized
+photos. An explicit inspection Trip must match. Occurrence is revalidated at Depart.
+No fake state, configurable bypass or mobile statement satisfies it. Original #44
+tests retain their confined prerequisite fixture; #43 also tests the complete real
+from-start non-delivery sequence with PostgreSQL and actual finalized documents.
 
 ## Physical truth and locking
 
@@ -156,3 +156,11 @@ implemented by #46. Old file receipts migrate with the original identity; legacy
 controllers remain compatibility/test boundaries. The new intent guide never mutates
 cached Trip/Stop/Trailer state. #43 start prerequisites and #45/#53 Delivery evidence
 blocks remain unchanged.
+
+## Issue #43 real prerequisite integration
+
+The previously blocked from-start integration is now implemented by Inspections:
+real own open Shift plus validated same-Shift/current-Tractor Pre-Trip/photos.
+Trips still consumes its own prerequisite port without depending on Inspections.
+No configuration bypass exists. Driver assignment and all #44 physical rules still
+apply; Delivery completion remains blocked until #45. See issue-43-shift-inspections.md.

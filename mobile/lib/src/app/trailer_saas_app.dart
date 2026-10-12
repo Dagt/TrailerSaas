@@ -13,6 +13,9 @@ import '../media/media_file_store.dart';
 import '../media/media_store.dart';
 import '../media/media_processor.dart';
 import '../media/documents_client.dart';
+import '../shift/shift_commands.dart';
+import '../shift/inspection_store.dart';
+import '../shift/camera_capture.dart';
 
 class TrailerSaasApp extends StatefulWidget {
   const TrailerSaasApp({
@@ -48,16 +51,27 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
     await widget.database.initialize();
     await widget.session?.start();
     if (widget.session != null && widget.journal == null) {
+      final shiftReplay = ShiftReplay(
+        CommandStore(widget.database),
+        widget.session!,
+      );
       _worker ??= ReplayWorker(
         widget.session!,
         CommandStore(widget.database),
         FileOnlineCommandJournal(),
+        shifts: shiftReplay,
+        futureEvidence: shiftReplay,
         media: MediaProcessor(
           MediaStore(widget.database, PrivateMediaFileStore()),
           DocumentsClient(widget.session!.api),
           R2SignedPutTransport(),
         ),
       );
+      await InspectionCapture(
+        InspectionStore(shiftReplay),
+        _worker!.media!.store,
+        NativeInspectionCamera(),
+      ).recover();
       _worker!.start();
     }
   }

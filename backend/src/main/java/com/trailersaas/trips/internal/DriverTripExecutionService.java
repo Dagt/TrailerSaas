@@ -147,8 +147,8 @@ class DriverTripExecutionService {
                     || r.fromStopId() != null
                     || !active.id.equals(r.nextStopId())) throw TripFailure.tripState();
                 if (trip.currentTractorId == null
-                    || !prerequisites.satisfied(
-                        tenant, driver.get(), trip.currentTractorId, tripId))
+                    || !prerequisites.satisfiedAt(
+                        tenant, driver.get(), trip.currentTractorId, tripId,r.occurredAt()))
                   throw TripFailure.conflict();
                 physical.depart(
                     tenant,

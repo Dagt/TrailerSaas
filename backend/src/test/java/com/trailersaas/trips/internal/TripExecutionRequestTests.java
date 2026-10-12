@@ -8,11 +8,12 @@ import org.junit.jupiter.api.Test;
 class TripExecutionRequestTests {
   @Test
   void pendingInspectionPolicyNeverFabricatesEligibility() {
-    assertThat(
-            new PendingDeparturePrerequisites()
-                .satisfied(
-                    UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()))
-        .isFalse();
+    var jdbc=org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);
+    var tenant=UUID.randomUUID();var driver=UUID.randomUUID();var tractor=UUID.randomUUID();var trip=UUID.randomUUID();
+    org.mockito.Mockito.when(jdbc.queryForObject(org.mockito.ArgumentMatchers.anyString(),org.mockito.ArgumentMatchers.eq(Boolean.class),org.mockito.ArgumentMatchers.any(Object[].class))).thenReturn(false);
+    var real=new com.trailersaas.inspections.internal.DatabaseTripDeparturePrerequisites(jdbc);
+    assertThat(real.satisfied(tenant,driver,tractor,trip)).isFalse();
+    org.mockito.Mockito.verify(jdbc).queryForObject(org.mockito.ArgumentMatchers.contains("doc.upload_status='UPLOADED'"),org.mockito.ArgumentMatchers.eq(Boolean.class),org.mockito.ArgumentMatchers.eq(trip),org.mockito.ArgumentMatchers.eq(tenant),org.mockito.ArgumentMatchers.eq(driver),org.mockito.ArgumentMatchers.any(java.sql.Timestamp.class),org.mockito.ArgumentMatchers.eq(tractor),org.mockito.ArgumentMatchers.any(java.sql.Timestamp.class));
   }
 
   @Test

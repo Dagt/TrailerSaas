@@ -1550,9 +1550,9 @@ paths:
     get:
       tags: [DriverMobile]
       operationId: getOwnDriverProfile
-      x-implementation-status: implemented-issue-42
-      summary: Read the authenticated User's active linked Driver profile
-      description: Requires fresh ACTIVE membership and TRIP_VIEW_ASSIGNED. No arbitrary User/Driver IDs, query parameters, Shift, execution state or directory browsing. Missing/inactive link is CAPABILITY_DENIED.
+      x-implementation-status: implemented-issue-43
+      summary: Read own active Driver and authoritative Shift/inspection context
+      description: Requires fresh ACTIVE membership and TRIP_VIEW_ASSIGNED. No arbitrary User/Driver IDs or query parameters. Bounded own open Shift, 50 current-Shift inspections and deduplicated active Tractors of nonterminal currently assigned Trips. usedTractors identifies equipment requiring Post-Trip. Requirements are navigation hints; every command reauthorizes. Missing/inactive Driver link is CAPABILITY_DENIED.
       parameters:
         - $ref: '#/components/parameters/TenantId'
       responses:
@@ -1589,6 +1589,102 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '500': { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/driver/me/shifts/on-duty:
+    post:
+      tags: [DriverMobile]
+      operationId: startOwnDriverShift
+      x-implementation-status: implemented-issue-43
+      summary: Start a real Driver Shift
+      description: Fresh SHIFT_START, ACTIVE membership and own active linked Driver. UUID Idempotency-Key required. Serializes Driver commands; one open Shift per Driver/Tenant. Same logical replay reauthorizes and returns the historical receipt. New key while open is RESOURCE_CONFLICT; incompatible reuse is IDEMPOTENCY_KEY_REUSED. Does not start a Trip or complete Pre-Trip.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DriverOnDutyRequest' }
+      responses:
+        '200':
+          description: Persisted Shift or authorized historical receipt
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverShift' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/driver/me/shifts/{shiftId}/off-duty:
+    post:
+      tags: [DriverMobile]
+      operationId: closeOwnDriverShift
+      x-implementation-status: implemented-issue-43
+      summary: Close an own Shift after work and Post-Trip requirements
+      description: Fresh SHIFT_END and own active Driver. Requires own ON_DUTY Shift, no unresolved assigned Trip, Post-Trip for used equipment after its last applicable use, and compatible occurrence chronology. Normal closure is blocked with RESOURCE_CONFLICT; closed state is INVALID_STATE_TRANSITION. No administrative override, automatic Trip completion or physical equipment effects. Replay uses the same UUID and revalidates identity and capability.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: shiftId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DriverOffDutyRequest' }
+      responses:
+        '200':
+          description: Closed Shift or authorized historical receipt
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverShift' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/driver/me/inspections/pre-trip:
+    post:
+      tags: [DriverMobile]
+      operationId: createOwnPreTripInspection
+      x-implementation-status: implemented-issue-43
+      summary: Record an authorized four-photo Pre-Trip inspection
+      description: Fresh PRETRIP_CREATE, own open Shift and active Tractor of a nonterminal currently assigned Trip. tripId may be null; explicit Trip must currently assign this Driver/Tractor. Validates four distinct own UPLOADED documents of exact position types through OperationalEvidencePolicy, then atomically records inspection and immutable INSPECTION links. No arbitrary document attachment or local approval. Missing photos EVIDENCE_REQUIRED, unfinished uploads UPLOAD_NOT_COMPLETE, invisible context RESOURCE_NOT_FOUND. OQ-052 checklist catalog stays open; bounded structured answers confer no authority. Same UUID/body replay reauthorizes current context.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DriverPreTripRequest' }
+      responses:
+        '200':
+          description: Persisted validated inspection or authorized historical receipt
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverInspection' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/driver/me/inspections/post-trip:
+    post:
+      tags: [DriverMobile]
+      operationId: createOwnPostTripInspection
+      x-implementation-status: implemented-issue-43
+      summary: Record a Post-Trip without closing the Shift
+      description: Fresh POSTTRIP_CREATE, own open Shift and active Tractor. Explicit Trip must still assign the Driver and Tractor; without Trip, equipment must have an own Pre-Trip in this Shift. No mandatory photos. Records odometer and bounded damage/failure/comments, without changing Trip/Trailer state, reporting an exception or closing the Shift. Occurrence cannot precede a later inspection of this equipment. UUID replay revalidates current authority.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DriverPostTripRequest' }
+      responses:
+        '200':
+          description: Persisted Post-Trip or authorized historical receipt
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverInspection' }
+        default: { $ref: '#/components/responses/Problem' }
 
   /api/v1/tenants/{tenantId}/driver/me/updates:
     parameters:
@@ -1839,7 +1935,7 @@ paths:
       operationId: recordFirstTripDeparture
       x-implementation-status: implemented-issue-44
       description: >-
-        Requires DEPARTURE_CONFIRM, ASSIGNED Trip, active current Tractor, expected physically coupled Trailer when planned, and verified On Duty/Pre-Trip. Production fails closed pending #43. No fabricated Shift/inspection or configurable bypass.
+        Requires DEPARTURE_CONFIRM, ASSIGNED Trip, active current Tractor, expected physically coupled Trailer when planned, and real open own Shift with a four-photo validated Pre-Trip for the same current Driver/Shift/Tractor. An explicit inspection Trip must match this Trip. Occurrence must follow Shift/inspection occurrence. Revalidates PostgreSQL under execution locks; no historical other-Shift inspection, fabricated state or configurable bypass.
         Fresh ACTIVE membership, own active linked Driver and current Trip assignment are
         required with TRIP_EXECUTE_ASSIGNED. Unknown body/query fields are rejected.
         Same key and logical request replays its saved result only after fresh authorization;
@@ -2054,7 +2150,7 @@ paths:
         Requires UPLOADED documents, uploader with current type-specific upload authority and active own
         Driver assigned to the target Trip, and TRIP_VIEW_ASSIGNED. TRIP_STOP supports delivery and Driver
         damage; TRIP supports Pre-Trip, fuel and Driver damage. Unsupported targets, including public
-        Trailer/OOS attachment, are rejected. Same-Tenant target is validated through Trips public API.
+          Trailer/OOS attachment and direct INSPECTION attachment, are rejected. #43 creates INSPECTION links only inside validated inspection creation. Same-Tenant target is validated through Trips public API.
         Identical links return the existing reference; at most 50 links per document. Attachment itself
         does not approve evidence or complete a Stop; #53 exposes synchronous policies for future workflows.
       requestBody:
@@ -2282,7 +2378,7 @@ components:
         tractorOperationalNumber: { type: [string, "null"] }
         startedAt: { type: [string, "null"], format: date-time }
         completedAt: { type: [string, "null"], format: date-time }
-        departurePrerequisitesSatisfied: { type: boolean, description: "Fail closed until #43 supplies fresh required On Duty/Pre-Trip validation. Navigation hint only." }
+        departurePrerequisitesSatisfied: { type: boolean, description: "Fresh real own open Shift and valid matching four-photo Pre-Trip (#43). Navigation hint only; departure revalidates with occurrence time." }
         currentCoupling:
           oneOf:
             - { type: "null" }
@@ -2304,12 +2400,133 @@ components:
     DriverSelfProfile:
       type: object
       additionalProperties: false
-      required: [id, name, active, version]
+      required: [id, name, active, version, shiftContext]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         active: { type: boolean, const: true }
         version: { type: integer, minimum: 0 }
+        shiftContext: { $ref: '#/components/schemas/DriverShiftHome' }
+
+    DriverOnDutyRequest:
+      type: object
+      additionalProperties: false
+      required: [occurredAt]
+      properties:
+        occurredAt: { type: string, format: date-time, description: "Offline command occurrence, UTC; required and not in the future." }
+    DriverOffDutyRequest:
+      type: object
+      additionalProperties: false
+      required: [occurredAt, expectedShiftState]
+      properties:
+        occurredAt: { type: string, format: date-time }
+        expectedShiftState: { type: string, const: ON_DUTY }
+    DriverPreTripRequest:
+      type: object
+      additionalProperties: false
+      required: [shiftId, tractorId, odometer, checklist, documentIds, occurredAt]
+      properties:
+        shiftId: { type: string, format: uuid }
+        tripId: { type: [string, "null"], format: uuid }
+        tractorId: { type: string, format: uuid }
+        odometer: { type: number, minimum: 0, maximum: 1000000000000, multipleOf: 0.001 }
+        checklist:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                type: object
+                minProperties: 1
+                maxProperties: 20
+                propertyNames: { type: string, minLength: 1, maxLength: 80 }
+                additionalProperties:
+                  oneOf:
+                    - { type: string, maxLength: 2000 }
+                    - { type: boolean }
+                    - { type: number }
+        documentIds:
+          type: object
+          additionalProperties: false
+          required: [front, rear, driverSide, passengerSide]
+          properties:
+            front: { type: string, format: uuid }
+            rear: { type: string, format: uuid }
+            driverSide: { type: string, format: uuid }
+            passengerSide: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+    DriverPostTripRequest:
+      type: object
+      additionalProperties: false
+      required: [shiftId, tractorId, odometer, occurredAt]
+      properties:
+        shiftId: { type: string, format: uuid }
+        tripId: { type: [string, "null"], format: uuid }
+        tractorId: { type: string, format: uuid }
+        odometer: { type: number, minimum: 0, maximum: 1000000000000, multipleOf: 0.001 }
+        damages: { type: [string, "null"], maxLength: 4000 }
+        failures: { type: [string, "null"], maxLength: 4000 }
+        comments: { type: [string, "null"], maxLength: 4000 }
+        occurredAt: { type: string, format: date-time }
+    DriverShift:
+      type: object
+      additionalProperties: false
+      required: [id, state, onDutyAt, offDutyAt, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        state: { type: string, enum: [ON_DUTY, OFF_DUTY] }
+        onDutyAt: { type: string, format: date-time }
+        offDutyAt: { type: [string, "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    DriverInspection:
+      type: object
+      additionalProperties: false
+      required: [id, shiftId, tripId, tractorId, inspectionType, odometer, occurredAt, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        shiftId: { type: string, format: uuid }
+        tripId: { type: [string, "null"], format: uuid }
+        tractorId: { type: string, format: uuid }
+        inspectionType: { type: string, enum: [PRE_TRIP, POST_TRIP] }
+        odometer: { type: number, minimum: 0 }
+        occurredAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+    DriverShiftEquipment:
+      type: object
+      additionalProperties: false
+      required: [tractorId, operationalNumber, tripId]
+      properties:
+        tractorId: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        tripId: { type: [string, "null"], format: uuid }
+    DriverShiftHome:
+      type: object
+      additionalProperties: false
+      required: [currentShift, inspections, authorizedTractors, usedTractors, offDutyBlockers]
+      properties:
+        currentShift:
+          oneOf:
+            - { type: "null" }
+            - { $ref: '#/components/schemas/DriverShift' }
+        inspections:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/DriverInspection' }
+        authorizedTractors:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/DriverShiftEquipment' }
+        usedTractors:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/DriverShiftEquipment' }
+        offDutyBlockers:
+          type: array
+          items: { type: string, enum: [ACTIVE_WORK, POST_TRIP_REQUIRED] }
 
     DriverAssignedWorkPage:
       type: object
@@ -4119,7 +4336,7 @@ components:
       required: [id, entityType, entityId, createdAt]
       properties:
         id: { type: string, format: uuid }
-        entityType: { type: string, enum: [TRIP_STOP, TRIP, TRAILER], description: "TRAILER is reserved for the future authorized #49 attachment workflow; public link requests reject it." }
+        entityType: { type: string, enum: [TRIP_STOP, TRIP, TRAILER, INSPECTION], description: "INSPECTION is attached atomically by #43 and read through the own-inspection directory. TRAILER is reserved for #49. Public link requests accept only TRIP_STOP/TRIP." }
         entityId: { type: string, format: uuid }
         createdAt: { type: string, format: date-time }
 

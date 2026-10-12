@@ -19,7 +19,8 @@ class OnlineCommand {
     : body = Map.unmodifiable(
         jsonDecode(jsonEncode(body)) as Map<String, dynamic>,
       );
-  final String id, tripId, path;
+  final String id, path;
+  final String? tripId;
   final Map<String, dynamic> body;
 
   /// Never replay a malformed, relative or other-Tenant endpoint from storage.
@@ -51,7 +52,7 @@ class OnlineCommand {
   };
   factory OnlineCommand.fromJson(Map<String, dynamic> j) => OnlineCommand(
     j['id'] as String,
-    j['tripId'] as String,
+    j['tripId'] as String?,
     j['path'] as String,
     j['body'] as Map<String, dynamic>,
   );

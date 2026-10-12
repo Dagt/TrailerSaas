@@ -219,3 +219,19 @@ crash-safely with the original UUID/path/body; session cache cleanup preserves q
 rows while hiding other identities/Tenants. No OS background guarantee, media queue,
 first-departure prerequisite bypass or Delivery evidence bypass. See
 [implementation, migration, security and retry policy](../docs/mobile/issue-46-command-replay.md).
+
+## Driver Shift and inspections (#43)
+
+Road home exposes real Shift context, On/Off Duty and native four-photo Pre-Trip /
+Post-Trip forms. image_picker 1.2.4 (flutter.dev maintained) is the native camera
+adapter; no gallery upload workflow or fake photos. UUID private file storage and
+Drift v5 drafts/capture contexts survive restart. Android lost camera data is
+recovered via retrieveLostData; ambiguous/partial results require retake. iOS camera
+usage text is configured. No audio/GPS permission is introduced. Camera metadata is
+not required. OS camera permissions, process death and iOS/Android physical device
+behavior still need device QA; host tests exercise injected camera plus real files,
+SQLite and HTTP. Native encryption/backup limitations remain as documented in #54.
+Locked dependencies: flutter pub get --enforce-lockfile. Generate with dart run
+build_runner build, format/analyze/test using existing CI. All older cache/command/
+media records are preserved; final requests freeze after real Shift/photo IDs resolve.
+See [architecture, safety and deferred #45 workflows](../docs/mobile/issue-43-shift-inspections.md).

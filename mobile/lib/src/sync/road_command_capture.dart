@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../road/online_command_journal.dart';
 import '../session/contracts.dart';
 import '../session/session_controller.dart';
@@ -50,15 +52,6 @@ class RoadCommandCapture {
         throw StateError('Stop is not supported downloaded work');
       }
     }
-    if (kind == 'trips' &&
-        action == 'departures' &&
-        (downloaded.data['executionContext']
-                as Map?)?['departurePrerequisitesSatisfied'] !=
-            true) {
-      throw StateError(
-        'First departure requires real server-verified prerequisites',
-      );
-    }
     if (action == 'hooks' &&
         (body['trailerId'] != downloaded.data['plannedInitialTrailerId'] ||
             body['tractorId'] != downloaded.data['currentTractorId'] ||
@@ -92,14 +85,44 @@ class RoadCommandCapture {
       owner.membership.tenantId,
     );
     if (!current()) throw StateError('Session changed');
+    String? preTrip;
+    if (kind == 'trips' &&
+        action == 'departures' &&
+        (downloaded.data['executionContext']
+                as Map?)?['departurePrerequisitesSatisfied'] !=
+            true) {
+      // Pending inspection grants no departure permission. The intent depends on
+      // a real accepted inspection, then PostgreSQL revalidates every prerequisite.
+      preTrip = rows
+          .where((c) {
+            if (c.commandType != 'pre-trip' ||
+                c.aggregateType != 'INSPECTION' ||
+                c.state == 'ACKNOWLEDGED') {
+              return false;
+            }
+            final b = jsonDecode(c.payloadJson) as Map;
+            return b['tractorId'] == downloaded.data['currentTractorId'] &&
+                (c.tripId == null || c.tripId == tripId);
+          })
+          .lastOrNull
+          ?.clientOperationId;
+      if (preTrip == null) {
+        throw StateError(
+          'First departure requires a matching real or pending Pre-Trip.',
+        );
+      }
+    }
     final related = rows
         .where(
           (c) =>
               c.tripId == tripId && c.state != CommandState.acknowledged.value,
         )
         .lastOrNull;
-    final deps =
-        dependencies ?? [if (related != null) related.clientOperationId];
+    final deps = {
+      ...?dependencies,
+      if (dependencies == null && related != null) related.clientOperationId,
+      ?preTrip,
+    }.toList();
     final command = OnlineCommand(operationUuid(), tripId, path, body);
     await worker.store.enqueue(
       owner.userId,

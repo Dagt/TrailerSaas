@@ -14,6 +14,7 @@ import 'package:trailersaas_mobile/src/media/media_store.dart';
 import 'package:trailersaas_mobile/src/media/documents_client.dart';
 import 'package:trailersaas_mobile/src/media/media_processor.dart';
 import 'package:trailersaas_mobile/src/media/media_dependencies.dart';
+import 'package:trailersaas_mobile/src/shift/shift_commands.dart';
 import 'package:trailersaas_mobile/src/sync/command_store.dart';
 import 'package:trailersaas_mobile/src/sync/replay_worker.dart';
 import 'package:trailersaas_mobile/src/road/online_command_journal.dart';
@@ -23,6 +24,9 @@ import '../session/fixtures.dart' show FakeAuth, FakeNetwork, work;
 import 'media_storage_test.dart' show user, tenant, other;
 
 class TestEvidencePort implements EvidenceReplayPort {
+  @override
+  bool supports(LocalCommand intent) =>
+      EvidenceCommandIntent.kindFor(intent) != null;
   TestEvidencePort(this.api);
   final ApiClient api;
   @override
@@ -65,6 +69,11 @@ class MediaHttpFixture {
   String? retryAfter;
   Completer<void>? putEntered, putRelease, finalizeEntered, finalizeRelease;
   bool switchUser = false;
+  bool shiftWorkflows = false, reassigned = false, shiftRevoked = false;
+  Map<String, dynamic>? serverShift;
+  final serverInspections = <Map<String, dynamic>>[];
+  final shiftLedger =
+      <String, ({String logical, Map<String, dynamic> result})>{};
   Future<void> start({
     bool futurePort = false,
     bool fileDatabase = false,
@@ -90,19 +99,26 @@ class MediaHttpFixture {
     worker = makeWorker(futurePort: futurePort);
   }
 
-  ReplayWorker makeWorker({bool futurePort = false}) => ReplayWorker(
-    session,
-    CommandStore(db, clock: () => now),
-    MemoryJournal(),
-    scheduleTimers: false,
-    media: MediaProcessor(
-      media,
-      DocumentsClient(api, clock: () => now),
-      R2SignedPutTransport(allowTestLoopback: true, clock: () => now),
-      jitter: () => 0.5,
-    ),
-    futureEvidence: futurePort ? TestEvidencePort(api) : null,
-  );
+  ReplayWorker makeWorker({bool futurePort = false}) {
+    final shiftReplay = shiftWorkflows
+        ? ShiftReplay(CommandStore(db, clock: () => now), session)
+        : null;
+    return ReplayWorker(
+      session,
+      CommandStore(db, clock: () => now),
+      MemoryJournal(),
+      scheduleTimers: false,
+      media: MediaProcessor(
+        media,
+        DocumentsClient(api, clock: () => now),
+        R2SignedPutTransport(allowTestLoopback: true, clock: () => now),
+        jitter: () => 0.5,
+      ),
+      futureEvidence: futurePort ? TestEvidencePort(api) : shiftReplay,
+      shifts: shiftReplay,
+    );
+  }
+
   Future<void> restart() async {
     await worker.shutdown();
     await session.shutdown();
@@ -191,12 +207,53 @@ class MediaHttpFixture {
                   'PRETRIP_CREATE',
                   'FUEL_EVENT_CREATE',
                   'EXCEPTION_REPORT',
+                  if (shiftWorkflows) ...[
+                    'SHIFT_START',
+                    'SHIFT_END',
+                    'POSTTRIP_CREATE',
+                  ],
                 ],
               },
             ],
           });
         } else if (path.endsWith('/driver/me')) {
-          await reply(r, {'id': user, 'name': 'Driver', 'active': true});
+          await reply(r, {
+            'id': user,
+            'name': 'Driver',
+            'active': true,
+            if (shiftWorkflows)
+              'shiftContext': {
+                'currentShift': switchUser ? null : serverShift,
+                'inspections': switchUser ? [] : serverInspections,
+                'authorizedTractors': reassigned || noTrips
+                    ? []
+                    : [
+                        {
+                          'tractorId': '44444444-4444-4444-8444-444444444444',
+                          'operationalNumber': 'T-12',
+                          'tripId': null,
+                        },
+                      ],
+                'usedTractors': serverInspections.isEmpty
+                    ? []
+                    : [
+                        {
+                          'tractorId': '44444444-4444-4444-8444-444444444444',
+                          'operationalNumber': 'T-12',
+                          'tripId': null,
+                        },
+                      ],
+                'offDutyBlockers':
+                    serverInspections.any(
+                          (i) => i['inspectionType'] == 'PRE_TRIP',
+                        ) &&
+                        !serverInspections.any(
+                          (i) => i['inspectionType'] == 'POST_TRIP',
+                        )
+                    ? ['POST_TRIP_REQUIRED']
+                    : [],
+              },
+          });
         } else if (RegExp(r'/trips/trip-[AB]$').hasMatch(path)) {
           await reply(r, {
             'trip': work(path.split('/').last),
@@ -286,6 +343,111 @@ class MediaHttpFixture {
         final override = finalizeResponseOverride;
         finalizeResponseOverride = null;
         await reply(r, override == null ? doc : {...doc, ...override});
+        return;
+      }
+      if (shiftWorkflows &&
+          (path.contains('/shifts/') || path.contains('/inspections/'))) {
+        if (shiftRevoked) {
+          await reply(r, {'code': 'CAPABILITY_DENIED'}, 403);
+          return;
+        }
+        final logical = '$path|${jsonEncode(body)}';
+        if (key == null ||
+            shiftLedger.containsKey(key) &&
+                shiftLedger[key]!.logical != logical) {
+          await reply(r, {'code': 'IDEMPOTENCY_KEY_REUSED'}, 409);
+          return;
+        }
+        Map<String, dynamic> result;
+        if (shiftLedger.containsKey(key)) {
+          result = shiftLedger[key]!.result;
+        } else if (path.endsWith('/on-duty')) {
+          if (serverShift != null) {
+            await reply(r, {'code': 'RESOURCE_CONFLICT'}, 409);
+            return;
+          }
+          result = {
+            'id': operationUuid(),
+            'state': 'ON_DUTY',
+            'onDutyAt': body['occurredAt'],
+            'offDutyAt': null,
+            'createdAt': now.toIso8601String(),
+            'updatedAt': now.toIso8601String(),
+          };
+          serverShift = result;
+        } else if (path.endsWith('/off-duty')) {
+          if (serverShift == null ||
+              path.split('/').reversed.elementAt(1) != serverShift!['id']) {
+            await reply(r, {'code': 'RESOURCE_NOT_FOUND'}, 404);
+            return;
+          }
+          if (serverInspections.any((i) => i['inspectionType'] == 'PRE_TRIP') &&
+              !serverInspections.any(
+                (i) => i['inspectionType'] == 'POST_TRIP',
+              )) {
+            await reply(r, {'code': 'RESOURCE_CONFLICT'}, 409);
+            return;
+          }
+          result = {
+            ...serverShift!,
+            'state': 'OFF_DUTY',
+            'offDutyAt': body['occurredAt'],
+            'updatedAt': now.toIso8601String(),
+          };
+          serverShift = null;
+        } else {
+          if (reassigned) {
+            await reply(r, {'code': 'RESOURCE_NOT_FOUND'}, 404);
+            return;
+          }
+          if (serverShift == null || body['shiftId'] != serverShift!['id']) {
+            await reply(r, {'code': 'INVALID_STATE_TRANSITION'}, 409);
+            return;
+          }
+          final pre = path.endsWith('/pre-trip');
+          if (pre) {
+            final expected = {
+                  'front': 'PRETRIP_FRONT',
+                  'rear': 'PRETRIP_REAR',
+                  'driverSide': 'PRETRIP_DRIVER_SIDE',
+                  'passengerSide': 'PRETRIP_PASSENGER_SIDE',
+                },
+                ids = body['documentIds'];
+            if (ids is! Map ||
+                ids.length != 4 ||
+                ids.values.toSet().length != 4 ||
+                expected.entries.any(
+                  (e) =>
+                      documents[ids[e.key]]?['uploadStatus'] != 'UPLOADED' ||
+                      documents[ids[e.key]]?['documentType'] != e.value,
+                )) {
+              await reply(r, {'code': 'EVIDENCE_REQUIRED'}, 409);
+              return;
+            }
+          }
+          result = {
+            'id': operationUuid(),
+            'shiftId': body['shiftId'],
+            'tripId': body['tripId'],
+            'tractorId': body['tractorId'],
+            'inspectionType': pre ? 'PRE_TRIP' : 'POST_TRIP',
+            'odometer': body['odometer'],
+            'occurredAt': body['occurredAt'],
+            'createdAt': now.toIso8601String(),
+          };
+          serverInspections.add(result);
+        }
+        if (!shiftLedger.containsKey(key)) {
+          shiftLedger[key] = (logical: logical, result: result);
+          businessEffects++;
+        }
+        if (loseBusinessAck) {
+          loseBusinessAck = false;
+          final socket = await r.response.detachSocket(writeHeaders: false);
+          socket.destroy();
+          return;
+        }
+        await reply(r, result);
         return;
       }
       final logical = jsonEncode(body);

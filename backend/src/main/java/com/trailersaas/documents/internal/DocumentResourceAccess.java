@@ -16,7 +16,8 @@ class DocumentResourceAccess {
   private final DocumentStopDirectory stops;
   private final EvidenceWorkDirectory work;
   private final TrailerEvidenceDirectory trailers;
-  DocumentResourceAccess(DriverIdentityPolicy d,DocumentStopDirectory s,EvidenceWorkDirectory w,TrailerEvidenceDirectory t) { drivers=d;stops=s;work=w;trailers=t; }
+  private final org.springframework.beans.factory.ObjectProvider<com.trailersaas.documents.InspectionDocumentDirectory> inspections;
+  DocumentResourceAccess(DriverIdentityPolicy d,DocumentStopDirectory s,EvidenceWorkDirectory w,TrailerEvidenceDirectory t,org.springframework.beans.factory.ObjectProvider<com.trailersaas.documents.InspectionDocumentDirectory> i) { drivers=d;stops=s;work=w;trailers=t;inspections=i; }
   List<Link> visible(AuthenticatedUserPrincipal actor,UUID tenant,List<Link> linked,DocumentAccessPolicy.ReadScope scope) {
     UUID driver=scope.assignedWork()?drivers.activeForUser(tenant,actor.userId()).orElse(null):null;
     var visible=linked.stream().filter(link->switch(link.entityType()) {
@@ -26,6 +27,7 @@ class DocumentResourceAccess {
       // No Customer-scoped Trip read capability exists; inspection/fuel Trip attachments are not Customer grants.
       case TRIP -> work.readTrip(tenant,link.entityId()).map(t->scope.tenantWide() || (driver!=null && driver.equals(t.driverId()))).orElse(false);
       case TRAILER -> scope.tenantWide() && trailers.exists(tenant,link.entityId());
+      case INSPECTION -> inspections.getIfAvailable()!=null && inspections.getObject().find(tenant,link.entityId()).map(i->scope.tenantWide() || driver!=null && driver.equals(i.driverId())).orElse(false);
     }).toList();
     return visible.size()==linked.size()?visible:List.of();
   }

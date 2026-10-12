@@ -11,4 +11,7 @@ public interface DriverIdentityPolicy {
 
   /** Pins the authenticated operational identity during a physical command transaction. */
   Optional<UUID> lockActiveForUser(UUID tenantId, UUID authenticatedUserId);
+
+  /** Shift mutations serialize against execution's shared Driver lock. Trip parents precede this lock. */
+  Optional<UUID> exclusiveActiveForUser(UUID tenantId, UUID authenticatedUserId);
 }

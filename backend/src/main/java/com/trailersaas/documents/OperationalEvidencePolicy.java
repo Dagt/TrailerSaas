@@ -19,6 +19,8 @@ public interface OperationalEvidencePolicy {
    * This validates files only; it is never approval of an inspection or departure.
    */
   void validatePreTripUploads(AuthenticatedUserPrincipal actor, UUID tenant, PreTripPhotos photos);
+  /** Attaches own finalized photos to a newly persisted, authorized inspection in the same transaction. */
+  void attachPreTripInspection(AuthenticatedUserPrincipal actor,UUID tenant,UUID inspection,UUID trip,UUID tractor,PreTripPhotos photos);
   void validateDelivery(AuthenticatedUserPrincipal actor, UUID tenant, UUID stop, Delivery delivery);
   /** Fresh full resource/document authority before the future #45 ledger, including committed replay. */
   void validateDeliveryForReplay(AuthenticatedUserPrincipal actor, UUID tenant, UUID stop, Delivery delivery);

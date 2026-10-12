@@ -299,3 +299,15 @@ malformed sets/types/duplicates; safe 404 RESOURCE_NOT_FOUND for invisible conte
 403 CAPABILITY_DENIED for missing authority; INVALID_STATE_TRANSITION or
 RESOURCE_CONFLICT for incompatible execution/persistence. Infrastructure stays 5xx.
 See [#53 policy, dependencies and transaction proof](issue-53-evidence-validation.md).
+
+## Issue #43 inspection ownership extension
+
+Validated Pre-Trip creation attaches four immutable INSPECTION references within
+its own transaction, optionally alongside the exact Trip links. Generic HTTP link
+requests still accept only TRIP_STOP/TRIP: clients cannot attach an arbitrary
+inspection UUID. Own active Driver may read own inspection photographs; Tenant-wide
+DOCUMENT_VIEW_ALL may read them. Customer scope grants no inspection access. If
+other links coexist, all must still be currently authorized; historical uploader
+identity cannot override a revoked Trip assignment. Unlinked upload management,
+R2 final publication/checksum/immutable bytes and replay authorization stay intact.
+No #45/#49 evidence workflow endpoint is introduced.

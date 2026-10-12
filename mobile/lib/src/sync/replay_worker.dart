@@ -13,6 +13,7 @@ import '../session/session_controller.dart';
 import 'command_store.dart';
 import '../media/media_processor.dart';
 import '../media/media_dependencies.dart';
+import '../shift/shift_commands.dart';
 
 /// Foreground/reconnect worker. A single serialized lane for this SQLite database
 /// prevents overlapping Trip/Trailer/Tractor sends, including independent chains.
@@ -27,6 +28,7 @@ class ReplayWorker extends ChangeNotifier {
     this.scheduleTimers = true,
     this.media,
     this.futureEvidence,
+    this.shifts,
   }) : jitter = jitter ?? Random.secure().nextDouble,
        timerFactory = timerFactory ?? ((delay, work) => Timer(delay, work));
   final SessionController session;
@@ -37,6 +39,7 @@ class ReplayWorker extends ChangeNotifier {
   final bool scheduleTimers;
   final MediaProcessor? media;
   final EvidenceReplayPort? futureEvidence;
+  final ShiftReplay? shifts;
   MediaDependencies get bindings => MediaDependencies(store);
   static final _lanes = Expando<Future<void>>();
   Future<void>? _running;
@@ -188,6 +191,7 @@ class ReplayWorker extends ChangeNotifier {
         if (!_current(owner)) return;
         await _dependencies(rows);
         await _mediaDependencies(rows);
+        await _shiftDependencies(rows);
         final fresh = await store.list(owner.userId, owner.membership.tenantId);
         final byId = {for (final r in fresh) r.clientOperationId: r};
         final candidate = fresh
@@ -210,13 +214,26 @@ class ReplayWorker extends ChangeNotifier {
           await _scheduleMedia(owner);
           return;
         }
-        final body = await bindings.materialize(candidate);
+        final isShift = ShiftCommandIntent.recognizes(candidate);
+        final shiftRequest = isShift
+            ? await shifts?.materialize(candidate)
+            : null;
+        final body = isShift
+            ? (shiftRequest == null
+                  ? null
+                  : jsonDecode(shiftRequest.payloadJson)
+                        as Map<String, dynamic>)
+            : await bindings.materialize(candidate);
         if (body == null || !_current(owner)) continue;
         if (!await store.claim(candidate)) continue;
         if (!_current(owner)) {
           return; // SENDING is recovered in its original namespace.
         }
-        await _send(candidate, owner, body);
+        if (isShift) {
+          await _sendShift(candidate, owner, body);
+        } else {
+          await _send(candidate, owner, body);
+        }
         if (!_current(owner)) return;
       }
       if (_current(owner)) {
@@ -233,6 +250,7 @@ class ReplayWorker extends ChangeNotifier {
 
   Future<void> _mediaDependencies(List<LocalCommand> rows) async {
     for (final c in rows) {
+      if (ShiftCommandIntent.recognizes(c)) continue;
       if ({
         'ACKNOWLEDGED',
         'SENDING',
@@ -255,7 +273,7 @@ class ReplayWorker extends ChangeNotifier {
       final ready = await bindings.ready(c);
       final code = !ready
           ? 'EVIDENCE_PENDING'
-          : futureEvidence == null
+          : futureEvidence == null || !futureEvidence!.supports(c)
           ? 'FUTURE_WORKFLOW'
           : null;
       if (code != null) {
@@ -268,6 +286,141 @@ class ReplayWorker extends ChangeNotifier {
       } else if (c.state == 'BLOCKED' &&
           {'EVIDENCE_PENDING', 'FUTURE_WORKFLOW'}.contains(c.lastErrorCode)) {
         await store.result(c, CommandState.queued);
+      }
+    }
+  }
+
+  Future<void> _shiftDependencies(List<LocalCommand> rows) async {
+    for (final c in rows) {
+      if (!ShiftCommandIntent.recognizes(c) ||
+          {
+            'ACKNOWLEDGED',
+            'SENDING',
+            'CONFLICT',
+            'PERMANENT_FAILURE',
+          }.contains(c.state)) {
+        continue;
+      }
+      String? code;
+      try {
+        ShiftCommandIntent(
+          ShiftCommandIntent.actionFor(c),
+          OnlineCommand(
+            c.clientOperationId,
+            c.tripId,
+            c.endpointPath,
+            jsonDecode(c.payloadJson) as Map<String, dynamic>,
+          ),
+        ).validate(c.tenantId);
+        if (shifts == null) {
+          code = 'FUTURE_WORKFLOW';
+        } else if (c.commandType == 'pre-trip' && !await bindings.ready(c)) {
+          code = 'EVIDENCE_PENDING';
+        } else if (!await shifts!.ready(c)) {
+          code = 'RESULT_PENDING';
+        }
+      } catch (_) {
+        code = 'INVALID_COMMAND';
+      }
+      if (code != null) {
+        await store.result(
+          c,
+          CommandState.blocked,
+          code: code,
+          category: 'DEPENDENCY',
+        );
+      } else if (c.state == 'BLOCKED' &&
+          {
+            'EVIDENCE_PENDING',
+            'RESULT_PENDING',
+            'FUTURE_WORKFLOW',
+          }.contains(c.lastErrorCode)) {
+        await store.result(c, CommandState.queued);
+      }
+    }
+  }
+
+  Future<void> _sendShift(
+    LocalCommand c,
+    SessionSnapshot owner,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final result = await shifts!.send(c, body);
+      if (!_current(owner)) return;
+      await shifts!.acknowledge(c, result);
+      if (!_current(owner)) return;
+      await session.refresh();
+      await _refreshExecutionContext(c, owner);
+      if (_current(owner)) {
+        message =
+            'Confirmed Shift/inspection reconciled with current server work.';
+      }
+    } on ApiProblem catch (e) {
+      if (!_current(owner)) return;
+      final current = await store.find(
+        c.userId,
+        c.tenantId,
+        c.clientOperationId,
+      );
+      if (current?.state == 'ACKNOWLEDGED') return;
+      if ({401, 403, 404, 409}.contains(e.status)) {
+        await store.result(
+          c,
+          CommandState.conflict,
+          status: e.status,
+          code: e.code,
+          category: e.status == 409 ? 'STATE' : 'AUTHORIZATION',
+        );
+        if (e.status == 401 || e.status == 403) {
+          await session.rejectOperationalContext(e);
+        } else {
+          await session.refresh();
+        }
+      } else if (e.status == 408 ||
+          e.status == 429 ||
+          e.status >= 500 ||
+          e.code == 'UNEXPECTED_RESPONSE' ||
+          e.code == 'UNEXPECTED_FAILURE') {
+        await store.result(
+          c,
+          CommandState.retryableFailure,
+          status: e.status,
+          code: e.code,
+          retryAt: _backoff(c, e.retryAfter),
+        );
+      } else {
+        await store.result(
+          c,
+          CommandState.permanentFailure,
+          status: e.status,
+          code: e.code,
+          category: 'VALIDATION',
+        );
+      }
+    } on FormatException {
+      if (_current(owner)) {
+        await store.result(
+          c,
+          CommandState.retryableFailure,
+          code: 'UNEXPECTED_RESPONSE',
+          retryAt: _backoff(c, null),
+        );
+      }
+    } catch (_) {
+      if (!_current(owner)) return;
+      final current = await store.find(
+        c.userId,
+        c.tenantId,
+        c.clientOperationId,
+      );
+      if (current?.state != 'ACKNOWLEDGED') {
+        await store.result(
+          c,
+          CommandState.retryableFailure,
+          code: 'RESULT_UNCERTAIN',
+          retryAt: _backoff(c, null),
+        );
       }
     }
   }

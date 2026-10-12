@@ -143,3 +143,17 @@ After successful sync and a safe grace period:
 - completed old Trips/Yard Checks may be evicted from cache.
 
 Do not clean unresolved conflicts automatically.
+
+## Issue #43 schema v5 (incremental v1/v2/v3/v4 upgrades)
+
+local_commands adds typed aggregate_type TRIP/SHIFT/INSPECTION; Trip/aggregate IDs
+are nullable for commands genuinely lacking them (no sentinel UUID). Existing
+physical intents remain non-null and immutable. command_results stores verified
+historical Shift/inspection IDs; command_result_dependencies binds an inspection or
+Off Duty to a prior same-namespace On Duty ACK. inspection_drafts persists inputs,
+photo positions and immutable Shift reference; camera_captures persists context
+before native camera launch. Existing cache/commands/issues/media/frozen requests
+are preserved. Foreign keys and insert-before-send/immutability triggers protect
+namespace and generated-ID dependencies. No token or signed URL is stored here.
+Only materialized_requests contains the final frozen HTTP path/body. Typed Off Duty
+templates resolve only with the acknowledged real Shift ID; intent is unchanged.

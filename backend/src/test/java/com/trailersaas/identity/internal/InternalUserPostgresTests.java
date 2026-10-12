@@ -28,7 +28,7 @@ class InternalUserPostgresTests extends PostgresIntegrationTest {
     @Test
     void schemaAndRuntimeGrantsAreMinimal() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("20");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var columns = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY ordinal_position")) {

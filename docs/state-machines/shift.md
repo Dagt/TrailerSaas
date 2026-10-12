@@ -76,3 +76,13 @@ Whether these timestamps are official payroll records remains a production-polic
 - `DriverWentOnDuty`
 - `DriverWentOffDuty`
 - `ShiftTimeCorrected`
+
+## Implemented #43 boundary
+
+V21 persists one open Shift per Driver/Tenant, immutable inspections and reserved
+correction history. Explicit On/Off Duty commands use current authorization and
+MobileOperationLedger. Off Duty blocks unresolved assigned Trips and missing
+applicable Post-Trip; no administrative override is implemented. Pre-Trip and
+Post-Trip never start/end the Shift automatically. First departure now validates
+real same-Shift inspection and four finalized photos for the current Tractor.
+See [implementation](../mobile/issue-43-shift-inspections.md). OQ-052 remains open.

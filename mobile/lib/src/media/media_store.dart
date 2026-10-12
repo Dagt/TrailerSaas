@@ -64,6 +64,7 @@ class MediaStore {
     String mime,
     Stream<List<int>> bytes, {
     String? tripId,
+    String? localId,
   }) async {
     final owner = session.snapshot;
     if (owner == null ||
@@ -75,7 +76,10 @@ class MediaStore {
       throw const MediaFileProblem('AUTHORIZATION_REQUIRED');
     }
     validateType(type, mime);
-    final id = operationUuid();
+    final id = localId ?? operationUuid();
+    if (!uuidPattern.hasMatch(id)) {
+      throw const MediaFileProblem('INVALID_MEDIA_ID');
+    }
     final file = await files.capture(
       owner.userId,
       owner.membership.tenantId,

@@ -286,11 +286,13 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
             if (trip['status'] == 'ASSIGNED' &&
                 controller.detail?['departurePrerequisitesSatisfied'] == false)
               const Text(
-                'First departure requires verified On Duty and Pre-Trip. That integration is not available yet.',
+                'First departure requires verified On Duty and Pre-Trip. A recorded departure waits for a matching pending inspection and server authorization.',
               ),
             if (execute &&
                 trip['status'] == 'ASSIGNED' &&
-                controller.detail?['departurePrerequisitesSatisfied'] == true &&
+                (controller.detail?['departurePrerequisitesSatisfied'] ==
+                        true ||
+                    controller.pendingPreTrip) &&
                 capabilities.contains('DEPARTURE_CONFIRM'))
               FilledButton(
                 onPressed: () => action(

@@ -623,3 +623,16 @@ The implemented Road detail shows assigned Stops, human destinations/instruction
 ## Issue #46 implementation note
 
 Road now records previously authorized/downloaded work as immutable pending intent. The synchronization panel is available even without assigned Trips, shows confirmations and review/blocking issues, and supports manual synchronization. A pending action guide links physical actions through explicit dependencies while keeping downloaded Trip/Stop state unchanged. Offline actions are never presented as confirmed server execution. Foreground/reconnect replay uses the original Idempotency-Key and refreshes current server work. First departure remains blocked until real #43 prerequisites exist, and Delivery/POD, media and Yard remain separate. See [queue migration, security and replay policy](../mobile/issue-46-command-replay.md).
+
+## Issue #43 implementation note
+
+Road home includes real Shift state, On Duty, four-photo Pre-Trip, Post-Trip and
+Off Duty. The Pre-Trip Tractor selector deduplicates active equipment from current
+nonterminal assigned Trips. No eligible equipment shows: "No tienes un Tractor
+asignado. Contacta a operaciones." A Shift is usable without a selected Trip;
+inspection without any assignment requires a future assignment model.
+Native camera capture writes to private #54 media storage. Local draft/photos,
+upload/finalization and accepted inspection are distinct. Offline commands retain
+intention/IDs; Pre-Trip waits for real On Duty result and all four finalized photos.
+Departure remains subject to fresh server checks. Completed Trips do not close
+Shift, and Post-Trip does not perform OOS/exception workflow. #45 remains deferred.
