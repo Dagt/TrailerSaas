@@ -1860,9 +1860,9 @@ class $LocalCommandsTable extends LocalCommands
   late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
     'trip_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _aggregateIdMeta = const VerificationMeta(
     'aggregateId',
@@ -1871,9 +1871,21 @@ class $LocalCommandsTable extends LocalCommands
   late final GeneratedColumn<String> aggregateId = GeneratedColumn<String>(
     'aggregate_id',
     aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _aggregateTypeMeta = const VerificationMeta(
+    'aggregateType',
+  );
+  @override
+  late final GeneratedColumn<String> aggregateType = GeneratedColumn<String>(
+    'aggregate_type',
+    aliasedName,
     false,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('TRIP'),
   );
   static const VerificationMeta _resourceKeysJsonMeta = const VerificationMeta(
     'resourceKeysJson',
@@ -1996,6 +2008,7 @@ class $LocalCommandsTable extends LocalCommands
     payloadJson,
     tripId,
     aggregateId,
+    aggregateType,
     resourceKeysJson,
     dependenciesJson,
     occurredAt,
@@ -2103,8 +2116,6 @@ class $LocalCommandsTable extends LocalCommands
         _tripIdMeta,
         tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_tripIdMeta);
     }
     if (data.containsKey('aggregate_id')) {
       context.handle(
@@ -2114,8 +2125,15 @@ class $LocalCommandsTable extends LocalCommands
           _aggregateIdMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_aggregateIdMeta);
+    }
+    if (data.containsKey('aggregate_type')) {
+      context.handle(
+        _aggregateTypeMeta,
+        aggregateType.isAcceptableOrUnknown(
+          data['aggregate_type']!,
+          _aggregateTypeMeta,
+        ),
+      );
     }
     if (data.containsKey('resource_keys_json')) {
       context.handle(
@@ -2249,10 +2267,14 @@ class $LocalCommandsTable extends LocalCommands
       tripId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}trip_id'],
-      )!,
+      ),
       aggregateId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}aggregate_id'],
+      ),
+      aggregateType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}aggregate_type'],
       )!,
       resourceKeysJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2312,8 +2334,9 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
   final String endpointPath;
   final String httpMethod;
   final String payloadJson;
-  final String tripId;
-  final String aggregateId;
+  final String? tripId;
+  final String? aggregateId;
+  final String aggregateType;
   final String resourceKeysJson;
   final String dependenciesJson;
   final DateTime occurredAt;
@@ -2333,8 +2356,9 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
     required this.endpointPath,
     required this.httpMethod,
     required this.payloadJson,
-    required this.tripId,
-    required this.aggregateId,
+    this.tripId,
+    this.aggregateId,
+    required this.aggregateType,
     required this.resourceKeysJson,
     required this.dependenciesJson,
     required this.occurredAt,
@@ -2357,8 +2381,13 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
     map['endpoint_path'] = Variable<String>(endpointPath);
     map['http_method'] = Variable<String>(httpMethod);
     map['payload_json'] = Variable<String>(payloadJson);
-    map['trip_id'] = Variable<String>(tripId);
-    map['aggregate_id'] = Variable<String>(aggregateId);
+    if (!nullToAbsent || tripId != null) {
+      map['trip_id'] = Variable<String>(tripId);
+    }
+    if (!nullToAbsent || aggregateId != null) {
+      map['aggregate_id'] = Variable<String>(aggregateId);
+    }
+    map['aggregate_type'] = Variable<String>(aggregateType);
     map['resource_keys_json'] = Variable<String>(resourceKeysJson);
     map['dependencies_json'] = Variable<String>(dependenciesJson);
     map['occurred_at'] = Variable<DateTime>(occurredAt);
@@ -2390,8 +2419,13 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
       endpointPath: Value(endpointPath),
       httpMethod: Value(httpMethod),
       payloadJson: Value(payloadJson),
-      tripId: Value(tripId),
-      aggregateId: Value(aggregateId),
+      tripId: tripId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tripId),
+      aggregateId: aggregateId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(aggregateId),
+      aggregateType: Value(aggregateType),
       resourceKeysJson: Value(resourceKeysJson),
       dependenciesJson: Value(dependenciesJson),
       occurredAt: Value(occurredAt),
@@ -2427,8 +2461,9 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
       endpointPath: serializer.fromJson<String>(json['endpointPath']),
       httpMethod: serializer.fromJson<String>(json['httpMethod']),
       payloadJson: serializer.fromJson<String>(json['payloadJson']),
-      tripId: serializer.fromJson<String>(json['tripId']),
-      aggregateId: serializer.fromJson<String>(json['aggregateId']),
+      tripId: serializer.fromJson<String?>(json['tripId']),
+      aggregateId: serializer.fromJson<String?>(json['aggregateId']),
+      aggregateType: serializer.fromJson<String>(json['aggregateType']),
       resourceKeysJson: serializer.fromJson<String>(json['resourceKeysJson']),
       dependenciesJson: serializer.fromJson<String>(json['dependenciesJson']),
       occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
@@ -2453,8 +2488,9 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
       'endpointPath': serializer.toJson<String>(endpointPath),
       'httpMethod': serializer.toJson<String>(httpMethod),
       'payloadJson': serializer.toJson<String>(payloadJson),
-      'tripId': serializer.toJson<String>(tripId),
-      'aggregateId': serializer.toJson<String>(aggregateId),
+      'tripId': serializer.toJson<String?>(tripId),
+      'aggregateId': serializer.toJson<String?>(aggregateId),
+      'aggregateType': serializer.toJson<String>(aggregateType),
       'resourceKeysJson': serializer.toJson<String>(resourceKeysJson),
       'dependenciesJson': serializer.toJson<String>(dependenciesJson),
       'occurredAt': serializer.toJson<DateTime>(occurredAt),
@@ -2477,8 +2513,9 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
     String? endpointPath,
     String? httpMethod,
     String? payloadJson,
-    String? tripId,
-    String? aggregateId,
+    Value<String?> tripId = const Value.absent(),
+    Value<String?> aggregateId = const Value.absent(),
+    String? aggregateType,
     String? resourceKeysJson,
     String? dependenciesJson,
     DateTime? occurredAt,
@@ -2498,8 +2535,9 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
     endpointPath: endpointPath ?? this.endpointPath,
     httpMethod: httpMethod ?? this.httpMethod,
     payloadJson: payloadJson ?? this.payloadJson,
-    tripId: tripId ?? this.tripId,
-    aggregateId: aggregateId ?? this.aggregateId,
+    tripId: tripId.present ? tripId.value : this.tripId,
+    aggregateId: aggregateId.present ? aggregateId.value : this.aggregateId,
+    aggregateType: aggregateType ?? this.aggregateType,
     resourceKeysJson: resourceKeysJson ?? this.resourceKeysJson,
     dependenciesJson: dependenciesJson ?? this.dependenciesJson,
     occurredAt: occurredAt ?? this.occurredAt,
@@ -2541,6 +2579,9 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
       aggregateId: data.aggregateId.present
           ? data.aggregateId.value
           : this.aggregateId,
+      aggregateType: data.aggregateType.present
+          ? data.aggregateType.value
+          : this.aggregateType,
       resourceKeysJson: data.resourceKeysJson.present
           ? data.resourceKeysJson.value
           : this.resourceKeysJson,
@@ -2581,6 +2622,7 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
           ..write('payloadJson: $payloadJson, ')
           ..write('tripId: $tripId, ')
           ..write('aggregateId: $aggregateId, ')
+          ..write('aggregateType: $aggregateType, ')
           ..write('resourceKeysJson: $resourceKeysJson, ')
           ..write('dependenciesJson: $dependenciesJson, ')
           ..write('occurredAt: $occurredAt, ')
@@ -2596,7 +2638,7 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     clientOperationId,
     userId,
     tenantId,
@@ -2607,6 +2649,7 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
     payloadJson,
     tripId,
     aggregateId,
+    aggregateType,
     resourceKeysJson,
     dependenciesJson,
     occurredAt,
@@ -2617,7 +2660,7 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
     lastHttpStatus,
     lastErrorCode,
     ackedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2632,6 +2675,7 @@ class LocalCommand extends DataClass implements Insertable<LocalCommand> {
           other.payloadJson == this.payloadJson &&
           other.tripId == this.tripId &&
           other.aggregateId == this.aggregateId &&
+          other.aggregateType == this.aggregateType &&
           other.resourceKeysJson == this.resourceKeysJson &&
           other.dependenciesJson == this.dependenciesJson &&
           other.occurredAt == this.occurredAt &&
@@ -2653,8 +2697,9 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
   final Value<String> endpointPath;
   final Value<String> httpMethod;
   final Value<String> payloadJson;
-  final Value<String> tripId;
-  final Value<String> aggregateId;
+  final Value<String?> tripId;
+  final Value<String?> aggregateId;
+  final Value<String> aggregateType;
   final Value<String> resourceKeysJson;
   final Value<String> dependenciesJson;
   final Value<DateTime> occurredAt;
@@ -2677,6 +2722,7 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
     this.payloadJson = const Value.absent(),
     this.tripId = const Value.absent(),
     this.aggregateId = const Value.absent(),
+    this.aggregateType = const Value.absent(),
     this.resourceKeysJson = const Value.absent(),
     this.dependenciesJson = const Value.absent(),
     this.occurredAt = const Value.absent(),
@@ -2698,8 +2744,9 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
     required String endpointPath,
     required String httpMethod,
     required String payloadJson,
-    required String tripId,
-    required String aggregateId,
+    this.tripId = const Value.absent(),
+    this.aggregateId = const Value.absent(),
+    this.aggregateType = const Value.absent(),
     required String resourceKeysJson,
     required String dependenciesJson,
     required DateTime occurredAt,
@@ -2719,8 +2766,6 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
        endpointPath = Value(endpointPath),
        httpMethod = Value(httpMethod),
        payloadJson = Value(payloadJson),
-       tripId = Value(tripId),
-       aggregateId = Value(aggregateId),
        resourceKeysJson = Value(resourceKeysJson),
        dependenciesJson = Value(dependenciesJson),
        occurredAt = Value(occurredAt),
@@ -2737,6 +2782,7 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
     Expression<String>? payloadJson,
     Expression<String>? tripId,
     Expression<String>? aggregateId,
+    Expression<String>? aggregateType,
     Expression<String>? resourceKeysJson,
     Expression<String>? dependenciesJson,
     Expression<DateTime>? occurredAt,
@@ -2760,6 +2806,7 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
       if (payloadJson != null) 'payload_json': payloadJson,
       if (tripId != null) 'trip_id': tripId,
       if (aggregateId != null) 'aggregate_id': aggregateId,
+      if (aggregateType != null) 'aggregate_type': aggregateType,
       if (resourceKeysJson != null) 'resource_keys_json': resourceKeysJson,
       if (dependenciesJson != null) 'dependencies_json': dependenciesJson,
       if (occurredAt != null) 'occurred_at': occurredAt,
@@ -2783,8 +2830,9 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
     Value<String>? endpointPath,
     Value<String>? httpMethod,
     Value<String>? payloadJson,
-    Value<String>? tripId,
-    Value<String>? aggregateId,
+    Value<String?>? tripId,
+    Value<String?>? aggregateId,
+    Value<String>? aggregateType,
     Value<String>? resourceKeysJson,
     Value<String>? dependenciesJson,
     Value<DateTime>? occurredAt,
@@ -2808,6 +2856,7 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
       payloadJson: payloadJson ?? this.payloadJson,
       tripId: tripId ?? this.tripId,
       aggregateId: aggregateId ?? this.aggregateId,
+      aggregateType: aggregateType ?? this.aggregateType,
       resourceKeysJson: resourceKeysJson ?? this.resourceKeysJson,
       dependenciesJson: dependenciesJson ?? this.dependenciesJson,
       occurredAt: occurredAt ?? this.occurredAt,
@@ -2854,6 +2903,9 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
     }
     if (aggregateId.present) {
       map['aggregate_id'] = Variable<String>(aggregateId.value);
+    }
+    if (aggregateType.present) {
+      map['aggregate_type'] = Variable<String>(aggregateType.value);
     }
     if (resourceKeysJson.present) {
       map['resource_keys_json'] = Variable<String>(resourceKeysJson.value);
@@ -2904,6 +2956,7 @@ class LocalCommandsCompanion extends UpdateCompanion<LocalCommand> {
           ..write('payloadJson: $payloadJson, ')
           ..write('tripId: $tripId, ')
           ..write('aggregateId: $aggregateId, ')
+          ..write('aggregateType: $aggregateType, ')
           ..write('resourceKeysJson: $resourceKeysJson, ')
           ..write('dependenciesJson: $dependenciesJson, ')
           ..write('occurredAt: $occurredAt, ')
@@ -5707,6 +5760,2251 @@ class MaterializedRequestsCompanion
   }
 }
 
+class $CommandResultsTable extends CommandResults
+    with TableInfo<$CommandResultsTable, CommandResult> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CommandResultsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _clientOperationIdMeta = const VerificationMeta(
+    'clientOperationId',
+  );
+  @override
+  late final GeneratedColumn<String> clientOperationId =
+      GeneratedColumn<String>(
+        'client_operation_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resultKindMeta = const VerificationMeta(
+    'resultKind',
+  );
+  @override
+  late final GeneratedColumn<String> resultKind = GeneratedColumn<String>(
+    'result_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectionJsonMeta = const VerificationMeta(
+    'projectionJson',
+  );
+  @override
+  late final GeneratedColumn<String> projectionJson = GeneratedColumn<String>(
+    'projection_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _confirmedAtMeta = const VerificationMeta(
+    'confirmedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> confirmedAt = GeneratedColumn<DateTime>(
+    'confirmed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    clientOperationId,
+    userId,
+    tenantId,
+    resultKind,
+    serverId,
+    projectionJson,
+    confirmedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'command_results';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CommandResult> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('client_operation_id')) {
+      context.handle(
+        _clientOperationIdMeta,
+        clientOperationId.isAcceptableOrUnknown(
+          data['client_operation_id']!,
+          _clientOperationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clientOperationIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('result_kind')) {
+      context.handle(
+        _resultKindMeta,
+        resultKind.isAcceptableOrUnknown(data['result_kind']!, _resultKindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_resultKindMeta);
+    }
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('projection_json')) {
+      context.handle(
+        _projectionJsonMeta,
+        projectionJson.isAcceptableOrUnknown(
+          data['projection_json']!,
+          _projectionJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_projectionJsonMeta);
+    }
+    if (data.containsKey('confirmed_at')) {
+      context.handle(
+        _confirmedAtMeta,
+        confirmedAt.isAcceptableOrUnknown(
+          data['confirmed_at']!,
+          _confirmedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_confirmedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {clientOperationId};
+  @override
+  CommandResult map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CommandResult(
+      clientOperationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_operation_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      resultKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}result_kind'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      projectionJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}projection_json'],
+      )!,
+      confirmedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}confirmed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CommandResultsTable createAlias(String alias) {
+    return $CommandResultsTable(attachedDatabase, alias);
+  }
+}
+
+class CommandResult extends DataClass implements Insertable<CommandResult> {
+  final String clientOperationId;
+  final String userId;
+  final String tenantId;
+  final String resultKind;
+  final String serverId;
+  final String projectionJson;
+  final DateTime confirmedAt;
+  const CommandResult({
+    required this.clientOperationId,
+    required this.userId,
+    required this.tenantId,
+    required this.resultKind,
+    required this.serverId,
+    required this.projectionJson,
+    required this.confirmedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['client_operation_id'] = Variable<String>(clientOperationId);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['result_kind'] = Variable<String>(resultKind);
+    map['server_id'] = Variable<String>(serverId);
+    map['projection_json'] = Variable<String>(projectionJson);
+    map['confirmed_at'] = Variable<DateTime>(confirmedAt);
+    return map;
+  }
+
+  CommandResultsCompanion toCompanion(bool nullToAbsent) {
+    return CommandResultsCompanion(
+      clientOperationId: Value(clientOperationId),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      resultKind: Value(resultKind),
+      serverId: Value(serverId),
+      projectionJson: Value(projectionJson),
+      confirmedAt: Value(confirmedAt),
+    );
+  }
+
+  factory CommandResult.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CommandResult(
+      clientOperationId: serializer.fromJson<String>(json['clientOperationId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      resultKind: serializer.fromJson<String>(json['resultKind']),
+      serverId: serializer.fromJson<String>(json['serverId']),
+      projectionJson: serializer.fromJson<String>(json['projectionJson']),
+      confirmedAt: serializer.fromJson<DateTime>(json['confirmedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'clientOperationId': serializer.toJson<String>(clientOperationId),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'resultKind': serializer.toJson<String>(resultKind),
+      'serverId': serializer.toJson<String>(serverId),
+      'projectionJson': serializer.toJson<String>(projectionJson),
+      'confirmedAt': serializer.toJson<DateTime>(confirmedAt),
+    };
+  }
+
+  CommandResult copyWith({
+    String? clientOperationId,
+    String? userId,
+    String? tenantId,
+    String? resultKind,
+    String? serverId,
+    String? projectionJson,
+    DateTime? confirmedAt,
+  }) => CommandResult(
+    clientOperationId: clientOperationId ?? this.clientOperationId,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    resultKind: resultKind ?? this.resultKind,
+    serverId: serverId ?? this.serverId,
+    projectionJson: projectionJson ?? this.projectionJson,
+    confirmedAt: confirmedAt ?? this.confirmedAt,
+  );
+  CommandResult copyWithCompanion(CommandResultsCompanion data) {
+    return CommandResult(
+      clientOperationId: data.clientOperationId.present
+          ? data.clientOperationId.value
+          : this.clientOperationId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      resultKind: data.resultKind.present
+          ? data.resultKind.value
+          : this.resultKind,
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      projectionJson: data.projectionJson.present
+          ? data.projectionJson.value
+          : this.projectionJson,
+      confirmedAt: data.confirmedAt.present
+          ? data.confirmedAt.value
+          : this.confirmedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommandResult(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('resultKind: $resultKind, ')
+          ..write('serverId: $serverId, ')
+          ..write('projectionJson: $projectionJson, ')
+          ..write('confirmedAt: $confirmedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    clientOperationId,
+    userId,
+    tenantId,
+    resultKind,
+    serverId,
+    projectionJson,
+    confirmedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CommandResult &&
+          other.clientOperationId == this.clientOperationId &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.resultKind == this.resultKind &&
+          other.serverId == this.serverId &&
+          other.projectionJson == this.projectionJson &&
+          other.confirmedAt == this.confirmedAt);
+}
+
+class CommandResultsCompanion extends UpdateCompanion<CommandResult> {
+  final Value<String> clientOperationId;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> resultKind;
+  final Value<String> serverId;
+  final Value<String> projectionJson;
+  final Value<DateTime> confirmedAt;
+  final Value<int> rowid;
+  const CommandResultsCompanion({
+    this.clientOperationId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.resultKind = const Value.absent(),
+    this.serverId = const Value.absent(),
+    this.projectionJson = const Value.absent(),
+    this.confirmedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CommandResultsCompanion.insert({
+    required String clientOperationId,
+    required String userId,
+    required String tenantId,
+    required String resultKind,
+    required String serverId,
+    required String projectionJson,
+    required DateTime confirmedAt,
+    this.rowid = const Value.absent(),
+  }) : clientOperationId = Value(clientOperationId),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       resultKind = Value(resultKind),
+       serverId = Value(serverId),
+       projectionJson = Value(projectionJson),
+       confirmedAt = Value(confirmedAt);
+  static Insertable<CommandResult> custom({
+    Expression<String>? clientOperationId,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? resultKind,
+    Expression<String>? serverId,
+    Expression<String>? projectionJson,
+    Expression<DateTime>? confirmedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (clientOperationId != null) 'client_operation_id': clientOperationId,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (resultKind != null) 'result_kind': resultKind,
+      if (serverId != null) 'server_id': serverId,
+      if (projectionJson != null) 'projection_json': projectionJson,
+      if (confirmedAt != null) 'confirmed_at': confirmedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CommandResultsCompanion copyWith({
+    Value<String>? clientOperationId,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? resultKind,
+    Value<String>? serverId,
+    Value<String>? projectionJson,
+    Value<DateTime>? confirmedAt,
+    Value<int>? rowid,
+  }) {
+    return CommandResultsCompanion(
+      clientOperationId: clientOperationId ?? this.clientOperationId,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      resultKind: resultKind ?? this.resultKind,
+      serverId: serverId ?? this.serverId,
+      projectionJson: projectionJson ?? this.projectionJson,
+      confirmedAt: confirmedAt ?? this.confirmedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (clientOperationId.present) {
+      map['client_operation_id'] = Variable<String>(clientOperationId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (resultKind.present) {
+      map['result_kind'] = Variable<String>(resultKind.value);
+    }
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (projectionJson.present) {
+      map['projection_json'] = Variable<String>(projectionJson.value);
+    }
+    if (confirmedAt.present) {
+      map['confirmed_at'] = Variable<DateTime>(confirmedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommandResultsCompanion(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('resultKind: $resultKind, ')
+          ..write('serverId: $serverId, ')
+          ..write('projectionJson: $projectionJson, ')
+          ..write('confirmedAt: $confirmedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CommandResultDependenciesTable extends CommandResultDependencies
+    with TableInfo<$CommandResultDependenciesTable, CommandResultDependency> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CommandResultDependenciesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _clientOperationIdMeta = const VerificationMeta(
+    'clientOperationId',
+  );
+  @override
+  late final GeneratedColumn<String> clientOperationId =
+      GeneratedColumn<String>(
+        'client_operation_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceOperationIdMeta = const VerificationMeta(
+    'sourceOperationId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceOperationId =
+      GeneratedColumn<String>(
+        'source_operation_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _fieldPathMeta = const VerificationMeta(
+    'fieldPath',
+  );
+  @override
+  late final GeneratedColumn<String> fieldPath = GeneratedColumn<String>(
+    'field_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    clientOperationId,
+    userId,
+    tenantId,
+    sourceOperationId,
+    fieldPath,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'command_result_dependencies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CommandResultDependency> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('client_operation_id')) {
+      context.handle(
+        _clientOperationIdMeta,
+        clientOperationId.isAcceptableOrUnknown(
+          data['client_operation_id']!,
+          _clientOperationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clientOperationIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('source_operation_id')) {
+      context.handle(
+        _sourceOperationIdMeta,
+        sourceOperationId.isAcceptableOrUnknown(
+          data['source_operation_id']!,
+          _sourceOperationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceOperationIdMeta);
+    }
+    if (data.containsKey('field_path')) {
+      context.handle(
+        _fieldPathMeta,
+        fieldPath.isAcceptableOrUnknown(data['field_path']!, _fieldPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldPathMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {clientOperationId, fieldPath};
+  @override
+  CommandResultDependency map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CommandResultDependency(
+      clientOperationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_operation_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      sourceOperationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_operation_id'],
+      )!,
+      fieldPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_path'],
+      )!,
+    );
+  }
+
+  @override
+  $CommandResultDependenciesTable createAlias(String alias) {
+    return $CommandResultDependenciesTable(attachedDatabase, alias);
+  }
+}
+
+class CommandResultDependency extends DataClass
+    implements Insertable<CommandResultDependency> {
+  final String clientOperationId;
+  final String userId;
+  final String tenantId;
+  final String sourceOperationId;
+  final String fieldPath;
+  const CommandResultDependency({
+    required this.clientOperationId,
+    required this.userId,
+    required this.tenantId,
+    required this.sourceOperationId,
+    required this.fieldPath,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['client_operation_id'] = Variable<String>(clientOperationId);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['source_operation_id'] = Variable<String>(sourceOperationId);
+    map['field_path'] = Variable<String>(fieldPath);
+    return map;
+  }
+
+  CommandResultDependenciesCompanion toCompanion(bool nullToAbsent) {
+    return CommandResultDependenciesCompanion(
+      clientOperationId: Value(clientOperationId),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      sourceOperationId: Value(sourceOperationId),
+      fieldPath: Value(fieldPath),
+    );
+  }
+
+  factory CommandResultDependency.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CommandResultDependency(
+      clientOperationId: serializer.fromJson<String>(json['clientOperationId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      sourceOperationId: serializer.fromJson<String>(json['sourceOperationId']),
+      fieldPath: serializer.fromJson<String>(json['fieldPath']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'clientOperationId': serializer.toJson<String>(clientOperationId),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'sourceOperationId': serializer.toJson<String>(sourceOperationId),
+      'fieldPath': serializer.toJson<String>(fieldPath),
+    };
+  }
+
+  CommandResultDependency copyWith({
+    String? clientOperationId,
+    String? userId,
+    String? tenantId,
+    String? sourceOperationId,
+    String? fieldPath,
+  }) => CommandResultDependency(
+    clientOperationId: clientOperationId ?? this.clientOperationId,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    sourceOperationId: sourceOperationId ?? this.sourceOperationId,
+    fieldPath: fieldPath ?? this.fieldPath,
+  );
+  CommandResultDependency copyWithCompanion(
+    CommandResultDependenciesCompanion data,
+  ) {
+    return CommandResultDependency(
+      clientOperationId: data.clientOperationId.present
+          ? data.clientOperationId.value
+          : this.clientOperationId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      sourceOperationId: data.sourceOperationId.present
+          ? data.sourceOperationId.value
+          : this.sourceOperationId,
+      fieldPath: data.fieldPath.present ? data.fieldPath.value : this.fieldPath,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommandResultDependency(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('sourceOperationId: $sourceOperationId, ')
+          ..write('fieldPath: $fieldPath')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    clientOperationId,
+    userId,
+    tenantId,
+    sourceOperationId,
+    fieldPath,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CommandResultDependency &&
+          other.clientOperationId == this.clientOperationId &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.sourceOperationId == this.sourceOperationId &&
+          other.fieldPath == this.fieldPath);
+}
+
+class CommandResultDependenciesCompanion
+    extends UpdateCompanion<CommandResultDependency> {
+  final Value<String> clientOperationId;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> sourceOperationId;
+  final Value<String> fieldPath;
+  final Value<int> rowid;
+  const CommandResultDependenciesCompanion({
+    this.clientOperationId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.sourceOperationId = const Value.absent(),
+    this.fieldPath = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CommandResultDependenciesCompanion.insert({
+    required String clientOperationId,
+    required String userId,
+    required String tenantId,
+    required String sourceOperationId,
+    required String fieldPath,
+    this.rowid = const Value.absent(),
+  }) : clientOperationId = Value(clientOperationId),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       sourceOperationId = Value(sourceOperationId),
+       fieldPath = Value(fieldPath);
+  static Insertable<CommandResultDependency> custom({
+    Expression<String>? clientOperationId,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? sourceOperationId,
+    Expression<String>? fieldPath,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (clientOperationId != null) 'client_operation_id': clientOperationId,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (sourceOperationId != null) 'source_operation_id': sourceOperationId,
+      if (fieldPath != null) 'field_path': fieldPath,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CommandResultDependenciesCompanion copyWith({
+    Value<String>? clientOperationId,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? sourceOperationId,
+    Value<String>? fieldPath,
+    Value<int>? rowid,
+  }) {
+    return CommandResultDependenciesCompanion(
+      clientOperationId: clientOperationId ?? this.clientOperationId,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      sourceOperationId: sourceOperationId ?? this.sourceOperationId,
+      fieldPath: fieldPath ?? this.fieldPath,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (clientOperationId.present) {
+      map['client_operation_id'] = Variable<String>(clientOperationId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (sourceOperationId.present) {
+      map['source_operation_id'] = Variable<String>(sourceOperationId.value);
+    }
+    if (fieldPath.present) {
+      map['field_path'] = Variable<String>(fieldPath.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommandResultDependenciesCompanion(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('sourceOperationId: $sourceOperationId, ')
+          ..write('fieldPath: $fieldPath, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $InspectionDraftsTable extends InspectionDrafts
+    with TableInfo<$InspectionDraftsTable, InspectionDraft> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InspectionDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _inspectionTypeMeta = const VerificationMeta(
+    'inspectionType',
+  );
+  @override
+  late final GeneratedColumn<String> inspectionType = GeneratedColumn<String>(
+    'inspection_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _shiftReferenceJsonMeta =
+      const VerificationMeta('shiftReferenceJson');
+  @override
+  late final GeneratedColumn<String> shiftReferenceJson =
+      GeneratedColumn<String>(
+        'shift_reference_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _tractorIdMeta = const VerificationMeta(
+    'tractorId',
+  );
+  @override
+  late final GeneratedColumn<String> tractorId = GeneratedColumn<String>(
+    'tractor_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
+    'trip_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _odometerMeta = const VerificationMeta(
+    'odometer',
+  );
+  @override
+  late final GeneratedColumn<String> odometer = GeneratedColumn<String>(
+    'odometer',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _checklistJsonMeta = const VerificationMeta(
+    'checklistJson',
+  );
+  @override
+  late final GeneratedColumn<String> checklistJson = GeneratedColumn<String>(
+    'checklist_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{"items":[]}'),
+  );
+  static const VerificationMeta _photosJsonMeta = const VerificationMeta(
+    'photosJson',
+  );
+  @override
+  late final GeneratedColumn<String> photosJson = GeneratedColumn<String>(
+    'photos_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _damagesMeta = const VerificationMeta(
+    'damages',
+  );
+  @override
+  late final GeneratedColumn<String> damages = GeneratedColumn<String>(
+    'damages',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _failuresMeta = const VerificationMeta(
+    'failures',
+  );
+  @override
+  late final GeneratedColumn<String> failures = GeneratedColumn<String>(
+    'failures',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _commentsMeta = const VerificationMeta(
+    'comments',
+  );
+  @override
+  late final GeneratedColumn<String> comments = GeneratedColumn<String>(
+    'comments',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _commandIdMeta = const VerificationMeta(
+    'commandId',
+  );
+  @override
+  late final GeneratedColumn<String> commandId = GeneratedColumn<String>(
+    'command_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    tenantId,
+    inspectionType,
+    shiftReferenceJson,
+    tractorId,
+    tripId,
+    odometer,
+    checklistJson,
+    photosJson,
+    damages,
+    failures,
+    comments,
+    commandId,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'inspection_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<InspectionDraft> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('inspection_type')) {
+      context.handle(
+        _inspectionTypeMeta,
+        inspectionType.isAcceptableOrUnknown(
+          data['inspection_type']!,
+          _inspectionTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_inspectionTypeMeta);
+    }
+    if (data.containsKey('shift_reference_json')) {
+      context.handle(
+        _shiftReferenceJsonMeta,
+        shiftReferenceJson.isAcceptableOrUnknown(
+          data['shift_reference_json']!,
+          _shiftReferenceJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_shiftReferenceJsonMeta);
+    }
+    if (data.containsKey('tractor_id')) {
+      context.handle(
+        _tractorIdMeta,
+        tractorId.isAcceptableOrUnknown(data['tractor_id']!, _tractorIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tractorIdMeta);
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(
+        _tripIdMeta,
+        tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta),
+      );
+    }
+    if (data.containsKey('odometer')) {
+      context.handle(
+        _odometerMeta,
+        odometer.isAcceptableOrUnknown(data['odometer']!, _odometerMeta),
+      );
+    }
+    if (data.containsKey('checklist_json')) {
+      context.handle(
+        _checklistJsonMeta,
+        checklistJson.isAcceptableOrUnknown(
+          data['checklist_json']!,
+          _checklistJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('photos_json')) {
+      context.handle(
+        _photosJsonMeta,
+        photosJson.isAcceptableOrUnknown(data['photos_json']!, _photosJsonMeta),
+      );
+    }
+    if (data.containsKey('damages')) {
+      context.handle(
+        _damagesMeta,
+        damages.isAcceptableOrUnknown(data['damages']!, _damagesMeta),
+      );
+    }
+    if (data.containsKey('failures')) {
+      context.handle(
+        _failuresMeta,
+        failures.isAcceptableOrUnknown(data['failures']!, _failuresMeta),
+      );
+    }
+    if (data.containsKey('comments')) {
+      context.handle(
+        _commentsMeta,
+        comments.isAcceptableOrUnknown(data['comments']!, _commentsMeta),
+      );
+    }
+    if (data.containsKey('command_id')) {
+      context.handle(
+        _commandIdMeta,
+        commandId.isAcceptableOrUnknown(data['command_id']!, _commandIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  InspectionDraft map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return InspectionDraft(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      inspectionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}inspection_type'],
+      )!,
+      shiftReferenceJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}shift_reference_json'],
+      )!,
+      tractorId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tractor_id'],
+      )!,
+      tripId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trip_id'],
+      ),
+      odometer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}odometer'],
+      )!,
+      checklistJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}checklist_json'],
+      )!,
+      photosJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photos_json'],
+      )!,
+      damages: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}damages'],
+      ),
+      failures: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}failures'],
+      ),
+      comments: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}comments'],
+      ),
+      commandId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}command_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $InspectionDraftsTable createAlias(String alias) {
+    return $InspectionDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class InspectionDraft extends DataClass implements Insertable<InspectionDraft> {
+  final String id;
+  final String userId;
+  final String tenantId;
+  final String inspectionType;
+  final String shiftReferenceJson;
+  final String tractorId;
+  final String? tripId;
+  final String odometer;
+  final String checklistJson;
+  final String photosJson;
+  final String? damages;
+  final String? failures;
+  final String? comments;
+  final String? commandId;
+  final DateTime updatedAt;
+  const InspectionDraft({
+    required this.id,
+    required this.userId,
+    required this.tenantId,
+    required this.inspectionType,
+    required this.shiftReferenceJson,
+    required this.tractorId,
+    this.tripId,
+    required this.odometer,
+    required this.checklistJson,
+    required this.photosJson,
+    this.damages,
+    this.failures,
+    this.comments,
+    this.commandId,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['inspection_type'] = Variable<String>(inspectionType);
+    map['shift_reference_json'] = Variable<String>(shiftReferenceJson);
+    map['tractor_id'] = Variable<String>(tractorId);
+    if (!nullToAbsent || tripId != null) {
+      map['trip_id'] = Variable<String>(tripId);
+    }
+    map['odometer'] = Variable<String>(odometer);
+    map['checklist_json'] = Variable<String>(checklistJson);
+    map['photos_json'] = Variable<String>(photosJson);
+    if (!nullToAbsent || damages != null) {
+      map['damages'] = Variable<String>(damages);
+    }
+    if (!nullToAbsent || failures != null) {
+      map['failures'] = Variable<String>(failures);
+    }
+    if (!nullToAbsent || comments != null) {
+      map['comments'] = Variable<String>(comments);
+    }
+    if (!nullToAbsent || commandId != null) {
+      map['command_id'] = Variable<String>(commandId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  InspectionDraftsCompanion toCompanion(bool nullToAbsent) {
+    return InspectionDraftsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      inspectionType: Value(inspectionType),
+      shiftReferenceJson: Value(shiftReferenceJson),
+      tractorId: Value(tractorId),
+      tripId: tripId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tripId),
+      odometer: Value(odometer),
+      checklistJson: Value(checklistJson),
+      photosJson: Value(photosJson),
+      damages: damages == null && nullToAbsent
+          ? const Value.absent()
+          : Value(damages),
+      failures: failures == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failures),
+      comments: comments == null && nullToAbsent
+          ? const Value.absent()
+          : Value(comments),
+      commandId: commandId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(commandId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory InspectionDraft.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return InspectionDraft(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      inspectionType: serializer.fromJson<String>(json['inspectionType']),
+      shiftReferenceJson: serializer.fromJson<String>(
+        json['shiftReferenceJson'],
+      ),
+      tractorId: serializer.fromJson<String>(json['tractorId']),
+      tripId: serializer.fromJson<String?>(json['tripId']),
+      odometer: serializer.fromJson<String>(json['odometer']),
+      checklistJson: serializer.fromJson<String>(json['checklistJson']),
+      photosJson: serializer.fromJson<String>(json['photosJson']),
+      damages: serializer.fromJson<String?>(json['damages']),
+      failures: serializer.fromJson<String?>(json['failures']),
+      comments: serializer.fromJson<String?>(json['comments']),
+      commandId: serializer.fromJson<String?>(json['commandId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'inspectionType': serializer.toJson<String>(inspectionType),
+      'shiftReferenceJson': serializer.toJson<String>(shiftReferenceJson),
+      'tractorId': serializer.toJson<String>(tractorId),
+      'tripId': serializer.toJson<String?>(tripId),
+      'odometer': serializer.toJson<String>(odometer),
+      'checklistJson': serializer.toJson<String>(checklistJson),
+      'photosJson': serializer.toJson<String>(photosJson),
+      'damages': serializer.toJson<String?>(damages),
+      'failures': serializer.toJson<String?>(failures),
+      'comments': serializer.toJson<String?>(comments),
+      'commandId': serializer.toJson<String?>(commandId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  InspectionDraft copyWith({
+    String? id,
+    String? userId,
+    String? tenantId,
+    String? inspectionType,
+    String? shiftReferenceJson,
+    String? tractorId,
+    Value<String?> tripId = const Value.absent(),
+    String? odometer,
+    String? checklistJson,
+    String? photosJson,
+    Value<String?> damages = const Value.absent(),
+    Value<String?> failures = const Value.absent(),
+    Value<String?> comments = const Value.absent(),
+    Value<String?> commandId = const Value.absent(),
+    DateTime? updatedAt,
+  }) => InspectionDraft(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    inspectionType: inspectionType ?? this.inspectionType,
+    shiftReferenceJson: shiftReferenceJson ?? this.shiftReferenceJson,
+    tractorId: tractorId ?? this.tractorId,
+    tripId: tripId.present ? tripId.value : this.tripId,
+    odometer: odometer ?? this.odometer,
+    checklistJson: checklistJson ?? this.checklistJson,
+    photosJson: photosJson ?? this.photosJson,
+    damages: damages.present ? damages.value : this.damages,
+    failures: failures.present ? failures.value : this.failures,
+    comments: comments.present ? comments.value : this.comments,
+    commandId: commandId.present ? commandId.value : this.commandId,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  InspectionDraft copyWithCompanion(InspectionDraftsCompanion data) {
+    return InspectionDraft(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      inspectionType: data.inspectionType.present
+          ? data.inspectionType.value
+          : this.inspectionType,
+      shiftReferenceJson: data.shiftReferenceJson.present
+          ? data.shiftReferenceJson.value
+          : this.shiftReferenceJson,
+      tractorId: data.tractorId.present ? data.tractorId.value : this.tractorId,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      odometer: data.odometer.present ? data.odometer.value : this.odometer,
+      checklistJson: data.checklistJson.present
+          ? data.checklistJson.value
+          : this.checklistJson,
+      photosJson: data.photosJson.present
+          ? data.photosJson.value
+          : this.photosJson,
+      damages: data.damages.present ? data.damages.value : this.damages,
+      failures: data.failures.present ? data.failures.value : this.failures,
+      comments: data.comments.present ? data.comments.value : this.comments,
+      commandId: data.commandId.present ? data.commandId.value : this.commandId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InspectionDraft(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('inspectionType: $inspectionType, ')
+          ..write('shiftReferenceJson: $shiftReferenceJson, ')
+          ..write('tractorId: $tractorId, ')
+          ..write('tripId: $tripId, ')
+          ..write('odometer: $odometer, ')
+          ..write('checklistJson: $checklistJson, ')
+          ..write('photosJson: $photosJson, ')
+          ..write('damages: $damages, ')
+          ..write('failures: $failures, ')
+          ..write('comments: $comments, ')
+          ..write('commandId: $commandId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    tenantId,
+    inspectionType,
+    shiftReferenceJson,
+    tractorId,
+    tripId,
+    odometer,
+    checklistJson,
+    photosJson,
+    damages,
+    failures,
+    comments,
+    commandId,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InspectionDraft &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.inspectionType == this.inspectionType &&
+          other.shiftReferenceJson == this.shiftReferenceJson &&
+          other.tractorId == this.tractorId &&
+          other.tripId == this.tripId &&
+          other.odometer == this.odometer &&
+          other.checklistJson == this.checklistJson &&
+          other.photosJson == this.photosJson &&
+          other.damages == this.damages &&
+          other.failures == this.failures &&
+          other.comments == this.comments &&
+          other.commandId == this.commandId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class InspectionDraftsCompanion extends UpdateCompanion<InspectionDraft> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> inspectionType;
+  final Value<String> shiftReferenceJson;
+  final Value<String> tractorId;
+  final Value<String?> tripId;
+  final Value<String> odometer;
+  final Value<String> checklistJson;
+  final Value<String> photosJson;
+  final Value<String?> damages;
+  final Value<String?> failures;
+  final Value<String?> comments;
+  final Value<String?> commandId;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const InspectionDraftsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.inspectionType = const Value.absent(),
+    this.shiftReferenceJson = const Value.absent(),
+    this.tractorId = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.odometer = const Value.absent(),
+    this.checklistJson = const Value.absent(),
+    this.photosJson = const Value.absent(),
+    this.damages = const Value.absent(),
+    this.failures = const Value.absent(),
+    this.comments = const Value.absent(),
+    this.commandId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  InspectionDraftsCompanion.insert({
+    required String id,
+    required String userId,
+    required String tenantId,
+    required String inspectionType,
+    required String shiftReferenceJson,
+    required String tractorId,
+    this.tripId = const Value.absent(),
+    this.odometer = const Value.absent(),
+    this.checklistJson = const Value.absent(),
+    this.photosJson = const Value.absent(),
+    this.damages = const Value.absent(),
+    this.failures = const Value.absent(),
+    this.comments = const Value.absent(),
+    this.commandId = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       inspectionType = Value(inspectionType),
+       shiftReferenceJson = Value(shiftReferenceJson),
+       tractorId = Value(tractorId),
+       updatedAt = Value(updatedAt);
+  static Insertable<InspectionDraft> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? inspectionType,
+    Expression<String>? shiftReferenceJson,
+    Expression<String>? tractorId,
+    Expression<String>? tripId,
+    Expression<String>? odometer,
+    Expression<String>? checklistJson,
+    Expression<String>? photosJson,
+    Expression<String>? damages,
+    Expression<String>? failures,
+    Expression<String>? comments,
+    Expression<String>? commandId,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (inspectionType != null) 'inspection_type': inspectionType,
+      if (shiftReferenceJson != null)
+        'shift_reference_json': shiftReferenceJson,
+      if (tractorId != null) 'tractor_id': tractorId,
+      if (tripId != null) 'trip_id': tripId,
+      if (odometer != null) 'odometer': odometer,
+      if (checklistJson != null) 'checklist_json': checklistJson,
+      if (photosJson != null) 'photos_json': photosJson,
+      if (damages != null) 'damages': damages,
+      if (failures != null) 'failures': failures,
+      if (comments != null) 'comments': comments,
+      if (commandId != null) 'command_id': commandId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  InspectionDraftsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? inspectionType,
+    Value<String>? shiftReferenceJson,
+    Value<String>? tractorId,
+    Value<String?>? tripId,
+    Value<String>? odometer,
+    Value<String>? checklistJson,
+    Value<String>? photosJson,
+    Value<String?>? damages,
+    Value<String?>? failures,
+    Value<String?>? comments,
+    Value<String?>? commandId,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return InspectionDraftsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      inspectionType: inspectionType ?? this.inspectionType,
+      shiftReferenceJson: shiftReferenceJson ?? this.shiftReferenceJson,
+      tractorId: tractorId ?? this.tractorId,
+      tripId: tripId ?? this.tripId,
+      odometer: odometer ?? this.odometer,
+      checklistJson: checklistJson ?? this.checklistJson,
+      photosJson: photosJson ?? this.photosJson,
+      damages: damages ?? this.damages,
+      failures: failures ?? this.failures,
+      comments: comments ?? this.comments,
+      commandId: commandId ?? this.commandId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (inspectionType.present) {
+      map['inspection_type'] = Variable<String>(inspectionType.value);
+    }
+    if (shiftReferenceJson.present) {
+      map['shift_reference_json'] = Variable<String>(shiftReferenceJson.value);
+    }
+    if (tractorId.present) {
+      map['tractor_id'] = Variable<String>(tractorId.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (odometer.present) {
+      map['odometer'] = Variable<String>(odometer.value);
+    }
+    if (checklistJson.present) {
+      map['checklist_json'] = Variable<String>(checklistJson.value);
+    }
+    if (photosJson.present) {
+      map['photos_json'] = Variable<String>(photosJson.value);
+    }
+    if (damages.present) {
+      map['damages'] = Variable<String>(damages.value);
+    }
+    if (failures.present) {
+      map['failures'] = Variable<String>(failures.value);
+    }
+    if (comments.present) {
+      map['comments'] = Variable<String>(comments.value);
+    }
+    if (commandId.present) {
+      map['command_id'] = Variable<String>(commandId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InspectionDraftsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('inspectionType: $inspectionType, ')
+          ..write('shiftReferenceJson: $shiftReferenceJson, ')
+          ..write('tractorId: $tractorId, ')
+          ..write('tripId: $tripId, ')
+          ..write('odometer: $odometer, ')
+          ..write('checklistJson: $checklistJson, ')
+          ..write('photosJson: $photosJson, ')
+          ..write('damages: $damages, ')
+          ..write('failures: $failures, ')
+          ..write('comments: $comments, ')
+          ..write('commandId: $commandId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CameraCapturesTable extends CameraCaptures
+    with TableInfo<$CameraCapturesTable, CameraCapture> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CameraCapturesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _draftIdMeta = const VerificationMeta(
+    'draftId',
+  );
+  @override
+  late final GeneratedColumn<String> draftId = GeneratedColumn<String>(
+    'draft_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<String> position = GeneratedColumn<String>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaIdMeta = const VerificationMeta(
+    'mediaId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaId = GeneratedColumn<String>(
+    'media_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('PENDING'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    tenantId,
+    draftId,
+    position,
+    mediaId,
+    state,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'camera_captures';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CameraCapture> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('draft_id')) {
+      context.handle(
+        _draftIdMeta,
+        draftId.isAcceptableOrUnknown(data['draft_id']!, _draftIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_draftIdMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('media_id')) {
+      context.handle(
+        _mediaIdMeta,
+        mediaId.isAcceptableOrUnknown(data['media_id']!, _mediaIdMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CameraCapture map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CameraCapture(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      draftId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}draft_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}position'],
+      )!,
+      mediaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_id'],
+      ),
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CameraCapturesTable createAlias(String alias) {
+    return $CameraCapturesTable(attachedDatabase, alias);
+  }
+}
+
+class CameraCapture extends DataClass implements Insertable<CameraCapture> {
+  final String id;
+  final String userId;
+  final String tenantId;
+  final String draftId;
+  final String position;
+  final String? mediaId;
+  final String state;
+  final DateTime createdAt;
+  const CameraCapture({
+    required this.id,
+    required this.userId,
+    required this.tenantId,
+    required this.draftId,
+    required this.position,
+    this.mediaId,
+    required this.state,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['draft_id'] = Variable<String>(draftId);
+    map['position'] = Variable<String>(position);
+    if (!nullToAbsent || mediaId != null) {
+      map['media_id'] = Variable<String>(mediaId);
+    }
+    map['state'] = Variable<String>(state);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CameraCapturesCompanion toCompanion(bool nullToAbsent) {
+    return CameraCapturesCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      draftId: Value(draftId),
+      position: Value(position),
+      mediaId: mediaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mediaId),
+      state: Value(state),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CameraCapture.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CameraCapture(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      draftId: serializer.fromJson<String>(json['draftId']),
+      position: serializer.fromJson<String>(json['position']),
+      mediaId: serializer.fromJson<String?>(json['mediaId']),
+      state: serializer.fromJson<String>(json['state']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'draftId': serializer.toJson<String>(draftId),
+      'position': serializer.toJson<String>(position),
+      'mediaId': serializer.toJson<String?>(mediaId),
+      'state': serializer.toJson<String>(state),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CameraCapture copyWith({
+    String? id,
+    String? userId,
+    String? tenantId,
+    String? draftId,
+    String? position,
+    Value<String?> mediaId = const Value.absent(),
+    String? state,
+    DateTime? createdAt,
+  }) => CameraCapture(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    draftId: draftId ?? this.draftId,
+    position: position ?? this.position,
+    mediaId: mediaId.present ? mediaId.value : this.mediaId,
+    state: state ?? this.state,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  CameraCapture copyWithCompanion(CameraCapturesCompanion data) {
+    return CameraCapture(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      draftId: data.draftId.present ? data.draftId.value : this.draftId,
+      position: data.position.present ? data.position.value : this.position,
+      mediaId: data.mediaId.present ? data.mediaId.value : this.mediaId,
+      state: data.state.present ? data.state.value : this.state,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CameraCapture(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('draftId: $draftId, ')
+          ..write('position: $position, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    tenantId,
+    draftId,
+    position,
+    mediaId,
+    state,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CameraCapture &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.draftId == this.draftId &&
+          other.position == this.position &&
+          other.mediaId == this.mediaId &&
+          other.state == this.state &&
+          other.createdAt == this.createdAt);
+}
+
+class CameraCapturesCompanion extends UpdateCompanion<CameraCapture> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> draftId;
+  final Value<String> position;
+  final Value<String?> mediaId;
+  final Value<String> state;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const CameraCapturesCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.draftId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.mediaId = const Value.absent(),
+    this.state = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CameraCapturesCompanion.insert({
+    required String id,
+    required String userId,
+    required String tenantId,
+    required String draftId,
+    required String position,
+    this.mediaId = const Value.absent(),
+    this.state = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       draftId = Value(draftId),
+       position = Value(position),
+       createdAt = Value(createdAt);
+  static Insertable<CameraCapture> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? draftId,
+    Expression<String>? position,
+    Expression<String>? mediaId,
+    Expression<String>? state,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (draftId != null) 'draft_id': draftId,
+      if (position != null) 'position': position,
+      if (mediaId != null) 'media_id': mediaId,
+      if (state != null) 'state': state,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CameraCapturesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? draftId,
+    Value<String>? position,
+    Value<String?>? mediaId,
+    Value<String>? state,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return CameraCapturesCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      draftId: draftId ?? this.draftId,
+      position: position ?? this.position,
+      mediaId: mediaId ?? this.mediaId,
+      state: state ?? this.state,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (draftId.present) {
+      map['draft_id'] = Variable<String>(draftId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<String>(position.value);
+    }
+    if (mediaId.present) {
+      map['media_id'] = Variable<String>(mediaId.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CameraCapturesCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('draftId: $draftId, ')
+          ..write('position: $position, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $LocalSessionContextsTable localSessionContexts =
@@ -5723,6 +8021,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CommandMediaDependenciesTable(this);
   late final $MaterializedRequestsTable materializedRequests =
       $MaterializedRequestsTable(this);
+  late final $CommandResultsTable commandResults = $CommandResultsTable(this);
+  late final $CommandResultDependenciesTable commandResultDependencies =
+      $CommandResultDependenciesTable(this);
+  late final $InspectionDraftsTable inspectionDrafts = $InspectionDraftsTable(
+    this,
+  );
+  late final $CameraCapturesTable cameraCaptures = $CameraCapturesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5737,5 +8042,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localMedia,
     commandMediaDependencies,
     materializedRequests,
+    commandResults,
+    commandResultDependencies,
+    inspectionDrafts,
+    cameraCaptures,
   ];
 }

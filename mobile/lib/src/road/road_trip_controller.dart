@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'dart:async';
+import 'dart:convert';
 
 import '../session/session_controller.dart';
 import '../session/contracts.dart';
@@ -42,6 +43,18 @@ class RoadTripController extends ChangeNotifier {
                     c.tripId == tripId &&
                     c.state != CommandState.acknowledged.value,
               );
+              final tractor = session.snapshot?.trips
+                  .where((t) => t.id == tripId)
+                  .firstOrNull
+                  ?.data['currentTractorId'];
+              pendingPreTrip = rows.any(
+                (c) =>
+                    c.commandType == 'pre-trip' &&
+                    c.aggregateType == 'INSPECTION' &&
+                    c.state != 'ACKNOWLEDGED' &&
+                    (c.tripId == null || c.tripId == tripId) &&
+                    (jsonDecode(c.payloadJson) as Map)['tractorId'] == tractor,
+              );
               _notify();
             },
             onError: (Object _) {
@@ -59,6 +72,7 @@ class RoadTripController extends ChangeNotifier {
   final ReplayWorker? worker;
   StreamSubscription<List<LocalCommand>>? _queueSubscription;
   bool hasQueued = false;
+  bool pendingPreTrip = false;
   bool get canRecord =>
       session.snapshot?.driver != null &&
       {SessionState.ready, SessionState.offline}.contains(session.state);

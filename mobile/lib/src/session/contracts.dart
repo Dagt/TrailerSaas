@@ -1,3 +1,5 @@
+import '../shift/contracts.dart';
+
 class Membership {
   Membership(this.tenantId, this.name, this.capabilities);
   final String tenantId;
@@ -41,12 +43,22 @@ class UserContext {
 }
 
 class DriverProfile {
-  DriverProfile(this.id, this.name);
+  DriverProfile(this.id, this.name, [this.shiftContext]);
   final String id;
   final String name;
-  factory DriverProfile.fromJson(Map<String, dynamic> j) =>
-      DriverProfile(j['id'] as String, j['name'] as String);
-  Map<String, dynamic> toJson() => {'id': id, 'name': name};
+  final DriverShiftHome? shiftContext;
+  factory DriverProfile.fromJson(Map<String, dynamic> j) => DriverProfile(
+    j['id'] as String,
+    j['name'] as String,
+    j['shiftContext'] == null
+        ? null
+        : DriverShiftHome.fromJson(j['shiftContext'] as Map<String, dynamic>),
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    if (shiftContext != null) 'shiftContext': shiftContext!.toJson(),
+  };
 }
 
 class WorkTrip {

@@ -29,7 +29,8 @@ class CommandIntent {
   final OnlineCommand command;
   final List<String> dependencies, resources;
   String get type => command.path.split('/').last;
-  String get aggregate => command.path.split('/')[3];
+  String? get aggregate => command.path.split('/')[3];
+  String get aggregateType => 'TRIP';
   DateTime get occurredAt =>
       DateTime.parse(command.body['occurredAt'] as String).toUtc();
 
@@ -37,6 +38,7 @@ class CommandIntent {
     if (!RegExp(
           r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
         ).hasMatch(command.id) ||
+        command.tripId == null ||
         !command.belongsTo(tenant) ||
         dependencies.toSet().length != dependencies.length ||
         dependencies.contains(command.id)) {
@@ -151,7 +153,7 @@ class CommandStore {
     }
     final prior = await list(user, tenant);
     final keys = {
-      'trip:${c.tripId}',
+      if (c.tripId != null) 'trip:${c.tripId}',
       ...intent.resources,
       if (c.body['trailerId'] != null) 'trailer:${c.body['trailerId']}',
       if (c.body['tractorId'] != null) 'tractor:${c.body['tractorId']}',
@@ -187,8 +189,9 @@ class CommandStore {
             endpointPath: c.path,
             httpMethod: 'POST',
             payloadJson: jsonEncode(c.body),
-            tripId: c.tripId,
-            aggregateId: intent.aggregate,
+            tripId: Value(c.tripId),
+            aggregateId: Value(intent.aggregate),
+            aggregateType: Value(intent.aggregateType),
             resourceKeysJson: jsonEncode(keys.toList()),
             dependenciesJson: jsonEncode(deps.toList()),
             occurredAt: intent.occurredAt,
@@ -284,7 +287,7 @@ class CommandStore {
               tenantId: c.tenantId,
               category: category,
               errorCode: code ?? 'REVIEW_REQUIRED',
-              relatedResource: c.tripId,
+              relatedResource: c.tripId ?? c.aggregateId ?? c.clientOperationId,
               message: safeMessage(category),
               createdAt: now(),
             ),
@@ -345,6 +348,7 @@ class CommandStore {
           'INTERRUPTED',
           'RATE_LIMITED',
           'EVIDENCE_PENDING',
+          'RESULT_PENDING',
           'FUTURE_WORKFLOW',
           'INVALID_MEDIA_DEPENDENCY',
         }.contains(code)

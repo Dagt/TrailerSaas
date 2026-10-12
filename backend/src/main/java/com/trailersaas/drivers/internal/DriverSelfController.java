@@ -23,7 +23,7 @@ class DriverSelfController {
   record Profile(UUID id, String name, boolean active, long version,DriverShiftContext.Home shiftContext) {}
 
   @GetMapping("/api/v1/tenants/{tenantId}/driver/me")
-  @Transactional(readOnly = true)
+  @Transactional(readOnly = true, isolation=org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
   Profile get(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,
       @PathVariable UUID tenantId, @RequestParam Map<String,String> query) {
     if (!query.isEmpty()) throw DriverFailure.invalid();

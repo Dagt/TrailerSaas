@@ -55,6 +55,10 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Capture the four required tractor inspection photographs.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Process inspection photographs privately without publishing them to your gallery.</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

@@ -190,6 +190,10 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
   );
 
   static String commandLabel(String type) => switch (type) {
+    'on-duty' => 'Go On Duty',
+    'off-duty' => 'Go Off Duty',
+    'pre-trip' => 'Pre-Trip inspection',
+    'post-trip' => 'Post-Trip inspection',
     'hooks' => 'Hook Trailer',
     'drops' => 'Drop Trailer',
     'arrivals' => 'Confirm arrival',

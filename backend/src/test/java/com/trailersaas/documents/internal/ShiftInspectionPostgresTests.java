@@ -95,4 +95,81 @@ class ShiftInspectionPostgresTests extends DocumentHttpPostgresFixture {
     assertThat(http("driver","POST",home()+"/shifts/"+shift+"/off-duty",off,UUID.randomUUID()).statusCode()).isEqualTo(200);
     assertThat(db.value("SELECT damages FROM inspections WHERE tenant_id=? AND inspection_type='POST_TRIP'",tenant)).isEqualTo("Door scratch");
   }
+  boolean canDepart() throws Exception {return JsonPath.<Boolean>read(http("driver","GET",home()+"/trips/"+trip,null,null).body(),"$.departurePrerequisitesSatisfied");}
+  @Test void homeDeduplicatesOnlyCurrentlyAssignedNonterminalActiveEquipment() throws Exception {
+    UUID duplicate=UUID.randomUUID(),terminal=UUID.randomUUID(),unassigned=UUID.randomUUID();
+    db.execute("INSERT INTO trips(id,tenant_id,status,current_driver_id,current_tractor_id,created_at,updated_at) VALUES(?,?,'ASSIGNED',?,?,now(),now())",duplicate,tenant,driver,tractor);
+    db.execute("INSERT INTO trips(id,tenant_id,status,current_driver_id,current_tractor_id,created_at,updated_at) VALUES(?,?,'COMPLETED',?,?,now(),now())",terminal,tenant,driver,db.tractor(tenant,"Old"));
+    db.execute("INSERT INTO trips(id,tenant_id,status,current_tractor_id,created_at,updated_at) VALUES(?,?,'ASSIGNED',?,now(),now())",unassigned,tenant,db.tractor(tenant,"Other"));
+    var home=http("driver","GET",home(),null,null);assertThat(JsonPath.<List<?>>read(home.body(),"$.shiftContext.authorizedTractors")).hasSize(1);
+    assertThat(JsonPath.<String>read(home.body(),"$.shiftContext.authorizedTractors[0].tractorId")).isEqualTo(tractor.toString());
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE tenant_id=? AND status='ASSIGNED'",tenant);
+    assertThat(JsonPath.<List<?>>read(http("driver","GET",home(),null,null).body(),"$.shiftContext.authorizedTractors")).isEmpty();
+    assertProblem(pre(photos(),null,UUID.randomUUID()),404,"RESOURCE_NOT_FOUND");
+  }
+  @Test void noTripInspectionAuthorizesCurrentTractorButNeverAReassignedTractor() throws Exception {
+    var images=photos();assertThat(pre(images,null,UUID.randomUUID()).statusCode()).isEqualTo(200);assertThat(canDepart()).isTrue();
+    UUID replacement=db.tractor(tenant,"Replacement");db.execute("UPDATE trips SET current_tractor_id=? WHERE id=?",replacement,trip);assertThat(canDepart()).isFalse();
+    assertProblem(pre(photos(),null,UUID.randomUUID()),404,"RESOURCE_NOT_FOUND");
+    db.execute("UPDATE trips SET current_tractor_id=? WHERE id=?",tractor,trip);assertThat(canDepart()).isTrue();
+  }
+  @Test void explicitTripInspectionCannotAuthorizeAnotherTripSharingTheTractor() throws Exception {
+    assertThat(pre(photos(),trip,UUID.randomUUID()).statusCode()).isEqualTo(200);
+    UUID another=UUID.randomUUID();db.execute("INSERT INTO trips(id,tenant_id,status,current_driver_id,current_tractor_id,created_at,updated_at) VALUES(?,?,'ASSIGNED',?,?,now(),now())",another,tenant,driver,tractor);
+    assertThat(JsonPath.<Boolean>read(http("driver","GET",home()+"/trips/"+another,null,null).body(),"$.departurePrerequisitesSatisfied")).isFalse();
+  }
+  @Test void historicalPreTripNeverAuthorizesAnotherShift() throws Exception {
+    assertThat(pre(photos(),null,UUID.randomUUID()).statusCode()).isEqualTo(200);assertThat(canDepart()).isTrue();
+    db.execute("UPDATE shifts SET off_duty_at=?,updated_at=now() WHERE id=?",java.sql.Timestamp.from(start.plusSeconds(4)),shift);
+    var r=http("driver","POST",home()+"/shifts/on-duty","{\"occurredAt\":\""+start.plusSeconds(5)+"\"}",UUID.randomUUID());assertThat(r.statusCode()).isEqualTo(200);assertThat(canDepart()).isFalse();
+  }
+  @Test void replayAndDocumentReadRevalidateRevokedMembershipAndCurrentAssignment() throws Exception {
+    var images=photos();var key=UUID.randomUUID();assertThat(pre(images,trip,key).statusCode()).isEqualTo(200);
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);assertProblem(pre(images,trip,key),404,"RESOURCE_NOT_FOUND");
+    assertProblem(http("driver","GET",base()+"/"+images[0],null,null),404,"RESOURCE_NOT_FOUND");
+    db.execute("UPDATE trips SET current_driver_id=? WHERE id=?",driver,trip);db.execute("UPDATE tenant_memberships SET status='SUSPENDED' WHERE id=?",membership);
+    assertThat(pre(images,trip,key).statusCode()).isEqualTo(403);
+    assertThat(http("driver","GET",base()+"/"+images[0],null,null).statusCode()).isEqualTo(403);
+  }
+  @Test void concurrentPreTripsCannotReusePhotosOrCreatePartialHistory() throws Exception {
+    var images=photos();var gate=new CountDownLatch(1);var entered=new CountDownLatch(2);
+    try(var pool=Executors.newVirtualThreadPerTaskExecutor()) {
+      Callable<java.net.http.HttpResponse<String>> call=()->{entered.countDown();assertThat(gate.await(10,TimeUnit.SECONDS)).isTrue();return pre(images,trip,UUID.randomUUID());};
+      var a=pool.submit(call);var b=pool.submit(call);assertThat(entered.await(10,TimeUnit.SECONDS)).isTrue();gate.countDown();
+      assertThat(List.of(a.get(20,TimeUnit.SECONDS).statusCode(),b.get(20,TimeUnit.SECONDS).statusCode())).containsExactlyInAnyOrder(200,409);
+    } finally {gate.countDown();}
+    assertThat(db.value("SELECT count(*) FROM inspections WHERE tenant_id=?",tenant)).isEqualTo(1L);
+    assertThat(db.value("SELECT count(*) FROM document_links WHERE tenant_id=? AND entity_type='INSPECTION'",tenant)).isEqualTo(4L);
+  }
+  @Test void anotherDriverPhotoAndForeignShiftCannotPassEvenWhenResourcesExistInTenant() throws Exception {
+    var images=photos();UUID another=db.user(),anotherDriver=db.driver(tenant,another);
+    db.membership(tenant,another,"ACTIVE","DRIVER");org.mockito.Mockito.when(verifier.verify("otherdriver")).thenReturn(new com.trailersaas.identity.VerifiedFirebaseIdentity("fixture-"+another,null,null));
+    var upload=initialize(initBody("PRETRIP_FRONT"),"otherdriver");assertThat(upload.statusCode()).isEqualTo(201);var foreignPhoto=UUID.fromString(JsonPath.<String>read(upload.body(),"$.documentId"));
+    peer.objects.put(DocumentService.temporary(tenant,foreignPhoto),new SignedS3TestServer.Blob(bytes,"image/jpeg"));assertThat(http("otherdriver","POST",base()+"/"+foreignPhoto+"/upload-completion","{\"checksumSha256\":null}",UUID.randomUUID()).statusCode()).isEqualTo(200);
+    var original=images[0];images[0]=foreignPhoto;assertProblem(pre(images,trip,UUID.randomUUID()),404,"RESOURCE_NOT_FOUND");
+    images[0]=original;UUID alienShift=UUID.randomUUID();
+    db.execute("INSERT INTO shifts VALUES(?,?,?,now(),NULL,now(),now())",alienShift,tenant,anotherDriver);
+    var body=preBody(images,trip).replace(shift.toString(),alienShift.toString());assertProblem(http("driver","POST",home()+"/inspections/pre-trip",body,UUID.randomUUID()),404,"RESOURCE_NOT_FOUND");
+    assertThat(db.value("SELECT count(*) FROM inspections WHERE tenant_id=?",tenant)).isEqualTo(0L);
+  }
+  @Test void concurrentSamePreTripIdentityReplaysOneInspectionAndOnePhotoSet() throws Exception {
+    var images=photos();var key=UUID.randomUUID();var release=new CountDownLatch(1);
+    try(var pool=Executors.newVirtualThreadPerTaskExecutor()) {
+      Callable<java.net.http.HttpResponse<String>> call=()->{assertThat(release.await(10,TimeUnit.SECONDS)).isTrue();return pre(images,trip,key);};
+      var a=pool.submit(call);var b=pool.submit(call);release.countDown();var first=a.get(20,TimeUnit.SECONDS);var second=b.get(20,TimeUnit.SECONDS);
+      assertThat(first.statusCode()).isEqualTo(200);assertThat(second.body()).isEqualTo(first.body());
+    } finally {release.countDown();}
+    assertThat(db.value("SELECT count(*) FROM inspections WHERE tenant_id=?",tenant)).isEqualTo(1L);
+  }
+  @Test void postTripFailureIsAtomicAndNoTripPathRemainsUsableAfterAssignedWorkFinishes() throws Exception {
+    assertThat(pre(photos(),null,UUID.randomUUID()).statusCode()).isEqualTo(200);
+    db.execute("UPDATE trips SET status='COMPLETED' WHERE id=?",trip);
+    assertThat(JsonPath.<List<?>>read(http("driver","GET",home(),null,null).body(),"$.shiftContext.usedTractors")).hasSize(1);
+    String body="{\"shiftId\":\""+shift+"\",\"tractorId\":\""+tractor+"\",\"odometer\":124,\"occurredAt\":\""+start.plusSeconds(3)+"\"}";
+    var key=UUID.randomUUID();db.execute("CREATE FUNCTION fail_post() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.inspection_type='POST_TRIP' THEN RAISE EXCEPTION 'test-only'; END IF; RETURN NEW; END $$");db.execute("CREATE TRIGGER fail_post BEFORE INSERT ON inspections FOR EACH ROW EXECUTE FUNCTION fail_post()");
+    try {assertThat(http("driver","POST",home()+"/inspections/post-trip",body,key).statusCode()).isGreaterThanOrEqualTo(500);assertThat(db.value("SELECT count(*) FROM inspections WHERE tenant_id=? AND inspection_type='POST_TRIP'",tenant)).isEqualTo(0L);assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE client_operation_id=?",key)).isEqualTo(0L);}
+    finally {db.execute("DROP TRIGGER fail_post ON inspections");db.execute("DROP FUNCTION fail_post()");}
+    assertThat(http("driver","POST",home()+"/inspections/post-trip",body,key).statusCode()).isEqualTo(200);
+    assertThat(db.value("SELECT off_duty_at IS NULL FROM shifts WHERE id=?",shift)).isEqualTo(true);
+  }
 }

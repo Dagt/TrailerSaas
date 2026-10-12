@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../shift/shift_view.dart';
+
 import 'session_controller.dart';
 import '../road/road_trip_screen.dart';
 import '../road/command_recovery_panel.dart';
@@ -201,6 +203,13 @@ class _SessionViewState extends State<SessionView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Road Mode — ${snapshot.driver?.name ?? ''}'),
+                    if (road && widget.worker?.shifts != null)
+                      ShiftHomePanel(
+                        key: ValueKey(
+                          'shift-${snapshot.userId}-${snapshot.membership.tenantId}',
+                        ),
+                        worker: widget.worker!,
+                      ),
                     if (road && widget.worker == null)
                       CommandRecoveryPanel(
                         key: ValueKey(

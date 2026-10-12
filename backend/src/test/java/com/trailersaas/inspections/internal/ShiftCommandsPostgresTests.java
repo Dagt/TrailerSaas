@@ -94,4 +94,19 @@ class ShiftCommandsPostgresTests extends PostgresIntegrationTest {
     finally {db.execute("DROP TRIGGER fail_shift_create ON shifts");db.execute("DROP FUNCTION fail_shift_create()");}
     assertThat(start(key).statusCode()).isEqualTo(200);
   }
+  @Test void concurrentOffDutyCreatesOneClosureAndDeterministicLoser() throws Exception {
+    var shift=opened();var entered=new CountDownLatch(2);var release=new CountDownLatch(1);
+    try(var pool=Executors.newVirtualThreadPerTaskExecutor()) {
+      Callable<HttpResponse<String>> call=()->{entered.countDown();assertThat(release.await(10,TimeUnit.SECONDS)).isTrue();return end(shift,UUID.randomUUID());};
+      var a=pool.submit(call);var b=pool.submit(call);assertThat(entered.await(10,TimeUnit.SECONDS)).isTrue();release.countDown();
+      assertThat(List.of(a.get(20,TimeUnit.SECONDS).statusCode(),b.get(20,TimeUnit.SECONDS).statusCode())).containsExactlyInAnyOrder(200,409);
+    } finally {release.countDown();}
+    assertThat(db.value("SELECT count(*) FROM shifts WHERE tenant_id=? AND off_duty_at IS NOT NULL",tenant)).isEqualTo(1L);
+  }
+  @Test void closeFailureRollsBackAndDoesNotConsumeTheOperationIdentity() throws Exception {
+    var shift=opened();var key=UUID.randomUUID();db.execute("CREATE FUNCTION fail_shift_close() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test-only'; END $$");db.execute("CREATE TRIGGER fail_shift_close BEFORE UPDATE ON shifts FOR EACH ROW EXECUTE FUNCTION fail_shift_close()");
+    try {assertThat(end(shift,key).statusCode()).isGreaterThanOrEqualTo(500);assertThat(db.value("SELECT off_duty_at IS NULL FROM shifts WHERE id=?",shift)).isEqualTo(true);assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE client_operation_id=?",key)).isEqualTo(0L);}
+    finally {db.execute("DROP TRIGGER fail_shift_close ON shifts");db.execute("DROP FUNCTION fail_shift_close()");}
+    assertThat(end(shift,key).statusCode()).isEqualTo(200);
+  }
 }

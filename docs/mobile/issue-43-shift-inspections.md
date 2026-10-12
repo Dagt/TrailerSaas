@@ -23,16 +23,14 @@ bounded structured checklist without inventing a regulatory catalog or treating
 client answers as permission. Four validated photos and authorized real context
 remain server requirements.
 
-The Accepted Road UX requires an assigned Tractor. The current schema represents
-that assignment through Trips, not a separate Driver–Tractor relation. Clarification
-was requested for the no-Trip inspection selector; implementation must not grant a
-Driver a tenant-wide Tractor directory by analogy.
-
-The conservative implemented boundary uses a currently assigned Trip to authorize
-the Tractor, even if the new inspection has no tripId/Trip attachment. A Driver
-without any equipment assignment receives a safe block/contact-Dispatch state.
-This follows the existing UX and adds no master-data read grant; the clarification
-remains available to refine the rule if another Accepted assignment source exists.
+The owner confirmed the MVP assignment boundary: only active Tractors from
+nonterminal Trips currently assigned to the authenticated Driver are eligible.
+The selector deduplicates Tractors; PostgreSQL revalidates the assignment at save.
+An inspection may have tripId=null with a currently assigned Tractor and own open
+Shift. Without eligible equipment, show “No tienes un Tractor asignado. Contacta
+a operaciones.” A later reassignment leaves offline intent/photos retained as a
+conflict. No independent Driver–Tractor relation or master-data browse grant exists.
+Inspection before any Trip assignment requires an explicit future assignment model.
 
 Inspection occurrence and persistence chronology must remain distinct for offline
 commands. V21 includes an explicit occurred_at alongside created_at; this is a
@@ -80,3 +78,18 @@ Off Duty sequence, rollback, lost ACK and Modulith. Existing physical tests stil
 use their confined prerequisite fixture, now including the time-aware port method.
 Next: extend the namespace-safe mobile queue for commands without Trip and durable
 generated Shift-ID dependencies, then camera/forms/UI and full regressions/CI.
+
+### Checkpoint E
+
+Drift v5 preserves legacy v1–v4 tables/rows and permits typed Shift/inspection intents
+without invented Trip IDs. Confirmed result bindings supply the real Shift ID;
+immutable materialization waits for all finalized media and ACK dependencies.
+Native camera uses durable private capture context, original namespace copying,
+active-request fencing and recovery of complete files after SQLite failure. Drafts
+remain editable until queued; camera-in-flight prevents queueing. Road home/forms
+include On/Off Duty, four-photo Pre-Trip, Post-Trip and conflict/sync visibility.
+Used equipment remains available for Post-Trip when assigned Trips have completed.
+277 Mobile tests and fatal-info analysis passed locally. 19 inspection PostgreSQL
+regressions and 11 Shift command tests pass; 2 module tests also pass. Exact current
+CI counts will be recorded after the final-head four-job run. No #45 endpoints.
+Next: final independent security review, remaining contracts/docs and full CI.

@@ -8,9 +8,9 @@ import 'package:trailersaas_mobile/src/persistence/app_database.dart';
 import 'package:trailersaas_mobile/src/media/media_file_store.dart';
 import 'package:trailersaas_mobile/src/media/media_store.dart';
 import 'package:trailersaas_mobile/src/road/online_command_journal.dart';
-import 'package:trailersaas_mobile/src/sync/command_store.dart';
 
 import '../sync/command_store_test.dart' show intent;
+import '../shift/legacy_database.dart';
 
 const user = '11111111-1111-4111-8111-111111111111';
 const tenant = '22222222-2222-4222-8222-222222222222';
@@ -27,7 +27,7 @@ class Version3 extends AppDatabase {
       await m.createTable(cachedTrips);
       await m.createTable(cachedStops);
       await m.createTable(cachedTrailers);
-      await m.createTable(localCommands);
+      await customStatement(legacyQueueSql);
       await m.createTable(localSyncIssues);
       await customStatement(
         'CREATE INDEX local_commands_scope_state ON local_commands(user_id,tenant_id,state,created_at)',
@@ -204,13 +204,22 @@ void main() {
       final file = File('${dir.path}/v3.sqlite');
       final v3 = Version3(NativeDatabase(file));
       final c = intent(tenant: tenant);
-      await CommandStore(v3).enqueue(user, tenant, c);
-      await CommandStore(v3).result(
-        (await CommandStore(v3).list(user, tenant)).single,
-        CommandState.conflict,
-        code: 'RESOURCE_CONFLICT',
-        category: 'STATE',
-      );
+      await seedLegacyCommand(v3, user, tenant, c, now);
+      await v3
+          .into(v3.localSyncIssues)
+          .insert(
+            LocalSyncIssuesCompanion.insert(
+              id: c.command.id,
+              clientOperationId: c.command.id,
+              userId: user,
+              tenantId: tenant,
+              category: 'STATE',
+              errorCode: 'RESOURCE_CONFLICT',
+              relatedResource: c.command.tripId!,
+              message: 'Review state',
+              createdAt: now,
+            ),
+          );
       await v3
           .into(v3.cachedTrips)
           .insert(
@@ -233,12 +242,12 @@ void main() {
       expect(
         (await v4.customSelect('PRAGMA user_version').getSingle())
             .data['user_version'],
-        4,
+        5,
       );
       expect(
         (await v4.customSelect('SELECT * FROM local_commands').getSingle())
             .data,
-        before,
+        {...before, 'aggregate_type': 'TRIP'},
       );
       expect(await v4.select(v4.localSyncIssues).get(), hasLength(1));
       await expectLater(
