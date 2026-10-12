@@ -1,6 +1,7 @@
 package com.trailersaas.drivers.internal;
 
 import com.trailersaas.identity.*;
+import com.trailersaas.drivers.DriverShiftContext;
 import jakarta.persistence.EntityManager;
 import java.util.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,12 +14,13 @@ class DriverSelfController {
   private final EntityManager em;
   private final TenantContext context;
   private final TenantAuthorization auth;
+  private final org.springframework.beans.factory.ObjectProvider<DriverShiftContext> shifts;
 
-  DriverSelfController(EntityManager em, TenantContext context, TenantAuthorization auth) {
-    this.em = em; this.context = context; this.auth = auth;
+  DriverSelfController(EntityManager em, TenantContext context, TenantAuthorization auth,org.springframework.beans.factory.ObjectProvider<DriverShiftContext> shifts) {
+    this.em = em; this.context = context; this.auth = auth;this.shifts=shifts;
   }
 
-  record Profile(UUID id, String name, boolean active, long version) {}
+  record Profile(UUID id, String name, boolean active, long version,DriverShiftContext.Home shiftContext) {}
 
   @GetMapping("/api/v1/tenants/{tenantId}/driver/me")
   @Transactional(readOnly = true)
@@ -30,6 +32,7 @@ class DriverSelfController {
         .setParameter("tenant", tenantId).setParameter("user", actor.userId()).getResultStream().findFirst();
     auth.requireAssignedWorkCapability(actor, tenantId, Capability.TRIP_VIEW_ASSIGNED, driver.isPresent());
     var d = driver.orElseThrow(DriverFailure::missing);
-    return new Profile(d.id, d.name, d.active, d.version);
+    var reader=shifts.getIfAvailable();
+    return new Profile(d.id, d.name, d.active, d.version,reader==null?null:reader.read(tenantId,d.id));
   }
 }

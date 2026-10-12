@@ -93,6 +93,7 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
     when(verifier.verify("driver"))
         .thenReturn(new VerifiedFirebaseIdentity("fixture-" + user, null, null));
     when(prerequisites.satisfied(any(), any(), any(), any())).thenReturn(true);
+    when(prerequisites.satisfiedAt(any(), any(), any(), any(),any())).thenReturn(true);
   }
 
   UUID stop(int sequence, String type) throws Exception {
@@ -291,6 +292,7 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
   void missingDutyOrPreTripEvidenceBlocksFirstDepartureWithoutWrites() throws Exception {
     hook();
     when(prerequisites.satisfied(any(), any(), any(), any())).thenReturn(false);
+    when(prerequisites.satisfiedAt(any(), any(), any(), any(),any())).thenReturn(false);
     problem(
         action("/trips/" + trip + "/departures", Map.of("nextStopId", stop.toString())),
         409,

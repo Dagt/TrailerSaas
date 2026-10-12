@@ -79,7 +79,7 @@ class DocumentService {
 
   @Transactional
   Link link(AuthenticatedUserPrincipal actor,UUID tenant,UUID document,LinkRequest request) {
-    if(request==null || request.entityType()==null || request.entityType()==Target.TRAILER || request.entityId()==null) throw DocumentFailure.invalid();
+    if(request==null || request.entityType()==null || request.entityType()==Target.TRAILER || request.entityType()==Target.INSPECTION || request.entityId()==null) throw DocumentFailure.invalid();
     // Parent Trip precedes Driver and Document locks, matching operational assignment/execution order.
     access.readScope(actor,tenant);
     var identity=repository.find(tenant,document,false);

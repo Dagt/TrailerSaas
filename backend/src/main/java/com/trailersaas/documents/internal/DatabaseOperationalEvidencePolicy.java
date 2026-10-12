@@ -38,6 +38,31 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
     var expected=preTripSet(photos);uploads.require(actor,tenant,Type.PRETRIP_FRONT,true);
     validateDocuments(actor,tenant,expected,null,null,Capability.PRETRIP_CREATE);
   }
+  public void attachPreTripInspection(AuthenticatedUserPrincipal actor,UUID tenant,UUID inspection,UUID trip,UUID tractor,PreTripPhotos photos) {
+    var expected=preTripSet(photos);
+    var owner=jdbc.query("""
+      SELECT i.driver_id FROM inspections i JOIN shifts s ON s.tenant_id=i.tenant_id AND s.id=i.shift_id AND s.driver_id=i.driver_id
+      JOIN drivers d ON d.tenant_id=i.tenant_id AND d.id=i.driver_id AND d.active
+      WHERE i.tenant_id=? AND i.id=? AND i.inspection_type='PRE_TRIP' AND i.tractor_id=? AND i.trip_id IS NOT DISTINCT FROM ?
+        AND d.user_id=? AND s.off_duty_at IS NULL AND i.xmin::text::numeric=mod(pg_current_xact_id()::text::numeric,4294967296)
+      """,(r,n)->r.getObject(1,UUID.class),tenant,inspection,tractor,trip,actor.userId());
+    if(owner.size()!=1)throw failure(RESOURCE_NOT_FOUND);
+    uploads.require(actor,tenant,Type.PRETRIP_FRONT,true);
+    for(UUID id:expected.keySet().stream().sorted().toList()) {
+      DocumentRepository.Row row;
+      try {row=documents.find(tenant,id,true);}catch(DocumentFailure e){if(e.status==404)throw failure(RESOURCE_NOT_FOUND);throw e;}
+      auth.requireTenantCapability(actor,tenant,Capability.PRETRIP_CREATE);
+      if(!actor.userId().equals(row.uploader()))throw failure(RESOURCE_NOT_FOUND);
+      if(row.type()!=expected.get(id))throw failure(VALIDATION_FAILED);
+      if(row.status()!=Status.UPLOADED)throw failure(UPLOAD_NOT_COMPLETE);
+      var links=documents.links(tenant,id);
+      if(links.stream().anyMatch(l->l.entityType()==Target.INSPECTION))throw failure(RESOURCE_CONFLICT);
+      if(links.stream().anyMatch(l->l.entityType()!=Target.TRIP || !Objects.equals(l.entityId(),trip)))throw failure(RESOURCE_NOT_FOUND);
+      if(trip!=null)documents.link(tenant,id,new LinkRequest(Target.TRIP,trip));
+    }
+    if(trip==null)validatePreTripUploads(actor,tenant,photos);else validatePreTrip(actor,tenant,trip,tractor,photos);
+    for(UUID id:expected.keySet().stream().sorted().toList())documents.link(tenant,id,new LinkRequest(Target.INSPECTION,inspection));
+  }
   private static Map<UUID,Type> preTripSet(PreTripPhotos photos) {
     if(photos==null) throw failure(EVIDENCE_REQUIRED);
     var expected=new LinkedHashMap<UUID,Type>();

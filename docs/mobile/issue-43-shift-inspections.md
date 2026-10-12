@@ -28,6 +28,12 @@ that assignment through Trips, not a separate Driver–Tractor relation. Clarifi
 was requested for the no-Trip inspection selector; implementation must not grant a
 Driver a tenant-wide Tractor directory by analogy.
 
+The conservative implemented boundary uses a currently assigned Trip to authorize
+the Tractor, even if the new inspection has no tripId/Trip attachment. A Driver
+without any equipment assignment receives a safe block/contact-Dispatch state.
+This follows the existing UX and adds no master-data read grant; the clarification
+remains available to refine the rule if another Accepted assignment source exists.
+
 Inspection occurrence and persistence chronology must remain distinct for offline
 commands. V21 includes an explicit occurred_at alongside created_at; this is a
 bounded storage extension of the existing request's occurredAt, not a new state.
@@ -48,3 +54,29 @@ Historical table inventories and latest-version assertions remain exact, with al
 previous columns/checksums preserved. 140 affected PostgreSQL/module tests passed:
 0 failures, 0 errors, 0 skipped. V1–V20 unchanged.
 Next: finish real Shift/home/ledger commands, then inspection orchestration.
+
+### Checkpoints B/C/D
+
+On/Off Duty, own-home enrichment, typed strict requests, fresh authorization,
+exclusive Driver serialization and MobileOperationLedger are implemented. Off Duty
+blocks all unresolved assigned Trips and missing end-of-day Post-Trip equipment
+requirements; it changes only the Shift. Domain events accompany durable Shift
+effects and the existing ledger, without an outbox or new ledger.
+
+Pre/Post-Trip orchestration creates immutable records. Four own finalized photos
+are locked in UUID order, validated with #53, and attached permanently in the
+same transaction. Existing Trip links and inspection links use all-or-nothing
+document authorization; arbitrary HTTP inspection attachment is rejected.
+Photos cannot be reused for another inspection. The no-Trip path stores inspection
+links only. Post-Trip has no required photos and never changes physical state.
+
+The production departure adapter now queries real open Shift/valid matching
+inspection/photos and occurrence time. Trips consumes its existing port, implemented
+by Inspections; Documents consumes a Documents-owned inspection read callback.
+No reverse Java module dependencies/cycles or lock upgrades are introduced.
+42 affected tests passed, including the real complete On Duty → four-photo
+Pre-Trip → departure → arrival/service/non-delivery completion → Post-Trip →
+Off Duty sequence, rollback, lost ACK and Modulith. Existing physical tests still
+use their confined prerequisite fixture, now including the time-aware port method.
+Next: extend the namespace-safe mobile queue for commands without Trip and durable
+generated Shift-ID dependencies, then camera/forms/UI and full regressions/CI.
