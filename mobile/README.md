@@ -235,3 +235,16 @@ Locked dependencies: flutter pub get --enforce-lockfile. Generate with dart run
 build_runner build, format/analyze/test using existing CI. All older cache/command/
 media records are preserved; final requests freeze after real Shift/photo IDs resolve.
 See [architecture, safety and deferred #45 workflows](../docs/mobile/issue-43-shift-inspections.md).
+
+## Issue #45 POD / Fuel / problem forms and instructions
+
+Road uses the existing image_picker camera adapter, private streaming file store,
+Drift v6 durable forms and the same replay/media lane. Four new local tables preserve
+unfinished captures and targeted Driver Updates. Existing migrations/queues remain.
+Only finalized server Document IDs enter frozen business requests. Local saving,
+upload finalization and server acceptance are distinct states; no fake success,
+new Firebase authority or extra worker is introduced. Instructions refresh without
+push and survive reassignment away. Native permissions/process-death behavior needs
+Android/iOS device QA; CI covers controlled camera + real files/SQLite/HTTP/widgets.
+Use locked dependencies, Drift generation/diff, format, fatal-info analyze and all
+tests as before. See docs/mobile/issue-45-pod-fuel-exceptions.md.

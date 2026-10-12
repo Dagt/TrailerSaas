@@ -8,6 +8,9 @@ import '../road/command_recovery_panel.dart';
 import '../road/online_command_journal.dart';
 import '../sync/replay_worker.dart';
 import '../sync/sync_panel.dart';
+import '../road/road_evidence_view.dart';
+import '../road/driver_updates_store.dart';
+import '../road/driver_updates_view.dart';
 
 class SessionView extends StatefulWidget {
   const SessionView({
@@ -15,10 +18,12 @@ class SessionView extends StatefulWidget {
     required this.session,
     this.journal,
     this.worker,
+    this.updates,
   });
   final OnlineCommandJournal? journal;
   final SessionController session;
   final ReplayWorker? worker;
+  final DriverUpdatesStore? updates;
   @override
   State<SessionView> createState() => _SessionViewState();
 }
@@ -225,6 +230,10 @@ class _SessionViewState extends State<SessionView> {
                         ),
                         worker: widget.worker!,
                       ),
+                    if (road && widget.updates != null)
+                      DriverUpdatesPanel(store: widget.updates!),
+                    if (road && widget.worker != null)
+                      RoadEvidencePanel(worker: widget.worker!),
                     if (snapshot.trips.isEmpty)
                       const Text('No assigned work downloaded.'),
                     ...snapshot.trips.map(

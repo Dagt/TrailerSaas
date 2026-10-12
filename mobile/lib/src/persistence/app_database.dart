@@ -265,6 +265,70 @@ class CameraCaptures extends Table {
   ];
 }
 
+class RoadDrafts extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get tripId => text()();
+  TextColumn get stopId => text().nullable()();
+  TextColumn get purpose => text()();
+  TextColumn get inputsJson => text().withDefault(const Constant('{}'))();
+  TextColumn get mediaJson => text().withDefault(const Constant('{}'))();
+  TextColumn get commandId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {id};
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(id,user_id,tenant_id)',
+    "CHECK (purpose IN ('SIGNED_BOL','NO_RECEIVER_AVAILABLE','FUEL','PROBLEM'))",
+    'FOREIGN KEY(command_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
+  ];
+}
+
+class RoadCaptures extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get draftId => text()();
+  TextColumn get documentType => text()();
+  TextColumn get field => text()();
+  TextColumn get mediaId => text().nullable()();
+  TextColumn get state => text().withDefault(const Constant('PENDING'))();
+  DateTimeColumn get createdAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {id};
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(draft_id,user_id,tenant_id) REFERENCES road_drafts(id,user_id,tenant_id)',
+    'FOREIGN KEY(media_id,user_id,tenant_id) REFERENCES local_media(id,user_id,tenant_id)',
+    "CHECK (document_type IN ('BOL','DELIVERY_PHOTO','FUEL_RECEIPT','DAMAGE_PHOTO'))",
+    "CHECK (state IN ('PENDING','CAPTURED','CANCELLED','FAILED'))",
+    "CHECK (state<>'CAPTURED' OR media_id IS NOT NULL)",
+  ];
+}
+
+class CachedDriverUpdates extends Table {
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get id => text()();
+  TextColumn get tripId => text()();
+  TextColumn get updateType => text()();
+  TextColumn get projectionJson => text()();
+  IntColumn get sequence => integer()();
+  DateTimeColumn get downloadedAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {userId, tenantId, id};
+}
+
+class DriverUpdateCursors extends Table {
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get cursor => text().nullable()();
+  @override
+  Set<Column> get primaryKey => {userId, tenantId};
+}
+
 @DriftDatabase(
   tables: [
     LocalSessionContexts,
@@ -280,6 +344,10 @@ class CameraCaptures extends Table {
     CommandResultDependencies,
     InspectionDrafts,
     CameraCaptures,
+    RoadDrafts,
+    RoadCaptures,
+    CachedDriverUpdates,
+    DriverUpdateCursors,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -295,7 +363,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -305,12 +373,13 @@ class AppDatabase extends _$AppDatabase {
         await _queueIndexesAndImmutability();
         await _mediaIndexesAndImmutability();
         await _shiftIndexesAndImmutability();
-        await customStatement('PRAGMA user_version=5');
+        await _roadIndexesAndImmutability();
+        await customStatement('PRAGMA user_version=6');
       });
     },
     onUpgrade: (migrator, from, to) async {
       // v1 was the empty scaffold. Its deployed schema remains an explicit upgrade source.
-      if (from < 1 || from > 4 || to != 5) {
+      if (from < 1 || from > 5 || to != 6) {
         throw StateError('No migration from schema $from to $to is defined.');
       }
       // Whole upgrade and version marker commit together. TableMigration alone
@@ -329,7 +398,7 @@ class AppDatabase extends _$AppDatabase {
             await migrator.createTable(localSyncIssues);
             await _queueIndexesAndImmutability();
           }
-          if (from >= 3) {
+          if (from >= 3 && from < 5) {
             // Preserve all queue rows and dependent tables. Native SQLite opens with
             // FK enforcement off during the migration; beforeOpen restores it.
             await customStatement(
@@ -356,17 +425,24 @@ class AppDatabase extends _$AppDatabase {
               'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
             );
           }
-          await migrator.createTable(commandResults);
-          await migrator.createTable(commandResultDependencies);
-          await migrator.createTable(inspectionDrafts);
-          await migrator.createTable(cameraCaptures);
-          await _shiftIndexesAndImmutability();
+          if (from < 5) {
+            await migrator.createTable(commandResults);
+            await migrator.createTable(commandResultDependencies);
+            await migrator.createTable(inspectionDrafts);
+            await migrator.createTable(cameraCaptures);
+            await _shiftIndexesAndImmutability();
+          }
+          await migrator.createTable(roadDrafts);
+          await migrator.createTable(roadCaptures);
+          await migrator.createTable(cachedDriverUpdates);
+          await migrator.createTable(driverUpdateCursors);
+          await _roadIndexesAndImmutability();
           if ((await customSelect(
             'PRAGMA foreign_key_check',
           ).get()).isNotEmpty) {
             throw StateError('Migration cannot preserve foreign-key integrity');
           }
-          await customStatement('PRAGMA user_version=5');
+          await customStatement('PRAGMA user_version=6');
         });
       } finally {
         await customStatement('PRAGMA foreign_keys=ON');
@@ -374,6 +450,39 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys=ON'),
   );
+
+  Future<void> _roadIndexesAndImmutability() async {
+    await customStatement(
+      'CREATE INDEX road_drafts_scope ON road_drafts(user_id,tenant_id,updated_at)',
+    );
+    await customStatement(
+      'CREATE UNIQUE INDEX road_camera_one_pending ON road_captures(state) WHERE state=\'PENDING\'',
+    );
+    await customStatement(
+      '''CREATE TRIGGER road_draft_context_immutable BEFORE UPDATE OF id,user_id,tenant_id,trip_id,stop_id,purpose ON road_drafts BEGIN SELECT RAISE(ABORT,'Draft context is immutable');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER road_draft_queued_immutable BEFORE UPDATE ON road_drafts WHEN OLD.command_id IS NOT NULL BEGIN SELECT RAISE(ABORT,'Queued draft is immutable');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER road_capture_context_immutable BEFORE UPDATE OF id,user_id,tenant_id,draft_id,document_type,field,created_at ON road_captures BEGIN SELECT RAISE(ABORT,'Capture context is immutable');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER road_capture_before_queue BEFORE INSERT ON road_captures WHEN EXISTS(SELECT 1 FROM road_drafts d WHERE d.id=NEW.draft_id AND d.command_id IS NOT NULL) BEGIN SELECT RAISE(ABORT,'Draft already queued');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER road_queue_after_capture BEFORE UPDATE OF command_id ON road_drafts WHEN NEW.command_id IS NOT NULL AND EXISTS(SELECT 1 FROM road_captures c WHERE c.draft_id=OLD.id AND c.state='PENDING') BEGIN SELECT RAISE(ABORT,'Capture still pending');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER road_camera_exclusive BEFORE INSERT ON road_captures WHEN NEW.state='PENDING' AND EXISTS(SELECT 1 FROM camera_captures WHERE state='PENDING') BEGIN SELECT RAISE(ABORT,'Camera still active');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER inspection_camera_exclusive BEFORE INSERT ON camera_captures WHEN NEW.state='PENDING' AND EXISTS(SELECT 1 FROM road_captures WHERE state='PENDING') BEGIN SELECT RAISE(ABORT,'Camera still active');END''',
+    );
+    await customStatement(
+      'CREATE INDEX driver_updates_scope_order ON cached_driver_updates(user_id,tenant_id,sequence)',
+    );
+  }
 
   Future<void> _mediaIndexesAndImmutability({
     bool createParentIndex = true,

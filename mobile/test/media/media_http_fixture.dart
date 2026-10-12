@@ -18,6 +18,7 @@ import 'package:trailersaas_mobile/src/shift/shift_commands.dart';
 import 'package:trailersaas_mobile/src/sync/command_store.dart';
 import 'package:trailersaas_mobile/src/sync/replay_worker.dart';
 import 'package:trailersaas_mobile/src/road/online_command_journal.dart';
+import 'package:trailersaas_mobile/src/road/road_evidence_replay.dart';
 
 import '../road/online_execution_test.dart' show MemoryJournal;
 import '../session/fixtures.dart' show FakeAuth, FakeNetwork, work;
@@ -70,6 +71,30 @@ class MediaHttpFixture {
   Completer<void>? putEntered, putRelease, finalizeEntered, finalizeRelease;
   bool switchUser = false;
   bool shiftWorkflows = false, reassigned = false, shiftRevoked = false;
+  bool roadWorkflows = false, roadCompleted = false;
+  static const roadTrip = '55555555-5555-4555-8555-555555555555';
+  static const roadStop = '66666666-6666-4666-8666-666666666666';
+  final roadLinks = <String, Set<String>>{};
+  final roadLedger =
+      <String, ({String logical, Map<String, dynamic> result})>{};
+  Map<String, dynamic>? roadResponseOverride;
+  final driverUpdates = <Map<String, dynamic>>[];
+  final roadFailureStatuses = <int>[];
+  bool repeatUpdatesCursor = false;
+  Completer<void>? updatesEntered, updatesRelease;
+  Map<String, dynamic> roadWork() => {
+    ...work(roadTrip),
+    'status': roadCompleted ? 'COMPLETED' : 'AT_STOP',
+    'currentTractorId': '44444444-4444-4444-8444-444444444444',
+    'stops': [
+      {
+        ...(work(roadTrip)['stops'] as List).first as Map<String, dynamic>,
+        'id': roadStop,
+        'stopType': 'DELIVERY',
+        'status': roadCompleted ? 'COMPLETED' : 'IN_SERVICE',
+      },
+    ],
+  };
   Map<String, dynamic>? serverShift;
   final serverInspections = <Map<String, dynamic>>[];
   final shiftLedger =
@@ -100,7 +125,7 @@ class MediaHttpFixture {
   }
 
   ReplayWorker makeWorker({bool futurePort = false}) {
-    final shiftReplay = shiftWorkflows
+    final shiftReplay = shiftWorkflows || roadWorkflows
         ? ShiftReplay(CommandStore(db, clock: () => now), session)
         : null;
     return ReplayWorker(
@@ -114,7 +139,11 @@ class MediaHttpFixture {
         R2SignedPutTransport(allowTestLoopback: true, clock: () => now),
         jitter: () => 0.5,
       ),
-      futureEvidence: futurePort ? TestEvidencePort(api) : shiftReplay,
+      futureEvidence: roadWorkflows
+          ? RoadEvidenceReplay(shiftReplay!, media)
+          : futurePort
+          ? TestEvidencePort(api)
+          : shiftReplay,
       shifts: shiftReplay,
     );
   }
@@ -207,6 +236,7 @@ class MediaHttpFixture {
                   'PRETRIP_CREATE',
                   'FUEL_EVENT_CREATE',
                   'EXCEPTION_REPORT',
+                  if (roadWorkflows) 'TRIP_EXECUTE_ASSIGNED',
                   if (shiftWorkflows) ...[
                     'SHIFT_START',
                     'SHIFT_END',
@@ -254,6 +284,30 @@ class MediaHttpFixture {
                     : [],
               },
           });
+        } else if (roadWorkflows && path.endsWith('/driver/me/updates')) {
+          final limit = int.parse(r.uri.queryParameters['limit'] ?? '200');
+          final offset =
+              int.tryParse(r.uri.queryParameters['cursor'] ?? '0') ?? 0;
+          final page = driverUpdates.skip(offset).take(limit).toList();
+          final visible = !switchUser;
+          if (updatesEntered != null && !updatesEntered!.isCompleted) {
+            updatesEntered!.complete();
+          }
+          if (updatesRelease != null) await updatesRelease!.future;
+          await reply(r, {
+            'items': visible ? page : [],
+            'nextCursor': repeatUpdatesCursor
+                ? r.uri.queryParameters['cursor'] ?? '0'
+                : offset + page.length < driverUpdates.length
+                ? '${offset + page.length}'
+                : null,
+          });
+        } else if (roadWorkflows && path.endsWith('/trips/$roadTrip')) {
+          await reply(r, {
+            'trip': roadWork(),
+            'currentCoupling': null,
+            'departurePrerequisitesSatisfied': true,
+          });
         } else if (RegExp(r'/trips/trip-[AB]$').hasMatch(path)) {
           await reply(r, {
             'trip': work(path.split('/').last),
@@ -262,7 +316,11 @@ class MediaHttpFixture {
           });
         } else {
           await reply(r, {
-            'items': noTrips ? [] : [work('trip-A'), work('trip-B')],
+            'items': noTrips || roadWorkflows && roadCompleted
+                ? []
+                : roadWorkflows
+                ? [roadWork()]
+                : [work('trip-A'), work('trip-B')],
             'nextCursor': null,
           });
         }
@@ -343,6 +401,132 @@ class MediaHttpFixture {
         final override = finalizeResponseOverride;
         finalizeResponseOverride = null;
         await reply(r, override == null ? doc : {...doc, ...override});
+        return;
+      }
+      if (roadWorkflows && path.endsWith('/links')) {
+        final id = path.split('/')[6];
+        if (reassigned || switchUser) {
+          await reply(r, {'code': 'RESOURCE_NOT_FOUND'}, 404);
+          return;
+        }
+        if (documents[id]?['uploadStatus'] != 'UPLOADED' ||
+            !{roadTrip, roadStop}.contains(body['entityId'])) {
+          await reply(r, {'code': 'RESOURCE_NOT_FOUND'}, 404);
+          return;
+        }
+        roadLinks.putIfAbsent(id, () => {}).add(body['entityId'] as String);
+        await reply(r, {
+          'id': operationUuid(),
+          'documentId': id,
+          'entityType': body['entityType'],
+          'entityId': body['entityId'],
+        });
+        return;
+      }
+      if (roadWorkflows &&
+          (path.endsWith('/delivery-completions') ||
+              path.endsWith('/fuel-events') ||
+              path.endsWith('/exceptions'))) {
+        if (roadFailureStatuses.isNotEmpty) {
+          final status = roadFailureStatuses.removeAt(0);
+          if (retryAfter != null) {
+            r.response.headers.set('Retry-After', retryAfter!);
+          }
+          await reply(r, {'code': failCode}, status);
+          return;
+        }
+        if (reassigned || switchUser) {
+          await reply(r, {'code': 'RESOURCE_NOT_FOUND'}, 404);
+          return;
+        }
+        if (shiftRevoked) {
+          await reply(r, {'code': 'CAPABILITY_DENIED'}, 403);
+          return;
+        }
+        final logical = '$path|${jsonEncode(body)}';
+        if (key == null ||
+            roadLedger.containsKey(key) &&
+                roadLedger[key]!.logical != logical) {
+          await reply(r, {'code': 'IDEMPOTENCY_KEY_REUSED'}, 409);
+          return;
+        }
+        Map<String, dynamic> result;
+        if (roadLedger.containsKey(key)) {
+          result = roadLedger[key]!.result;
+        } else {
+          bool doc(Object? id, String type, String target) =>
+              documents[id]?['documentType'] == type &&
+              documents[id]?['uploadStatus'] == 'UPLOADED' &&
+              (roadLinks[id]?.contains(target) ?? false);
+          if (path.endsWith('/delivery-completions')) {
+            if (!path.contains(roadStop) ||
+                roadCompleted ||
+                !doc(body['bolDocumentId'], 'BOL', roadStop) ||
+                body['evidenceMode'] == 'NO_RECEIVER_AVAILABLE' &&
+                    (!doc(
+                          body['deliveryPhotoDocumentId'],
+                          'DELIVERY_PHOTO',
+                          roadStop,
+                        ) ||
+                        (body['comment'] as String? ?? '').trim().isEmpty)) {
+              await reply(r, {'code': 'EVIDENCE_REQUIRED'}, 409);
+              return;
+            }
+            result = {
+              'stopId': roadStop,
+              'tripId': roadTrip,
+              'stopStatus': 'COMPLETED',
+              'tripStatus': 'COMPLETED',
+              'stopVersion': 1,
+              'tripVersion': 1,
+              'completedAt': body['occurredAt'],
+            };
+            roadCompleted = true;
+          } else if (path.endsWith('/fuel-events')) {
+            if (body['tripId'] != roadTrip ||
+                !doc(body['receiptDocumentId'], 'FUEL_RECEIPT', roadTrip)) {
+              await reply(r, {'code': 'EVIDENCE_REQUIRED'}, 409);
+              return;
+            }
+            result = {
+              'id': operationUuid(),
+              ...body,
+              'createdAt': now.toIso8601String(),
+            };
+          } else {
+            final ids = body['documentIds'];
+            if (ids is! List ||
+                body['category'] == 'EQUIPMENT_DAMAGE' && ids.isEmpty ||
+                ids.any(
+                  (id) => !doc(
+                    id,
+                    'DAMAGE_PHOTO',
+                    body['stopId'] as String? ?? roadTrip,
+                  ),
+                )) {
+              await reply(r, {'code': 'EVIDENCE_REQUIRED'}, 409);
+              return;
+            }
+            result = {
+              'id': operationUuid(),
+              'tripId': roadTrip,
+              ...body,
+              'documentIds': List<String>.from(ids)..sort(),
+              'recordedAt': now.toIso8601String(),
+            };
+          }
+          roadLedger[key] = (logical: logical, result: result);
+          businessEffects++;
+        }
+        if (loseBusinessAck) {
+          loseBusinessAck = false;
+          final socket = await r.response.detachSocket(writeHeaders: false);
+          socket.destroy();
+          return;
+        }
+        final override = roadResponseOverride;
+        roadResponseOverride = null;
+        await reply(r, override ?? result);
         return;
       }
       if (shiftWorkflows &&
@@ -477,6 +661,9 @@ class MediaHttpFixture {
   }
 
   Future<void> close() async {
+    if (updatesRelease != null && !updatesRelease!.isCompleted) {
+      updatesRelease!.complete();
+    }
     if (putRelease != null && !putRelease!.isCompleted) putRelease!.complete();
     if (finalizeRelease != null && !finalizeRelease!.isCompleted) {
       finalizeRelease!.complete();

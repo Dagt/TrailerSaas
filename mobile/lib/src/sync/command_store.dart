@@ -18,6 +18,14 @@ enum CommandState {
   final String value;
 }
 
+/// Drift stores these instants as whole Unix seconds. Never round a retry deadline down.
+DateTime? durableRetryAt(DateTime? value) => value == null
+    ? null
+    : DateTime.fromMicrosecondsSinceEpoch(
+        ((value.microsecondsSinceEpoch + 999999) ~/ 1000000) * 1000000,
+        isUtc: true,
+      );
+
 /// Immutable, explicit endpoint intent. Neither tokens nor arbitrary request fields
 /// enter SQLite. Authorization and semantic eligibility remain server decisions.
 class CommandIntent {
@@ -272,7 +280,7 @@ class CommandStore {
             state: Value(state.value),
             lastHttpStatus: Value(status),
             lastErrorCode: Value(code),
-            nextRetryAt: Value(retryAt),
+            nextRetryAt: Value(durableRetryAt(retryAt)),
             ackedAt: Value(state == CommandState.acknowledged ? now() : null),
           ),
         );

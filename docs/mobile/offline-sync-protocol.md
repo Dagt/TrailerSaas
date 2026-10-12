@@ -563,3 +563,17 @@ records never change after first send. ACK is historical; home/work refresh rema
 authoritative. Pending matching Pre-Trip can precede a recorded departure, but cannot
 grant departure permission: dependencies require ACK and PostgreSQL revalidates.
 Reassignment/revocation retains conflicts, draft and photos. No #45 endpoint is enabled.
+
+## Issue #45 production evidence adapters
+
+The same ReplayWorker now installs typed #43/#45 evidence adapters. Signed BOL,
+No Receiver, Fuel and exceptions use immutable local intent, finalized media edges
+and separately frozen materialized_requests. No receiver waits for both files;
+Fuel waits for its receipt; damage waits for every attached photo. Linking and POST
+reauthorize on the server. Empty optional non-damage photo sets are valid.
+ACK requires the exact typed Stop/event result, identity/context and occurrence;
+physical Hook/Drop/Trip checks are unchanged. Lost ACK retains UUID/path/body and
+never reuploads confirmed files. Confirmed ACK survives failed authoritative refresh.
+SQLite retry deadlines round UP to seconds so restart cannot retry before Retry-After.
+Authorization/state conflicts retain intent/photos for review. No second worker,
+generic endpoint executor, push dependency or server-state simulation is added.

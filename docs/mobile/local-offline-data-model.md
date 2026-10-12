@@ -157,3 +157,14 @@ are preserved. Foreign keys and insert-before-send/immutability triggers protect
 namespace and generated-ID dependencies. No token or signed URL is stored here.
 Only materialized_requests contains the final frozen HTTP path/body. Typed Off Duty
 templates resolve only with the acknowledged real Shift ID; intent is unchanged.
+
+## Issue #45 schema v6
+
+Incremental v1/v2/v3/v4/v5 upgrades add road_drafts, road_captures,
+cached_driver_updates and driver_update_cursors, preserving the complete existing
+cache/command/media/result graph and frozen requests. Draft context is immutable;
+queued drafts cannot change. Camera context is recorded before native launch;
+namespace FKs and global camera claims protect cross-account references and live
+captures. Confirmed updates are namespaced, immutable server identities with stable
+sequence from createdAt/id pagination, not an authorization cache. Update history
+survives removal of current work. No token, signed URL or binary enters these tables.

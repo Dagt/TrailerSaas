@@ -249,7 +249,7 @@ class MediaStore {
       updatedAt: Value(now()),
       lastErrorCode: Value(safeCode(code)),
       lastHttpStatus: Value(status),
-      nextRetryAt: Value(retryAt),
+      nextRetryAt: Value(durableRetryAt(retryAt)),
       reviewRequired: Value(review),
     ),
   );

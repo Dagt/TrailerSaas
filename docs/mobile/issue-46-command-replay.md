@@ -161,3 +161,13 @@ Shift-ID bindings. Schema v5 preserves v3/v4 queues. Physical command response c
 SENDING fencing/reconnect, immutable request and User/Tenant isolation remain intact.
 The media phase precedes Pre-Trip; real On Duty ACK and all four finalized images
 must resolve before request freezing. See issue-43-shift-inspections.md.
+
+## Issue #45 extension
+
+Typed production delivery/Fuel/exception response validation now runs in the same
+lane, alongside unchanged Shift and physical protocols. Materialization, media
+edges, SENDING/UPLOADING fencing and current owner checks remain authoritative.
+The #54 future-workflow gate now opens only for implemented #43/#45 paths. Business
+ACK persists before current work refresh; refresh failure cannot downgrade that ACK.
+Drift whole-second retry deadlines are rounded upward. No arbitrary endpoint or
+second queue is introduced. See issue-45-pod-fuel-exceptions.md.

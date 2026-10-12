@@ -8005,6 +8005,1954 @@ class CameraCapturesCompanion extends UpdateCompanion<CameraCapture> {
   }
 }
 
+class $RoadDraftsTable extends RoadDrafts
+    with TableInfo<$RoadDraftsTable, RoadDraft> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RoadDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
+    'trip_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stopIdMeta = const VerificationMeta('stopId');
+  @override
+  late final GeneratedColumn<String> stopId = GeneratedColumn<String>(
+    'stop_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _purposeMeta = const VerificationMeta(
+    'purpose',
+  );
+  @override
+  late final GeneratedColumn<String> purpose = GeneratedColumn<String>(
+    'purpose',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _inputsJsonMeta = const VerificationMeta(
+    'inputsJson',
+  );
+  @override
+  late final GeneratedColumn<String> inputsJson = GeneratedColumn<String>(
+    'inputs_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _mediaJsonMeta = const VerificationMeta(
+    'mediaJson',
+  );
+  @override
+  late final GeneratedColumn<String> mediaJson = GeneratedColumn<String>(
+    'media_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _commandIdMeta = const VerificationMeta(
+    'commandId',
+  );
+  @override
+  late final GeneratedColumn<String> commandId = GeneratedColumn<String>(
+    'command_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    tenantId,
+    tripId,
+    stopId,
+    purpose,
+    inputsJson,
+    mediaJson,
+    commandId,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'road_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RoadDraft> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(
+        _tripIdMeta,
+        tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tripIdMeta);
+    }
+    if (data.containsKey('stop_id')) {
+      context.handle(
+        _stopIdMeta,
+        stopId.isAcceptableOrUnknown(data['stop_id']!, _stopIdMeta),
+      );
+    }
+    if (data.containsKey('purpose')) {
+      context.handle(
+        _purposeMeta,
+        purpose.isAcceptableOrUnknown(data['purpose']!, _purposeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_purposeMeta);
+    }
+    if (data.containsKey('inputs_json')) {
+      context.handle(
+        _inputsJsonMeta,
+        inputsJson.isAcceptableOrUnknown(data['inputs_json']!, _inputsJsonMeta),
+      );
+    }
+    if (data.containsKey('media_json')) {
+      context.handle(
+        _mediaJsonMeta,
+        mediaJson.isAcceptableOrUnknown(data['media_json']!, _mediaJsonMeta),
+      );
+    }
+    if (data.containsKey('command_id')) {
+      context.handle(
+        _commandIdMeta,
+        commandId.isAcceptableOrUnknown(data['command_id']!, _commandIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RoadDraft map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RoadDraft(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      tripId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trip_id'],
+      )!,
+      stopId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stop_id'],
+      ),
+      purpose: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purpose'],
+      )!,
+      inputsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}inputs_json'],
+      )!,
+      mediaJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_json'],
+      )!,
+      commandId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}command_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RoadDraftsTable createAlias(String alias) {
+    return $RoadDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class RoadDraft extends DataClass implements Insertable<RoadDraft> {
+  final String id;
+  final String userId;
+  final String tenantId;
+  final String tripId;
+  final String? stopId;
+  final String purpose;
+  final String inputsJson;
+  final String mediaJson;
+  final String? commandId;
+  final DateTime updatedAt;
+  const RoadDraft({
+    required this.id,
+    required this.userId,
+    required this.tenantId,
+    required this.tripId,
+    this.stopId,
+    required this.purpose,
+    required this.inputsJson,
+    required this.mediaJson,
+    this.commandId,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['trip_id'] = Variable<String>(tripId);
+    if (!nullToAbsent || stopId != null) {
+      map['stop_id'] = Variable<String>(stopId);
+    }
+    map['purpose'] = Variable<String>(purpose);
+    map['inputs_json'] = Variable<String>(inputsJson);
+    map['media_json'] = Variable<String>(mediaJson);
+    if (!nullToAbsent || commandId != null) {
+      map['command_id'] = Variable<String>(commandId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  RoadDraftsCompanion toCompanion(bool nullToAbsent) {
+    return RoadDraftsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      tripId: Value(tripId),
+      stopId: stopId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stopId),
+      purpose: Value(purpose),
+      inputsJson: Value(inputsJson),
+      mediaJson: Value(mediaJson),
+      commandId: commandId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(commandId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory RoadDraft.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RoadDraft(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      tripId: serializer.fromJson<String>(json['tripId']),
+      stopId: serializer.fromJson<String?>(json['stopId']),
+      purpose: serializer.fromJson<String>(json['purpose']),
+      inputsJson: serializer.fromJson<String>(json['inputsJson']),
+      mediaJson: serializer.fromJson<String>(json['mediaJson']),
+      commandId: serializer.fromJson<String?>(json['commandId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'tripId': serializer.toJson<String>(tripId),
+      'stopId': serializer.toJson<String?>(stopId),
+      'purpose': serializer.toJson<String>(purpose),
+      'inputsJson': serializer.toJson<String>(inputsJson),
+      'mediaJson': serializer.toJson<String>(mediaJson),
+      'commandId': serializer.toJson<String?>(commandId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  RoadDraft copyWith({
+    String? id,
+    String? userId,
+    String? tenantId,
+    String? tripId,
+    Value<String?> stopId = const Value.absent(),
+    String? purpose,
+    String? inputsJson,
+    String? mediaJson,
+    Value<String?> commandId = const Value.absent(),
+    DateTime? updatedAt,
+  }) => RoadDraft(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    tripId: tripId ?? this.tripId,
+    stopId: stopId.present ? stopId.value : this.stopId,
+    purpose: purpose ?? this.purpose,
+    inputsJson: inputsJson ?? this.inputsJson,
+    mediaJson: mediaJson ?? this.mediaJson,
+    commandId: commandId.present ? commandId.value : this.commandId,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  RoadDraft copyWithCompanion(RoadDraftsCompanion data) {
+    return RoadDraft(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      stopId: data.stopId.present ? data.stopId.value : this.stopId,
+      purpose: data.purpose.present ? data.purpose.value : this.purpose,
+      inputsJson: data.inputsJson.present
+          ? data.inputsJson.value
+          : this.inputsJson,
+      mediaJson: data.mediaJson.present ? data.mediaJson.value : this.mediaJson,
+      commandId: data.commandId.present ? data.commandId.value : this.commandId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoadDraft(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('tripId: $tripId, ')
+          ..write('stopId: $stopId, ')
+          ..write('purpose: $purpose, ')
+          ..write('inputsJson: $inputsJson, ')
+          ..write('mediaJson: $mediaJson, ')
+          ..write('commandId: $commandId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    tenantId,
+    tripId,
+    stopId,
+    purpose,
+    inputsJson,
+    mediaJson,
+    commandId,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RoadDraft &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.tripId == this.tripId &&
+          other.stopId == this.stopId &&
+          other.purpose == this.purpose &&
+          other.inputsJson == this.inputsJson &&
+          other.mediaJson == this.mediaJson &&
+          other.commandId == this.commandId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> tripId;
+  final Value<String?> stopId;
+  final Value<String> purpose;
+  final Value<String> inputsJson;
+  final Value<String> mediaJson;
+  final Value<String?> commandId;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const RoadDraftsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.stopId = const Value.absent(),
+    this.purpose = const Value.absent(),
+    this.inputsJson = const Value.absent(),
+    this.mediaJson = const Value.absent(),
+    this.commandId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RoadDraftsCompanion.insert({
+    required String id,
+    required String userId,
+    required String tenantId,
+    required String tripId,
+    this.stopId = const Value.absent(),
+    required String purpose,
+    this.inputsJson = const Value.absent(),
+    this.mediaJson = const Value.absent(),
+    this.commandId = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       tripId = Value(tripId),
+       purpose = Value(purpose),
+       updatedAt = Value(updatedAt);
+  static Insertable<RoadDraft> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? tripId,
+    Expression<String>? stopId,
+    Expression<String>? purpose,
+    Expression<String>? inputsJson,
+    Expression<String>? mediaJson,
+    Expression<String>? commandId,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (tripId != null) 'trip_id': tripId,
+      if (stopId != null) 'stop_id': stopId,
+      if (purpose != null) 'purpose': purpose,
+      if (inputsJson != null) 'inputs_json': inputsJson,
+      if (mediaJson != null) 'media_json': mediaJson,
+      if (commandId != null) 'command_id': commandId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RoadDraftsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? tripId,
+    Value<String?>? stopId,
+    Value<String>? purpose,
+    Value<String>? inputsJson,
+    Value<String>? mediaJson,
+    Value<String?>? commandId,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return RoadDraftsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      tripId: tripId ?? this.tripId,
+      stopId: stopId ?? this.stopId,
+      purpose: purpose ?? this.purpose,
+      inputsJson: inputsJson ?? this.inputsJson,
+      mediaJson: mediaJson ?? this.mediaJson,
+      commandId: commandId ?? this.commandId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (stopId.present) {
+      map['stop_id'] = Variable<String>(stopId.value);
+    }
+    if (purpose.present) {
+      map['purpose'] = Variable<String>(purpose.value);
+    }
+    if (inputsJson.present) {
+      map['inputs_json'] = Variable<String>(inputsJson.value);
+    }
+    if (mediaJson.present) {
+      map['media_json'] = Variable<String>(mediaJson.value);
+    }
+    if (commandId.present) {
+      map['command_id'] = Variable<String>(commandId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoadDraftsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('tripId: $tripId, ')
+          ..write('stopId: $stopId, ')
+          ..write('purpose: $purpose, ')
+          ..write('inputsJson: $inputsJson, ')
+          ..write('mediaJson: $mediaJson, ')
+          ..write('commandId: $commandId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RoadCapturesTable extends RoadCaptures
+    with TableInfo<$RoadCapturesTable, RoadCapture> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RoadCapturesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _draftIdMeta = const VerificationMeta(
+    'draftId',
+  );
+  @override
+  late final GeneratedColumn<String> draftId = GeneratedColumn<String>(
+    'draft_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _documentTypeMeta = const VerificationMeta(
+    'documentType',
+  );
+  @override
+  late final GeneratedColumn<String> documentType = GeneratedColumn<String>(
+    'document_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldMeta = const VerificationMeta('field');
+  @override
+  late final GeneratedColumn<String> field = GeneratedColumn<String>(
+    'field',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaIdMeta = const VerificationMeta(
+    'mediaId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaId = GeneratedColumn<String>(
+    'media_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('PENDING'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    tenantId,
+    draftId,
+    documentType,
+    field,
+    mediaId,
+    state,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'road_captures';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RoadCapture> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('draft_id')) {
+      context.handle(
+        _draftIdMeta,
+        draftId.isAcceptableOrUnknown(data['draft_id']!, _draftIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_draftIdMeta);
+    }
+    if (data.containsKey('document_type')) {
+      context.handle(
+        _documentTypeMeta,
+        documentType.isAcceptableOrUnknown(
+          data['document_type']!,
+          _documentTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_documentTypeMeta);
+    }
+    if (data.containsKey('field')) {
+      context.handle(
+        _fieldMeta,
+        field.isAcceptableOrUnknown(data['field']!, _fieldMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldMeta);
+    }
+    if (data.containsKey('media_id')) {
+      context.handle(
+        _mediaIdMeta,
+        mediaId.isAcceptableOrUnknown(data['media_id']!, _mediaIdMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RoadCapture map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RoadCapture(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      draftId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}draft_id'],
+      )!,
+      documentType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_type'],
+      )!,
+      field: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field'],
+      )!,
+      mediaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_id'],
+      ),
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RoadCapturesTable createAlias(String alias) {
+    return $RoadCapturesTable(attachedDatabase, alias);
+  }
+}
+
+class RoadCapture extends DataClass implements Insertable<RoadCapture> {
+  final String id;
+  final String userId;
+  final String tenantId;
+  final String draftId;
+  final String documentType;
+  final String field;
+  final String? mediaId;
+  final String state;
+  final DateTime createdAt;
+  const RoadCapture({
+    required this.id,
+    required this.userId,
+    required this.tenantId,
+    required this.draftId,
+    required this.documentType,
+    required this.field,
+    this.mediaId,
+    required this.state,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['draft_id'] = Variable<String>(draftId);
+    map['document_type'] = Variable<String>(documentType);
+    map['field'] = Variable<String>(field);
+    if (!nullToAbsent || mediaId != null) {
+      map['media_id'] = Variable<String>(mediaId);
+    }
+    map['state'] = Variable<String>(state);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  RoadCapturesCompanion toCompanion(bool nullToAbsent) {
+    return RoadCapturesCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      draftId: Value(draftId),
+      documentType: Value(documentType),
+      field: Value(field),
+      mediaId: mediaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mediaId),
+      state: Value(state),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory RoadCapture.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RoadCapture(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      draftId: serializer.fromJson<String>(json['draftId']),
+      documentType: serializer.fromJson<String>(json['documentType']),
+      field: serializer.fromJson<String>(json['field']),
+      mediaId: serializer.fromJson<String?>(json['mediaId']),
+      state: serializer.fromJson<String>(json['state']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'draftId': serializer.toJson<String>(draftId),
+      'documentType': serializer.toJson<String>(documentType),
+      'field': serializer.toJson<String>(field),
+      'mediaId': serializer.toJson<String?>(mediaId),
+      'state': serializer.toJson<String>(state),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  RoadCapture copyWith({
+    String? id,
+    String? userId,
+    String? tenantId,
+    String? draftId,
+    String? documentType,
+    String? field,
+    Value<String?> mediaId = const Value.absent(),
+    String? state,
+    DateTime? createdAt,
+  }) => RoadCapture(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    draftId: draftId ?? this.draftId,
+    documentType: documentType ?? this.documentType,
+    field: field ?? this.field,
+    mediaId: mediaId.present ? mediaId.value : this.mediaId,
+    state: state ?? this.state,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  RoadCapture copyWithCompanion(RoadCapturesCompanion data) {
+    return RoadCapture(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      draftId: data.draftId.present ? data.draftId.value : this.draftId,
+      documentType: data.documentType.present
+          ? data.documentType.value
+          : this.documentType,
+      field: data.field.present ? data.field.value : this.field,
+      mediaId: data.mediaId.present ? data.mediaId.value : this.mediaId,
+      state: data.state.present ? data.state.value : this.state,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoadCapture(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('draftId: $draftId, ')
+          ..write('documentType: $documentType, ')
+          ..write('field: $field, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    tenantId,
+    draftId,
+    documentType,
+    field,
+    mediaId,
+    state,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RoadCapture &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.draftId == this.draftId &&
+          other.documentType == this.documentType &&
+          other.field == this.field &&
+          other.mediaId == this.mediaId &&
+          other.state == this.state &&
+          other.createdAt == this.createdAt);
+}
+
+class RoadCapturesCompanion extends UpdateCompanion<RoadCapture> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> draftId;
+  final Value<String> documentType;
+  final Value<String> field;
+  final Value<String?> mediaId;
+  final Value<String> state;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const RoadCapturesCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.draftId = const Value.absent(),
+    this.documentType = const Value.absent(),
+    this.field = const Value.absent(),
+    this.mediaId = const Value.absent(),
+    this.state = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RoadCapturesCompanion.insert({
+    required String id,
+    required String userId,
+    required String tenantId,
+    required String draftId,
+    required String documentType,
+    required String field,
+    this.mediaId = const Value.absent(),
+    this.state = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       draftId = Value(draftId),
+       documentType = Value(documentType),
+       field = Value(field),
+       createdAt = Value(createdAt);
+  static Insertable<RoadCapture> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? draftId,
+    Expression<String>? documentType,
+    Expression<String>? field,
+    Expression<String>? mediaId,
+    Expression<String>? state,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (draftId != null) 'draft_id': draftId,
+      if (documentType != null) 'document_type': documentType,
+      if (field != null) 'field': field,
+      if (mediaId != null) 'media_id': mediaId,
+      if (state != null) 'state': state,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RoadCapturesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? draftId,
+    Value<String>? documentType,
+    Value<String>? field,
+    Value<String?>? mediaId,
+    Value<String>? state,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return RoadCapturesCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      draftId: draftId ?? this.draftId,
+      documentType: documentType ?? this.documentType,
+      field: field ?? this.field,
+      mediaId: mediaId ?? this.mediaId,
+      state: state ?? this.state,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (draftId.present) {
+      map['draft_id'] = Variable<String>(draftId.value);
+    }
+    if (documentType.present) {
+      map['document_type'] = Variable<String>(documentType.value);
+    }
+    if (field.present) {
+      map['field'] = Variable<String>(field.value);
+    }
+    if (mediaId.present) {
+      map['media_id'] = Variable<String>(mediaId.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoadCapturesCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('draftId: $draftId, ')
+          ..write('documentType: $documentType, ')
+          ..write('field: $field, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedDriverUpdatesTable extends CachedDriverUpdates
+    with TableInfo<$CachedDriverUpdatesTable, CachedDriverUpdate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedDriverUpdatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
+    'trip_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updateTypeMeta = const VerificationMeta(
+    'updateType',
+  );
+  @override
+  late final GeneratedColumn<String> updateType = GeneratedColumn<String>(
+    'update_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectionJsonMeta = const VerificationMeta(
+    'projectionJson',
+  );
+  @override
+  late final GeneratedColumn<String> projectionJson = GeneratedColumn<String>(
+    'projection_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sequenceMeta = const VerificationMeta(
+    'sequence',
+  );
+  @override
+  late final GeneratedColumn<int> sequence = GeneratedColumn<int>(
+    'sequence',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _downloadedAtMeta = const VerificationMeta(
+    'downloadedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> downloadedAt = GeneratedColumn<DateTime>(
+    'downloaded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    tenantId,
+    id,
+    tripId,
+    updateType,
+    projectionJson,
+    sequence,
+    downloadedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_driver_updates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedDriverUpdate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(
+        _tripIdMeta,
+        tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tripIdMeta);
+    }
+    if (data.containsKey('update_type')) {
+      context.handle(
+        _updateTypeMeta,
+        updateType.isAcceptableOrUnknown(data['update_type']!, _updateTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updateTypeMeta);
+    }
+    if (data.containsKey('projection_json')) {
+      context.handle(
+        _projectionJsonMeta,
+        projectionJson.isAcceptableOrUnknown(
+          data['projection_json']!,
+          _projectionJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_projectionJsonMeta);
+    }
+    if (data.containsKey('sequence')) {
+      context.handle(
+        _sequenceMeta,
+        sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sequenceMeta);
+    }
+    if (data.containsKey('downloaded_at')) {
+      context.handle(
+        _downloadedAtMeta,
+        downloadedAt.isAcceptableOrUnknown(
+          data['downloaded_at']!,
+          _downloadedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId, tenantId, id};
+  @override
+  CachedDriverUpdate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedDriverUpdate(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      tripId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trip_id'],
+      )!,
+      updateType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}update_type'],
+      )!,
+      projectionJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}projection_json'],
+      )!,
+      sequence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sequence'],
+      )!,
+      downloadedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}downloaded_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedDriverUpdatesTable createAlias(String alias) {
+    return $CachedDriverUpdatesTable(attachedDatabase, alias);
+  }
+}
+
+class CachedDriverUpdate extends DataClass
+    implements Insertable<CachedDriverUpdate> {
+  final String userId;
+  final String tenantId;
+  final String id;
+  final String tripId;
+  final String updateType;
+  final String projectionJson;
+  final int sequence;
+  final DateTime downloadedAt;
+  const CachedDriverUpdate({
+    required this.userId,
+    required this.tenantId,
+    required this.id,
+    required this.tripId,
+    required this.updateType,
+    required this.projectionJson,
+    required this.sequence,
+    required this.downloadedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['id'] = Variable<String>(id);
+    map['trip_id'] = Variable<String>(tripId);
+    map['update_type'] = Variable<String>(updateType);
+    map['projection_json'] = Variable<String>(projectionJson);
+    map['sequence'] = Variable<int>(sequence);
+    map['downloaded_at'] = Variable<DateTime>(downloadedAt);
+    return map;
+  }
+
+  CachedDriverUpdatesCompanion toCompanion(bool nullToAbsent) {
+    return CachedDriverUpdatesCompanion(
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      id: Value(id),
+      tripId: Value(tripId),
+      updateType: Value(updateType),
+      projectionJson: Value(projectionJson),
+      sequence: Value(sequence),
+      downloadedAt: Value(downloadedAt),
+    );
+  }
+
+  factory CachedDriverUpdate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedDriverUpdate(
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      id: serializer.fromJson<String>(json['id']),
+      tripId: serializer.fromJson<String>(json['tripId']),
+      updateType: serializer.fromJson<String>(json['updateType']),
+      projectionJson: serializer.fromJson<String>(json['projectionJson']),
+      sequence: serializer.fromJson<int>(json['sequence']),
+      downloadedAt: serializer.fromJson<DateTime>(json['downloadedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'id': serializer.toJson<String>(id),
+      'tripId': serializer.toJson<String>(tripId),
+      'updateType': serializer.toJson<String>(updateType),
+      'projectionJson': serializer.toJson<String>(projectionJson),
+      'sequence': serializer.toJson<int>(sequence),
+      'downloadedAt': serializer.toJson<DateTime>(downloadedAt),
+    };
+  }
+
+  CachedDriverUpdate copyWith({
+    String? userId,
+    String? tenantId,
+    String? id,
+    String? tripId,
+    String? updateType,
+    String? projectionJson,
+    int? sequence,
+    DateTime? downloadedAt,
+  }) => CachedDriverUpdate(
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    id: id ?? this.id,
+    tripId: tripId ?? this.tripId,
+    updateType: updateType ?? this.updateType,
+    projectionJson: projectionJson ?? this.projectionJson,
+    sequence: sequence ?? this.sequence,
+    downloadedAt: downloadedAt ?? this.downloadedAt,
+  );
+  CachedDriverUpdate copyWithCompanion(CachedDriverUpdatesCompanion data) {
+    return CachedDriverUpdate(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      id: data.id.present ? data.id.value : this.id,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      updateType: data.updateType.present
+          ? data.updateType.value
+          : this.updateType,
+      projectionJson: data.projectionJson.present
+          ? data.projectionJson.value
+          : this.projectionJson,
+      sequence: data.sequence.present ? data.sequence.value : this.sequence,
+      downloadedAt: data.downloadedAt.present
+          ? data.downloadedAt.value
+          : this.downloadedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedDriverUpdate(')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
+          ..write('updateType: $updateType, ')
+          ..write('projectionJson: $projectionJson, ')
+          ..write('sequence: $sequence, ')
+          ..write('downloadedAt: $downloadedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    userId,
+    tenantId,
+    id,
+    tripId,
+    updateType,
+    projectionJson,
+    sequence,
+    downloadedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedDriverUpdate &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.id == this.id &&
+          other.tripId == this.tripId &&
+          other.updateType == this.updateType &&
+          other.projectionJson == this.projectionJson &&
+          other.sequence == this.sequence &&
+          other.downloadedAt == this.downloadedAt);
+}
+
+class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> id;
+  final Value<String> tripId;
+  final Value<String> updateType;
+  final Value<String> projectionJson;
+  final Value<int> sequence;
+  final Value<DateTime> downloadedAt;
+  final Value<int> rowid;
+  const CachedDriverUpdatesCompanion({
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.id = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.updateType = const Value.absent(),
+    this.projectionJson = const Value.absent(),
+    this.sequence = const Value.absent(),
+    this.downloadedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedDriverUpdatesCompanion.insert({
+    required String userId,
+    required String tenantId,
+    required String id,
+    required String tripId,
+    required String updateType,
+    required String projectionJson,
+    required int sequence,
+    required DateTime downloadedAt,
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       tenantId = Value(tenantId),
+       id = Value(id),
+       tripId = Value(tripId),
+       updateType = Value(updateType),
+       projectionJson = Value(projectionJson),
+       sequence = Value(sequence),
+       downloadedAt = Value(downloadedAt);
+  static Insertable<CachedDriverUpdate> custom({
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? id,
+    Expression<String>? tripId,
+    Expression<String>? updateType,
+    Expression<String>? projectionJson,
+    Expression<int>? sequence,
+    Expression<DateTime>? downloadedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (id != null) 'id': id,
+      if (tripId != null) 'trip_id': tripId,
+      if (updateType != null) 'update_type': updateType,
+      if (projectionJson != null) 'projection_json': projectionJson,
+      if (sequence != null) 'sequence': sequence,
+      if (downloadedAt != null) 'downloaded_at': downloadedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedDriverUpdatesCompanion copyWith({
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? id,
+    Value<String>? tripId,
+    Value<String>? updateType,
+    Value<String>? projectionJson,
+    Value<int>? sequence,
+    Value<DateTime>? downloadedAt,
+    Value<int>? rowid,
+  }) {
+    return CachedDriverUpdatesCompanion(
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      id: id ?? this.id,
+      tripId: tripId ?? this.tripId,
+      updateType: updateType ?? this.updateType,
+      projectionJson: projectionJson ?? this.projectionJson,
+      sequence: sequence ?? this.sequence,
+      downloadedAt: downloadedAt ?? this.downloadedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (updateType.present) {
+      map['update_type'] = Variable<String>(updateType.value);
+    }
+    if (projectionJson.present) {
+      map['projection_json'] = Variable<String>(projectionJson.value);
+    }
+    if (sequence.present) {
+      map['sequence'] = Variable<int>(sequence.value);
+    }
+    if (downloadedAt.present) {
+      map['downloaded_at'] = Variable<DateTime>(downloadedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedDriverUpdatesCompanion(')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('id: $id, ')
+          ..write('tripId: $tripId, ')
+          ..write('updateType: $updateType, ')
+          ..write('projectionJson: $projectionJson, ')
+          ..write('sequence: $sequence, ')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DriverUpdateCursorsTable extends DriverUpdateCursors
+    with TableInfo<$DriverUpdateCursorsTable, DriverUpdateCursor> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DriverUpdateCursorsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cursorMeta = const VerificationMeta('cursor');
+  @override
+  late final GeneratedColumn<String> cursor = GeneratedColumn<String>(
+    'cursor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [userId, tenantId, cursor];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'driver_update_cursors';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DriverUpdateCursor> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('cursor')) {
+      context.handle(
+        _cursorMeta,
+        cursor.isAcceptableOrUnknown(data['cursor']!, _cursorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId, tenantId};
+  @override
+  DriverUpdateCursor map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DriverUpdateCursor(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      cursor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cursor'],
+      ),
+    );
+  }
+
+  @override
+  $DriverUpdateCursorsTable createAlias(String alias) {
+    return $DriverUpdateCursorsTable(attachedDatabase, alias);
+  }
+}
+
+class DriverUpdateCursor extends DataClass
+    implements Insertable<DriverUpdateCursor> {
+  final String userId;
+  final String tenantId;
+  final String? cursor;
+  const DriverUpdateCursor({
+    required this.userId,
+    required this.tenantId,
+    this.cursor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    if (!nullToAbsent || cursor != null) {
+      map['cursor'] = Variable<String>(cursor);
+    }
+    return map;
+  }
+
+  DriverUpdateCursorsCompanion toCompanion(bool nullToAbsent) {
+    return DriverUpdateCursorsCompanion(
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      cursor: cursor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cursor),
+    );
+  }
+
+  factory DriverUpdateCursor.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DriverUpdateCursor(
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      cursor: serializer.fromJson<String?>(json['cursor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'cursor': serializer.toJson<String?>(cursor),
+    };
+  }
+
+  DriverUpdateCursor copyWith({
+    String? userId,
+    String? tenantId,
+    Value<String?> cursor = const Value.absent(),
+  }) => DriverUpdateCursor(
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    cursor: cursor.present ? cursor.value : this.cursor,
+  );
+  DriverUpdateCursor copyWithCompanion(DriverUpdateCursorsCompanion data) {
+    return DriverUpdateCursor(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      cursor: data.cursor.present ? data.cursor.value : this.cursor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DriverUpdateCursor(')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('cursor: $cursor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(userId, tenantId, cursor);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DriverUpdateCursor &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.cursor == this.cursor);
+}
+
+class DriverUpdateCursorsCompanion extends UpdateCompanion<DriverUpdateCursor> {
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String?> cursor;
+  final Value<int> rowid;
+  const DriverUpdateCursorsCompanion({
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.cursor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DriverUpdateCursorsCompanion.insert({
+    required String userId,
+    required String tenantId,
+    this.cursor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       tenantId = Value(tenantId);
+  static Insertable<DriverUpdateCursor> custom({
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? cursor,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (cursor != null) 'cursor': cursor,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DriverUpdateCursorsCompanion copyWith({
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String?>? cursor,
+    Value<int>? rowid,
+  }) {
+    return DriverUpdateCursorsCompanion(
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      cursor: cursor ?? this.cursor,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (cursor.present) {
+      map['cursor'] = Variable<String>(cursor.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DriverUpdateCursorsCompanion(')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('cursor: $cursor, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $LocalSessionContextsTable localSessionContexts =
@@ -8028,6 +9976,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $CameraCapturesTable cameraCaptures = $CameraCapturesTable(this);
+  late final $RoadDraftsTable roadDrafts = $RoadDraftsTable(this);
+  late final $RoadCapturesTable roadCaptures = $RoadCapturesTable(this);
+  late final $CachedDriverUpdatesTable cachedDriverUpdates =
+      $CachedDriverUpdatesTable(this);
+  late final $DriverUpdateCursorsTable driverUpdateCursors =
+      $DriverUpdateCursorsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8046,5 +10000,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     commandResultDependencies,
     inspectionDrafts,
     cameraCaptures,
+    roadDrafts,
+    roadCaptures,
+    cachedDriverUpdates,
+    driverUpdateCursors,
   ];
 }

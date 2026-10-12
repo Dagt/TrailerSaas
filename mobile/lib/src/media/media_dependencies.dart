@@ -8,7 +8,7 @@ import '../sync/command_store.dart';
 
 enum EvidenceCommandKind { preTrip, signedBol, noReceiver, fuel, damage }
 
-/// Typed intent for FUTURE owning workflows, not permission to send an endpoint.
+/// Typed evidence intent; server permission and state are always revalidated.
 /// Local document UUIDs are logical references; the original JSON never changes.
 class EvidenceCommandIntent extends CommandIntent {
   EvidenceCommandIntent(
@@ -103,6 +103,27 @@ class EvidenceCommandIntent extends CommandIntent {
             command.body['documentIds'] is! List) {
       throw const FormatException('Invalid media set');
     }
+    if (kind == EvidenceCommandKind.fuel &&
+        (command.body['tripId'] != command.tripId ||
+            command.body['tractorId'] is! String ||
+            command.body['odometer'] is! num ||
+            !(command.body['odometer'] as num).isFinite ||
+            (command.body['odometer'] as num) < 0)) {
+      throw const FormatException('Invalid Fuel context');
+    }
+    if (kind == EvidenceCommandKind.damage &&
+        (!{
+              'DELAY_TRAFFIC',
+              'EQUIPMENT_DAMAGE',
+              'DESTINATION_CUSTOMER_ISSUE',
+              'LOAD_REJECTED',
+              'OTHER',
+            }.contains(command.body['category']) ||
+            command.body['comment'] is! String ||
+            (command.body['comment'] as String).trim().isEmpty ||
+            (command.body['comment'] as String).length > 4000)) {
+      throw const FormatException('Invalid problem');
+    }
   }
 
   static EvidenceCommandKind? kindFor(LocalCommand c) =>
@@ -124,6 +145,20 @@ abstract interface class EvidenceReplayPort {
   bool supports(LocalCommand intent);
   Future<Map<String, dynamic>> send(
     LocalCommand intent,
+    Map<String, dynamic> frozenBody,
+  );
+}
+
+/// Implemented workflow responses are validated separately from physical Trip responses.
+abstract interface class TypedEvidenceReplayPort implements EvidenceReplayPort {
+  Future<Map<String, dynamic>> sendAuthorized(
+    LocalCommand intent,
+    Map<String, dynamic> frozenBody, {
+    required bool forceRefresh,
+  });
+  void validateResponse(
+    LocalCommand intent,
+    Map<String, dynamic> response,
     Map<String, dynamic> frozenBody,
   );
 }
@@ -223,7 +258,8 @@ class MediaDependencies {
         add('receiptDocumentId', b['receiptDocumentId']);
       case EvidenceCommandKind.damage:
         final refs = b['documentIds'] as List;
-        if (refs.isEmpty || refs.length > 50) {
+        if ((refs.isEmpty && b['category'] == 'EQUIPMENT_DAMAGE') ||
+            refs.length > 50) {
           throw const FormatException('Invalid damage photos');
         }
         for (var n = 0; n < refs.length; n++) {
@@ -257,7 +293,6 @@ class MediaDependencies {
   Future<bool> ready(LocalCommand c) async {
     final kind = EvidenceCommandIntent.kindFor(c), links = await edges(c);
     if (kind == null && links.isNotEmpty) return false;
-    if (kind != null && links.isEmpty) return false;
     Map<String, String>? expected;
     if (kind != null) {
       try {

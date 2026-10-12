@@ -200,6 +200,9 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
     'service-starts' => 'Start service',
     'completions' => 'Complete non-delivery service',
     'departures' => 'Confirm departure',
+    'delivery-completions' => 'Entrega / POD',
+    'fuel-events' => 'Registro de combustible',
+    'exceptions' => 'Problema operativo',
     _ => 'Recorded operation',
   };
   static String stateLabel(String state) => switch (state) {

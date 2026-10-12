@@ -70,3 +70,117 @@ at event/fulfillment/evidence insertion and deferred commit. Earlier execution,
 inspection and module regression classes passed 61 tests. Next: extend terminal
 replay/locking edge coverage and complete Flutter schema v6, forms, typed replay
 and Driver Updates, then all final-head CI gates. No PR or merge yet.
+
+## Implemented API, boundaries and authorization
+
+| Endpoint | Gate and fresh context | Required evidence | Result |
+| --- | --- | --- | --- |
+| POST /stops/{stopId}/delivery-completions | POD_UPLOAD + TRIP_EXECUTE_ASSIGNED; own active Driver/current assignment, exact IN_SERVICE DELIVERY/AT_STOP | SIGNED_BOL: BOL; NO_RECEIVER_AVAILABLE: distinct BOL + DELIVERY_PHOTO + Unicode-nonblank comment | stopId/tripId/statuses/versions/completedAt |
+| POST /driver/me/fuel-events | FUEL_EVENT_CREATE + own assigned work; executing Trip, current active Tractor, own open Shift | finalized own FUEL_RECEIPT linked to exact Trip | immutable id/Trip/Tractor/odometer/receipt/occurrence/creation |
+| POST /trips/{tripId}/exceptions | EXCEPTION_REPORT + own assigned work; optional Stop belongs to exact Trip | damage: >=1 DAMAGE_PHOTO; other categories: optional validated photos | immutable fact, category/comment/doc IDs/occurrence/recording |
+
+Strict JSON rejects unknown/coerced/duplicate/trailing data and query parameters.
+SIGNED_BOL cannot use generic POD or no-receiver fields. All UUID idempotency keys
+use the existing ledger. Replay revalidates current resource authority/documents
+before returning stored information. Fuel/damage terminal replay needs an actual
+committed own ledger result, not a client flag or historical upload authority.
+No new capability, role mapping, R2 contract or physical state rule is introduced.
+
+## Transaction and fulfillment proof
+
+Inspections owns application orchestration; Orders owns fulfillment, Trips owns its
+shared real Stop completion transition, Documents owns synchronous validation and
+immutable evidence insertion. There is no Trips -> Documents dependency or cycle.
+Sorted Order locks precede Trip UPDATE, own Driver SHARE and ordered Stop locks;
+Documents follows with sorted shared file locks. Evidence validation precedes ledger
+claim. The winner calls recordDelivery, which verifies COMPLETED + version increment
+and an authenticated completion event written by the current PostgreSQL transaction.
+Its callback performs real Trip execution and fulfillment; evidence then inserts and
+everything commits together. Failed insert/deferred commit rolls back every effect.
+
+Fulfillment requires nonempty DELIVERY mappings, every allocated Delivery successful
+with evidence, and every requested Delivery visited. Exact requested IDs are used
+when present; otherwise Site/Location or normalized snapshot must match. Distinct
+matching prevents one visit fulfilling two required visits at the same destination.
+Missing allocations never imply success. First departure starts allocated Orders
+through the existing lifecycle, including reconciling a legacy OPEN projection to
+its persisted plan. Partial work remains PARTIALLY_DELIVERED, full work DELIVERED;
+COMPLETED is an independent authorized administrative action. Cancellation remains
+blocked from ordinary fulfillment. Explicit BASE_RETURN prevents early Trip close.
+Trip completion never closes Shift or manufactures physical movement/cargo facts.
+
+## Flutter, Drift v6 and real transport
+
+Four additive tables: road_drafts, road_captures, cached_driver_updates and
+driver_update_cursors. v1–v5 upgrade atomically and preserve all queues, photo/result
+edges and frozen requests. Draft/capture identities are immutable and namespace-safe;
+queued drafts cannot change. Native camera context persists before launch; complete
+private files repair interrupted association. Late callbacks preserve only the
+original User/Tenant files. Native camera requests cannot overlap inspection captures.
+Host camera tests inject real JPEG files; permissions/iOS and Android process death
+still require physical-device QA, with no production test images or manual bypass.
+
+Signed BOL/no-receiver, Fuel and problem forms save drafts and seek explicit intent
+confirmation. The same replay lane finalizes R2 media, resolves/freeze IDs, attaches
+to exact authorized context and sends only implemented typed endpoints. Final ACK
+requires validated result identity/context/occurrence and survives a failed refresh;
+authoritative work is read afterward. Lost ACK never generates another UUID or PUT.
+Pending offline service can precede POD without advancing cached Stop state. Its
+existing resource dependency waits for ACK. The UI and retained forms remain usable
+without assigned Trips, show pending versus server confirmation and retain conflicts.
+
+Transport/408/429/5xx retain the exact frozen request and use existing durable retry;
+Retry-After is never rounded down by SQLite. 401 refreshes once. 403/404/semantic409
+retain intent and photographs for review. No second worker, arbitrary endpoint,
+false offline state, token persistence or R2-public fallback is added. Photos remain
+conservatively pinned for offline recovery; no new automatic deletion is enabled.
+
+## Driver Updates and cursor continuity
+
+The existing targeted GET is fetched initially, manually, after ready/reconnect and
+foreground. Each pass is bounded to ten pages of 200. Only backend-issued cursors
+are persisted. Because nextCursor is a page continuation, not an end watermark,
+the latest non-null anchor is retained; its final tail is reread and deduplicated
+on later refresh. This avoids fabricating a cursor or skipping newly created rows.
+Rows get a stable local sequence from server createdAt/id ordering (not occurredAt);
+the inbox presents the most recent 200 first, preserving older metadata. Repeated
+or malformed pages fail safely without advancing that page's cursor. Updates survive
+Trip removal; namespaced views hide old account/Tenant data. Payload rendering is
+whitelisted human fields, without claims/actor data or raw JSON. No push/outbox exists.
+
+## Acceptance -> production code -> tests
+
+| Acceptance | Code | Verification |
+| --- | --- | --- |
+| POD structural rules/current context | RoadOperationsService, OperationalEvidencePolicy | RoadOperationsPostgresTests; EvidencePostgresTests and Documents regressions |
+| Real transition and same-tx proof | DriverDeliveryExecution, DriverTripExecutionService, recordDelivery | Real Shift -> Pre -> multistop POD -> Order -> BASE_RETURN -> Post -> Off; deferred-commit and insertion rollback |
+| Partial/multi-Order fulfillment | DatabaseOrderFulfillment, existing Order lifecycle | Distinct visits, missing requested work, shared Stop, cancellation, no administrative close |
+| Fuel/problem persistence | V22, RoadOperationsController/Service | Category/evidence/current assignment, same receipt concurrency, rollback, terminal replay |
+| RLS/schema/minimal grants | V22, strict historical inventories | RoadSchemaPostgresTests, TenantRlsPostgresTests and Flyway checksums |
+| Mobile real private capture/replay | RoadEvidenceStore/Replay/View, existing MediaStore/ReplayWorker | road_evidence_test: real files/SQLite/HTTP, offline modes, lost ACK/restart, 401/408/429/5xx, review/conflicts, malformed ACK, file tampering and account switch |
+| Migration/frozen requests | AppDatabase v6 | Existing actual v1–v4 upgrade tests plus populated v5/reopen and late-failure rollback |
+| Updates without push | DriverUpdatesStore/View | Pagination 205+, tail deduplication/restart, reassignment, malformed/repeated cursor, safe payload and widget cancellation display |
+| Functional controls/honest states | RoadEvidenceForm/Panel, SyncPanel | road_widgets_test: two captures, offline saved state, no work, real form controls, logout |
+| Exact public contracts | OpenAPI implemented-issue-45 schemas | Existing strict Documents/Shift tests plus #45 request/result/capability and closed catalog checks |
+
+## Deliberate limits
+
+No Yard/OOS mutations, geofences, FCM/outbox, generic Audit, OCR/signature recognition,
+cost/gallons, payroll, or remote retention. OQ-053 unsigned-BOL alerts and OQ-057
+retention remain open. Requested delivery mapping ambiguities fail conservatively;
+they do not infer load quantities or fabricate fulfilled obligations. Device-level
+camera/process recovery and release signing remain native release QA requirements.
+Final exact-head CI results are recorded in the PR; this document does not claim a
+merge or issue closure.
+
+### Checkpoints E/F
+
+Mobile infrastructure, forms and instructions are implemented and published with
+typed real transport, persistent v6 forms/captures and the existing synchronization
+lane. The full local suite passed 314 tests before the final late-identity test;
+the strengthened Road subset now passes 31 tests. Static analysis is clean. Existing
+actual v1–v4 upgrade tests remain, plus populated v5/reopen and rollback tests.
+OpenAPI validation and 13 tests pass; the former #43/#53 future-endpoint assertions
+now check the exact implemented #45 marker and typed contracts without removing
+their previous document/inspection security checks. Next: final audit, generated
+code/format/locked dependencies and exact final-head four-job CI. No merge.
