@@ -1,6 +1,25 @@
 # TrailerSaaS Mobile
 
-## Current implementation — Issue #42
+## Current implementation — Issue #54
+
+Drift v4 now persists private media and namespaced command dependencies alongside
+the #46 command queue. The shared foreground/reconnect worker initializes Documents,
+streams a direct R2 PUT without Firebase headers, confirms finalization with a stable
+UUID and freezes dependent HTTP requests before sending. Road's sync panel shows
+local/uploading/finalized/review states even without assigned Trips. Future #43/#45
+commands remain blocked: no Shift, inspection, POD/Fuel/exception or camera flow is
+implemented here. See [media queue, recovery and security](../docs/mobile/issue-54-media-queue.md).
+
+Use the same locked SDK and dependencies; crypto 3.0.7 was already locked transitively
+and is now direct for streaming SHA-256. Files stay in application-support storage,
+with UUID/User/Tenant paths. Android backup is disabled. Native encryption, iOS backup
+and device lifecycle validation remain deployment checks; no custom encryption keys.
+Cleanup requires server finalization, all dependent ACKs, explicit offline-use release
+and a configurable seven-day default grace. No remote retention/deletion is added.
+
+The historical implementation notes below remain useful for their original issues.
+
+## Session implementation — Issue #42
 
 Firebase sign-in/session restore, `/me`, Tenant selection, own Driver/work reads and persistent
 namespaced Drift caches now replace the unauthenticated shell. Road is read-only downloaded

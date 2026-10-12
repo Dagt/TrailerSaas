@@ -259,6 +259,8 @@ void main() {
     expect(posts[1].key, c.clientOperationId);
     expect(posts[0].body, frozen);
     expect(posts[1].body, frozen);
+    expect(posts[1].raw, posts[0].raw);
+    expect(posts[0].raw, jsonEncode(frozen));
   });
   test('crash after materialization before POST preserves request across another worker', () async {
     final bol = await f.capture();

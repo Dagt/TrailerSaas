@@ -77,12 +77,18 @@ class DocumentsClient implements DocumentTransport {
         response['uploadStatus'] != 'UPLOADED' ||
         response['documentType'] != row.documentType ||
         response['contentType'] != row.contentType ||
+        response['sizeBytes'] is! int ||
         response['sizeBytes'] != row.sizeBytes ||
         response['checksumSha256'] != row.checksumSha256 ||
         response['uploadedAt'] is! String) {
       throw const FormatException('Unconfirmed document');
     }
-    return DateTime.parse(response['uploadedAt'] as String).toUtc();
+    final uploadedAt = response['uploadedAt'] as String;
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$')
+        .hasMatch(uploadedAt)) {
+      throw const FormatException('Invalid finalization instant');
+    }
+    return DateTime.parse(uploadedAt).toUtc();
   }
 
   /// Future workflow owners attach only after resource authorization. Upload
@@ -173,6 +179,9 @@ class R2SignedPutTransport implements SignedPutTransport {
     LocalMediaData row,
     MediaFileStore files,
   ) async {
+    if (row.serverDocumentId != grant.documentId) {
+      throw const MediaFileProblem('UPLOAD_IDENTITY_MISMATCH');
+    }
     validate(grant);
     final client = HttpClient()..autoUncompress = false;
     HttpClientRequest? request;

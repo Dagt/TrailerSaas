@@ -346,6 +346,7 @@ class CommandStore {
           'RATE_LIMITED',
           'EVIDENCE_PENDING',
           'FUTURE_WORKFLOW',
+          'INVALID_MEDIA_DEPENDENCY',
         }.contains(code)
       ? code
       : 'UNEXPECTED_FAILURE';

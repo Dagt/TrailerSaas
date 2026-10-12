@@ -29,6 +29,15 @@ class Version3 extends AppDatabase {
       await m.createTable(cachedTrailers);
       await m.createTable(localCommands);
       await m.createTable(localSyncIssues);
+      await customStatement(
+        'CREATE INDEX local_commands_scope_state ON local_commands(user_id,tenant_id,state,created_at)',
+      );
+      await customStatement(
+        'CREATE INDEX local_sync_issues_scope ON local_sync_issues(user_id,tenant_id,created_at)',
+      );
+      await customStatement('''CREATE TRIGGER local_command_intent_immutable BEFORE UPDATE OF client_operation_id,user_id,tenant_id,command_type,
+        endpoint_path,http_method,payload_json,trip_id,aggregate_id,resource_keys_json,dependencies_json,occurred_at,created_at,queue_sequence ON local_commands
+        BEGIN SELECT RAISE(ABORT, 'Command intent is immutable'); END''');
     },
   );
 }
@@ -232,6 +241,10 @@ void main() {
         before,
       );
       expect(await v4.select(v4.localSyncIssues).get(), hasLength(1));
+      await expectLater(
+        v4.customStatement("UPDATE local_commands SET payload_json='{}'"),
+        throwsA(isA<Exception>()),
+      );
       expect(await v4.select(v4.cachedTrips).get(), hasLength(1));
       final id = operationUuid(),
           saved = await files.capture(

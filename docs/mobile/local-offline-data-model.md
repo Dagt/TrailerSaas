@@ -90,6 +90,13 @@ Defined by offline sync protocol.
 
 Defined by offline sync protocol.
 
+Implemented by #54 in schema v4 with immutable file/SHA/User/Tenant identity,
+server Document/completion attempt identity, durable retry/review fields and
+offline-use/deletion markers. Two narrow local tables, command_media_dependencies
+and materialized_requests, preserve bindings and the frozen HTTP body separately
+from the unchanged #46 logical command intent. Composite namespace FKs prohibit
+cross-account/Tenant references. See [schema, migrations and recovery](issue-54-media-queue.md).
+
 ### local_sync_issues
 
 User-visible reconciliation record:

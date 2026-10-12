@@ -129,11 +129,17 @@ class LocalMedia extends Table {
   @override
   List<String> get customConstraints => [
     'UNIQUE(id,user_id,tenant_id)',
+    'UNIQUE(user_id,tenant_id,server_document_id)',
+    "CHECK(file_key=id)",
+    "CHECK(length(finalize_key)=36 AND finalize_key GLOB '????????-????-????-????-????????????' AND finalize_key NOT GLOB '*[^0-9a-f-]*')",
+    "CHECK(server_document_id IS NULL OR (length(server_document_id)=36 AND server_document_id GLOB '????????-????-????-????-????????????' AND server_document_id NOT GLOB '*[^0-9a-f-]*'))",
     "CHECK(length(id)=36 AND id GLOB '????????-????-????-????-????????????' AND id NOT GLOB '*[^0-9a-f-]*')",
     'CHECK(size_bytes > 0 AND size_bytes <= 104857600)',
     'CHECK(length(checksum_sha256)=64)',
+    "CHECK(checksum_sha256 NOT GLOB '*[^0-9a-f]*')",
     "CHECK(document_type IN ('BOL','POD','DELIVERY_PHOTO','PRETRIP_FRONT','PRETRIP_REAR','PRETRIP_DRIVER_SIDE','PRETRIP_PASSENGER_SIDE','DAMAGE_PHOTO','FUEL_RECEIPT'))",
     "CHECK(content_type IN ('image/jpeg','image/png','application/pdf'))",
+    "CHECK(content_type<>'application/pdf' OR document_type IN ('BOL','POD'))",
     "CHECK(state IN ('LOCAL_ONLY','INIT_PENDING','UPLOAD_PENDING','UPLOADING','UPLOADED','FINALIZE_PENDING','FINALIZED','FAILED'))",
     "CHECK(file_state IN ('PRESENT','REMOVING','REMOVED'))",
     'CHECK(attempt_count >= 0)',
@@ -280,6 +286,13 @@ class AppDatabase extends _$AppDatabase {
         OR EXISTS(SELECT 1 FROM local_commands WHERE client_operation_id=NEW.client_operation_id AND (attempt_count>0 OR state<>'QUEUED'))
         OR EXISTS(SELECT 1 FROM local_media WHERE id=NEW.media_id AND file_state<>'PRESENT')
       BEGIN SELECT RAISE(ABORT, 'Dependencies must precede sending'); END''');
+    await customStatement(
+      '''CREATE TRIGGER materialized_request_matches_intent
+      BEFORE INSERT ON materialized_requests
+      WHEN NOT EXISTS(SELECT 1 FROM local_commands c WHERE c.client_operation_id=NEW.client_operation_id
+        AND c.user_id=NEW.user_id AND c.tenant_id=NEW.tenant_id AND c.endpoint_path=NEW.endpoint_path AND c.http_method=NEW.http_method)
+      BEGIN SELECT RAISE(ABORT, 'Materialized request must match original intent'); END''',
+    );
   }
 
   Future<void> _queueIndexesAndImmutability() async {

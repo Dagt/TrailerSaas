@@ -28,6 +28,7 @@ class MediaProcessor {
         String,
         PendingDocumentUpload
       >{}; // ephemeral bearer grants, never SQLite/logs
+  void forgetGrants() => _grants.clear();
 
   Future<void> process(
     SessionController session,

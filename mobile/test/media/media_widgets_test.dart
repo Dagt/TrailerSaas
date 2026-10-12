@@ -13,9 +13,11 @@ import 'media_storage_test.dart' show user, tenant;
 // only inside controlled fixture work, without changing production authorization.
 class _FixtureHttp extends HttpOverrides {}
 
-Future<T?> real<T>(WidgetTester tester, Future<T> Function() work) =>
-    tester.runAsync(()=>HttpOverrides.runWithHttpOverrides(work,_FixtureHttp()));
-Future<void> mount(WidgetTester tester,Widget widget) async {await real(tester,()=>tester.pumpWidget(widget));}
+Future<T?> real<T>(WidgetTester tester, Future<T> Function() work) => tester
+    .runAsync(() => HttpOverrides.runWithHttpOverrides(work, _FixtureHttp()));
+Future<void> mount(WidgetTester tester, Widget widget) async {
+  await real(tester, () => tester.pumpWidget(widget));
+}
 
 void main() {
   test('all accepted media states have distinct honest UI labels', () {
@@ -44,7 +46,8 @@ void main() {
           f.network.events.add(f.network.status);
         }
       });
-      await mount(tester,
+      await mount(
+        tester,
         MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(child: SyncPanel(worker: f.worker)),
@@ -65,7 +68,18 @@ void main() {
         find.widgetWithText(FilledButton, 'Sync now'),
       );
       expect(button.onPressed, offline ? isNull : isNotNull);
-      await mount(tester,const SizedBox.shrink());
+      if (!offline) {
+        await real(tester, () async {
+          await tester.tap(find.text('Sync now'));
+          await f.worker.sync();
+          await f.media.watch(user, tenant).first;
+        });
+        await tester.pump();
+        expect(find.textContaining('Finalized by server'), findsWidgets);
+        expect(f.puts, 1);
+        expect(f.finalizeEffects, 1);
+      }
+      await mount(tester, const SizedBox.shrink());
       await real(tester, f.close);
     });
   }
@@ -83,7 +97,8 @@ void main() {
         await f.session.refresh();
         expect(f.session.snapshot!.trips, isEmpty);
       });
-      await mount(tester,
+      await mount(
+        tester,
         MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(child: SyncPanel(worker: f.worker)),
@@ -99,7 +114,8 @@ void main() {
       await real(tester, () async {
         await f.session.signOut();
       });
-      await mount(tester,
+      await mount(
+        tester,
         MaterialApp(
           home: Scaffold(body: SyncPanel(worker: f.worker)),
         ),
@@ -107,7 +123,7 @@ void main() {
       await tester.pump();
       expect(find.text('Bill of lading'), findsNothing);
       expect(find.text('Media synchronization'), findsNothing);
-      await mount(tester,const SizedBox.shrink());
+      await mount(tester, const SizedBox.shrink());
       await real(tester, f.close);
     },
   );

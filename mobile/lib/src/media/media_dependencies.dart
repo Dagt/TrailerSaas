@@ -150,6 +150,8 @@ class MediaDependencies {
               ))
               .get();
       if (rows.length != 1 ||
+          (rows.single.tripId != null &&
+              rows.single.tripId != intent.command.tripId) ||
           rows.single.fileState != 'PRESENT' ||
           rows.single.documentType != _type(intent.kind, entry.key)) {
         throw const FormatException('Unavailable media reference');
@@ -253,6 +255,29 @@ class MediaDependencies {
     final kind = EvidenceCommandIntent.kindFor(c), links = await edges(c);
     if (kind == null && links.isNotEmpty) return false;
     if (kind != null && links.isEmpty) return false;
+    Map<String, String>? expected;
+    if (kind != null) {
+      try {
+        final intent = EvidenceCommandIntent(
+          kind,
+          OnlineCommand(
+            c.clientOperationId,
+            c.tripId,
+            c.endpointPath,
+            jsonDecode(c.payloadJson) as Map<String, dynamic>,
+          ),
+        );
+        intent.validate(c.tenantId);
+        expected = _references(intent);
+      } catch (_) {
+        return false;
+      }
+      if (links.length != expected.length ||
+          links.any((l) => expected![l.fieldPath] != l.mediaId)) {
+        return false;
+      }
+    }
+    final serverIds = <String>{};
     for (final link in links) {
       final row =
           await (db.select(db.localMedia)..where(
@@ -264,7 +289,9 @@ class MediaDependencies {
               .getSingleOrNull();
       if (row == null ||
           row.state != 'FINALIZED' ||
-          row.serverDocumentId == null) {
+          row.serverDocumentId == null ||
+          kind != null && row.documentType != _type(kind, link.fieldPath) ||
+          !serverIds.add(row.serverDocumentId!)) {
         return false;
       }
     }

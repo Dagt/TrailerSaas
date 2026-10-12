@@ -72,6 +72,7 @@ class ReplayWorker extends ChangeNotifier {
     final ready = session.state == SessionState.ready;
     final changed = next != _scope;
     if (changed) {
+      media?.forgetGrants();
       _scope = next;
       _timer?.cancel();
       message = null;
@@ -232,13 +233,23 @@ class ReplayWorker extends ChangeNotifier {
 
   Future<void> _mediaDependencies(List<LocalCommand> rows) async {
     for (final c in rows) {
-      if (EvidenceCommandIntent.kindFor(c) == null ||
-          {
-            'ACKNOWLEDGED',
-            'SENDING',
-            'CONFLICT',
-            'PERMANENT_FAILURE',
-          }.contains(c.state)) {
+      if ({
+        'ACKNOWLEDGED',
+        'SENDING',
+        'CONFLICT',
+        'PERMANENT_FAILURE',
+      }.contains(c.state)) {
+        continue;
+      }
+      if (EvidenceCommandIntent.kindFor(c) == null) {
+        if ((await bindings.edges(c)).isNotEmpty) {
+          await store.result(
+            c,
+            CommandState.blocked,
+            code: 'INVALID_MEDIA_DEPENDENCY',
+            category: 'INVALID_SEQUENCE',
+          );
+        }
         continue;
       }
       final ready = await bindings.ready(c);
@@ -604,6 +615,7 @@ class ReplayWorker extends ChangeNotifier {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    media?.forgetGrants();
     _timer?.cancel();
     session.removeListener(_sessionChanged);
     unawaited(_network?.cancel());

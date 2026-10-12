@@ -47,7 +47,8 @@ class MediaHttpFixture {
   final documents = <String, Map<String, dynamic>>{};
   final objects = <String, List<int>>{};
   final completedKeys = <String, String>{};
-  final posts = <({String path, String? key, Map<String, dynamic> body})>[];
+  final posts =
+      <({String path, String? key, Map<String, dynamic> body, String raw})>[];
   int puts = 0, finalizeEffects = 0, businessEffects = 0;
   final businessKeys = <String, String>{};
   bool loseFinalizeAck = false,
@@ -58,6 +59,8 @@ class MediaHttpFixture {
   int? putStatus;
   Uri? putRedirect;
   int? failNext;
+  final failureStatuses = <int>[];
+  Map<String, dynamic>? finalizeResponseOverride;
   String failCode = 'TEMPORARY_FAILURE';
   String? retryAfter;
   Completer<void>? putEntered, putRelease, finalizeEntered, finalizeRelease;
@@ -100,16 +103,28 @@ class MediaHttpFixture {
     ),
     futureEvidence: futurePort ? TestEvidencePort(api) : null,
   );
-  Future<String> capture([String type = 'BOL']) => media.capture(
-    session,
-    type,
-    'image/jpeg',
-    Stream.fromIterable([
-      [1, 2],
-      [3, 4],
-    ]),
-    tripId: 'trip-A',
-  );
+  Future<void> restart() async {
+    await worker.shutdown();
+    await session.shutdown();
+    await db.close();
+    db = AppDatabase(NativeDatabase(File('${directory.path}/device.sqlite')));
+    media = MediaStore(db, files, clock: () => now);
+    session = SessionController(auth, api, SessionCache(db), network);
+    await session.start();
+    worker = makeWorker();
+  }
+
+  Future<String> capture([String type = 'BOL', String mime = 'image/jpeg']) =>
+      media.capture(
+        session,
+        type,
+        mime,
+        Stream.fromIterable([
+          [1, 2],
+          [3, 4],
+        ]),
+        tripId: 'trip-A',
+      );
   Future<void> reply(HttpRequest r, Object body, [int status = 200]) async {
     r.response.statusCode = status;
     r.response.headers.contentType = ContentType.json;
@@ -132,7 +147,8 @@ class MediaHttpFixture {
         );
         if (r.headers.value('authorization') != null ||
             r.headers.contentLength != bytes.length ||
-            r.headers.contentType?.mimeType != 'image/jpeg') {
+            r.headers.contentType?.mimeType !=
+                documents[path.split('/').last]?['contentType']) {
           await reply(r, {}, 400);
           return;
         }
@@ -195,10 +211,11 @@ class MediaHttpFixture {
         }
         return;
       }
-      final body =
-          jsonDecode(await utf8.decoder.bind(r).join()) as Map<String, dynamic>;
+      final raw = await utf8.decoder.bind(r).join();
+      final body = jsonDecode(raw) as Map<String, dynamic>;
       final key = r.headers.value('idempotency-key');
-      posts.add((path: path, key: key, body: body));
+      posts.add((path: path, key: key, body: body, raw: raw));
+      if (failureStatuses.isNotEmpty) failNext = failureStatuses.removeAt(0);
       if (failNext != null) {
         final status = failNext!;
         failNext = null;
@@ -266,7 +283,9 @@ class MediaHttpFixture {
           socket.destroy();
           return;
         }
-        await reply(r, doc);
+        final override = finalizeResponseOverride;
+        finalizeResponseOverride = null;
+        await reply(r, override == null ? doc : {...doc, ...override});
         return;
       }
       final logical = jsonEncode(body);

@@ -41,7 +41,8 @@ class ApiClient {
   final DateTime Function() now;
   final _postNotBefore = <String, DateTime>{};
 
-  /// One submission only. The caller durably stores an immutable key/payload first.
+  /// One submission only. Replay-sensitive callers durably store an immutable
+  /// key/payload first. Null is reserved for non-replay-guaranteed document init/link.
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> body,

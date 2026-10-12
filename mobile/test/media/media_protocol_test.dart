@@ -377,4 +377,63 @@ void main() {
       expect(row.nextRetryAt, isNull);
     },
   );
+  test('second 401 pauses media and freshly validates session without replacing identity', () async {
+    final id = await f.capture(),
+        before = (await f.media.list(user, tenant)).single;
+    f.failureStatuses.addAll([401, 401]);
+    f.failCode = 'AUTHENTICATION_REQUIRED';
+    final states = <SessionState>[];
+    f.session.addListener(() => states.add(f.session.state));
+    await f.worker.sync();
+    final row = (await f.media.find(user, tenant, id))!;
+    expect(row.state, 'FAILED');
+    expect(row.finalizeKey, before.finalizeKey);
+    expect(f.puts, 0);
+    expect(states, contains(SessionState.invalid));
+    expect(
+      f.session.state,
+      SessionState.ready,
+    ); // Only after successful fresh /me + Driver/work reads.
+    expect(row.reviewRequired, isTrue);
+    final count = f.posts.length;
+    await f.worker.sync();
+    expect(f.posts.length, count);
+  });
+  for (final type in ['BOL', 'POD']) {
+    test('$type PDF uses exact MIME in actual direct PUT', () async {
+      final id = await f.capture(type, 'application/pdf');
+      await f.worker.sync();
+      final row = (await f.media.find(user, tenant, id))!;
+      expect(row.state, 'FINALIZED');
+      expect(row.contentType, 'application/pdf');
+      expect(f.puts, 1);
+    });
+  }
+  for (final override in [
+    {'sizeBytes': 4.0},
+    {'uploadedAt': '2026-10-12'},
+    {'uploadStatus': 'PENDING'},
+  ]) {
+    test(
+      'malformed final ACK $override remains uncertain and recovers without another PUT',
+      () async {
+        final id = await f.capture();
+        f.finalizeResponseOverride = override;
+        await f.worker.sync();
+        final row = (await f.media.find(user, tenant, id))!;
+        expect(row.state, 'FINALIZE_PENDING');
+        expect(row.finalizedAt, isNull);
+        expect(f.finalizeEffects, 1);
+        expect(f.puts, 1);
+        f.now = f.now.add(const Duration(minutes: 2));
+        await f.worker.sync();
+        final done = (await f.media.find(user, tenant, id))!;
+        expect(done.state, 'FINALIZED');
+        expect(done.finalizeKey, row.finalizeKey);
+        expect(done.serverDocumentId, row.serverDocumentId);
+        expect(f.puts, 1);
+        expect(f.finalizeEffects, 1);
+      },
+    );
+  }
 }

@@ -188,15 +188,23 @@ class MediaStore {
           ))
           .write(update) ==
       1;
-  Future<bool> claim(LocalMediaData row) => change(
-    row,
-    LocalMediaCompanion(
-      state: const Value('UPLOADING'),
-      attemptCount: Value(row.attemptCount + 1),
-      updatedAt: Value(now()),
-      nextRetryAt: const Value(null),
-    ),
-  );
+  Future<bool> claim(LocalMediaData row) {
+    if (row.state == 'FINALIZED' ||
+        row.reviewRequired ||
+        row.fileState != 'PRESENT' ||
+        (row.nextRetryAt != null && now().isBefore(row.nextRetryAt!))) {
+      return Future.value(false);
+    }
+    return change(
+      row,
+      LocalMediaCompanion(
+        state: const Value('UPLOADING'),
+        attemptCount: Value(row.attemptCount + 1),
+        updatedAt: Value(now()),
+        nextRetryAt: const Value(null),
+      ),
+    );
+  }
 
   /// Call only while owning ReplayWorker's entire HTTP/database lane.
   Future<void> recover(String user, String tenant) async {
@@ -314,7 +322,8 @@ class MediaStore {
     );
   }
 
-  /// Filesystem removal uses a durable tombstone. A crash never makes a missing
+  /// Future owning workflow releases this pin only after offline access is no
+  /// longer needed. Cleanup still independently requires every dependent ACK.
   Future<void> releaseOfflineUse(String user, String tenant, String id) async {
     await (db.update(db.localMedia)..where(
           (r) =>
