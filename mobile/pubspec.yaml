@@ -19,6 +19,7 @@ dependencies:
   firebase_auth: ^6.7.0
   mobile_scanner: 7.4.2
   http: ^1.6.0
+  crypto: ^3.0.7
   connectivity_plus: ^7.3.2
 
 dev_dependencies:

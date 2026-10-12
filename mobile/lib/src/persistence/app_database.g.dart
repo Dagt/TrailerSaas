@@ -3540,6 +3540,2119 @@ class LocalSyncIssuesCompanion extends UpdateCompanion<LocalSyncIssue> {
   }
 }
 
+class $LocalMediaTable extends LocalMedia
+    with TableInfo<$LocalMediaTable, LocalMediaData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalMediaTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _documentTypeMeta = const VerificationMeta(
+    'documentType',
+  );
+  @override
+  late final GeneratedColumn<String> documentType = GeneratedColumn<String>(
+    'document_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentTypeMeta = const VerificationMeta(
+    'contentType',
+  );
+  @override
+  late final GeneratedColumn<String> contentType = GeneratedColumn<String>(
+    'content_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileKeyMeta = const VerificationMeta(
+    'fileKey',
+  );
+  @override
+  late final GeneratedColumn<String> fileKey = GeneratedColumn<String>(
+    'file_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _checksumSha256Meta = const VerificationMeta(
+    'checksumSha256',
+  );
+  @override
+  late final GeneratedColumn<String> checksumSha256 = GeneratedColumn<String>(
+    'checksum_sha256',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serverDocumentIdMeta = const VerificationMeta(
+    'serverDocumentId',
+  );
+  @override
+  late final GeneratedColumn<String> serverDocumentId = GeneratedColumn<String>(
+    'server_document_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _finalizeKeyMeta = const VerificationMeta(
+    'finalizeKey',
+  );
+  @override
+  late final GeneratedColumn<String> finalizeKey = GeneratedColumn<String>(
+    'finalize_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _attemptHistoryJsonMeta =
+      const VerificationMeta('attemptHistoryJson');
+  @override
+  late final GeneratedColumn<String> attemptHistoryJson =
+      GeneratedColumn<String>(
+        'attempt_history_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
+  static const VerificationMeta _attemptCountMeta = const VerificationMeta(
+    'attemptCount',
+  );
+  @override
+  late final GeneratedColumn<int> attemptCount = GeneratedColumn<int>(
+    'attempt_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextRetryAtMeta = const VerificationMeta(
+    'nextRetryAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextRetryAt = GeneratedColumn<DateTime>(
+    'next_retry_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastHttpStatusMeta = const VerificationMeta(
+    'lastHttpStatus',
+  );
+  @override
+  late final GeneratedColumn<int> lastHttpStatus = GeneratedColumn<int>(
+    'last_http_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastErrorCodeMeta = const VerificationMeta(
+    'lastErrorCode',
+  );
+  @override
+  late final GeneratedColumn<String> lastErrorCode = GeneratedColumn<String>(
+    'last_error_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reviewRequiredMeta = const VerificationMeta(
+    'reviewRequired',
+  );
+  @override
+  late final GeneratedColumn<bool> reviewRequired = GeneratedColumn<bool>(
+    'review_required',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("review_required" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _tripIdMeta = const VerificationMeta('tripId');
+  @override
+  late final GeneratedColumn<String> tripId = GeneratedColumn<String>(
+    'trip_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _capturedAtMeta = const VerificationMeta(
+    'capturedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> capturedAt = GeneratedColumn<DateTime>(
+    'captured_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _finalizedAtMeta = const VerificationMeta(
+    'finalizedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> finalizedAt = GeneratedColumn<DateTime>(
+    'finalized_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fileStateMeta = const VerificationMeta(
+    'fileState',
+  );
+  @override
+  late final GeneratedColumn<String> fileState = GeneratedColumn<String>(
+    'file_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('PRESENT'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    tenantId,
+    documentType,
+    contentType,
+    fileKey,
+    sizeBytes,
+    checksumSha256,
+    state,
+    serverDocumentId,
+    finalizeKey,
+    attemptHistoryJson,
+    attemptCount,
+    nextRetryAt,
+    lastHttpStatus,
+    lastErrorCode,
+    reviewRequired,
+    tripId,
+    capturedAt,
+    updatedAt,
+    finalizedAt,
+    fileState,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_media';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalMediaData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('document_type')) {
+      context.handle(
+        _documentTypeMeta,
+        documentType.isAcceptableOrUnknown(
+          data['document_type']!,
+          _documentTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_documentTypeMeta);
+    }
+    if (data.containsKey('content_type')) {
+      context.handle(
+        _contentTypeMeta,
+        contentType.isAcceptableOrUnknown(
+          data['content_type']!,
+          _contentTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentTypeMeta);
+    }
+    if (data.containsKey('file_key')) {
+      context.handle(
+        _fileKeyMeta,
+        fileKey.isAcceptableOrUnknown(data['file_key']!, _fileKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileKeyMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('checksum_sha256')) {
+      context.handle(
+        _checksumSha256Meta,
+        checksumSha256.isAcceptableOrUnknown(
+          data['checksum_sha256']!,
+          _checksumSha256Meta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_checksumSha256Meta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stateMeta);
+    }
+    if (data.containsKey('server_document_id')) {
+      context.handle(
+        _serverDocumentIdMeta,
+        serverDocumentId.isAcceptableOrUnknown(
+          data['server_document_id']!,
+          _serverDocumentIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('finalize_key')) {
+      context.handle(
+        _finalizeKeyMeta,
+        finalizeKey.isAcceptableOrUnknown(
+          data['finalize_key']!,
+          _finalizeKeyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_finalizeKeyMeta);
+    }
+    if (data.containsKey('attempt_history_json')) {
+      context.handle(
+        _attemptHistoryJsonMeta,
+        attemptHistoryJson.isAcceptableOrUnknown(
+          data['attempt_history_json']!,
+          _attemptHistoryJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('attempt_count')) {
+      context.handle(
+        _attemptCountMeta,
+        attemptCount.isAcceptableOrUnknown(
+          data['attempt_count']!,
+          _attemptCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_retry_at')) {
+      context.handle(
+        _nextRetryAtMeta,
+        nextRetryAt.isAcceptableOrUnknown(
+          data['next_retry_at']!,
+          _nextRetryAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_http_status')) {
+      context.handle(
+        _lastHttpStatusMeta,
+        lastHttpStatus.isAcceptableOrUnknown(
+          data['last_http_status']!,
+          _lastHttpStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_error_code')) {
+      context.handle(
+        _lastErrorCodeMeta,
+        lastErrorCode.isAcceptableOrUnknown(
+          data['last_error_code']!,
+          _lastErrorCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('review_required')) {
+      context.handle(
+        _reviewRequiredMeta,
+        reviewRequired.isAcceptableOrUnknown(
+          data['review_required']!,
+          _reviewRequiredMeta,
+        ),
+      );
+    }
+    if (data.containsKey('trip_id')) {
+      context.handle(
+        _tripIdMeta,
+        tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta),
+      );
+    }
+    if (data.containsKey('captured_at')) {
+      context.handle(
+        _capturedAtMeta,
+        capturedAt.isAcceptableOrUnknown(data['captured_at']!, _capturedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_capturedAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('finalized_at')) {
+      context.handle(
+        _finalizedAtMeta,
+        finalizedAt.isAcceptableOrUnknown(
+          data['finalized_at']!,
+          _finalizedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('file_state')) {
+      context.handle(
+        _fileStateMeta,
+        fileState.isAcceptableOrUnknown(data['file_state']!, _fileStateMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalMediaData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalMediaData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      documentType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_type'],
+      )!,
+      contentType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_type'],
+      )!,
+      fileKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_key'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      checksumSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}checksum_sha256'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      serverDocumentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_document_id'],
+      ),
+      finalizeKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}finalize_key'],
+      )!,
+      attemptHistoryJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}attempt_history_json'],
+      )!,
+      attemptCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempt_count'],
+      )!,
+      nextRetryAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_retry_at'],
+      ),
+      lastHttpStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_http_status'],
+      ),
+      lastErrorCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error_code'],
+      ),
+      reviewRequired: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}review_required'],
+      )!,
+      tripId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trip_id'],
+      ),
+      capturedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}captured_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      finalizedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}finalized_at'],
+      ),
+      fileState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_state'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalMediaTable createAlias(String alias) {
+    return $LocalMediaTable(attachedDatabase, alias);
+  }
+}
+
+class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
+  final String id;
+  final String userId;
+  final String tenantId;
+  final String documentType;
+  final String contentType;
+  final String fileKey;
+  final int sizeBytes;
+  final String checksumSha256;
+  final String state;
+  final String? serverDocumentId;
+  final String finalizeKey;
+  final String attemptHistoryJson;
+  final int attemptCount;
+  final DateTime? nextRetryAt;
+  final int? lastHttpStatus;
+  final String? lastErrorCode;
+  final bool reviewRequired;
+  final String? tripId;
+  final DateTime capturedAt;
+  final DateTime updatedAt;
+  final DateTime? finalizedAt;
+  final String fileState;
+  const LocalMediaData({
+    required this.id,
+    required this.userId,
+    required this.tenantId,
+    required this.documentType,
+    required this.contentType,
+    required this.fileKey,
+    required this.sizeBytes,
+    required this.checksumSha256,
+    required this.state,
+    this.serverDocumentId,
+    required this.finalizeKey,
+    required this.attemptHistoryJson,
+    required this.attemptCount,
+    this.nextRetryAt,
+    this.lastHttpStatus,
+    this.lastErrorCode,
+    required this.reviewRequired,
+    this.tripId,
+    required this.capturedAt,
+    required this.updatedAt,
+    this.finalizedAt,
+    required this.fileState,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['document_type'] = Variable<String>(documentType);
+    map['content_type'] = Variable<String>(contentType);
+    map['file_key'] = Variable<String>(fileKey);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    map['checksum_sha256'] = Variable<String>(checksumSha256);
+    map['state'] = Variable<String>(state);
+    if (!nullToAbsent || serverDocumentId != null) {
+      map['server_document_id'] = Variable<String>(serverDocumentId);
+    }
+    map['finalize_key'] = Variable<String>(finalizeKey);
+    map['attempt_history_json'] = Variable<String>(attemptHistoryJson);
+    map['attempt_count'] = Variable<int>(attemptCount);
+    if (!nullToAbsent || nextRetryAt != null) {
+      map['next_retry_at'] = Variable<DateTime>(nextRetryAt);
+    }
+    if (!nullToAbsent || lastHttpStatus != null) {
+      map['last_http_status'] = Variable<int>(lastHttpStatus);
+    }
+    if (!nullToAbsent || lastErrorCode != null) {
+      map['last_error_code'] = Variable<String>(lastErrorCode);
+    }
+    map['review_required'] = Variable<bool>(reviewRequired);
+    if (!nullToAbsent || tripId != null) {
+      map['trip_id'] = Variable<String>(tripId);
+    }
+    map['captured_at'] = Variable<DateTime>(capturedAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || finalizedAt != null) {
+      map['finalized_at'] = Variable<DateTime>(finalizedAt);
+    }
+    map['file_state'] = Variable<String>(fileState);
+    return map;
+  }
+
+  LocalMediaCompanion toCompanion(bool nullToAbsent) {
+    return LocalMediaCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      documentType: Value(documentType),
+      contentType: Value(contentType),
+      fileKey: Value(fileKey),
+      sizeBytes: Value(sizeBytes),
+      checksumSha256: Value(checksumSha256),
+      state: Value(state),
+      serverDocumentId: serverDocumentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverDocumentId),
+      finalizeKey: Value(finalizeKey),
+      attemptHistoryJson: Value(attemptHistoryJson),
+      attemptCount: Value(attemptCount),
+      nextRetryAt: nextRetryAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextRetryAt),
+      lastHttpStatus: lastHttpStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastHttpStatus),
+      lastErrorCode: lastErrorCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastErrorCode),
+      reviewRequired: Value(reviewRequired),
+      tripId: tripId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tripId),
+      capturedAt: Value(capturedAt),
+      updatedAt: Value(updatedAt),
+      finalizedAt: finalizedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(finalizedAt),
+      fileState: Value(fileState),
+    );
+  }
+
+  factory LocalMediaData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalMediaData(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      documentType: serializer.fromJson<String>(json['documentType']),
+      contentType: serializer.fromJson<String>(json['contentType']),
+      fileKey: serializer.fromJson<String>(json['fileKey']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      checksumSha256: serializer.fromJson<String>(json['checksumSha256']),
+      state: serializer.fromJson<String>(json['state']),
+      serverDocumentId: serializer.fromJson<String?>(json['serverDocumentId']),
+      finalizeKey: serializer.fromJson<String>(json['finalizeKey']),
+      attemptHistoryJson: serializer.fromJson<String>(
+        json['attemptHistoryJson'],
+      ),
+      attemptCount: serializer.fromJson<int>(json['attemptCount']),
+      nextRetryAt: serializer.fromJson<DateTime?>(json['nextRetryAt']),
+      lastHttpStatus: serializer.fromJson<int?>(json['lastHttpStatus']),
+      lastErrorCode: serializer.fromJson<String?>(json['lastErrorCode']),
+      reviewRequired: serializer.fromJson<bool>(json['reviewRequired']),
+      tripId: serializer.fromJson<String?>(json['tripId']),
+      capturedAt: serializer.fromJson<DateTime>(json['capturedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      finalizedAt: serializer.fromJson<DateTime?>(json['finalizedAt']),
+      fileState: serializer.fromJson<String>(json['fileState']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'documentType': serializer.toJson<String>(documentType),
+      'contentType': serializer.toJson<String>(contentType),
+      'fileKey': serializer.toJson<String>(fileKey),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'checksumSha256': serializer.toJson<String>(checksumSha256),
+      'state': serializer.toJson<String>(state),
+      'serverDocumentId': serializer.toJson<String?>(serverDocumentId),
+      'finalizeKey': serializer.toJson<String>(finalizeKey),
+      'attemptHistoryJson': serializer.toJson<String>(attemptHistoryJson),
+      'attemptCount': serializer.toJson<int>(attemptCount),
+      'nextRetryAt': serializer.toJson<DateTime?>(nextRetryAt),
+      'lastHttpStatus': serializer.toJson<int?>(lastHttpStatus),
+      'lastErrorCode': serializer.toJson<String?>(lastErrorCode),
+      'reviewRequired': serializer.toJson<bool>(reviewRequired),
+      'tripId': serializer.toJson<String?>(tripId),
+      'capturedAt': serializer.toJson<DateTime>(capturedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'finalizedAt': serializer.toJson<DateTime?>(finalizedAt),
+      'fileState': serializer.toJson<String>(fileState),
+    };
+  }
+
+  LocalMediaData copyWith({
+    String? id,
+    String? userId,
+    String? tenantId,
+    String? documentType,
+    String? contentType,
+    String? fileKey,
+    int? sizeBytes,
+    String? checksumSha256,
+    String? state,
+    Value<String?> serverDocumentId = const Value.absent(),
+    String? finalizeKey,
+    String? attemptHistoryJson,
+    int? attemptCount,
+    Value<DateTime?> nextRetryAt = const Value.absent(),
+    Value<int?> lastHttpStatus = const Value.absent(),
+    Value<String?> lastErrorCode = const Value.absent(),
+    bool? reviewRequired,
+    Value<String?> tripId = const Value.absent(),
+    DateTime? capturedAt,
+    DateTime? updatedAt,
+    Value<DateTime?> finalizedAt = const Value.absent(),
+    String? fileState,
+  }) => LocalMediaData(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    documentType: documentType ?? this.documentType,
+    contentType: contentType ?? this.contentType,
+    fileKey: fileKey ?? this.fileKey,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    checksumSha256: checksumSha256 ?? this.checksumSha256,
+    state: state ?? this.state,
+    serverDocumentId: serverDocumentId.present
+        ? serverDocumentId.value
+        : this.serverDocumentId,
+    finalizeKey: finalizeKey ?? this.finalizeKey,
+    attemptHistoryJson: attemptHistoryJson ?? this.attemptHistoryJson,
+    attemptCount: attemptCount ?? this.attemptCount,
+    nextRetryAt: nextRetryAt.present ? nextRetryAt.value : this.nextRetryAt,
+    lastHttpStatus: lastHttpStatus.present
+        ? lastHttpStatus.value
+        : this.lastHttpStatus,
+    lastErrorCode: lastErrorCode.present
+        ? lastErrorCode.value
+        : this.lastErrorCode,
+    reviewRequired: reviewRequired ?? this.reviewRequired,
+    tripId: tripId.present ? tripId.value : this.tripId,
+    capturedAt: capturedAt ?? this.capturedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    finalizedAt: finalizedAt.present ? finalizedAt.value : this.finalizedAt,
+    fileState: fileState ?? this.fileState,
+  );
+  LocalMediaData copyWithCompanion(LocalMediaCompanion data) {
+    return LocalMediaData(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      documentType: data.documentType.present
+          ? data.documentType.value
+          : this.documentType,
+      contentType: data.contentType.present
+          ? data.contentType.value
+          : this.contentType,
+      fileKey: data.fileKey.present ? data.fileKey.value : this.fileKey,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      checksumSha256: data.checksumSha256.present
+          ? data.checksumSha256.value
+          : this.checksumSha256,
+      state: data.state.present ? data.state.value : this.state,
+      serverDocumentId: data.serverDocumentId.present
+          ? data.serverDocumentId.value
+          : this.serverDocumentId,
+      finalizeKey: data.finalizeKey.present
+          ? data.finalizeKey.value
+          : this.finalizeKey,
+      attemptHistoryJson: data.attemptHistoryJson.present
+          ? data.attemptHistoryJson.value
+          : this.attemptHistoryJson,
+      attemptCount: data.attemptCount.present
+          ? data.attemptCount.value
+          : this.attemptCount,
+      nextRetryAt: data.nextRetryAt.present
+          ? data.nextRetryAt.value
+          : this.nextRetryAt,
+      lastHttpStatus: data.lastHttpStatus.present
+          ? data.lastHttpStatus.value
+          : this.lastHttpStatus,
+      lastErrorCode: data.lastErrorCode.present
+          ? data.lastErrorCode.value
+          : this.lastErrorCode,
+      reviewRequired: data.reviewRequired.present
+          ? data.reviewRequired.value
+          : this.reviewRequired,
+      tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      capturedAt: data.capturedAt.present
+          ? data.capturedAt.value
+          : this.capturedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      finalizedAt: data.finalizedAt.present
+          ? data.finalizedAt.value
+          : this.finalizedAt,
+      fileState: data.fileState.present ? data.fileState.value : this.fileState,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalMediaData(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('documentType: $documentType, ')
+          ..write('contentType: $contentType, ')
+          ..write('fileKey: $fileKey, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('checksumSha256: $checksumSha256, ')
+          ..write('state: $state, ')
+          ..write('serverDocumentId: $serverDocumentId, ')
+          ..write('finalizeKey: $finalizeKey, ')
+          ..write('attemptHistoryJson: $attemptHistoryJson, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('nextRetryAt: $nextRetryAt, ')
+          ..write('lastHttpStatus: $lastHttpStatus, ')
+          ..write('lastErrorCode: $lastErrorCode, ')
+          ..write('reviewRequired: $reviewRequired, ')
+          ..write('tripId: $tripId, ')
+          ..write('capturedAt: $capturedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('finalizedAt: $finalizedAt, ')
+          ..write('fileState: $fileState')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    userId,
+    tenantId,
+    documentType,
+    contentType,
+    fileKey,
+    sizeBytes,
+    checksumSha256,
+    state,
+    serverDocumentId,
+    finalizeKey,
+    attemptHistoryJson,
+    attemptCount,
+    nextRetryAt,
+    lastHttpStatus,
+    lastErrorCode,
+    reviewRequired,
+    tripId,
+    capturedAt,
+    updatedAt,
+    finalizedAt,
+    fileState,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalMediaData &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.documentType == this.documentType &&
+          other.contentType == this.contentType &&
+          other.fileKey == this.fileKey &&
+          other.sizeBytes == this.sizeBytes &&
+          other.checksumSha256 == this.checksumSha256 &&
+          other.state == this.state &&
+          other.serverDocumentId == this.serverDocumentId &&
+          other.finalizeKey == this.finalizeKey &&
+          other.attemptHistoryJson == this.attemptHistoryJson &&
+          other.attemptCount == this.attemptCount &&
+          other.nextRetryAt == this.nextRetryAt &&
+          other.lastHttpStatus == this.lastHttpStatus &&
+          other.lastErrorCode == this.lastErrorCode &&
+          other.reviewRequired == this.reviewRequired &&
+          other.tripId == this.tripId &&
+          other.capturedAt == this.capturedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.finalizedAt == this.finalizedAt &&
+          other.fileState == this.fileState);
+}
+
+class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> documentType;
+  final Value<String> contentType;
+  final Value<String> fileKey;
+  final Value<int> sizeBytes;
+  final Value<String> checksumSha256;
+  final Value<String> state;
+  final Value<String?> serverDocumentId;
+  final Value<String> finalizeKey;
+  final Value<String> attemptHistoryJson;
+  final Value<int> attemptCount;
+  final Value<DateTime?> nextRetryAt;
+  final Value<int?> lastHttpStatus;
+  final Value<String?> lastErrorCode;
+  final Value<bool> reviewRequired;
+  final Value<String?> tripId;
+  final Value<DateTime> capturedAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> finalizedAt;
+  final Value<String> fileState;
+  final Value<int> rowid;
+  const LocalMediaCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.documentType = const Value.absent(),
+    this.contentType = const Value.absent(),
+    this.fileKey = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.checksumSha256 = const Value.absent(),
+    this.state = const Value.absent(),
+    this.serverDocumentId = const Value.absent(),
+    this.finalizeKey = const Value.absent(),
+    this.attemptHistoryJson = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    this.nextRetryAt = const Value.absent(),
+    this.lastHttpStatus = const Value.absent(),
+    this.lastErrorCode = const Value.absent(),
+    this.reviewRequired = const Value.absent(),
+    this.tripId = const Value.absent(),
+    this.capturedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.finalizedAt = const Value.absent(),
+    this.fileState = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalMediaCompanion.insert({
+    required String id,
+    required String userId,
+    required String tenantId,
+    required String documentType,
+    required String contentType,
+    required String fileKey,
+    required int sizeBytes,
+    required String checksumSha256,
+    required String state,
+    this.serverDocumentId = const Value.absent(),
+    required String finalizeKey,
+    this.attemptHistoryJson = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    this.nextRetryAt = const Value.absent(),
+    this.lastHttpStatus = const Value.absent(),
+    this.lastErrorCode = const Value.absent(),
+    this.reviewRequired = const Value.absent(),
+    this.tripId = const Value.absent(),
+    required DateTime capturedAt,
+    required DateTime updatedAt,
+    this.finalizedAt = const Value.absent(),
+    this.fileState = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       documentType = Value(documentType),
+       contentType = Value(contentType),
+       fileKey = Value(fileKey),
+       sizeBytes = Value(sizeBytes),
+       checksumSha256 = Value(checksumSha256),
+       state = Value(state),
+       finalizeKey = Value(finalizeKey),
+       capturedAt = Value(capturedAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<LocalMediaData> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? documentType,
+    Expression<String>? contentType,
+    Expression<String>? fileKey,
+    Expression<int>? sizeBytes,
+    Expression<String>? checksumSha256,
+    Expression<String>? state,
+    Expression<String>? serverDocumentId,
+    Expression<String>? finalizeKey,
+    Expression<String>? attemptHistoryJson,
+    Expression<int>? attemptCount,
+    Expression<DateTime>? nextRetryAt,
+    Expression<int>? lastHttpStatus,
+    Expression<String>? lastErrorCode,
+    Expression<bool>? reviewRequired,
+    Expression<String>? tripId,
+    Expression<DateTime>? capturedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? finalizedAt,
+    Expression<String>? fileState,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (documentType != null) 'document_type': documentType,
+      if (contentType != null) 'content_type': contentType,
+      if (fileKey != null) 'file_key': fileKey,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (checksumSha256 != null) 'checksum_sha256': checksumSha256,
+      if (state != null) 'state': state,
+      if (serverDocumentId != null) 'server_document_id': serverDocumentId,
+      if (finalizeKey != null) 'finalize_key': finalizeKey,
+      if (attemptHistoryJson != null)
+        'attempt_history_json': attemptHistoryJson,
+      if (attemptCount != null) 'attempt_count': attemptCount,
+      if (nextRetryAt != null) 'next_retry_at': nextRetryAt,
+      if (lastHttpStatus != null) 'last_http_status': lastHttpStatus,
+      if (lastErrorCode != null) 'last_error_code': lastErrorCode,
+      if (reviewRequired != null) 'review_required': reviewRequired,
+      if (tripId != null) 'trip_id': tripId,
+      if (capturedAt != null) 'captured_at': capturedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (finalizedAt != null) 'finalized_at': finalizedAt,
+      if (fileState != null) 'file_state': fileState,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalMediaCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? documentType,
+    Value<String>? contentType,
+    Value<String>? fileKey,
+    Value<int>? sizeBytes,
+    Value<String>? checksumSha256,
+    Value<String>? state,
+    Value<String?>? serverDocumentId,
+    Value<String>? finalizeKey,
+    Value<String>? attemptHistoryJson,
+    Value<int>? attemptCount,
+    Value<DateTime?>? nextRetryAt,
+    Value<int?>? lastHttpStatus,
+    Value<String?>? lastErrorCode,
+    Value<bool>? reviewRequired,
+    Value<String?>? tripId,
+    Value<DateTime>? capturedAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? finalizedAt,
+    Value<String>? fileState,
+    Value<int>? rowid,
+  }) {
+    return LocalMediaCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      documentType: documentType ?? this.documentType,
+      contentType: contentType ?? this.contentType,
+      fileKey: fileKey ?? this.fileKey,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      checksumSha256: checksumSha256 ?? this.checksumSha256,
+      state: state ?? this.state,
+      serverDocumentId: serverDocumentId ?? this.serverDocumentId,
+      finalizeKey: finalizeKey ?? this.finalizeKey,
+      attemptHistoryJson: attemptHistoryJson ?? this.attemptHistoryJson,
+      attemptCount: attemptCount ?? this.attemptCount,
+      nextRetryAt: nextRetryAt ?? this.nextRetryAt,
+      lastHttpStatus: lastHttpStatus ?? this.lastHttpStatus,
+      lastErrorCode: lastErrorCode ?? this.lastErrorCode,
+      reviewRequired: reviewRequired ?? this.reviewRequired,
+      tripId: tripId ?? this.tripId,
+      capturedAt: capturedAt ?? this.capturedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      finalizedAt: finalizedAt ?? this.finalizedAt,
+      fileState: fileState ?? this.fileState,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (documentType.present) {
+      map['document_type'] = Variable<String>(documentType.value);
+    }
+    if (contentType.present) {
+      map['content_type'] = Variable<String>(contentType.value);
+    }
+    if (fileKey.present) {
+      map['file_key'] = Variable<String>(fileKey.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (checksumSha256.present) {
+      map['checksum_sha256'] = Variable<String>(checksumSha256.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (serverDocumentId.present) {
+      map['server_document_id'] = Variable<String>(serverDocumentId.value);
+    }
+    if (finalizeKey.present) {
+      map['finalize_key'] = Variable<String>(finalizeKey.value);
+    }
+    if (attemptHistoryJson.present) {
+      map['attempt_history_json'] = Variable<String>(attemptHistoryJson.value);
+    }
+    if (attemptCount.present) {
+      map['attempt_count'] = Variable<int>(attemptCount.value);
+    }
+    if (nextRetryAt.present) {
+      map['next_retry_at'] = Variable<DateTime>(nextRetryAt.value);
+    }
+    if (lastHttpStatus.present) {
+      map['last_http_status'] = Variable<int>(lastHttpStatus.value);
+    }
+    if (lastErrorCode.present) {
+      map['last_error_code'] = Variable<String>(lastErrorCode.value);
+    }
+    if (reviewRequired.present) {
+      map['review_required'] = Variable<bool>(reviewRequired.value);
+    }
+    if (tripId.present) {
+      map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (capturedAt.present) {
+      map['captured_at'] = Variable<DateTime>(capturedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (finalizedAt.present) {
+      map['finalized_at'] = Variable<DateTime>(finalizedAt.value);
+    }
+    if (fileState.present) {
+      map['file_state'] = Variable<String>(fileState.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalMediaCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('documentType: $documentType, ')
+          ..write('contentType: $contentType, ')
+          ..write('fileKey: $fileKey, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('checksumSha256: $checksumSha256, ')
+          ..write('state: $state, ')
+          ..write('serverDocumentId: $serverDocumentId, ')
+          ..write('finalizeKey: $finalizeKey, ')
+          ..write('attemptHistoryJson: $attemptHistoryJson, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('nextRetryAt: $nextRetryAt, ')
+          ..write('lastHttpStatus: $lastHttpStatus, ')
+          ..write('lastErrorCode: $lastErrorCode, ')
+          ..write('reviewRequired: $reviewRequired, ')
+          ..write('tripId: $tripId, ')
+          ..write('capturedAt: $capturedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('finalizedAt: $finalizedAt, ')
+          ..write('fileState: $fileState, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CommandMediaDependenciesTable extends CommandMediaDependencies
+    with TableInfo<$CommandMediaDependenciesTable, CommandMediaDependency> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CommandMediaDependenciesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _clientOperationIdMeta = const VerificationMeta(
+    'clientOperationId',
+  );
+  @override
+  late final GeneratedColumn<String> clientOperationId =
+      GeneratedColumn<String>(
+        'client_operation_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaIdMeta = const VerificationMeta(
+    'mediaId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaId = GeneratedColumn<String>(
+    'media_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldPathMeta = const VerificationMeta(
+    'fieldPath',
+  );
+  @override
+  late final GeneratedColumn<String> fieldPath = GeneratedColumn<String>(
+    'field_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    clientOperationId,
+    userId,
+    tenantId,
+    mediaId,
+    fieldPath,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'command_media_dependencies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CommandMediaDependency> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('client_operation_id')) {
+      context.handle(
+        _clientOperationIdMeta,
+        clientOperationId.isAcceptableOrUnknown(
+          data['client_operation_id']!,
+          _clientOperationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clientOperationIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('media_id')) {
+      context.handle(
+        _mediaIdMeta,
+        mediaId.isAcceptableOrUnknown(data['media_id']!, _mediaIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mediaIdMeta);
+    }
+    if (data.containsKey('field_path')) {
+      context.handle(
+        _fieldPathMeta,
+        fieldPath.isAcceptableOrUnknown(data['field_path']!, _fieldPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldPathMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {clientOperationId, fieldPath};
+  @override
+  CommandMediaDependency map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CommandMediaDependency(
+      clientOperationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_operation_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      mediaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_id'],
+      )!,
+      fieldPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_path'],
+      )!,
+    );
+  }
+
+  @override
+  $CommandMediaDependenciesTable createAlias(String alias) {
+    return $CommandMediaDependenciesTable(attachedDatabase, alias);
+  }
+}
+
+class CommandMediaDependency extends DataClass
+    implements Insertable<CommandMediaDependency> {
+  final String clientOperationId;
+  final String userId;
+  final String tenantId;
+  final String mediaId;
+  final String fieldPath;
+  const CommandMediaDependency({
+    required this.clientOperationId,
+    required this.userId,
+    required this.tenantId,
+    required this.mediaId,
+    required this.fieldPath,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['client_operation_id'] = Variable<String>(clientOperationId);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['media_id'] = Variable<String>(mediaId);
+    map['field_path'] = Variable<String>(fieldPath);
+    return map;
+  }
+
+  CommandMediaDependenciesCompanion toCompanion(bool nullToAbsent) {
+    return CommandMediaDependenciesCompanion(
+      clientOperationId: Value(clientOperationId),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      mediaId: Value(mediaId),
+      fieldPath: Value(fieldPath),
+    );
+  }
+
+  factory CommandMediaDependency.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CommandMediaDependency(
+      clientOperationId: serializer.fromJson<String>(json['clientOperationId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      mediaId: serializer.fromJson<String>(json['mediaId']),
+      fieldPath: serializer.fromJson<String>(json['fieldPath']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'clientOperationId': serializer.toJson<String>(clientOperationId),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'mediaId': serializer.toJson<String>(mediaId),
+      'fieldPath': serializer.toJson<String>(fieldPath),
+    };
+  }
+
+  CommandMediaDependency copyWith({
+    String? clientOperationId,
+    String? userId,
+    String? tenantId,
+    String? mediaId,
+    String? fieldPath,
+  }) => CommandMediaDependency(
+    clientOperationId: clientOperationId ?? this.clientOperationId,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    mediaId: mediaId ?? this.mediaId,
+    fieldPath: fieldPath ?? this.fieldPath,
+  );
+  CommandMediaDependency copyWithCompanion(
+    CommandMediaDependenciesCompanion data,
+  ) {
+    return CommandMediaDependency(
+      clientOperationId: data.clientOperationId.present
+          ? data.clientOperationId.value
+          : this.clientOperationId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      mediaId: data.mediaId.present ? data.mediaId.value : this.mediaId,
+      fieldPath: data.fieldPath.present ? data.fieldPath.value : this.fieldPath,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommandMediaDependency(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('fieldPath: $fieldPath')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(clientOperationId, userId, tenantId, mediaId, fieldPath);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CommandMediaDependency &&
+          other.clientOperationId == this.clientOperationId &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.mediaId == this.mediaId &&
+          other.fieldPath == this.fieldPath);
+}
+
+class CommandMediaDependenciesCompanion
+    extends UpdateCompanion<CommandMediaDependency> {
+  final Value<String> clientOperationId;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> mediaId;
+  final Value<String> fieldPath;
+  final Value<int> rowid;
+  const CommandMediaDependenciesCompanion({
+    this.clientOperationId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.mediaId = const Value.absent(),
+    this.fieldPath = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CommandMediaDependenciesCompanion.insert({
+    required String clientOperationId,
+    required String userId,
+    required String tenantId,
+    required String mediaId,
+    required String fieldPath,
+    this.rowid = const Value.absent(),
+  }) : clientOperationId = Value(clientOperationId),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       mediaId = Value(mediaId),
+       fieldPath = Value(fieldPath);
+  static Insertable<CommandMediaDependency> custom({
+    Expression<String>? clientOperationId,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? mediaId,
+    Expression<String>? fieldPath,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (clientOperationId != null) 'client_operation_id': clientOperationId,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (mediaId != null) 'media_id': mediaId,
+      if (fieldPath != null) 'field_path': fieldPath,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CommandMediaDependenciesCompanion copyWith({
+    Value<String>? clientOperationId,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? mediaId,
+    Value<String>? fieldPath,
+    Value<int>? rowid,
+  }) {
+    return CommandMediaDependenciesCompanion(
+      clientOperationId: clientOperationId ?? this.clientOperationId,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      mediaId: mediaId ?? this.mediaId,
+      fieldPath: fieldPath ?? this.fieldPath,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (clientOperationId.present) {
+      map['client_operation_id'] = Variable<String>(clientOperationId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (mediaId.present) {
+      map['media_id'] = Variable<String>(mediaId.value);
+    }
+    if (fieldPath.present) {
+      map['field_path'] = Variable<String>(fieldPath.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommandMediaDependenciesCompanion(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('fieldPath: $fieldPath, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MaterializedRequestsTable extends MaterializedRequests
+    with TableInfo<$MaterializedRequestsTable, MaterializedRequest> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MaterializedRequestsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _clientOperationIdMeta = const VerificationMeta(
+    'clientOperationId',
+  );
+  @override
+  late final GeneratedColumn<String> clientOperationId =
+      GeneratedColumn<String>(
+        'client_operation_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endpointPathMeta = const VerificationMeta(
+    'endpointPath',
+  );
+  @override
+  late final GeneratedColumn<String> endpointPath = GeneratedColumn<String>(
+    'endpoint_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _httpMethodMeta = const VerificationMeta(
+    'httpMethod',
+  );
+  @override
+  late final GeneratedColumn<String> httpMethod = GeneratedColumn<String>(
+    'http_method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
+    'payloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+    'payload_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    clientOperationId,
+    userId,
+    tenantId,
+    endpointPath,
+    httpMethod,
+    payloadJson,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'materialized_requests';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MaterializedRequest> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('client_operation_id')) {
+      context.handle(
+        _clientOperationIdMeta,
+        clientOperationId.isAcceptableOrUnknown(
+          data['client_operation_id']!,
+          _clientOperationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_clientOperationIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('endpoint_path')) {
+      context.handle(
+        _endpointPathMeta,
+        endpointPath.isAcceptableOrUnknown(
+          data['endpoint_path']!,
+          _endpointPathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_endpointPathMeta);
+    }
+    if (data.containsKey('http_method')) {
+      context.handle(
+        _httpMethodMeta,
+        httpMethod.isAcceptableOrUnknown(data['http_method']!, _httpMethodMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_httpMethodMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+        _payloadJsonMeta,
+        payloadJson.isAcceptableOrUnknown(
+          data['payload_json']!,
+          _payloadJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {clientOperationId};
+  @override
+  MaterializedRequest map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MaterializedRequest(
+      clientOperationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_operation_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      endpointPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}endpoint_path'],
+      )!,
+      httpMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}http_method'],
+      )!,
+      payloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_json'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MaterializedRequestsTable createAlias(String alias) {
+    return $MaterializedRequestsTable(attachedDatabase, alias);
+  }
+}
+
+class MaterializedRequest extends DataClass
+    implements Insertable<MaterializedRequest> {
+  final String clientOperationId;
+  final String userId;
+  final String tenantId;
+  final String endpointPath;
+  final String httpMethod;
+  final String payloadJson;
+  final DateTime createdAt;
+  const MaterializedRequest({
+    required this.clientOperationId,
+    required this.userId,
+    required this.tenantId,
+    required this.endpointPath,
+    required this.httpMethod,
+    required this.payloadJson,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['client_operation_id'] = Variable<String>(clientOperationId);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['endpoint_path'] = Variable<String>(endpointPath);
+    map['http_method'] = Variable<String>(httpMethod);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  MaterializedRequestsCompanion toCompanion(bool nullToAbsent) {
+    return MaterializedRequestsCompanion(
+      clientOperationId: Value(clientOperationId),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      endpointPath: Value(endpointPath),
+      httpMethod: Value(httpMethod),
+      payloadJson: Value(payloadJson),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory MaterializedRequest.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MaterializedRequest(
+      clientOperationId: serializer.fromJson<String>(json['clientOperationId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      endpointPath: serializer.fromJson<String>(json['endpointPath']),
+      httpMethod: serializer.fromJson<String>(json['httpMethod']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'clientOperationId': serializer.toJson<String>(clientOperationId),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'endpointPath': serializer.toJson<String>(endpointPath),
+      'httpMethod': serializer.toJson<String>(httpMethod),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  MaterializedRequest copyWith({
+    String? clientOperationId,
+    String? userId,
+    String? tenantId,
+    String? endpointPath,
+    String? httpMethod,
+    String? payloadJson,
+    DateTime? createdAt,
+  }) => MaterializedRequest(
+    clientOperationId: clientOperationId ?? this.clientOperationId,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    endpointPath: endpointPath ?? this.endpointPath,
+    httpMethod: httpMethod ?? this.httpMethod,
+    payloadJson: payloadJson ?? this.payloadJson,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  MaterializedRequest copyWithCompanion(MaterializedRequestsCompanion data) {
+    return MaterializedRequest(
+      clientOperationId: data.clientOperationId.present
+          ? data.clientOperationId.value
+          : this.clientOperationId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      endpointPath: data.endpointPath.present
+          ? data.endpointPath.value
+          : this.endpointPath,
+      httpMethod: data.httpMethod.present
+          ? data.httpMethod.value
+          : this.httpMethod,
+      payloadJson: data.payloadJson.present
+          ? data.payloadJson.value
+          : this.payloadJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MaterializedRequest(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('endpointPath: $endpointPath, ')
+          ..write('httpMethod: $httpMethod, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    clientOperationId,
+    userId,
+    tenantId,
+    endpointPath,
+    httpMethod,
+    payloadJson,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MaterializedRequest &&
+          other.clientOperationId == this.clientOperationId &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.endpointPath == this.endpointPath &&
+          other.httpMethod == this.httpMethod &&
+          other.payloadJson == this.payloadJson &&
+          other.createdAt == this.createdAt);
+}
+
+class MaterializedRequestsCompanion
+    extends UpdateCompanion<MaterializedRequest> {
+  final Value<String> clientOperationId;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> endpointPath;
+  final Value<String> httpMethod;
+  final Value<String> payloadJson;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const MaterializedRequestsCompanion({
+    this.clientOperationId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.endpointPath = const Value.absent(),
+    this.httpMethod = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MaterializedRequestsCompanion.insert({
+    required String clientOperationId,
+    required String userId,
+    required String tenantId,
+    required String endpointPath,
+    required String httpMethod,
+    required String payloadJson,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : clientOperationId = Value(clientOperationId),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       endpointPath = Value(endpointPath),
+       httpMethod = Value(httpMethod),
+       payloadJson = Value(payloadJson),
+       createdAt = Value(createdAt);
+  static Insertable<MaterializedRequest> custom({
+    Expression<String>? clientOperationId,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? endpointPath,
+    Expression<String>? httpMethod,
+    Expression<String>? payloadJson,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (clientOperationId != null) 'client_operation_id': clientOperationId,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (endpointPath != null) 'endpoint_path': endpointPath,
+      if (httpMethod != null) 'http_method': httpMethod,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MaterializedRequestsCompanion copyWith({
+    Value<String>? clientOperationId,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? endpointPath,
+    Value<String>? httpMethod,
+    Value<String>? payloadJson,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return MaterializedRequestsCompanion(
+      clientOperationId: clientOperationId ?? this.clientOperationId,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      endpointPath: endpointPath ?? this.endpointPath,
+      httpMethod: httpMethod ?? this.httpMethod,
+      payloadJson: payloadJson ?? this.payloadJson,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (clientOperationId.present) {
+      map['client_operation_id'] = Variable<String>(clientOperationId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (endpointPath.present) {
+      map['endpoint_path'] = Variable<String>(endpointPath.value);
+    }
+    if (httpMethod.present) {
+      map['http_method'] = Variable<String>(httpMethod.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MaterializedRequestsCompanion(')
+          ..write('clientOperationId: $clientOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('endpointPath: $endpointPath, ')
+          ..write('httpMethod: $httpMethod, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $LocalSessionContextsTable localSessionContexts =
@@ -3551,6 +5664,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LocalSyncIssuesTable localSyncIssues = $LocalSyncIssuesTable(
     this,
   );
+  late final $LocalMediaTable localMedia = $LocalMediaTable(this);
+  late final $CommandMediaDependenciesTable commandMediaDependencies =
+      $CommandMediaDependenciesTable(this);
+  late final $MaterializedRequestsTable materializedRequests =
+      $MaterializedRequestsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3562,5 +5680,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cachedTrailers,
     localCommands,
     localSyncIssues,
+    localMedia,
+    commandMediaDependencies,
+    materializedRequests,
   ];
 }
