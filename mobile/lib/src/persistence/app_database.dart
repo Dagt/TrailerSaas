@@ -300,59 +300,74 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) async {
-      await migrator.createAll();
-      await _queueIndexesAndImmutability();
-      await _mediaIndexesAndImmutability();
-      await _shiftIndexesAndImmutability();
+      await transaction(() async {
+        await migrator.createAll();
+        await _queueIndexesAndImmutability();
+        await _mediaIndexesAndImmutability();
+        await _shiftIndexesAndImmutability();
+        await customStatement('PRAGMA user_version=5');
+      });
     },
     onUpgrade: (migrator, from, to) async {
       // v1 was the empty scaffold. Its deployed schema remains an explicit upgrade source.
       if (from < 1 || from > 4 || to != 5) {
         throw StateError('No migration from schema $from to $to is defined.');
       }
-      if (from == 1) {
-        await migrator.createTable(localSessionContexts);
-        await migrator.createTable(cachedTrips);
-        await migrator.createTable(cachedStops);
-        await migrator.createTable(cachedTrailers);
+      // Whole upgrade and version marker commit together. TableMigration alone
+      // commits its rebuild, which would leave a non-recoverable half-v5 on crash.
+      await customStatement('PRAGMA foreign_keys=OFF');
+      try {
+        await transaction(() async {
+          if (from == 1) {
+            await migrator.createTable(localSessionContexts);
+            await migrator.createTable(cachedTrips);
+            await migrator.createTable(cachedStops);
+            await migrator.createTable(cachedTrailers);
+          }
+          if (from <= 2) {
+            await migrator.createTable(localCommands);
+            await migrator.createTable(localSyncIssues);
+            await _queueIndexesAndImmutability();
+          }
+          if (from >= 3) {
+            // Preserve all queue rows and dependent tables. Native SQLite opens with
+            // FK enforcement off during the migration; beforeOpen restores it.
+            await customStatement(
+              'DROP TRIGGER IF EXISTS local_command_intent_immutable',
+            );
+            await migrator.alterTable(
+              TableMigration(
+                localCommands,
+                newColumns: [localCommands.aggregateType],
+              ),
+            );
+            await _queueIndexesAndImmutability();
+          }
+          if (from <= 3) {
+            await migrator.createTable(localMedia);
+            await customStatement(
+              'CREATE UNIQUE INDEX local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
+            );
+            await migrator.createTable(commandMediaDependencies);
+            await migrator.createTable(materializedRequests);
+            await _mediaIndexesAndImmutability(createParentIndex: false);
+          } else {
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
+            );
+          }
+          await migrator.createTable(commandResults);
+          await migrator.createTable(commandResultDependencies);
+          await migrator.createTable(inspectionDrafts);
+          await migrator.createTable(cameraCaptures);
+          await _shiftIndexesAndImmutability();
+          if ((await customSelect('PRAGMA foreign_key_check').get()).isNotEmpty)
+            throw StateError('Migration cannot preserve foreign-key integrity');
+          await customStatement('PRAGMA user_version=5');
+        });
+      } finally {
+        await customStatement('PRAGMA foreign_keys=ON');
       }
-      if (from <= 2) {
-        await migrator.createTable(localCommands);
-        await migrator.createTable(localSyncIssues);
-        await _queueIndexesAndImmutability();
-      }
-      if (from >= 3) {
-        // Preserve all queue rows and dependent tables. Native SQLite opens with
-        // FK enforcement off during the migration; beforeOpen restores it.
-        await customStatement(
-          'DROP TRIGGER IF EXISTS local_command_intent_immutable',
-        );
-        await migrator.alterTable(
-          TableMigration(
-            localCommands,
-            newColumns: [localCommands.aggregateType],
-          ),
-        );
-        await _queueIndexesAndImmutability();
-      }
-      if (from <= 3) {
-        await migrator.createTable(localMedia);
-        await customStatement(
-          'CREATE UNIQUE INDEX local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
-        );
-        await migrator.createTable(commandMediaDependencies);
-        await migrator.createTable(materializedRequests);
-        await _mediaIndexesAndImmutability(createParentIndex: false);
-      } else {
-        await customStatement(
-          'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
-        );
-      }
-      await migrator.createTable(commandResults);
-      await migrator.createTable(commandResultDependencies);
-      await migrator.createTable(inspectionDrafts);
-      await migrator.createTable(cameraCaptures);
-      await _shiftIndexesAndImmutability();
     },
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys=ON'),
   );

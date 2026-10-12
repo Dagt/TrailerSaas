@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trailersaas_mobile/src/shift/shift_commands.dart';
 import 'package:trailersaas_mobile/src/shift/inspection_store.dart';
+import 'package:trailersaas_mobile/src/sync/road_command_capture.dart';
+import 'package:trailersaas_mobile/src/session/contracts.dart';
 import 'package:trailersaas_mobile/src/road/online_command_journal.dart';
 import 'package:trailersaas_mobile/src/session/session_controller.dart';
 import 'package:trailersaas_mobile/src/platform/connectivity.dart';
@@ -350,5 +352,95 @@ void main() {
       ),
       throwsA(isA<FormatException>()),
     );
+  });
+  for (final status in [408, 429, 500]) {
+    test(
+      'Shift HTTP $status retains exact frozen identity and respects retry eligibility',
+      () async {
+        final id = await onDuty();
+        f.failNext = status;
+        f.retryAfter = '7';
+        await f.worker.sync();
+        final c = (await f.worker.store.find(user, tenant, id))!;
+        expect(c.state, 'RETRYABLE_FAILURE');
+        final frozen = (await getReplay().frozen(c))!;
+        await f.worker.sync();
+        expect(f.posts.where((p) => p.path.endsWith('/on-duty')), hasLength(1));
+        f.now = f.now.add(const Duration(seconds: 30));
+        await f.worker.sync();
+        expect(
+          (await f.worker.store.find(user, tenant, id))!.state,
+          'ACKNOWLEDGED',
+        );
+        expect(
+          f.posts.where((p) => p.path.endsWith('/on-duty')).map((p) => p.raw),
+          everyElement(frozen.payloadJson),
+        );
+        expect(
+          f.posts.where((p) => p.path.endsWith('/on-duty')).map((p) => p.key),
+          everyElement(id),
+        );
+        expect(f.businessEffects, 1);
+      },
+    );
+  }
+  test('Shift 401 renews Firebase once and reuses UUID/body without a second Shift', () async {
+    final id = await onDuty();
+    f.failureStatuses.addAll([401]);
+    await f.worker.sync();
+    expect(f.auth.forceRefreshes, contains(true));
+    expect(
+      (await f.worker.store.find(user, tenant, id))!.state,
+      'ACKNOWLEDGED',
+    );
+    expect(f.posts.map((p) => p.key), everyElement(id));
+    expect(f.posts.map((p) => p.raw).toSet(), hasLength(1));
+    expect(f.businessEffects, 1);
+  });
+  test('first departure remains blocked or depends explicitly on matching pending inspection without local state advance', () async {
+    f.network.status = ConnectivityStatus.unavailable;
+    await f.session.refresh();
+    final source = await onDuty();
+    final snapshot = f.session.snapshot!;
+    final owner = SessionSnapshot(
+      snapshot.firebaseUid,
+      snapshot.userId,
+      Membership.cached({
+        ...snapshot.membership.toJson(),
+        'capabilities': [
+          ...snapshot.membership.capabilities,
+          'TRIP_EXECUTE_ASSIGNED',
+          'DEPARTURE_CONFIRM',
+        ],
+      }),
+      snapshot.driver,
+      snapshot.refreshedAt,
+      [
+        for (final t in snapshot.trips)
+          WorkTrip({...t.data, 'currentTractorId': tractor}),
+      ],
+    );
+    f.session.snapshot = owner;
+    const path = 'tenants/$tenant/trips/trip-A/departures';
+    final body = {'occurredAt': f.now.toIso8601String(), 'nextStopId': 'stop'};
+    await expectLater(
+      RoadCommandCapture(
+        f.session,
+        f.worker,
+      ).record(owner, 'trip-A', path, body),
+      throwsA(isA<StateError>()),
+    );
+    final inspection = await pre(source, await photos());
+    final departure = await RoadCommandCapture(
+      f.session,
+      f.worker,
+    ).record(owner, 'trip-A', path, body);
+    final c = (await f.worker.store.find(user, tenant, departure))!;
+    expect(jsonDecode(c.dependenciesJson), contains(inspection));
+    expect(c.state, 'QUEUED');
+    expect(f.posts, isEmpty);
+    expect(owner.trips.first.status, 'ASSIGNED');
+    expect(f.serverShift, isNull);
+    expect(f.serverInspections, isEmpty);
   });
 }

@@ -15,6 +15,43 @@ import 'camera_capture_test.dart' show ControlledCamera;
 import 'shift_protocol_test.dart' show tractor;
 
 void main() {
+  testWidgets(
+    'selector deduplicates several assigned Trips sharing the same Tractor',
+    (tester) async {
+      late MediaHttpFixture f;
+      await real(tester, () async {
+        f = MediaHttpFixture()..shiftWorkflows = true;
+        await f.start();
+        await InspectionStore(f.worker.shifts!).onDuty();
+        await f.worker.sync();
+        final equipment = f.session.snapshot!.driver!.shiftContext!.tractors;
+        equipment.add(equipment.first);
+      });
+      await mount(
+        tester,
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ShiftHomePanel(worker: f.worker),
+            ),
+          ),
+        ),
+      );
+      await real(tester, () async {
+        await f.worker.store.watch(user, tenant).first;
+      });
+      await tester.pump();
+      await tester.tap(find.text('Pre-Trip · cuatro fotografías'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Confirmar Tractor'), findsOneWidget);
+      expect(find.text('T-12'), findsOneWidget);
+      Navigator.of(tester.element(find.byType(SimpleDialog))).pop();
+      await tester.pump(const Duration(milliseconds: 200));
+      await mount(tester, const SizedBox.shrink());
+      await real(tester, f.close);
+    },
+  );
   for (final offline in [false, true]) {
     testWidgets(
       'Shift home records honest On Duty online=$offline without needing a Trip',

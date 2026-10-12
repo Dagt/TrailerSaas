@@ -321,7 +321,7 @@ class TenantRlsPostgresTests extends PostgresIntegrationTest {
                     .isEqualTo(32);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relforcerowsecurity"))
                     .isZero();
-            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(34);
+            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(37);
             return null;
         });
     }

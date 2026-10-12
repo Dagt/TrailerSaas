@@ -72,7 +72,10 @@ test('#53 type authority and context links do not advertise future workflow endp
   assert.deepEqual(api.components.schemas.DocumentLinkRequestImplemented.properties.entityType.enum, ['TRIP_STOP', 'TRIP']);
   assert.match(api.paths[`${base}/{documentId}/links`].post.description, /Trailer\/OOS attachment.*rejected/s);
   for (const [path, item] of Object.entries(api.paths)) {
-    if (/delivery-completions|inspections\/pre-trip|fuel-events|\/exceptions$/.test(path)) {
+    if (/inspections\/pre-trip$/.test(path)) {
+      assert.equal(item.post?.['x-implementation-status'], 'implemented-issue-43', path);
+    }
+    if (/delivery-completions|fuel-events|\/exceptions$/.test(path)) {
       assert(!item.post?.['x-implementation-status']?.startsWith('implemented'), path);
     }
   }

@@ -1042,3 +1042,13 @@ after verification. A reusable upload grant cannot rewrite finalized bytes.
 See [document contracts/security matrix](../docs/api/documents.md) and
 [implementation traceability](../docs/api/issue-52-document-storage.md).
 No evidence approval, mobile media queue, cleanup worker or retention is enabled.
+
+## Shift / inspection implementation (#43)
+
+V21 (after untouched V1–V20) creates shifts/shift_corrections/inspections with Tenant
+RLS, minimal runtime grants, one-open-Shift index and immutable photo associations.
+Inspections orchestrates typed public Driver/Tractor/Trip/Documents policies and the
+existing MobileOperationLedger. No circular Java dependencies. Four explicit commands
+and own-driver home are documented in docs/mobile/issue-43-shift-inspections.md.
+Run ./mvnw -B -ntp clean verify with Java25 and Docker/PostgreSQL18 Testcontainers.
+No correction endpoint, generic Audit, payroll or #45 delivery/Fuel is implemented.

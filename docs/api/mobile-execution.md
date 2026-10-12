@@ -19,8 +19,8 @@ GET `/driver/me` returns own active linked Driver id/name/active/version. GET
 with cursor/limit (default50/max200), executable Stops and relevant planned Trailer context.
 Both require fresh ACTIVE membership and TRIP_VIEW_ASSIGNED. Unknown query fields, including
 active/date/Driver IDs, are rejected. No administrative actor histories, generic directory,
-Shift or fabricated singular active Trip context. Planned Trailer is not physical coupling.
-The richer home below remains future execution work. `/me` adds fresh Tenant-scope capability
+fabricated singular active Trip context. #43 adds own real shiftContext (see the implemented boundary below). Planned Trailer is not physical coupling.
+The implemented own-home subset is described below. `/me` adds fresh Tenant-scope capability
 hints for navigation only; server authorization remains mandatory on every resource request.
 See [session/cache boundary](../mobile/issue-42-session-cache.md). Replay remains #46.
 
@@ -635,3 +635,33 @@ and Trip effects. Its high-level application orchestration calls Documents and
 Trips public APIs; Trips does not import Documents. #49 owns the contextual public
 Yard/OOS evidence workflow; #54 owns media upload sequencing on the client.
 See [server policy and joint transaction contract](issue-53-evidence-validation.md).
+
+## Issue #43 implemented Shift / inspection boundary
+
+All four commands above are implemented: strict JSON/UUID headers, fresh capabilities
+SHIFT_START / SHIFT_END / PRETRIP_CREATE / POSTTRIP_CREATE, ACTIVE membership and own
+active Driver before MobileOperationLedger replay. occurredAt is command occurrence;
+createdAt/updatedAt are server persistence chronology. No query parameters accepted.
+GET /driver/me adds shiftContext: currentShift, inspections (max50), authorizedTractors
+(max50, deduplicated), usedTractors (max50), offDutyBlockers. Hints grant no permission.
+Only active Tractors from nonterminal currently assigned Trips are eligible for
+Pre-Trip, revalidated at save. tripId may be null with an own open Shift and a real
+current assignment for that Tractor. Inspection before any Trip assignment needs a
+future explicit Driver–Tractor assignment model. No new assignment relation exists.
+Four distinct own UPLOADED documents must match each required type. Inspection plus
+immutable INSPECTION links commit/rollback together; explicit Trip links additionally
+use #53 authorization. Missing photo: EVIDENCE_REQUIRED; PENDING: UPLOAD_NOT_COMPLETE;
+invisible context: RESOURCE_NOT_FOUND. OQ-052 stays open: checklist.items accepts
+bounded scalar maps (100 items, 1–20 fields, keys max80, text max2000); no invented
+regulatory catalog or approval boolean unlocks execution. Odometer 0..10^12, max3
+fractional decimals. Post-Trip optional text fields max4000, no required photos;
+without Trip, equipment must have an own Pre-Trip in this Shift.
+Responses: Shift id/state/onDutyAt/offDutyAt/createdAt/updatedAt; inspection
+id/shiftId/tripId/tractorId/inspectionType/odometer/occurredAt/createdAt. No tenant/actor IDs.
+Off Duty blockers ACTIVE_WORK and POST_TRIP_REQUIRED reflect real assigned work and
+used equipment. No override; closing Shift never completes work or changes coupling.
+First departure reuses #44 and requires own open Shift, valid matching Driver/Shift/
+current Tractor Pre-Trip with four linked finalized photos. Explicit inspection Trip
+must match. Occurrence must follow inspection/Shift occurrence. Other-Shift history or
+reassigned Tractor cannot authorize it. Delivery/POD completion remains #45.
+See ../mobile/issue-43-shift-inspections.md for locking, migrations and offline materialization.

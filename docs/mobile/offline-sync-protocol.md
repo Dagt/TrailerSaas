@@ -548,3 +548,18 @@ Protocol can be Accepted when:
 8. Yard Check snapshot semantics survive offline operation;
 9. app correctness does not depend on guaranteed background execution;
 10. targeted server refresh is sufficient for MVP without generic CDC sync.
+
+## Issue #43 Shift / inspection replay integration
+
+The installed typed ShiftReplay port supports only implemented On/Off Duty and
+Pre/Post-Trip endpoints. It shares the original ReplayWorker lane, media phase,
+fencing, backoff, namespace and SENDING recovery. Strict Shift/inspection receipts
+are validated separately; Hook/Drop/Trip validation remains unchanged.
+Offline On Duty has only a client operation UUID, not an invented Shift UUID.
+Pre-Trip materializes only after its source ACK supplies a real Shift ID and all
+four media are FINALIZED. Off Duty similarly resolves the path. Frozen path/body
+and original Idempotency-Key are reused after crash/timeout. Intent and dependency
+records never change after first send. ACK is historical; home/work refresh remains
+authoritative. Pending matching Pre-Trip can precede a recorded departure, but cannot
+grant departure permission: dependencies require ACK and PostgreSQL revalidates.
+Reassignment/revocation retains conflicts, draft and photos. No #45 endpoint is enabled.

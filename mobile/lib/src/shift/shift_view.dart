@@ -549,7 +549,11 @@ class _InspectionScreenState extends State<InspectionScreen> {
                   ),
                   validator: (v) {
                     final n = num.tryParse(v ?? '');
-                    return n == null || !n.isFinite || n < 0
+                    return n == null ||
+                            !n.isFinite ||
+                            n < 0 ||
+                            n > 1000000000000 ||
+                            !RegExp(r'^\d+(\.\d{1,3})?$').hasMatch(v ?? '')
                         ? 'Introduce un odómetro válido.'
                         : null;
                   },
@@ -586,6 +590,17 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Checklist revisado (un punto por línea)',
                     ),
+                    validator: (v) {
+                      final points = (v ?? '')
+                          .split('\n')
+                          .map((s) => s.trim())
+                          .where((s) => s.isNotEmpty)
+                          .toList();
+                      return points.length > 100 ||
+                              points.any((s) => s.length > 2000)
+                          ? 'Máximo 100 puntos; 2000 caracteres por punto.'
+                          : null;
+                    },
                   ),
                 ] else ...[
                   TextFormField(
