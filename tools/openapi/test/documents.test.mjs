@@ -51,13 +51,31 @@ test('#52 strict upload/finalization/link shapes retain closed catalogs and UUID
   assert.equal(init.properties.sizeBytes.minimum, 1);
   assert.equal(schemas.CompleteUploadRequestImplemented.additionalProperties, false);
   assert.deepEqual(Object.keys(schemas.CompleteUploadRequestImplemented.properties), ['checksumSha256']);
-  assert.deepEqual(schemas.DocumentLinkRequestImplemented.properties.entityType.enum, ['TRIP_STOP']);
+  assert.deepEqual(schemas.DocumentLinkRequestImplemented.properties.entityType.enum, ['TRIP_STOP', 'TRIP']);
   const completion = api.paths['/api/v1/tenants/{tenantId}/documents/{documentId}/upload-completion'];
   assert(completion.parameters.some(p => p.$ref === '#/components/parameters/IdempotencyKey'));
   assert.equal(api.components.parameters.IdempotencyKey.required, true);
   assert.equal(api.components.parameters.IdempotencyKey.schema.format, 'uuid');
   assert.match(completion.post.description, /UPLOAD_NOT_COMPLETE/);
   assert.match(completion.post.description, /IDEMPOTENCY_KEY_REUSED/);
+});
+
+test('#53 type authority and context links do not advertise future workflow endpoints', () => {
+  const base = '/api/v1/tenants/{tenantId}/documents';
+  const upload = api.paths[`${base}/uploads`].post;
+  for (const capability of ['POD_UPLOAD', 'PRETRIP_CREATE', 'FUEL_EVENT_CREATE', 'EXCEPTION_REPORT']) {
+    assert(upload.description.includes(capability));
+  }
+  const completion = api.paths[`${base}/{documentId}/upload-completion`].post;
+  assert.match(completion.description, /persisted document type/);
+  assert.match(completion.description, /Existing links must remain fully authorized/);
+  assert.deepEqual(api.components.schemas.DocumentLinkRequestImplemented.properties.entityType.enum, ['TRIP_STOP', 'TRIP']);
+  assert.match(api.paths[`${base}/{documentId}/links`].post.description, /Trailer\/OOS attachment.*rejected/s);
+  for (const [path, item] of Object.entries(api.paths)) {
+    if (/delivery-completions|inspections\/pre-trip|fuel-events|\/exceptions$/.test(path)) {
+      assert(!item.post?.['x-implementation-status']?.startsWith('implemented'), path);
+    }
+  }
 });
 
 test('#52 metadata excludes storage secrets and downloads acknowledge temporary bearer semantics', () => {

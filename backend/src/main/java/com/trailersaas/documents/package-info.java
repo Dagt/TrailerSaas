@@ -1,5 +1,5 @@
 /**
- * Private object storage; evidence workflow validation remains owned by later issues.
+ * Private object storage and synchronous operational evidence policies; workflows own domain transitions.
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies={"identity","drivers","trips"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies={"identity","drivers","trips","trailers","tractors"})
 package com.trailersaas.documents;

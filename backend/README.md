@@ -1,5 +1,24 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Operational evidence policy (#53)
+
+`documents.OperationalEvidencePolicy` validates finalized own documents and fresh
+assigned context synchronously in an existing Tenant transaction. Four typed
+Pre-Trip positions, SIGNED_BOL/NO_RECEIVER_AVAILABLE, Driver damage, contextual
+Trailer OOS and Fuel receipt rules are implemented. Type-specific upload authority
+uses existing capabilities; read grants never authorize writes. V20 adds immutable
+insert-only `delivery_evidence` with Tenant RLS and exact context attachment types.
+
+Future #43/#45/#49 application orchestration calls Documents and Trips public
+APIs; Trips never imports Documents. `recordDelivery` validates, runs the owner's
+completion action, verifies actual persisted Stop completion/event, and records
+evidence in that same transaction. #45 owns service obligations, fulfillment,
+Trip effects and the existing ledger. No production delivery/inspection/Fuel/OOS
+evidence workflow is added. The PostgreSQL test harness proves joint commit and
+rollback without a mocked validator or fictitious production Shift.
+
+See [rules, architecture and traceability](../docs/api/issue-53-evidence-validation.md).
+
 ## Orders foundation (issue #31)
 
 V10 creates only `orders`, `order_cargo_lines` and `order_stops`; V1–V9 remain

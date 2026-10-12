@@ -99,6 +99,11 @@ The Trailer movement/read surface wave is complete. #42 is merged/complete via [
 
 These streams may overlap according to each Issue's explicit dependencies.
 
+#52 is merged/complete via [PR #99](https://github.com/Dagt/TrailerSaas/pull/99).
+#53 is the current bounded evidence validation/persistence implementation; it is
+not complete until merge. #43/#45/#49 consume its synchronous policies and still
+own their respective operational workflows; #54 media and #55 jobs remain pending.
+
 ## Wave 4 — Mobile synchronization foundation
 
 - #42 Mobile auth/cache shell — complete via PR #96

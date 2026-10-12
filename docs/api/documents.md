@@ -173,7 +173,7 @@ All five transport endpoints in sections 1–6 are implemented by #52. Requests
 are strict; unknown fields/query parameters, invalid enums, numeric coercion and
 client provenance are rejected. Binary PUT/GET goes directly to private R2.
 
-### Current authority
+### Issue #52 authority (superseded by the #53 type matrix below)
 
 | Operation | Current fresh authority | Resource restrictions |
 | --- | --- | --- |
@@ -244,3 +244,58 @@ No automatic cleanup is enabled and OQ-057 retention remains unresolved.
 
 See [implementation/security traceability](issue-52-document-storage.md) and
 [environment configuration](../development/environment-configuration.md).
+
+## Issue #53 implementation boundary
+
+The upload transport remains #52; #53 adds type-specific authorization and a
+synchronous, server-side `OperationalEvidencePolicy`. No inspection, delivery,
+exception, Fuel or Yard command endpoint is implemented here.
+
+| Type | Fresh upload/finalization capability | Supported attachment/context |
+| --- | --- | --- |
+| BOL, POD, DELIVERY_PHOTO | POD_UPLOAD + active own Driver | Current assigned TRIP_STOP; delivery validation accepts BOL, not generic POD as a signed-BOL substitute |
+| Four PRETRIP positions | PRETRIP_CREATE + active own Driver | Current assigned TRIP; validator also checks the real current active Tractor |
+| FUEL_RECEIPT | FUEL_EVENT_CREATE + active own Driver | Current assigned TRIP and real current active Tractor |
+| DAMAGE_PHOTO (Driver) | EXCEPTION_REPORT + active own Driver | Current assigned TRIP or TRIP_STOP; never arbitrary Trailer authority |
+| DAMAGE_PHOTO (OOS) | TRAILER_OOS_MARK in the concrete Trailer context | Validation port prepared; public upload/attachment workflow remains #49 |
+
+Finalization resolves the persisted type before checking its capability, including
+ledger replay. Unlinked uploader metadata management uses that type's current
+authority. Linked metadata/download still require all-or-nothing current resource
+access. Trip-only inspection/Fuel attachments have no Customer-scoped Trip read
+grant; Customer read of delivery Stops retains all mapped-Customer checks.
+
+Pre-Trip requires exactly four distinct UPLOADED references with the exact front,
+rear, Driver-side and passenger-side types, same Tenant/uploader and exact Trip
+attachment. #43 must additionally validate real Shift/inspection identity and
+equipment workflow before marking an inspection complete; no such rows are faked.
+Fuel requires one finalized own FUEL_RECEIPT in the authorized Trip/Tractor context.
+Attachment-free upload-set variants support a NEW future inspection or Shift-only
+Fuel Event when its owning domain has already authorized the real Shift/Tractor.
+They reject already-linked uploads and validate files only; they neither approve
+nor create an inspection/event. A Trip is not fabricated for nullable-trip workflows.
+Damage requires own finalized DAMAGE_PHOTO in the exact assigned work context.
+The separate OOS validator requires TRAILER_OOS_MARK and exact Trailer attachment;
+it changes no Trailer state and does not grant Driver generic Trailer access.
+
+SIGNED_BOL requires a finalized own BOL linked to the exact IN_SERVICE Delivery
+Stop on the currently assigned AT_STOP Trip. NO_RECEIVER_AVAILABLE additionally
+requires a distinct DELIVERY_PHOTO and a stripped nonblank comment. Validation
+is structural, not OCR, signature recognition or evidence-image approval.
+
+`recordDelivery` joins the owning workflow's transaction, validates first, invokes
+its completion action, verifies the persisted COMPLETED Stop/version and matching
+authenticated completion event, then inserts one immutable delivery_evidence row.
+No-op/failing transitions and missing evidence roll back everything. #45 owns the
+actual completion/fulfillment and existing ledger replay; repeated direct policy
+calls conflict safely and cannot create a second evidence row.
+Before claiming the ledger, #45 calls `validateDeliveryForReplay`: exclusive Trip
+parent lock plus fresh full document/resource authority, including committed replay.
+This avoids shared-lock upgrade/ledger deadlocks; the committed Stop and event must
+belong to the same PostgreSQL transaction as new evidence persistence.
+
+Errors: 409 EVIDENCE_REQUIRED or UPLOAD_NOT_COMPLETE; 400 VALIDATION_FAILED for
+malformed sets/types/duplicates; safe 404 RESOURCE_NOT_FOUND for invisible context;
+403 CAPABILITY_DENIED for missing authority; INVALID_STATE_TRANSITION or
+RESOURCE_CONFLICT for incompatible execution/persistence. Infrastructure stays 5xx.
+See [#53 policy, dependencies and transaction proof](issue-53-evidence-validation.md).
