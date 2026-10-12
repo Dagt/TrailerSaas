@@ -44,7 +44,29 @@ has a composite FK to its exact Trip. Receipt reuse and duplicate fulfillment fa
 are constrained. Historical exact table/Flyway/RLS inventories now include V22;
 V1–V21 are unchanged and all exact/security assertions remain.
 
-Affected validation passed: RoadSchemaPostgresTests (9), TenantRlsPostgresTests (17),
-ShiftSchemaPostgresTests (7), TrailerSaasApplicationTests (6): 39 tests, zero failures,
+Affected validation passed: RoadSchemaPostgresTests (8), TenantRlsPostgresTests (17),
+ShiftSchemaPostgresTests (7), TrailerSaasApplicationTests (7): 39 tests, zero failures,
 errors or skipped, PostgreSQL 18, BUILD SUCCESS. Next: production typed Delivery
 port, evidence/ledger orchestration, fulfillment and real HTTP transaction tests.
+
+### Checkpoints B/C/D: initial Backend integration
+
+The production delivery endpoint now validates evidence before the ledger and uses
+recordDelivery around Trips' actual shared completion transition. Stop/event,
+Order fulfillment facts/projections, Trip and evidence commit together. Orders
+locks precede Trip locks. Required destinations use distinct matching visits;
+every actual DELIVERY allocation must also be successful with accepted evidence.
+No mapping-free or partially delivered Order is administratively closed.
+
+Fuel records the finalized own receipt with the existing type policy; exceptions
+record only append-only facts and optional validated damage references. The three
+strict commands require current own Driver/capabilities and stable ledger identity.
+No physical, Shift, cancellation or commercial editor is introduced.
+
+33 new real PostgreSQL/HTTP/S3 command tests pass, including both POD modes,
+multi-Stop/two-visit fulfillment, shared Orders, BASE_RETURN, concurrent identical
+keys, revoked assignment, strict DTOs, Fuel, all exception categories, and rollback
+at event/fulfillment/evidence insertion and deferred commit. Earlier execution,
+inspection and module regression classes passed 61 tests. Next: extend terminal
+replay/locking edge coverage and complete Flutter schema v6, forms, typed replay
+and Driver Updates, then all final-head CI gates. No PR or merge yet.
