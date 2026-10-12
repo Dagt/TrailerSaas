@@ -302,7 +302,7 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     assertThatThrownBy(()->db.execute("INSERT INTO delivery_evidence VALUES(?,?,?,'SIGNED_BOL',NULL,?,now())",UUID.randomUUID(),tenant,stop,UUID.randomUUID())).isInstanceOf(SQLException.class);
     var valid=signed();assertThat(http("driver","POST",harness("record"),deliveryJson(valid),null).statusCode()).isEqualTo(200);
     assertThatThrownBy(()->db.execute("INSERT INTO delivery_evidence VALUES(?,?,?,'SIGNED_BOL',NULL,?,now())",UUID.randomUUID(),tenant,stop,user)).isInstanceOf(SQLException.class);
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");flyway.validate();
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("22");flyway.validate();
     try(var c=runtime.getConnection();var q=c.createStatement()) {
       c.setAutoCommit(false);assertThat(c.getMetaData().getDatabaseMajorVersion()).isEqualTo(18);
       try(var r=q.executeQuery("SELECT has_table_privilege(current_user,'delivery_evidence','SELECT'),has_table_privilege(current_user,'delivery_evidence','INSERT'),has_table_privilege(current_user,'delivery_evidence','UPDATE'),has_table_privilege(current_user,'delivery_evidence','DELETE')")) {r.next();assertThat(r.getBoolean(1)).isTrue();assertThat(r.getBoolean(2)).isTrue();assertThat(r.getBoolean(3)).isFalse();assertThat(r.getBoolean(4)).isFalse();}
