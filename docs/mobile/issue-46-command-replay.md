@@ -45,6 +45,13 @@ remain injectable for compatibility/regression tests; production Road uses Drift
 
 ## Worker and dependencies
 
+Integration note for #54: ReplayWorker remains the only lifecycle coordinator.
+It now optionally awaits MediaProcessor in the same fenced lane, then releases
+only commands with their complete FINALIZED media set and durably frozen request.
+An app-private filesystem lock also covers separately opened database connections.
+Original command payload/keys and #98 interrupted-SENDING recovery are preserved.
+No future #43/#45 adapter is installed in production. See [media integration](issue-54-media-queue.md).
+
 One foreground service owns synchronization for the app's single SQLite connection.
 Worker passes share a serialized lane, so no Trip/Trailer/Tractor sends overlap.
 SQLite compare-and-set claims QUEUED/RETRYABLE_FAILURE as SENDING before HTTP. Every
@@ -126,9 +133,10 @@ records. A cached hint cannot fabricate them. Tests start from a legitimately ex
 Trip or use only the existing test-confined prerequisite seam. DELIVERY completion
 still requires finalized POD (#45/#53); no fake evidence or load-state mutation is
 introduced. Live Load/Unload retains #44 uninterrupted-coupling semantics. Unknown
-coupling/QR cannot be replaced by manually entered UUIDs. No Yard, geofence, media,
-Shift, document upload, background OS worker or generic sync/domain editor is added.
-#45, #47, #52/#53, #54 and Yard issues remain separate.
+coupling/QR cannot be replaced by manually entered UUIDs. The original #46 scope
+added no Yard, geofence, media, Shift, document upload, background OS worker or
+generic sync/domain editor. #52/#53 are now merged and #54 adds the bounded media
+integration above; #45/#47 and Yard workflows remain separate.
 
 ## Verification
 

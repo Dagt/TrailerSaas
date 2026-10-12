@@ -65,73 +65,68 @@ void main() {
   });
   tearDown(() => db.close());
 
-  test(
-    'real v2 file migration preserves all cache rows and adds indexed v3 queue',
-    () async {
-      final dir = await Directory.systemTemp.createTemp('mobile-v2-queue-');
-      addTearDown(() => dir.delete(recursive: true));
-      final file = File('${dir.path}/device.sqlite');
-      final v2 = Version2Database(NativeDatabase(file));
-      final original = SessionSnapshot(
-        'firebase-A',
-        'user-A',
-        Membership('A', 'Tenant A', {'TRIP_VIEW_ASSIGNED'}),
-        DriverProfile('driver', 'Jane'),
-        DateTime.utc(2026, 10, 10),
-        [WorkTrip(work('trip-A'))],
-      );
-      await SessionCache(v2).replace(original, () => true);
-      final before = <String, List<Map<String, Object?>>>{};
-      for (final table in [
-        'local_session_context',
-        'cached_trips',
-        'cached_stops',
-        'cached_trailers',
-      ]) {
-        before[table] = (await v2.customSelect('select * from $table').get())
+  test('real v2 file migration preserves all cache rows and adds indexed v4 queues', () async {
+    final dir = await Directory.systemTemp.createTemp('mobile-v2-queue-');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/device.sqlite');
+    final v2 = Version2Database(NativeDatabase(file));
+    final original = SessionSnapshot(
+      'firebase-A',
+      'user-A',
+      Membership('A', 'Tenant A', {'TRIP_VIEW_ASSIGNED'}),
+      DriverProfile('driver', 'Jane'),
+      DateTime.utc(2026, 10, 10),
+      [WorkTrip(work('trip-A'))],
+    );
+    await SessionCache(v2).replace(original, () => true);
+    final before = <String, List<Map<String, Object?>>>{};
+    for (final table in [
+      'local_session_context',
+      'cached_trips',
+      'cached_stops',
+      'cached_trailers',
+    ]) {
+      before[table] = (await v2.customSelect('select * from $table').get())
+          .map((r) => r.data)
+          .toList();
+    }
+    await v2.close();
+    final upgraded = AppDatabase(NativeDatabase(file));
+    await upgraded.initialize();
+    expect(
+      (await upgraded.customSelect('PRAGMA user_version').getSingle())
+          .read<int>('user_version'),
+      4,
+    );
+    for (final table in before.keys) {
+      expect(
+        (await upgraded.customSelect('select * from $table').get())
             .map((r) => r.data)
-            .toList();
-      }
-      await v2.close();
-      final upgraded = AppDatabase(NativeDatabase(file));
-      await upgraded.initialize();
-      expect(
-        (await upgraded.customSelect('PRAGMA user_version').getSingle())
-            .read<int>('user_version'),
-        3,
+            .toList(),
+        before[table],
       );
-      for (final table in before.keys) {
-        expect(
-          (await upgraded.customSelect('select * from $table').get())
-              .map((r) => r.data)
-              .toList(),
-          before[table],
-        );
-      }
-      final c = intent();
-      await CommandStore(upgraded).enqueue('user-A', 'A', c);
-      await upgraded.close();
-      final reopened = AppDatabase(NativeDatabase(file));
-      addTearDown(reopened.close);
-      expect(
-        (await CommandStore(reopened).list('user-A', 'A')).single.payloadJson,
-        jsonEncode(c.command.body),
-      );
-      expect(
-        (await SessionCache(reopened).restore('firebase-A'))!.trips.single.id,
-        'trip-A',
-      );
-      expect(
-        (await reopened
-                .customSelect(
-                  "select name from sqlite_master where type='index'",
-                )
-                .get())
-            .map((r) => r.read<String>('name')),
-        containsAll(['local_commands_scope_state', 'local_sync_issues_scope']),
-      );
-    },
-  );
+    }
+    final c = intent();
+    await CommandStore(upgraded).enqueue('user-A', 'A', c);
+    await upgraded.close();
+    final reopened = AppDatabase(NativeDatabase(file));
+    addTearDown(reopened.close);
+    expect(
+      (await CommandStore(reopened).list('user-A', 'A')).single.payloadJson,
+      jsonEncode(c.command.body),
+    );
+    expect(
+      (await SessionCache(reopened).restore('firebase-A'))!.trips.single.id,
+      'trip-A',
+    );
+    expect(
+      (await reopened
+              .customSelect("select name from sqlite_master where type='index'")
+              .get())
+          .map((r) => r.read<String>('name')),
+      containsAll(['local_commands_scope_state', 'local_sync_issues_scope']),
+    );
+  });
 
   test('immutable identity, payload, endpoint and dependencies cannot be updated even by SQL', () async {
     final c = intent();

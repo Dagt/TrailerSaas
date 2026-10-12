@@ -41,11 +41,12 @@ class ApiClient {
   final DateTime Function() now;
   final _postNotBefore = <String, DateTime>{};
 
-  /// One submission only. The caller durably stores an immutable key/payload first.
+  /// One submission only. Replay-sensitive callers durably store an immutable
+  /// key/payload first. Null is reserved for non-replay-guaranteed document init/link.
   Future<Map<String, dynamic>> post(
     String path,
     Map<String, dynamic> body,
-    String key, {
+    String? key, {
     bool forceRefresh = true,
   }) async {
     final uid = auth.uid;
@@ -101,7 +102,7 @@ class ApiClient {
               'Authorization': 'Bearer $token',
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-              'Idempotency-Key': key,
+              'Idempotency-Key': ?key,
               'X-Request-Id': List.generate(
                 16,
                 (_) => Random.secure()

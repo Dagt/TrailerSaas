@@ -20,7 +20,7 @@ void main() {
         [WorkTrip(work('trip-$tenant'))],
       );
   test(
-    'real SQLite v1 upgrades to six exact cache and command tables',
+    'real SQLite v1 upgrades to nine exact cache command and media tables',
     () async {
       final dir = await Directory.systemTemp.createTemp('mobile-v1-');
       addTearDown(() => dir.delete(recursive: true));
@@ -35,7 +35,7 @@ void main() {
       expect(
         (await upgraded.customSelect('PRAGMA user_version').getSingle())
             .read<int>('user_version'),
-        3,
+        4,
       );
       final tables =
           (await upgraded
@@ -52,6 +52,9 @@ void main() {
         'cached_trailers',
         'local_commands',
         'local_sync_issues',
+        'local_media',
+        'command_media_dependencies',
+        'materialized_requests',
       });
     },
   );
