@@ -195,3 +195,33 @@ assertions in AuthorizationPostgresTests/TenantRlsPostgresTests: V21 adds three
 tables, so the exact count is 37 rather than 34. Assertions remain exact; no grants,
 columns, checksum or isolation checks were removed. Final validation requires all
 four jobs on the published final SHA. Device camera QA remains as above.
+
+### PR #102 RLS inventory correction
+
+CI 38289698364 on 2158cd399e0280600d1e6e0918ba7166d1b64527 ran 1919 Backend
+checks with one failure: the global RLS inventory still counted the V20 policies.
+V21 adds exactly three Tenant policies and three RLS tables. Exact expectations are
+now: 42 policies, 34 ALL/WITH CHECK, 7 SELECT/no WITH CHECK, 42 targeting only the
+runtime role, 35 RLS tables, 0 FORCE RLS and 37 public tables. No minimum/relaxed
+comparison replaced a strict assertion. No production code or migration changed.
+
+The existing parameterized V21 security test previously inspected shifts rows in
+all three cases. Its real PostgreSQL fixtures now exercise own/foreign rows for each
+of shifts, shift_corrections and inspections on the same reused runtime connection,
+bootstrap denial, cross-Tenant INSERT rejected specifically by RLS (42501), exact
+single ALL policy/role, matching USING/WITH CHECK Tenant/bootstrap conditions,
+RLS enabled/not forced and non-owner runtime. Existing minimal SELECT/INSERT,
+Shift-only UPDATE, no DELETE/CREATE/superuser/BYPASSRLS and no PUBLIC checks remain.
+
+TenantRlsPostgresTests completed 17/17, and the required Documents/R2/Evidence,
+Shift/inspection, Driver execution, root/Flyway and Modulith regression group passed
+265/265 with zero failures/errors/skips on PostgreSQL18. V1–V20 remain byte-for-byte
+unchanged. Full final-head CI, not this targeted result, determines Ready for Review.
+The code audit preserves one-open-Shift, authorized replay, four distinct finalized
+photos and atomic attachment, current assignment checks, same-Shift departure,
+independent Off Duty, frozen mobile requests/IDs and namespace isolation. Active
+work is currently assigned nonterminal Trips (including CANCELLING); closure does
+not terminate them. #45 remains deferred. No additional production defect identified.
+The expanded V21 proof was rerun after adding cross-Tenant INSERT checks: 7/7 passed,
+0 failures/errors/skipped. No new test cases replace existing suites; assertions
+were strengthened within the original three table cases. Final total stays 1919.
