@@ -361,7 +361,9 @@ class AppDatabase extends _$AppDatabase {
           await migrator.createTable(inspectionDrafts);
           await migrator.createTable(cameraCaptures);
           await _shiftIndexesAndImmutability();
-          if ((await customSelect('PRAGMA foreign_key_check').get()).isNotEmpty) {
+          if ((await customSelect(
+            'PRAGMA foreign_key_check',
+          ).get()).isNotEmpty) {
             throw StateError('Migration cannot preserve foreign-key integrity');
           }
           await customStatement('PRAGMA user_version=5');
