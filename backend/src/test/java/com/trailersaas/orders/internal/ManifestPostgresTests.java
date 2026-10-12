@@ -35,7 +35,7 @@ class ManifestPostgresTests extends PostgresIntegrationTest {
     AuthenticatedUserPrincipal principal(UUID id) { return new AuthenticatedUserPrincipal(id, "fixture-" + id, null, null); }
     @Test void exactV11SchemaAndNoOrderToTrailerForeignKey() throws Exception {
         flyway.validate(); assertThat(flyway.info().applied()).extracting(i -> i.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21");
         assertThat(columns("load_manifests")).containsExactly("id", "tenant_id", "trailer_id", "status", "created_at", "updated_at", "version", "closed_at");
         assertThat(columns("manifest_orders")).containsExactly("id", "tenant_id", "manifest_id", "order_id", "allocated_quantity", "allocated_pallet_count", "allocated_weight", "created_at");
         assertThat(f.db.value("SELECT count(*) FROM pg_constraint WHERE conrelid='orders'::regclass AND confrelid='trailers'::regclass")).isEqualTo(0L);
