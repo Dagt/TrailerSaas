@@ -114,6 +114,21 @@ void main() {
     expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
     await close(tester);
   });
+  testWidgets('double tap Confirm Arrival sends exactly one human command', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.tap(find.text('Check arrival location'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm Arrival'));
+    await tester.tap(find.text('Confirm Arrival'));
+    await tester.pumpAndSettle();
+    expect(
+      f.requests.where((request) => request.method == 'POST'),
+      hasLength(1),
+    );
+    await close(tester);
+  });
   testWidgets(
     'expired UI confirmation never posts; manual still works without permission',
     (tester) async {

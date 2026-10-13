@@ -184,6 +184,7 @@ void main() {
       await controller.check();
       controller.notYet();
       await controller.check();
+      controller.update(null);
       controller.update(ArrivalTarget.parse(geoTarget(), geoTrip(), 'driver'));
       await controller.check();
       expect(port.reads, 1);
@@ -477,7 +478,7 @@ void main() {
       native.positions.addError(StateError('native'));
       expect(await result, isNull);
       expect(native.cancelled, isTrue);
-      await native.positions.close();
+      unawaited(native.positions.close());
       adapter.cancel();
     },
   );

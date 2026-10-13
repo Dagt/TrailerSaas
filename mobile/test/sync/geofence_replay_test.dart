@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/native.dart';
@@ -24,6 +25,8 @@ void main() {
   late RoadTripController controller;
   late FakeLocation location;
   late DateTime now;
+  String currentDriver = 'driver';
+  bool noWork = false;
   Map<String, dynamic> detail() => {
     'trip': geoTrip(),
     'arrivalAssistance': geoTarget(),
@@ -36,13 +39,13 @@ void main() {
       return f.response({'userId': 'user-A', 'memberships': f.memberships});
     }
     if (r.url.path.endsWith('/driver/me')) {
-      return f.response({'id': 'driver', 'name': 'Jane', 'active': true});
+      return f.response({'id': currentDriver, 'name': 'Jane', 'active': true});
     }
     if (r.url.path.endsWith('/driver/me/trips/trip-A')) {
       return f.response(detail());
     }
     return f.response({
-      'items': [geoTrip()],
+      'items': noWork ? [] : [geoTrip()],
       'nextCursor': null,
     });
   }
@@ -100,6 +103,8 @@ void main() {
   }
 
   setUp(() async {
+    currentDriver = 'driver';
+    noWork = false;
     directory = await Directory.systemTemp.createTemp('issue47-replay-');
     file = File('${directory.path}/road.sqlite');
     now = DateTime.now().toUtc();
@@ -111,6 +116,32 @@ void main() {
     await worker.shutdown();
     await f.close();
     await directory.delete(recursive: true);
+  });
+  test('Driver rebind during HTTP cannot acknowledge or refresh another Driver context', () async {
+    await offlineCapture();
+    f.network.status = ConnectivityStatus.available;
+    await f.session.refresh();
+    final started = Completer<void>(), response = Completer<http.Response>();
+    f.handler = (request) async {
+      if (request.method == 'GET') {
+        return reads(request);
+      }
+      started.complete();
+      return response.future;
+    };
+    final send = worker.sync();
+    await started.future;
+    currentDriver = 'replacement-driver';
+    noWork = true;
+    await f.session.refresh();
+    response.complete(f.response(detail()));
+    await send;
+    expect(f.session.snapshot!.driver!.id, 'replacement-driver');
+    expect(f.session.snapshot!.trips, isEmpty);
+    expect(
+      (await worker.store.list('user-A', 'A')).single.state,
+      isNot('ACKNOWLEDGED'),
+    );
   });
   for (final status in [408, 429, 500, 503, 401, 403, 404, 409]) {
     test(

@@ -43,7 +43,11 @@ class ArrivalAssistanceController extends ChangeNotifier {
     if (target?.identity == next?.identity) return;
     invalidate();
     target = next;
-    _dismissed = null;
+    // A reload/background gap is not a new destination. Keep Not Yet for the
+    // same identity when the authoritative context returns.
+    if (next != null && _dismissed != next.identity) {
+      _dismissed = null;
+    }
     message = null;
   }
 
