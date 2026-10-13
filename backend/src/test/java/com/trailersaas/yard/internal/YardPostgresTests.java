@@ -42,6 +42,62 @@ class YardPostgresTests extends PostgresIntegrationTest {
     return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/tenants/"+tenant+path)).header("Authorization","Bearer yard").GET().build(),HttpResponse.BodyHandlers.ofString());
   }
   void problem(HttpResponse<String> r,int status,String code){assertThat(r.statusCode()).as(r.body()).isEqualTo(status);assertThat(JsonPath.<String>read(r.body(),"$.code")).isEqualTo(code);}
+  Map<String,Object> moveBody() {return new LinkedHashMap<>(Map.of("trailerId",trailer.toString(),"fromLocationId",a.toString(),"toLocationId",b.toString(),"observedAt",Instant.now().minusSeconds(5).toString(),"expectedTrailerVersion",0));}
+  HttpResponse<String> post(String key,Map<String,Object> body) throws Exception {
+    return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/tenants/"+tenant+"/yard-moves"))
+        .header("Authorization","Bearer yard").header("Idempotency-Key",key).header("Content-Type","application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body))).build(),HttpResponse.BodyHandlers.ofString());
+  }
+  void unchanged() throws Exception {
+    assertThat(f.db.value("select current_location_id from trailers where id=?",trailer)).isEqualTo(a);
+    assertThat(f.db.value("select version from trailers where id=?",trailer)).isEqualTo(0L);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=?",trailer)).isEqualTo(0L);
+    assertThat(f.db.value("select count(*) from processed_client_operations where tenant_id=?",tenant)).isEqualTo(0L);
+  }
+  @ParameterizedTest @ValueSource(strings={"YARD:DOCK","DOCK:YARD","YARD:YARD"})
+  void moveUsesOriginalEngineAndPreservesOtherDimensions(String route) throws Exception {
+    var types=route.split(":");f.db.execute("update operational_locations set type=? where id=?",types[0],a);f.db.execute("update operational_locations set type=? where id=?",types[1],b);
+    var body=moveBody();var key=UUID.randomUUID().toString();var r=post(key,body);assertThat(r.statusCode()).as(r.body()).isEqualTo(200);
+    assertThat(JsonPath.<String>read(r.body(),"$.trailer.currentLocation.id")).isEqualTo(b.toString());
+    assertThat(JsonPath.<Number>read(r.body(),"$.trailer.version").longValue()).isEqualTo(1L);
+    assertThat(f.db.value("select last_known_location_id from trailers where id=?",trailer)).isEqualTo(b);
+    assertThat(f.db.value("select load_state from trailers where id=?",trailer)).isEqualTo("UNKNOWN");
+    assertThat(f.db.value("select designated_customer_id from trailers where id=?",trailer)).isEqualTo(customer);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=? and event_type='YARD_MOVED' and actor_type='HUMAN_USER' and source_type='USER_ACTION' and actor_user_id=? and client_operation_id=? and trip_id is null and driver_id is null and tractor_id is null and metadata->>'previousLocationId'=? and metadata->>'newLocationId'=?",trailer,user,UUID.fromString(key),a.toString(),b.toString())).isEqualTo(1L);
+    assertThat(f.db.value("select last_seen_at from trailers where id=?",trailer)).isEqualTo(java.sql.Timestamp.from(Instant.parse(body.get("observedAt").toString()).truncatedTo(java.time.temporal.ChronoUnit.MICROS)));
+  }
+  @Test void mismatchHasAuthorizedProjectionAndNoSilentCorrection() throws Exception {
+    var body=moveBody();body.put("fromLocationId",b.toString());body.put("toLocationId",a.toString());
+    var r=post(UUID.randomUUID().toString(),body);problem(r,409,"LOCATION_MISMATCH");
+    assertThat(JsonPath.<String>read(r.body(),"$.currentTrailer.currentLocation.id")).isEqualTo(a.toString());unchanged();
+  }
+  @Test void staleVersionIsDifferentFromMismatch() throws Exception {
+    var body=moveBody();body.put("expectedTrailerVersion",12);problem(post(UUID.randomUUID().toString(),body),409,"STALE_VERSION");unchanged();
+  }
+  @ParameterizedTest @ValueSource(strings={"oos","unknown","transit","same","site","inactiveSite","inactiveLocation","foreignLocation","foreignTrailer","oldObservation"})
+  void incompatibleMovesRollbackEverySideEffect(String mode) throws Exception {
+    var body=moveBody();String code="RESOURCE_CONFLICT";int status=409;
+    switch(mode) {
+      case "oos" -> {f.db.execute("update trailers set serviceability_state='OUT_OF_SERVICE' where id=?",trailer);code="INVALID_STATE_TRANSITION";}
+      case "unknown","transit" -> {f.db.execute("update trailers set location_state=?,current_location_id=null where id=?",mode.equals("unknown")?"LOCATION_UNKNOWN":"IN_TRANSIT",trailer);code="INVALID_STATE_TRANSITION";}
+      case "same" -> body.put("toLocationId",a.toString());
+      case "site" -> body.put("toLocationId",f.location(tenant).toString());
+      case "inactiveSite" -> f.db.execute("update physical_sites set active=false where id=?",site);
+      case "inactiveLocation" -> f.db.execute("update operational_locations set active=false where id=?",b);
+      case "foreignLocation" -> {body.put("toLocationId",f.location(other).toString());code="RESOURCE_NOT_FOUND";status=404;}
+      case "foreignTrailer" -> {body.put("trailerId",f.trailer(other,"Foreign-"+UUID.randomUUID(),null).toString());code="RESOURCE_NOT_FOUND";status=404;}
+      case "oldObservation" -> body.put("observedAt",Instant.now().minusSeconds(7200).toString());
+    }
+    problem(post(UUID.randomUUID().toString(),body),status,code);
+    if(mode.equals("unknown")||mode.equals("transit"))f.db.execute("update trailers set location_state='AT_LOCATION',current_location_id=? where id=?",a,trailer);
+    unchanged();
+  }
+  @Test void lostAckReplayKeepsOriginalResponseAndBodyReuseIsRejected() throws Exception {
+    var body=moveBody();var key=UUID.randomUUID().toString();var first=post(key,body);assertThat(first.statusCode()).as(first.body()).isEqualTo(200);
+    var replay=post(key,body);assertThat(json.readTree(replay.body())).isEqualTo(json.readTree(first.body()));
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=?",trailer)).isEqualTo(1L);
+    body.put("expectedTrailerVersion",1);problem(post(key,body),409,"IDEMPOTENCY_KEY_REUSED");
+  }
   @Test void activeContextHasOnlyTenantSitesAndNormalizedLocations() throws Exception {
     var foreign=f.location(other);var inactive=f.location(tenant);
     f.db.execute("update physical_sites set active=false where id=(select site_id from operational_locations where id=?)",inactive);

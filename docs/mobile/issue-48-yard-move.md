@@ -52,3 +52,13 @@ migration, role grant or RLS policy changed.
 
 Further implementation, tests and native QA limitations will be recorded as each
 recoverable checkpoint is published.
+
+B: POST yard-moves uses the existing physical engine and MobileOperationLedger
+in one transaction. Trailer row locking precedes live Site/location/Customer
+checks, with the existing Site parent protocol protecting association removal.
+Same active Site, IN_SERVICE, AT_LOCATION and UNCOUPLED are mandatory. Strict
+expectedTrailerVersion, origin, observedAt and JSON are checked. Twenty-seven
+PostgreSQL tests pass with 0 failures/errors/skipped, including manual rollback
+invariants, matching event/projection and stable ledger replay. Device-future
+observations are rejected, following the existing Shift time policy; chronology
+cannot move lastSeenAt backwards. No Trip/Driver/Tractor is invented.
