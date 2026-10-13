@@ -42,6 +42,13 @@ class RoadOperationsService {
     String comment=text(request.comment(),false);
     var input=new OperationalEvidencePolicy.Delivery(request.evidenceMode(),request.bolDocumentId(),request.deliveryPhotoDocumentId(),comment);
     context.establishTenant(tenant);
+    auth.requireTenantCapability(actor,tenant,Capability.POD_UPLOAD);
+    var driver=drivers.activeForUser(tenant,actor.userId());
+    auth.requireAssignedWorkCapability(actor,tenant,Capability.TRIP_EXECUTE_ASSIGNED,driver.isPresent());
+    // Reject invisible resources before touching their Order locks or bounded-query errors.
+    // This read grants no authority: prepare/evidence revalidate after every lock wait.
+    var parent=work.readStopTrip(tenant,stop).orElseThrow(ShiftFailure::missing);
+    if(!driver.orElseThrow(ShiftFailure::missing).equals(parent.driverId()))throw ShiftFailure.missing();
     var locked=orders.lockDeliveryOrders(tenant,stop);
     execution.prepare(actor,tenant,stop);
     evidence.validateDeliveryForReplay(actor,tenant,stop,input);
@@ -69,15 +76,16 @@ class RoadOperationsService {
     ShiftService.time(request.occurredAt());odometer(request.odometer());
     var trip=assigned(actor,tenant,request.tripId(),Capability.FUEL_EVENT_CREATE);
     if(!request.tractorId().equals(trip.tractorId()))throw ShiftFailure.missing();
-    evidence.validateFuel(actor,tenant,trip.id(),trip.tractorId(),request.receiptDocumentId());
+    evidence.validateFuelForReplay(actor,tenant,trip.id(),trip.tractorId(),request.receiptDocumentId(),key);
     return ledger.execute(tenant,actor.userId(),key,"FUEL_EVENT",hash(request.tripId(),request.tractorId(),request.odometer().stripTrailingZeros().toPlainString(),request.receiptDocumentId(),request.occurredAt()),"FUEL_EVENT",FuelResult::id,FuelResult.class,()-> {
       if(!Set.of("IN_TRANSIT","AT_STOP").contains(trip.status()))throw ShiftFailure.state();
       var shift=shifts.open(tenant,trip.driverId());
       if(shift==null || request.occurredAt().isBefore(shift.onDutyAt()))throw ShiftFailure.conflict();
       UUID id=UUID.randomUUID();Instant now=Instant.now();
       if(Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM fuel_events WHERE tenant_id=? AND receipt_document_id=?)",Boolean.class,tenant,request.receiptDocumentId())))throw ShiftFailure.conflict();
-      jdbc.update("INSERT INTO fuel_events VALUES(?,?,?,?,?,?,?,?,?)",id,tenant,trip.driverId(),trip.tractorId(),trip.id(),request.odometer(),request.receiptDocumentId(),Timestamp.from(request.occurredAt()),Timestamp.from(now));
-      return new FuelResult(id,trip.id(),trip.tractorId(),request.odometer(),request.receiptDocumentId(),request.occurredAt(),now);
+      var odometer=request.odometer().stripTrailingZeros();
+      if(jdbc.update("INSERT INTO fuel_events VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT (tenant_id,receipt_document_id) DO NOTHING",id,tenant,trip.driverId(),trip.tractorId(),trip.id(),odometer,request.receiptDocumentId(),Timestamp.from(request.occurredAt()),Timestamp.from(now))!=1)throw ShiftFailure.conflict();
+      return new FuelResult(id,trip.id(),trip.tractorId(),odometer,request.receiptDocumentId(),request.occurredAt(),now);
     });
   }
   ProblemResult problem(AuthenticatedUserPrincipal actor,UUID tenant,UUID tripId,UUID key,Problem request) {
@@ -86,8 +94,8 @@ class RoadOperationsService {
     var ids=request.documentIds()==null?List.<UUID>of():request.documentIds();
     if(ids.size()>50 || ids.stream().anyMatch(Objects::isNull) || new HashSet<>(ids).size()!=ids.size())throw ShiftFailure.invalid();
     var trip=assigned(actor,tenant,tripId,Capability.EXCEPTION_REPORT);
-    if(request.stopId()!=null && !work.stop(tenant,request.stopId(),true).orElseThrow(ShiftFailure::missing).trip().id().equals(tripId))throw ShiftFailure.missing();
-    if(request.category()==Category.EQUIPMENT_DAMAGE || !ids.isEmpty())evidence.validateDriverDamage(actor,tenant,tripId,request.stopId(),ids);
+    if(request.stopId()!=null && !work.belongs(tenant,request.stopId(),tripId))throw ShiftFailure.missing();
+    if(request.category()==Category.EQUIPMENT_DAMAGE || !ids.isEmpty())evidence.validateDriverDamageForReplay(actor,tenant,tripId,request.stopId(),ids,key);
     var sorted=ids.stream().sorted().toList();
     return ledger.execute(tenant,actor.userId(),key,"OPERATIONAL_EXCEPTION",hash(tripId,request.stopId(),request.category(),comment,sorted,request.occurredAt()),"OPERATIONAL_EXCEPTION",ProblemResult::id,ProblemResult.class,()-> {
       if(Set.of("COMPLETED","CANCELLED").contains(trip.status()))throw ShiftFailure.state();
@@ -106,6 +114,6 @@ class RoadOperationsService {
     String result=raw.substring(start,end);
     if(result.length()>4000 || (required && result.isEmpty()))throw ShiftFailure.invalid();return result.isEmpty()?null:result;
   }
-  private static boolean space(int cp){return Character.isWhitespace(cp)||Character.isSpaceChar(cp);}
+  private static boolean space(int cp){return cp==0x85||Character.isWhitespace(cp)||Character.isSpaceChar(cp);}
   private static void odometer(BigDecimal value){if(value==null || value.signum()<0 || value.compareTo(new BigDecimal("1000000000000"))>0 || value.stripTrailingZeros().scale()>3)throw ShiftFailure.invalid();}
 }

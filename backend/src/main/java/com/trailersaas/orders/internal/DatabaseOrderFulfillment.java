@@ -42,7 +42,7 @@ class DatabaseOrderFulfillment implements OrderFulfillment {
     }
   }
   private OrderEntity own(UUID tenant,UUID id) {return repository.lockForMutation(tenant,id,new CustomerAccessScope(true,Set.of()));}
-  record DeliveryStop(UUID id,UUID requested,UUID site,UUID location,String snapshot,boolean successful) {}
+  record DeliveryStop(UUID id,boolean successful,Set<UUID> requestedMatches) {}
   public void delivered(AuthenticatedUserPrincipal actor,UUID tenant,UUID stop,UUID operation,Instant at,List<UUID> locked) {
     pinned(tenant);
     var affected=jdbc.query("SELECT DISTINCT order_id FROM trip_stop_orders WHERE tenant_id=? AND trip_stop_id=? ORDER BY order_id",(r,n)->r.getObject(1,UUID.class),tenant,stop);
@@ -51,17 +51,21 @@ class DatabaseOrderFulfillment implements OrderFulfillment {
       var order=own(tenant,id);
       if(!Set.of(OrderStatus.PLANNED,OrderStatus.IN_PROGRESS,OrderStatus.PARTIALLY_DELIVERED).contains(order.status))throw reject(OrderPlanningRejectedException.Reason.STATE);
       var previous=order.status;
+      var requested=repository.fulfillmentStops(tenant,id);
+      if(requested.size()>500)throw reject(OrderPlanningRejectedException.Reason.CONFLICT);
       var visits=jdbc.query("""
-        SELECT s.id,a.order_stop_id,s.site_id,s.location_id,s.site_snapshot::text,
+        SELECT s.id,
           (s.status='COMPLETED' AND (EXISTS(SELECT 1 FROM delivery_evidence e WHERE e.tenant_id=s.tenant_id AND e.trip_stop_id=s.id)
             OR (s.id=? AND s.xmin::text::numeric=mod(pg_current_xact_id()::text::numeric,4294967296)
               AND EXISTS(SELECT 1 FROM trip_stop_events e WHERE e.tenant_id=s.tenant_id AND e.trip_stop_id=s.id AND e.event_type='COMPLETED'
-                AND e.xmin::text::numeric=mod(pg_current_xact_id()::text::numeric,4294967296))))) successful
+                AND e.xmin::text::numeric=mod(pg_current_xact_id()::text::numeric,4294967296))))) successful,
+          ARRAY(SELECT os.id FROM order_stops os WHERE os.tenant_id=a.tenant_id AND os.order_id=a.order_id AND os.stop_type='DELIVERY'
+            AND (a.order_stop_id=os.id OR (a.order_stop_id IS NULL AND s.site_id IS NOT DISTINCT FROM os.site_id
+              AND s.location_id IS NOT DISTINCT FROM os.location_id AND (os.site_id IS NOT NULL OR s.site_snapshot=os.site_snapshot)))) requested_matches
         FROM trip_stop_orders a JOIN trip_stops s ON s.tenant_id=a.tenant_id AND s.id=a.trip_stop_id
         WHERE a.tenant_id=? AND a.order_id=? AND s.stop_type='DELIVERY' ORDER BY s.id,a.id LIMIT 501
-        """,(r,n)->new DeliveryStop(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class),r.getObject(4,UUID.class),r.getString(5),r.getBoolean(6)),stop,tenant,id);
+        """,(r,n)->new DeliveryStop(r.getObject(1,UUID.class),r.getBoolean(2),Set.of((UUID[])r.getArray(3).getArray())),stop,tenant,id);
       if(visits.isEmpty() || visits.size()>500 || visits.stream().noneMatch(v->v.id().equals(stop)&&v.successful()))throw reject(OrderPlanningRejectedException.Reason.CONFLICT);
-      var requested=repository.stops(tenant,id).stream().filter(s->"DELIVERY".equals(s.stopType)).toList();
       boolean all=visits.stream().allMatch(DeliveryStop::successful) && obligationsSatisfied(requested,visits);
       if(order.status==OrderStatus.PLANNED)mutations.transition(order,Action.ORDER_FULFILLMENT_STARTED,Actor.system(),null,null);
       if(all)mutations.transition(order,Action.ORDER_DELIVERED,Actor.system(),null,null);
@@ -78,8 +82,7 @@ class DatabaseOrderFulfillment implements OrderFulfillment {
   }
   private boolean match(OrderStopEntity required,List<OrderStopEntity> all,List<DeliveryStop> visits,Map<UUID,UUID> assigned,Set<UUID> seen) {
     for(var visit:visits) {
-      boolean target=visit.requested()!=null?visit.requested().equals(required.id):Objects.equals(visit.site(),required.siteId)
-          && Objects.equals(visit.location(),required.locationId) && (required.siteId!=null || Objects.equals(visit.snapshot(),canonicalSnapshot(required.siteSnapshot)));
+      boolean target=visit.requestedMatches().contains(required.id);
       if(!visit.successful() || !target || !seen.add(visit.id()))continue;
       UUID old=assigned.get(visit.id());
       if(old==null || match(all.stream().filter(s->s.id.equals(old)).findFirst().orElseThrow(),all,visits,assigned,seen)) {
@@ -87,10 +90,6 @@ class DatabaseOrderFulfillment implements OrderFulfillment {
       }
     }
     return false;
-  }
-  private String canonicalSnapshot(Map<String,Object> value) {
-    // PostgreSQL's jsonb text representation, rather than Java map iteration order.
-    return value==null?null:jdbc.queryForObject("SELECT cast(cast(? as jsonb) as text)",String.class,tools.jackson.databind.json.JsonMapper.builder().build().writeValueAsString(value));
   }
   private static OrderPlanningRejectedException reject(OrderPlanningRejectedException.Reason reason){return new OrderPlanningRejectedException(reason);}
 }

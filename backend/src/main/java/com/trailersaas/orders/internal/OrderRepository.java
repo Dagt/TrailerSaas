@@ -59,6 +59,10 @@ class OrderRepository {
         return em.createQuery("select s from OrderStopEntity s where s.tenantId=:tenant and s.orderId=:order order by s.sequenceNumber, s.id", OrderStopEntity.class)
                 .setParameter("tenant", tenant).setParameter("order", order).getResultList();
     }
+    List<OrderStopEntity> fulfillmentStops(UUID tenant,UUID order) {
+        return em.createQuery("select s from OrderStopEntity s where s.tenantId=:tenant and s.orderId=:order and s.stopType='DELIVERY' order by s.sequenceNumber,s.id",OrderStopEntity.class)
+            .setParameter("tenant",tenant).setParameter("order",order).setMaxResults(501).getResultList();
+    }
     boolean hasActiveSiteUse(UUID tenant, UUID customer, UUID site) {
         // Fresh statement after the caller acquires the exclusive Site lock.
         // Every accepted state except COMPLETED/CANCELLED keeps the association in active use.

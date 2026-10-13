@@ -16,6 +16,11 @@ class DatabaseEvidenceWorkDirectory implements EvidenceWorkDirectory {
     return findTrip(tenant,trip,exclusive?" FOR UPDATE":" FOR SHARE");
   }
   public Optional<Trip> readTrip(UUID tenant,UUID trip) { return findTrip(tenant,trip,""); }
+  public Optional<Trip> readStopTrip(UUID tenant,UUID stop) {
+    return jdbc.query("SELECT t.id,t.current_driver_id,t.current_tractor_id,t.status FROM trips t JOIN trip_stops s ON s.tenant_id=t.tenant_id AND s.trip_id=t.id WHERE s.tenant_id=? AND s.id=?",
+        (r,n)->new Trip(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class),r.getString(4)),tenant,stop).stream().findFirst();
+  }
+  public boolean belongs(UUID tenant,UUID stop,UUID trip){return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM trip_stops WHERE tenant_id=? AND id=? AND trip_id=?)",Boolean.class,tenant,stop,trip));}
   private Optional<Trip> findTrip(UUID tenant,UUID trip,String lock) {
     return jdbc.query("SELECT id,current_driver_id,current_tractor_id,status FROM trips WHERE tenant_id=? AND id=?"+lock,
         (r,n)->new Trip(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class),r.getString(4)),tenant,trip).stream().findFirst();

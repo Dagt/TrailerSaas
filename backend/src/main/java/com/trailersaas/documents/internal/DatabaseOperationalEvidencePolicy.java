@@ -25,9 +25,10 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
   private final TrailerEvidenceDirectory trailers;
   private final TractorPlanningPolicy tractors;
   private final JdbcTemplate jdbc;
+  private final org.springframework.beans.factory.ObjectProvider<com.trailersaas.documents.OperationalEvidenceReplayDirectory> replayFacts;
   DatabaseOperationalEvidencePolicy(TenantAuthorization a,DocumentAccessPolicy s,DocumentUploadAuthority u,
       DocumentRepository d,DocumentResourceAccess r,EvidenceWorkDirectory w,TrailerEvidenceDirectory t,
-      TractorPlanningPolicy p,JdbcTemplate j) { auth=a;access=s;uploads=u;documents=d;resources=r;work=w;trailers=t;tractors=p;jdbc=j; }
+      TractorPlanningPolicy p,JdbcTemplate j,org.springframework.beans.factory.ObjectProvider<com.trailersaas.documents.OperationalEvidenceReplayDirectory> replayFacts) { auth=a;access=s;uploads=u;documents=d;resources=r;work=w;trailers=t;tractors=p;jdbc=j;this.replayFacts=replayFacts; }
 
   public void validatePreTrip(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID tractor,PreTripPhotos photos) {
     var expected=preTripSet(photos);
@@ -81,10 +82,24 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
     uploads.require(actor,tenant,Type.FUEL_RECEIPT,true);
     validateDocuments(actor,tenant,Map.of(receipt,Type.FUEL_RECEIPT),null,null,Capability.FUEL_EVENT_CREATE);
   }
+  public void validateFuelForReplay(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID tractor,UUID receipt,UUID operation) {
+    if(receipt==null)throw failure(EVIDENCE_REQUIRED);
+    var facts=replayFacts.getIfAvailable();boolean committed=facts!=null&&facts.fuelCommitted(tenant,actor.userId(),operation,trip);
+    assignedTrip(actor,tenant,trip,tractor,Type.FUEL_RECEIPT,committed);
+    validateDocuments(actor,tenant,Map.of(receipt,Type.FUEL_RECEIPT),Target.TRIP,trip,Capability.FUEL_EVENT_CREATE);
+  }
+  public void validateDriverDamageForReplay(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID stop,List<UUID> photos,UUID operation) {
+    var facts=replayFacts.getIfAvailable();boolean committed=facts!=null&&facts.damageCommitted(tenant,actor.userId(),operation,trip);
+    if(!committed){validateDriverDamage(actor,tenant,trip,stop,photos);return;}
+    required(photos);assignedTrip(actor,tenant,trip,null,Type.DAMAGE_PHOTO,true);
+    if(stop!=null&&!work.belongs(tenant,stop,trip))throw failure(RESOURCE_NOT_FOUND);
+    validateDocuments(actor,tenant,expected(photos,Type.DAMAGE_PHOTO),stop==null?Target.TRIP:Target.TRIP_STOP,stop==null?trip:stop,Capability.EXCEPTION_REPORT);
+  }
   public void validateDriverDamage(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID stop,List<UUID> photos) {
     required(photos);auth.requireTenantCapability(actor,tenant,Capability.EXCEPTION_REPORT);
     if(stop==null) assignedTrip(actor,tenant,trip,null,Type.DAMAGE_PHOTO);
     else {
+      if(!work.belongs(tenant,stop,trip))throw failure(RESOURCE_NOT_FOUND);
       var parent=work.stop(tenant,stop,false).orElseThrow(()->failure(RESOURCE_NOT_FOUND));
       if(!parent.trip().id().equals(trip)) throw failure(RESOURCE_NOT_FOUND);
       assigned(actor,tenant,parent.trip(),Type.DAMAGE_PHOTO);
@@ -147,9 +162,12 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
     validateDocuments(actor,tenant,expected,Target.TRIP_STOP,stop,Capability.POD_UPLOAD);return parent;
   }
   private void assignedTrip(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID tractor,Type type) {
+    assignedTrip(actor,tenant,trip,tractor,type,false);
+  }
+  private void assignedTrip(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID tractor,Type type,boolean committedReplay) {
     auth.requireTenantCapability(actor,tenant,DocumentUploadAuthority.capability(type));
     if(trip==null) throw failure(VALIDATION_FAILED);
-    var parent=work.trip(tenant,trip,false).orElseThrow(()->failure(RESOURCE_NOT_FOUND));assigned(actor,tenant,parent,type);
+    var parent=work.trip(tenant,trip,false).orElseThrow(()->failure(RESOURCE_NOT_FOUND));assigned(actor,tenant,parent,type,committedReplay);
     if(type!=Type.DAMAGE_PHOTO) {
       if(tractor==null || !tractor.equals(parent.tractorId())) throw failure(RESOURCE_NOT_FOUND);
       var eligibility=tractors.check(tenant,tractor);
@@ -158,10 +176,13 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
     }
   }
   private void assigned(AuthenticatedUserPrincipal actor,UUID tenant,EvidenceWorkDirectory.Trip parent,Type type) {
+    assigned(actor,tenant,parent,type,false);
+  }
+  private void assigned(AuthenticatedUserPrincipal actor,UUID tenant,EvidenceWorkDirectory.Trip parent,Type type,boolean committedReplay) {
     UUID driver=uploads.require(actor,tenant,type,true);
     if(!driver.equals(parent.driverId())) throw failure(RESOURCE_NOT_FOUND);
     auth.requireAssignedWorkCapability(actor,tenant,Capability.TRIP_VIEW_ASSIGNED,true);
-    if(Set.of("COMPLETED","CANCELLED").contains(parent.status())) throw failure(INVALID_STATE_TRANSITION);
+    if(!committedReplay && Set.of("COMPLETED","CANCELLED").contains(parent.status())) throw failure(INVALID_STATE_TRANSITION);
   }
   private void validateDocuments(AuthenticatedUserPrincipal actor,UUID tenant,Map<UUID,Type> expected,Target target,UUID resource,Capability capability) {
     for(UUID id:expected.keySet().stream().sorted().toList()) {
@@ -196,7 +217,7 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
     while(start<end && space(value.codePointBefore(end))) end-=Character.charCount(value.codePointBefore(end));
     return start==end?null:value.substring(start,end);
   }
-  private static boolean space(int cp) { return Character.isWhitespace(cp) || Character.isSpaceChar(cp); }
+  private static boolean space(int cp) { return cp==0x85 || Character.isWhitespace(cp) || Character.isSpaceChar(cp); }
   private static Map<UUID,Type> expected(List<UUID> ids,Type type) { var result=new HashMap<UUID,Type>();ids.forEach(id->result.put(id,type));return result; }
   private static EvidenceValidationException failure(EvidenceValidationException.Code code) { return new EvidenceValidationException(code); }
 }

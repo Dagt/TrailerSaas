@@ -252,6 +252,7 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
     }
   }
 
+  @Transactional(propagation=Propagation.MANDATORY)
   public Assignment prepare(AuthenticatedUserPrincipal actor,UUID tenant,UUID stop) {
     try {
       context.establishTenant(tenant);
@@ -266,6 +267,7 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
     } catch(TripFailure e){throw new DriverOperationRejectedException(e.status,e.code);}
   }
 
+  @Transactional(propagation=Propagation.MANDATORY)
   public Result complete(AuthenticatedUserPrincipal actor,UUID tenant,UUID id,UUID operation,Instant at) {
     try {
       var assigned=prepare(actor,tenant,id);var trip=repository.resource(tenant,assigned.tripId(),true);

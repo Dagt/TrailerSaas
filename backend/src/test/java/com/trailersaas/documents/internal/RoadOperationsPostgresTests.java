@@ -48,6 +48,7 @@ class RoadOperationsPostgresTests extends DocumentHttpPostgresFixture {
     var bol=bol();var photo=image("DELIVERY_PHOTO");assertThat(link(photo,stop).statusCode()).isEqualTo(200);
     String body="{\"evidenceMode\":\"NO_RECEIVER_AVAILABLE\",\"bolDocumentId\":\""+bol+"\",\"deliveryPhotoDocumentId\":\""+photo+"\",\"comment\":\"No receiver\",\"occurredAt\":\""+at.plusSeconds(3)+"\"}";
     assertProblem(deliver(body.replace("No receiver","\u00a0\u2003"),UUID.randomUUID()),409,"EVIDENCE_REQUIRED");assertProblem(deliver(body.replace(photo.toString(),bol.toString()),UUID.randomUUID()),400,"VALIDATION_FAILED");
+    assertProblem(deliver(body.replace("No receiver","\u0085"),UUID.randomUUID()),409,"EVIDENCE_REQUIRED");
     var r=deliver(body,UUID.randomUUID());assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);assertThat(db.value("SELECT evidence_mode FROM delivery_evidence WHERE trip_stop_id=?",stop)).isEqualTo("NO_RECEIVER_AVAILABLE");
   }
   @ParameterizedTest @ValueSource(strings={"PENDING","ARRIVED","EN_ROUTE","COMPLETED","CANCELLED"})
@@ -72,10 +73,58 @@ class RoadOperationsPostgresTests extends DocumentHttpPostgresFixture {
     }
     assertProblem(deliver(body.replace(at.plusSeconds(3).toString(),at.plusSeconds(4).toString()),key),409,"IDEMPOTENCY_KEY_REUSED");assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(1L);
   }
-  @ParameterizedTest @ValueSource(strings={"trip_stop_events","order_fulfillment_events","delivery_evidence"})
+  @Test void differentKeysForSameDeliveryHaveOneWinnerAndNoDuplicateFacts() throws Exception {
+    String body=delivery(bol());var latch=new CountDownLatch(1);
+    try(var pool=Executors.newFixedThreadPool(2)) {
+      var a=pool.submit(()->{latch.await();return deliver(body,UUID.randomUUID());});
+      var b=pool.submit(()->{latch.await();return deliver(body,UUID.randomUUID());});latch.countDown();
+      assertThat(List.of(a.get(30,TimeUnit.SECONDS).statusCode(),b.get(30,TimeUnit.SECONDS).statusCode())).containsExactlyInAnyOrder(200,409);
+    }
+    for(String table:List.of("delivery_evidence","trip_stop_events","order_fulfillment_events","processed_client_operations"))
+      assertThat(db.value("SELECT count(*) FROM "+table+" WHERE tenant_id=?"+(table.equals("processed_client_operations")?" AND operation_type='DELIVERY_COMPLETION'":""),tenant)).isEqualTo(1L);
+  }
+  @Test void invisibleDeliveryNeverWaitsForAnotherAssignmentsOrderLock() throws Exception {
+    String body=delivery(bol());UUID key=UUID.randomUUID();db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);
+    try(var executor=Executors.newVirtualThreadPerTaskExecutor();var connection=flyway.getConfiguration().getDataSource().getConnection();var q=connection.createStatement()) {
+      connection.setAutoCommit(false);q.executeQuery("SELECT id FROM orders WHERE id='"+order+"' FOR UPDATE").close();
+      var result=executor.submit(()->deliver(body,key));assertProblem(result.get(10,TimeUnit.SECONDS),404,"RESOURCE_NOT_FOUND");
+    }
+    assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE client_operation_id=?",key)).isEqualTo(0L);
+  }
+  @ParameterizedTest @ValueSource(strings={"assignment","capability","cancellation","membership","linked-resource"})
+  void deliveryRevalidatesChangesCommittedWhileWaitingForOrderLock(String change) throws Exception {
+    UUID document=bol(),key=UUID.randomUUID();String body=delivery(document);
+    try(var executor=Executors.newVirtualThreadPerTaskExecutor();var connection=flyway.getConfiguration().getDataSource().getConnection();var q=connection.createStatement()) {
+      connection.setAutoCommit(false);q.executeQuery("SELECT id FROM orders WHERE id='"+order+"' FOR UPDATE").close();
+      int blocker;try(var pid=q.executeQuery("SELECT pg_backend_pid()")){pid.next();blocker=pid.getInt(1);}
+      var result=executor.submit(()->deliver(body,key));
+      org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(15)).untilAsserted(()->
+        assertThat((Long)db.value("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type='Lock' AND query ILIKE '%orders%' AND ?=ANY(pg_blocking_pids(pid))",blocker)).isGreaterThan(0L));
+      switch(change) {
+        case "assignment" -> db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);
+        case "capability" -> db.execute("DELETE FROM role_assignments WHERE membership_id=?",membership);
+        case "cancellation" -> q.executeUpdate("UPDATE orders SET status='CANCELLING' WHERE id='"+order+"'");
+        case "membership" -> db.execute("UPDATE tenant_memberships SET status='SUSPENDED' WHERE id=?",membership);
+        case "linked-resource" -> {
+          UUID hidden=UUID.randomUUID(),hiddenStop=UUID.randomUUID();
+          db.execute("INSERT INTO trips(id,tenant_id,status,created_at,updated_at) VALUES(?,?,'ASSIGNED',now(),now())",hidden,tenant);
+          db.execute("INSERT INTO trip_stops(id,tenant_id,trip_id,sequence_number,stop_type,status,site_snapshot,created_at,updated_at) VALUES(?,?,?,1,'DELIVERY','PENDING','{\"name\":\"Hidden\"}',now(),now())",hiddenStop,tenant,hidden);
+          db.execute("INSERT INTO document_links(id,tenant_id,document_id,entity_type,entity_id,created_at) VALUES(?,?,?,'TRIP_STOP',?,now())",UUID.randomUUID(),tenant,document,hiddenStop);
+        }
+        default -> throw new AssertionError(change);
+      }
+      connection.commit();
+      assertProblem(result.get(30,TimeUnit.SECONDS),Set.of("assignment","linked-resource").contains(change)?404:Set.of("capability","membership").contains(change)?403:409,
+        switch(change){case "assignment","linked-resource" -> "RESOURCE_NOT_FOUND";case "capability" -> "CAPABILITY_DENIED";case "membership" -> "TENANT_ACCESS_DENIED";default -> "INVALID_STATE_TRANSITION";});
+    }
+    assertThat(db.value("SELECT status FROM trip_stops WHERE id=?",stop)).isEqualTo("IN_SERVICE");
+    for(String table:List.of("delivery_evidence","trip_stop_events","order_fulfillment_events"))assertThat(db.value("SELECT count(*) FROM "+table+" WHERE tenant_id=?",tenant)).isEqualTo(0L);
+    assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE client_operation_id=?",key)).isEqualTo(0L);
+  }
+  @ParameterizedTest @ValueSource(strings={"trip_stops","trip_stop_events","order_fulfillment_events","delivery_evidence"})
   void injectedFailureRollsBackStopEventOrdersTripEvidenceAndLedger(String table) throws Exception {
     var body=delivery(bol());UUID key=UUID.randomUUID();
-    db.execute("CREATE FUNCTION road_fail() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test-only transaction failure'; END $$");db.execute("CREATE TRIGGER road_fail BEFORE INSERT ON "+table+" FOR EACH ROW EXECUTE FUNCTION road_fail()");
+    db.execute("CREATE FUNCTION road_fail() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test-only transaction failure'; END $$");db.execute("CREATE TRIGGER road_fail "+(table.equals("trip_stops")?"AFTER UPDATE":"BEFORE INSERT")+" ON "+table+" FOR EACH ROW EXECUTE FUNCTION road_fail()");
     try {
       assertThat(deliver(body,key).statusCode()).isGreaterThanOrEqualTo(500);
       assertThat(db.value("SELECT status FROM trip_stops WHERE id=?",stop)).isEqualTo("IN_SERVICE");assertThat(db.value("SELECT status FROM orders WHERE id=?",order)).isEqualTo("IN_PROGRESS");assertThat(db.value("SELECT status FROM trips WHERE id=?",trip)).isEqualTo("AT_STOP");
@@ -152,5 +201,77 @@ class RoadOperationsPostgresTests extends DocumentHttpPostgresFixture {
     for(String path:List.of(root()+"/stops/"+stop+"/delivery-completions",home()+"/fuel-events",root()+"/trips/"+trip+"/exceptions")) {
       assertProblem(http(null,"POST",path,"{}",UUID.randomUUID()),401,"AUTHENTICATION_REQUIRED");assertProblem(http("driver","POST",path,"{\"tenantId\":\""+other+"\"}",UUID.randomUUID()),400,"VALIDATION_FAILED");assertProblem(http("driver","POST",path+"?unexpected=true","{}",UUID.randomUUID()),400,"VALIDATION_FAILED");
     }
+  }
+  @Test void realShiftPreTripTwoStopRoadPodOrderPostTripOffDutyLifecycle() throws Exception {
+    db.execute("UPDATE trips SET status='ASSIGNED',started_at=NULL WHERE id=?",trip);db.execute("UPDATE trip_stops SET status='PENDING',arrived_at=NULL,service_started_at=NULL WHERE id=?",stop);db.execute("UPDATE orders SET status='PLANNED' WHERE id=?",order);
+    UUID back=UUID.randomUUID();db.execute("INSERT INTO trip_stops(id,tenant_id,trip_id,sequence_number,stop_type,status,site_snapshot,created_at,updated_at) VALUES(?,?,?,2,'BASE_RETURN','PENDING','{\"name\":\"Base\"}',now(),now())",back,tenant,trip);
+    UUID front=image("PRETRIP_FRONT"),rear=image("PRETRIP_REAR"),left=image("PRETRIP_DRIVER_SIDE"),right=image("PRETRIP_PASSENGER_SIDE");
+    String pre="{\"shiftId\":\""+shift+"\",\"tripId\":\""+trip+"\",\"tractorId\":\""+tractor+"\",\"odometer\":100,\"checklist\":{\"items\":[]},\"documentIds\":{\"front\":\""+front+"\",\"rear\":\""+rear+"\",\"driverSide\":\""+left+"\",\"passengerSide\":\""+right+"\"},\"occurredAt\":\""+at.plusSeconds(1)+"\"}";
+    var r=http("driver","POST",home()+"/inspections/pre-trip",pre,UUID.randomUUID());assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);
+    r=http("driver","POST",root()+"/trips/"+trip+"/departures","{\"occurredAt\":\""+at.plusSeconds(5)+"\",\"nextStopId\":\""+stop+"\"}",UUID.randomUUID());assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);assertThat(db.value("SELECT status FROM orders WHERE id=?",order)).isEqualTo("IN_PROGRESS");
+    for(var action:List.of("arrivals","service-starts")){r=http("driver","POST",root()+"/stops/"+stop+"/"+action,"{\"occurredAt\":\""+at.plusSeconds(action.equals("arrivals")?6:7)+"\""+(action.equals("arrivals")?",\"source\":\"MANUAL\"":"")+"}",UUID.randomUUID());assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);}
+    UUID key=UUID.randomUUID();String body=delivery(bol()).replace(at.plusSeconds(3).toString(),at.plusSeconds(8).toString());var completed=deliver(body,key);assertThat(completed.statusCode()).withFailMessage(completed.body()).isEqualTo(200);assertThat(db.value("SELECT status FROM orders WHERE id=?",order)).isEqualTo("DELIVERED");assertThat(db.value("SELECT status FROM trips WHERE id=?",trip)).isEqualTo("AT_STOP");
+    r=http("driver","POST",root()+"/stops/"+stop+"/departures","{\"occurredAt\":\""+at.plusSeconds(9)+"\",\"nextStopId\":\""+back+"\"}",UUID.randomUUID());assertThat(r.statusCode()).isEqualTo(200);
+    for(var action:List.of("arrivals","service-starts","completions")){r=http("driver","POST",root()+"/stops/"+back+"/"+action,"{\"occurredAt\":\""+at.plusSeconds(action.equals("arrivals")?10:action.equals("service-starts")?11:12)+"\""+(action.equals("arrivals")?",\"source\":\"MANUAL\"":"")+"}",UUID.randomUUID());assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);}
+    assertThat(deliver(body,key).body()).isEqualTo(completed.body());assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(1L);
+    r=http("driver","POST",home()+"/inspections/post-trip","{\"shiftId\":\""+shift+"\",\"tripId\":\""+trip+"\",\"tractorId\":\""+tractor+"\",\"odometer\":110,\"occurredAt\":\""+at.plusSeconds(13)+"\"}",UUID.randomUUID());assertThat(r.statusCode()).isEqualTo(200);
+    r=http("driver","POST",home()+"/shifts/"+shift+"/off-duty","{\"expectedShiftState\":\"ON_DUTY\",\"occurredAt\":\""+at.plusSeconds(14)+"\"}",UUID.randomUUID());assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);
+  }
+  @Test void committedFuelAndDamageReplayAfterTripEndsButStillRevalidateAssignment() throws Exception {
+    String fuelBody=fuelBody(receipt());UUID fuelKey=UUID.randomUUID();var fuel=fuel(fuelBody,fuelKey);assertThat(fuel.statusCode()).isEqualTo(200);
+    UUID photo=image("DAMAGE_PHOTO");assertThat(link(photo,stop).statusCode()).isEqualTo(200);String problem=problemBody("EQUIPMENT_DAMAGE",List.of(photo));UUID problemKey=UUID.randomUUID();var reported=problem(problem,problemKey);assertThat(reported.statusCode()).isEqualTo(200);
+    assertThat(deliver(delivery(bol()),UUID.randomUUID()).statusCode()).isEqualTo(200);
+    assertThat(fuel(fuelBody,fuelKey).body()).isEqualTo(fuel.body());assertThat(problem(problem,problemKey).body()).isEqualTo(reported.body());assertThat(fuel(fuelBody.replace("123.5","123.5000"),fuelKey).body()).isEqualTo(fuel.body());
+    db.execute("UPDATE trips SET current_driver_id=NULL WHERE id=?",trip);assertProblem(fuel(fuelBody,fuelKey),404,"RESOURCE_NOT_FOUND");assertProblem(problem(problem,problemKey),404,"RESOURCE_NOT_FOUND");
+  }
+  @ParameterizedTest @ValueSource(strings={"SIGNED_BOL","NO_RECEIVER_AVAILABLE"}) void missingRequiredBolProducesNoEffects(String mode) throws Exception {
+    assertProblem(deliver("{\"evidenceMode\":\""+mode+"\",\"occurredAt\":\""+at.plusSeconds(3)+"\"}",UUID.randomUUID()),409,"EVIDENCE_REQUIRED");assertThat(db.value("SELECT count(*) FROM delivery_evidence WHERE tenant_id=?",tenant)).isEqualTo(0L);
+  }
+  @ParameterizedTest @ValueSource(strings={"PICKUP","OTHER","LIVE_UNLOAD","DROP_HOOK"}) void nondeliveryStopCannotUsePodRoute(String type) throws Exception {
+    String body=delivery(bol());db.execute("UPDATE trip_stops SET stop_type=? WHERE id=?",type,stop);assertProblem(deliver(body,UUID.randomUUID()),409,"INVALID_STATE_TRANSITION");
+  }
+  @Test void currentDriverAndPermissionsCannotBeReplacedByUploaderIdentity() throws Exception {
+    String body=delivery(bol());UUID key=UUID.randomUUID();db.execute("UPDATE drivers SET active=false WHERE id=?",driver);assertProblem(deliver(body,key),403,"CAPABILITY_DENIED");db.execute("UPDATE drivers SET active=true WHERE id=?",driver);db.execute("DELETE FROM role_assignments WHERE membership_id=?",membership);assertProblem(deliver(body,key),403,"CAPABILITY_DENIED");assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE client_operation_id=?",key)).isEqualTo(0L);
+  }
+  @Test void fuelWrongDocumentTypeAndPendingReceiptAreNeverAccepted() throws Exception {
+    UUID id=image("BOL");assertThat(link(id,stop).statusCode()).isEqualTo(200);assertProblem(fuel(fuelBody(id),UUID.randomUUID()),400,"VALIDATION_FAILED");
+    var pending=initialize(initBody("FUEL_RECEIPT"),"driver");UUID receipt=UUID.fromString(JsonPath.read(pending.body(),"$.documentId"));assertProblem(fuel(fuelBody(receipt),UUID.randomUUID()),409,"UPLOAD_NOT_COMPLETE");
+  }
+  @Test void concurrentFuelCommandsSameReceiptHaveOneDefinitiveWinner() throws Exception {
+    String body=fuelBody(receipt());var latch=new CountDownLatch(1);
+    try(var pool=Executors.newFixedThreadPool(2)) {var a=pool.submit(()->{latch.await();return fuel(body,UUID.randomUUID());});var b=pool.submit(()->{latch.await();return fuel(body,UUID.randomUUID());});latch.countDown();assertThat(List.of(a.get(30,TimeUnit.SECONDS).statusCode(),b.get(30,TimeUnit.SECONDS).statusCode())).containsExactlyInAnyOrder(200,409);}
+    assertThat(db.value("SELECT count(*) FROM fuel_events WHERE tenant_id=?",tenant)).isEqualTo(1L);
+  }
+  @Test void receiptUniquenessAcrossDifferentTripLocksIsAStableBusinessConflict() throws Exception {
+    UUID second=UUID.randomUUID(),receipt=receipt();
+    db.execute("INSERT INTO trips(id,tenant_id,status,current_driver_id,current_tractor_id,created_at,updated_at) VALUES(?,?,'AT_STOP',?,?,now(),now())",second,tenant,driver,tractor);
+    assertThat(http("driver","POST",base()+"/"+receipt+"/links","{\"entityType\":\"TRIP\",\"entityId\":\""+second+"\"}",null).statusCode()).isEqualTo(200);
+    String body=fuelBody(receipt);var latch=new CountDownLatch(1);
+    try(var pool=Executors.newFixedThreadPool(2)) {
+      var a=pool.submit(()->{latch.await();return fuel(body,UUID.randomUUID());});
+      var b=pool.submit(()->{latch.await();return fuel(body.replace(trip.toString(),second.toString()),UUID.randomUUID());});latch.countDown();
+      var results=List.of(a.get(30,TimeUnit.SECONDS),b.get(30,TimeUnit.SECONDS));
+      assertThat(results.stream().map(HttpResponse::statusCode)).containsExactlyInAnyOrder(200,409);
+      assertProblem(results.stream().filter(r->r.statusCode()==409).findFirst().orElseThrow(),409,"RESOURCE_CONFLICT");
+    }
+    assertThat(db.value("SELECT count(*) FROM fuel_events WHERE tenant_id=?",tenant)).isEqualTo(1L);
+    assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE tenant_id=? AND operation_type='FUEL_EVENT'",tenant)).isEqualTo(1L);
+  }
+  @Test void exceptionsCannotUseAnotherTripStopOrCreatePartialDocumentEdges() throws Exception {
+    UUID another=UUID.randomUUID(),foreignStop=UUID.randomUUID();db.execute("INSERT INTO trips(id,tenant_id,status,current_driver_id,created_at,updated_at) VALUES(?,?,'ASSIGNED',?,now(),now())",another,tenant,driver);db.execute("INSERT INTO trip_stops(id,tenant_id,trip_id,sequence_number,stop_type,status,site_snapshot,created_at,updated_at) VALUES(?,?,?,1,'OTHER','PENDING','{\"name\":\"Other\"}',now(),now())",foreignStop,tenant,another);
+    assertProblem(problem(problemBody("OTHER",List.of()).replace(stop.toString(),foreignStop.toString()),UUID.randomUUID()),404,"RESOURCE_NOT_FOUND");
+    UUID photo=image("DAMAGE_PHOTO");assertThat(link(photo,stop).statusCode()).isEqualTo(200);String body=problemBody("EQUIPMENT_DAMAGE",List.of(photo));UUID key=UUID.randomUUID();db.execute("CREATE FUNCTION road_edge_fail() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test-only'; END $$");db.execute("CREATE TRIGGER road_edge_fail BEFORE INSERT ON operational_exception_documents FOR EACH ROW EXECUTE FUNCTION road_edge_fail()");
+    try {assertThat(problem(body,key).statusCode()).isGreaterThanOrEqualTo(500);assertThat(db.value("SELECT count(*) FROM operational_exceptions WHERE tenant_id=?",tenant)).isEqualTo(0L);assertThat(db.value("SELECT count(*) FROM processed_client_operations WHERE client_operation_id=?",key)).isEqualTo(0L);}finally{db.execute("DROP TRIGGER road_edge_fail ON operational_exception_documents");db.execute("DROP FUNCTION road_edge_fail()");}
+    assertThat(problem(body,key).statusCode()).isEqualTo(200);
+  }
+  @Test void opposingForeignStopRequestsRejectWithoutAcquiringAnotherTripsLock() throws Exception {
+    UUID second=UUID.randomUUID(),secondStop=UUID.randomUUID();db.execute("INSERT INTO trips(id,tenant_id,status,current_driver_id,created_at,updated_at) VALUES(?,?,'ASSIGNED',?,now(),now())",second,tenant,driver);db.execute("INSERT INTO trip_stops(id,tenant_id,trip_id,sequence_number,stop_type,status,site_snapshot,created_at,updated_at) VALUES(?,?,?,1,'OTHER','PENDING','{\"name\":\"Other\"}',now(),now())",secondStop,tenant,second);
+    var latch=new CountDownLatch(1);
+    try(var pool=Executors.newFixedThreadPool(2)) {
+      var a=pool.submit(()->{latch.await();return problem(problemBody("OTHER",List.of()).replace(stop.toString(),secondStop.toString()),UUID.randomUUID());});
+      var b=pool.submit(()->{latch.await();return http("driver","POST",root()+"/trips/"+second+"/exceptions",problemBody("OTHER",List.of()),UUID.randomUUID());});latch.countDown();
+      assertProblem(a.get(30,TimeUnit.SECONDS),404,"RESOURCE_NOT_FOUND");assertProblem(b.get(30,TimeUnit.SECONDS),404,"RESOURCE_NOT_FOUND");
+    }
+    assertThat(db.value("SELECT count(*) FROM operational_exceptions WHERE tenant_id=?",tenant)).isEqualTo(0L);
   }
 }
