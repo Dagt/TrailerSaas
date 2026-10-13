@@ -53,10 +53,19 @@ CREATE FUNCTION guard_trailer_oos_evidence() RETURNS trigger LANGUAGE plpgsql SE
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.trailer_movement_events e JOIN public.documents d ON d.tenant_id=e.tenant_id
+      JOIN public.processed_client_operations p ON p.tenant_id=e.tenant_id
+        AND p.client_operation_id=e.client_operation_id
+      JOIN public.trailers t ON t.tenant_id=e.tenant_id AND t.id=e.trailer_id
     WHERE e.tenant_id=NEW.tenant_id AND e.id=NEW.event_id AND e.trailer_id=NEW.trailer_id
       AND e.event_type='MARKED_OOS' AND e.actor_type='HUMAN_USER' AND e.source_type='USER_ACTION'
       AND e.actor_user_id=NEW.actor_user_id AND e.client_operation_id=NEW.client_operation_id
-      AND e.xmin::text::numeric=mod(pg_current_xact_id()::text::numeric,4294967296)
+      -- PostgreSQL's native xid8 -> xid cast preserves the unsigned low 32 bits.
+      -- Both rows must be newly written in this top-level, REQUIRED transaction;
+      -- a completed historical ledger cannot authorize a later evidence insertion.
+      AND e.xmin=pg_current_xact_id()::xid
+      AND p.xmin=pg_current_xact_id()::xid
+      AND p.status='PROCESSING' AND p.operation_type='OOS' AND p.user_id=NEW.actor_user_id
+      AND t.serviceability_state='OUT_OF_SERVICE'
       AND d.id=NEW.document_id AND d.document_type='DAMAGE_PHOTO' AND d.upload_status='UPLOADED'
       AND d.uploaded_by_user_id=NEW.actor_user_id
       AND EXISTS(SELECT 1 FROM public.document_links l WHERE l.tenant_id=d.tenant_id AND l.document_id=d.id

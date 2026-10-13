@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
+import java.sql.SQLException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -142,6 +143,62 @@ class YardOosEvidencePostgresTests extends DocumentHttpPostgresFixture {
     assertThat(http("spotter","POST",base()+"/"+id+"/download-url","{}",null).statusCode()).isEqualTo(200);
     db.execute("delete from role_assignments where membership_id=? and role_code='TENANT_ADMIN'",spotterMembership);
     assertProblem(http("spotter","POST",base()+"/"+id+"/upload-completion",request,key),403,"CAPABILITY_DENIED");unchanged();
+  }
+
+  @ParameterizedTest @ValueSource(strings={"wrongOperationType","historicalEvent","wrongTrailer","wrongActor","missingOosState"})
+  void runtimeCannotAttachEvidenceToAnIllegitimateEvent(String mode) throws Exception {
+    var document=photo("spotter",true);var event=UUID.randomUUID();var operation=UUID.randomUUID();
+    var otherTrailer=new TrailerFixtures(flyway).trailer(tenant,"Other-"+UUID.randomUUID(),customerA);
+    try(var connection=runtime.getConnection()) {
+      connection.setAutoCommit(false);
+      try {
+        try(var scope=connection.prepareStatement("select set_config('app.current_tenant_id',?,true)")) {scope.setString(1,tenant.toString());scope.execute();}
+        if(!mode.equals("missingOosState")) {
+          try(var state=connection.prepareStatement("update trailers set serviceability_state='OUT_OF_SERVICE' where tenant_id=? and id=?")) {state.setObject(1,tenant);state.setObject(2,trailer);state.executeUpdate();}
+        }
+        try(var ledger=connection.prepareStatement("insert into processed_client_operations(id,tenant_id,client_operation_id,user_id,operation_type,request_hash,status,created_at) values(?,?,?,?,?,?,'PROCESSING',now())")) {
+          ledger.setObject(1,UUID.randomUUID());ledger.setObject(2,tenant);ledger.setObject(3,operation);ledger.setObject(4,spotter);ledger.setString(5,mode.equals("wrongOperationType")?"YARD_MOVE":"OOS");ledger.setString(6,"0".repeat(64));ledger.executeUpdate();
+        }
+        try(var fact=connection.prepareStatement("insert into trailer_movement_events(id,tenant_id,trailer_id,event_type,actor_type,source_type,actor_user_id,occurred_at,recorded_at,client_operation_id) values(?,?,?,'MARKED_OOS','HUMAN_USER','USER_ACTION',?,now(),now(),?)")) {
+          fact.setObject(1,event);fact.setObject(2,tenant);fact.setObject(3,trailer);fact.setObject(4,spotter);fact.setObject(5,operation);fact.executeUpdate();
+        }
+        if(mode.equals("historicalEvent")) {
+          connection.commit();
+          try(var scope=connection.prepareStatement("select set_config('app.current_tenant_id',?,true)")) {scope.setString(1,tenant.toString());scope.execute();}
+        }
+        try(var insert=connection.prepareStatement("insert into trailer_oos_evidence(tenant_id,trailer_id,event_id,document_id,actor_user_id,client_operation_id) values(?,?,?,?,?,?)")) {
+          insert.setObject(1,tenant);insert.setObject(2,mode.equals("wrongTrailer")?otherTrailer:trailer);insert.setObject(3,event);insert.setObject(4,document);insert.setObject(5,mode.equals("wrongActor")?user:spotter);insert.setObject(6,operation);
+          assertThatThrownBy(insert::executeUpdate).isInstanceOfSatisfying(SQLException.class,e->assertThat(e.getSQLState()).isEqualTo("23514"));
+        }
+      } finally {connection.rollback();}
+    }
+    assertThat(db.value("select count(*) from trailer_oos_evidence where trailer_id=?",trailer)).isEqualTo(0L);
+    assertThat(db.value("select serviceability_state from trailers where id=?",trailer)).isEqualTo(mode.equals("historicalEvent")?"OUT_OF_SERVICE":"IN_SERVICE");
+    assertThat(db.value("select version from trailers where id=?",trailer)).isEqualTo(0L);
+  }
+
+  @Test void nativeTransactionIdCastRetainsUnsignedLowBitsWithoutOverflow() throws Exception {
+    try(var connection=runtime.getConnection();var statement=connection.createStatement();var result=statement.executeQuery("select ('4294967297'::xid8)::xid::text,('18446744073709551615'::xid8)::xid::text,pg_current_xact_id()::xid::text")) {
+      assertThat(result.next()).isTrue();assertThat(result.getString(1)).isEqualTo("1");assertThat(result.getString(2)).isEqualTo("4294967295");assertThat(result.getString(3)).matches("[0-9]+");
+    }
+  }
+
+  @Test void acceptedEvidenceHasRuntimeTenantRlsAndNoUpdateOrDeleteGrant() throws Exception {
+    var document=photo("spotter",true);assertThat(mark("spotter",UUID.randomUUID(),body(List.of(document))).statusCode()).isEqualTo(200);
+    try(var connection=runtime.getConnection()) {
+      connection.setAutoCommit(false);
+      try(var statement=connection.createStatement()) {
+        statement.execute("select set_config('app.current_tenant_id','"+other+"',true)");
+        try(var rows=statement.executeQuery("select count(*) from trailer_oos_evidence")) {assertThat(rows.next()).isTrue();assertThat(rows.getLong(1)).isZero();}
+        statement.execute("select set_config('app.current_tenant_id','"+tenant+"',true)");
+        try(var grants=statement.executeQuery("select has_table_privilege(current_user,'trailer_oos_evidence','SELECT'),has_table_privilege(current_user,'trailer_oos_evidence','INSERT'),has_table_privilege(current_user,'trailer_oos_evidence','UPDATE'),has_table_privilege(current_user,'trailer_oos_evidence','DELETE')")) {
+          assertThat(grants.next()).isTrue();assertThat(grants.getBoolean(1)).isTrue();assertThat(grants.getBoolean(2)).isTrue();assertThat(grants.getBoolean(3)).isFalse();assertThat(grants.getBoolean(4)).isFalse();
+        }
+        assertThatThrownBy(()->statement.executeUpdate("delete from trailer_oos_evidence")).isInstanceOfSatisfying(SQLException.class,e->assertThat(e.getSQLState()).isEqualTo("42501"));
+      } finally {connection.rollback();}
+    }
+    assertThatThrownBy(()->db.execute("update trailer_oos_evidence set actor_user_id=? where tenant_id=?",user,tenant)).hasMessageContaining("append-only");
+    assertThat(db.value("select count(*) from trailer_oos_evidence where trailer_id=?",trailer)).isEqualTo(1L);
   }
 
 }

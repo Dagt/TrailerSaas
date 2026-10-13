@@ -50,6 +50,27 @@ class YardReportsPostgresTests extends YardPostgresFixture {
     assertThat(f.db.value("select version from trailers where id=?",trailer)).isEqualTo(3L);
     assertThat(f.db.value("select current_location_id from trailers where id=?",trailer)).isEqualTo(a);
   }
+  @Test void unknownRecordedLocationIsAValidHistoricalObservationNotAFictitiousLocation() throws Exception {
+    f.db.execute("update trailers set location_state='LOCATION_UNKNOWN',current_location_id=null where id=?",trailer);
+    var body=report();body.put("recordedLocationId",null);var r=send(UUID.randomUUID().toString(),body);
+    assertThat(r.statusCode()).as(r.body()).isEqualTo(200);
+    assertThat(JsonPath.<Object>read(r.body(),"$.report.recordedLocationId")).isNull();
+    assertThat(f.db.value("select current_location_id from trailers where id=?",trailer)).isNull();
+    assertThat(f.db.value("select location_state from trailers where id=?",trailer)).isEqualTo("LOCATION_UNKNOWN");
+    assertThat(f.db.value("select version from trailers where id=?",trailer)).isEqualTo(0L);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=?",trailer)).isEqualTo(0L);
+  }
+  @Test void offlineReportAfterRealCorrectionCannotOverwriteOrRepeatItsPhysicalEvent() throws Exception {
+    var body=report();var correction=new LinkedHashMap<String,Object>();correction.put("trailerId",trailer);correction.put("siteId",site);correction.put("newLocationId",b);correction.put("expectedTrailerVersion",0);correction.put("reason","Observed at dock");correction.put("observedAt",java.time.Instant.now().minusSeconds(2).toString());
+    var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/tenants/"+tenant+"/yard/location-corrections")).header("Authorization","Bearer yard").header("Content-Type","application/json").header("Idempotency-Key",UUID.randomUUID().toString()).POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(correction))).build();
+    var corrected=HttpClient.newHttpClient().send(request,HttpResponse.BodyHandlers.ofString());assertThat(corrected.statusCode()).as(corrected.body()).isEqualTo(200);
+    var reported=send(UUID.randomUUID().toString(),body);assertThat(reported.statusCode()).as(reported.body()).isEqualTo(200);
+    assertThat(JsonPath.<String>read(reported.body(),"$.report.recordedLocationId")).isEqualTo(a.toString());
+    assertThat(JsonPath.<Number>read(reported.body(),"$.report.observedTrailerVersion").longValue()).isZero();
+    assertThat(f.db.value("select current_location_id from trailers where id=?",trailer)).isEqualTo(b);
+    assertThat(f.db.value("select version from trailers where id=?",trailer)).isEqualTo(1L);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=?",trailer)).isEqualTo(1L);
+  }
   @ParameterizedTest @ValueSource(strings={"reason","same","foreignRecorded","foreignReported","foreignTrailer","wrongSite","inactiveSite","badVersion","futureVersion","unknown","future","noKey","revoked"})
   void invalidReportsAreSafe(String mode) throws Exception {
     var body=report();String key=UUID.randomUUID().toString();int status=400;String code="VALIDATION_FAILED";
