@@ -41,8 +41,9 @@ class RoadTripController extends ChangeNotifier {
           session.snapshot?.userId != change.owner.userId ||
           session.snapshot?.membership.tenantId !=
               change.owner.membership.tenantId ||
-          session.snapshot?.driver?.id != change.owner.driver?.id)
+          session.snapshot?.driver?.id != change.owner.driver?.id) {
         return;
+      }
       assistance.update(null);
       ++_generation;
       detail = null;
