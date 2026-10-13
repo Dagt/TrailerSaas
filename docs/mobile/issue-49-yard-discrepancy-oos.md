@@ -51,7 +51,11 @@ A: typed Yard location/load commands reuse the existing projection, writer and
 ledger. 165 real PostgreSQL/regression/Modulith tests pass, plus two explicit
 permission-port tests (0 failures/errors/skips). The 52 #48 and 88 #40 tests
 are retained unchanged; their shared Yard setup moved into a reusable fixture.
-B–G remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
+B: append-only discrepancy reports and bounded separately authorized review are
+implemented. V23 adds Tenant-safe reports and the immutable OOS event/evidence
+association foundation, with RLS and SELECT/INSERT-only grants. 147 PostgreSQL,
+authorization, strict catalog, correction/#48 and Modulith tests pass (0/0/0),
+including 17 new report cases. C–G remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
 camera and Linux tests do not count as physical device evidence. OQ-054 return
 policy and production privacy/retention remain unresolved. No Yard Check, Missing
 reconciliation, notifications, generic audit worker or GPS tracking is included.
