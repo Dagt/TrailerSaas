@@ -67,7 +67,8 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
       TrailerTripExecution.Coupled currentCoupling,
       Instant startedAt,
       Instant completedAt,
-      boolean departurePrerequisitesSatisfied) {}
+      boolean departurePrerequisitesSatisfied,
+      ArrivalAssistanceContext arrivalAssistance) {}
 
   @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   Detail get(AuthenticatedUserPrincipal actor, UUID tenant, UUID id) {
@@ -308,7 +309,28 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
         t.startedAt,
         t.completedAt,
         "ASSIGNED".equals(t.status)
-            && prerequisites.satisfied(t.tenantId, t.currentDriverId, t.currentTractorId, t.id));
+            && prerequisites.satisfied(t.tenantId, t.currentDriverId, t.currentTractorId, t.id),
+        arrivalContext(t, false));
+  }
+
+  private ArrivalAssistanceContext arrivalContext(TripEntity t, boolean lock) {
+    if (!"IN_TRANSIT".equals(t.status)) return null;
+    // One next nonterminal Stop. Never take coordinates from a historical snapshot.
+    var rows = jdbc.query(
+        "select s.id,s.version,s.status,s.site_id,s.location_id,p.name,p.version,p.latitude,p.longitude,p.geofence_radius_m "
+        + "from trip_stops s join physical_sites p on p.tenant_id=s.tenant_id and p.id=s.site_id "
+        + "left join operational_locations l on l.tenant_id=s.tenant_id and l.site_id=s.site_id and l.id=s.location_id "
+        + "where s.tenant_id=? and s.trip_id=? and s.id=(select id from trip_stops where tenant_id=? and trip_id=? "
+        + "and status not in ('COMPLETED','CANCELLED') order by sequence_number limit 1) "
+        + "and s.status='EN_ROUTE' and p.active and p.latitude is not null and p.longitude is not null "
+        + "and p.geofence_radius_m>0 and (s.location_id is null or l.active) "
+        + (lock ? "for share of p" : ""),
+        (r,n) -> new ArrivalAssistanceContext(t.id,t.version,t.currentDriverId,t.currentTractorId,t.plannedInitialTrailerId,
+            r.getObject(1,UUID.class),r.getLong(2),r.getString(3),r.getObject(4,UUID.class),r.getLong(7),
+            r.getObject(5,UUID.class),r.getString(6),r.getDouble(8),r.getDouble(9),r.getInt(10)),
+        t.tenantId,t.id,t.tenantId,t.id);
+    return rows.stream().filter(c -> ArrivalAssistanceContext.configured(c.latitude(),c.longitude(),c.geofenceRadiusM()))
+        .findFirst().orElse(null);
   }
 
   private void event(
