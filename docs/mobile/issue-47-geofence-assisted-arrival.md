@@ -174,6 +174,36 @@ and CI evidence.
 | 19 | Manual offline preserved | Existing capture/replay API, no GPS dependency; manual real SQLite test and historical suites |
 | 20 | OpenAPI matches code | Implemented #47 source/evidence/own-context schemas; historical 14 plus four new contract tests |
 
+## Publication and external review
+
+The real publication artifact is [PR #104](https://github.com/Dagt/TrailerSaas/pull/104),
+opened as Draft on 2026-10-13 against `main`. All ten checkpoints A–G4 are
+preserved on `issue-47-geofence-assisted-arrival`.
+
+Implementation HEAD: `07c2fcd19fd964107817462864d816037e184bce`.
+Base: `df5be704594f4ef2810b7c3e5f3dcdb7ad528e07` (merged PR #103).
+Completed implementation CI: [run 38394857918](https://github.com/Dagt/TrailerSaas/actions/runs/38394857918),
+with all four jobs successful on that same head. Actions checked the PR merge
+ref containing that head and the verified base; no repository merge was performed.
+
+| Job | Actual CI tests | Result |
+| --- | ---: | --- |
+| Backend | 2,019 | PASS; 0 failures, errors or skipped; Java 25, PostgreSQL 18.6 Testcontainers, clean verify |
+| Mobile | 389 | PASS; no skipped tests; locked dependencies, reproducible Drift v6, format and fatal-info analysis; session regressions also pass individually |
+| Web | 244 | PASS; no skipped tests; npm ci, typecheck, lint, tests and build |
+| OpenAPI | 18 | PASS; 0 failures or skipped; accepted contract validation also passes |
+
+After G4, only this publication record and the backlog status were updated; no
+additional implementation correction was needed. The final documentation commit
+must pass the same four jobs before the **Ready for Review** handoff. The exact
+final publication SHA, final CI run ID/counts and current review state are kept
+in the [PR description](https://github.com/Dagt/TrailerSaas/pull/104) and
+[its checks](https://github.com/Dagt/TrailerSaas/pull/104/checks), so this record
+does not pretend to contain its own Git commit SHA or an uncompleted CI result.
+Readiness also requires no conflicts, rejected reviews or unresolved threads.
+The immutable implementation validation above remains independently inspectable.
+The PR stays open for external technical review. **NO MERGE; no #48 work.**
+
 ## QA and release gate #65
 
 Local Java25/PostgreSQL18.6 Testcontainers, full Web/OpenAPI and Flutter
@@ -183,8 +213,8 @@ and official engine were therefore provisioned in an isolated local Ubuntu Docke
 checkout: all 389 tests pass, including 70 new geofence tests with real SQLite,
 lost ACK/reopen, Driver rebound and targeted instruction persistence. Host source
 was mounted read-only; no security policy or test gate was bypassed. This remains
-automated local Linux validation, not Android/iOS hardware QA. Final exact-head
-CI counts and links are recorded in the PR after completion.
+automated local Linux validation, not Android/iOS hardware QA. Completed CI
+evidence and the final publication check links are recorded above and in the PR.
 
 The unmodified Web command also passes all 244 tests, typecheck/lint/build in a
 local Linux checkout. Parallel Windows runs under load exposed existing timing
@@ -212,7 +242,7 @@ OpenAPI **18** plus contract validation. An initial Linux Backend experiment was
 rejected by the existing loopback guard/Docker Desktop networking; that guard was
 preserved and the complete final verification ran in the working Windows setup.
 No CI, historical tests, migrations V1–V22, RLS policies or capabilities were altered.
-The PR remains Draft until its four unchanged jobs pass on its exact final HEAD.
+Readiness follows the publication gates above and the actual state of PR #104.
 
 No physical Android/iOS tests have been performed in this task. Release #65 must
 test the project minimum Android version and supported current Android/iOS:
