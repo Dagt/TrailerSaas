@@ -1813,9 +1813,10 @@ paths:
     post:
       tags: [DriverMobile]
       operationId: confirmStopArrival
-      x-implementation-status: implemented-issue-44
+      x-implementation-status: implemented-issue-47
       description: >-
-        Requires ARRIVAL_CONFIRM; manual arrival only. Coordinates are optional evidence. A normalized authorized Operational Location permits physical Trailer arrival; an ad-hoc snapshot never invents physical location.
+        Requires ARRIVAL_CONFIRM; MANUAL remains independent of GPS. GEOFENCE_CONFIRMED requires explicit human confirmation and coordinates within the live active next Site's configured radius, with positive finite accuracy at most half that radius and distance plus accuracy inside it. Missing geographic context rejects that mode with RESOURCE_CONFLICT. Coordinates are evidence, never proof of presence or permission. Both modes require Trip IN_TRANSIT and the next active Stop EN_ROUTE. A normalized authorized Operational Location permits physical Trailer arrival; an ad-hoc snapshot never invents physical location.
+        Backend derives HUMAN_USER from the principal, USER_ACTION for MANUAL and MOBILE_AUTOMATION for GEOFENCE_CONFIRMED, preserving arrivalSource metadata in Stop and applicable Trailer events. No event is produced by a suggestion alone.
         Fresh ACTIVE membership, own active linked Driver and current Trip assignment are
         required with TRIP_EXECUTE_ASSIGNED. Unknown body/query fields are rejected.
         Same key and logical request replays its saved result only after fresh authorization;
@@ -1825,7 +1826,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ManualArrivalRequestImplemented' }
+            schema: { $ref: '#/components/schemas/ConfirmedArrivalRequestImplemented' }
       responses:
         '200':
           description: Authoritative assigned execution projection or saved successful result
@@ -1963,7 +1964,7 @@ paths:
       tags: [DriverMobile]
       operationId: getOwnAssignedTripExecution
       x-implementation-status: implemented-issue-44
-      description: Fresh TRIP_VIEW_ASSIGNED and own active Driver/current assignment. Includes terminal result for this assigned Trip. No administrative history or generic directory. Invisible direct Trip is safe 404. No query fields.
+      description: Fresh TRIP_VIEW_ASSIGNED and own active Driver/current assignment. Includes terminal result for this assigned Trip. Optional arrivalAssistance exposes only the live active Site of the next EN_ROUTE Stop on an IN_TRANSIT Trip, including configuration/version/equipment identity. Null when unavailable. Historical Stop snapshots omit latitude, longitude and geofenceRadiusM; no Site directory or address-derived coordinates. No administrative history. Invisible direct Trip is safe 404. No query fields.
       responses:
         '200':
           description: Bounded assigned execution detail
@@ -2423,13 +2424,13 @@ components:
         occurredAt: { type: string, format: date-time }
         fromStopId: { type: [string, "null"], format: uuid, description: First departure requires null/omitted origin Stop. }
         nextStopId: { type: string, format: uuid, description: Must be first nonterminal planned Stop. }
-    ManualArrivalRequestImplemented:
+    ConfirmedArrivalRequestImplemented:
       type: object
       additionalProperties: false
       required: [occurredAt, source]
       properties:
         occurredAt: { type: string, format: date-time }
-        source: { type: string, enum: [MANUAL], description: "Confirmed geofence assistance remains #47." }
+        source: { type: string, enum: [MANUAL, GEOFENCE_CONFIRMED], description: Human confirmed operation; never client authority or an automatic detector POST. }
         coordinates:
           type: [object, "null"]
           additionalProperties: false
@@ -2438,6 +2439,17 @@ components:
             latitude: { type: number, minimum: -90, maximum: 90 }
             longitude: { type: number, minimum: -180, maximum: 180 }
             accuracyM: { type: number, minimum: 0 }
+      allOf:
+        - if:
+            properties: { source: { const: GEOFENCE_CONFIRMED } }
+            required: [source]
+          then:
+            required: [coordinates]
+            properties:
+              coordinates:
+                type: object
+                properties:
+                  accuracyM: { type: number, exclusiveMinimum: 0 }
     CompleteOperationalStopRequestImplemented:
       type: object
       additionalProperties: false
@@ -2455,9 +2467,13 @@ components:
     DriverExecutionDetail:
       type: object
       additionalProperties: false
-      required: [trip, tractorOperationalNumber, currentCoupling, startedAt, completedAt, departurePrerequisitesSatisfied]
+      required: [trip, tractorOperationalNumber, currentCoupling, startedAt, completedAt, departurePrerequisitesSatisfied, arrivalAssistance]
       properties:
         trip: { $ref: '#/components/schemas/DriverAssignedTrip' }
+        arrivalAssistance:
+          oneOf:
+            - { type: "null" }
+            - $ref: '#/components/schemas/DriverArrivalAssistance'
         tractorOperationalNumber: { type: [string, "null"] }
         startedAt: { type: [string, "null"], format: date-time }
         completedAt: { type: [string, "null"], format: date-time }
@@ -2466,6 +2482,26 @@ components:
           oneOf:
             - { type: "null" }
             - $ref: '#/components/schemas/DriverPhysicalCoupling'
+    DriverArrivalAssistance:
+      type: object
+      additionalProperties: false
+      required: [tripId, tripVersion, driverId, tractorId, expectedTrailerId, stopId, stopVersion, stopStatus, siteId, siteVersion, locationId, destinationName, latitude, longitude, geofenceRadiusM]
+      properties:
+        tripId: { type: string, format: uuid }
+        tripVersion: { type: integer, minimum: 0 }
+        driverId: { type: string, format: uuid }
+        tractorId: { type: [string, "null"], format: uuid }
+        expectedTrailerId: { type: [string, "null"], format: uuid }
+        stopId: { type: string, format: uuid }
+        stopVersion: { type: integer, minimum: 0 }
+        stopStatus: { type: string, const: EN_ROUTE }
+        siteId: { type: string, format: uuid }
+        siteVersion: { type: integer, minimum: 0 }
+        locationId: { type: [string, "null"], format: uuid }
+        destinationName: { type: string }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        geofenceRadiusM: { type: integer, minimum: 1, description: Explicit Site configuration; no default. }
     DriverPhysicalCoupling:
       type: object
       additionalProperties: false
@@ -2668,7 +2704,7 @@ components:
         locationId: { type: [string, "null"], format: uuid }
         siteName: { type: [string, "null"] }
         locationName: { type: [string, "null"] }
-        siteSnapshot: { type: [object, "null"], description: Frozen accepted destination snapshot; never used as authorization. }
+        siteSnapshot: { type: [object, "null"], description: Frozen accepted destination labels; geographic keys omitted in Driver projections. Never used as authorization or arrival coordinates. }
         scheduledAt: { type: [string, "null"], format: date-time }
         status: { type: string, enum: [PENDING, EN_ROUTE, ARRIVED, IN_SERVICE, EXCEPTION, COMPLETED, CANCELLED] }
         instructions: { type: [string, "null"] }

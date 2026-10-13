@@ -90,7 +90,7 @@ closing the Trips/dispatch Web wave.
 #39 is merged/complete via [PR #93](https://github.com/Dagt/TrailerSaas/pull/93).
 #40 is merged/complete via [PR #94](https://github.com/Dagt/TrailerSaas/pull/94).
 #41 is merged/complete via [PR #95](https://github.com/Dagt/TrailerSaas/pull/95).
-The Trailer movement/read surface wave is complete. #42 is merged/complete via [PR #96](https://github.com/Dagt/TrailerSaas/pull/96). #44 is merged/complete via [PR #97](https://github.com/Dagt/TrailerSaas/pull/97); #43 is merged/complete via PR #102; #45 is the current Road evidence phase. Yard workflows remain separate Issues.
+The Trailer movement/read surface wave is complete. #42 is merged/complete via [PR #96](https://github.com/Dagt/TrailerSaas/pull/96). #44 is merged/complete via [PR #97](https://github.com/Dagt/TrailerSaas/pull/97); #43 is merged/complete via PR #102; #45 is merged via PR #103. #47 is the current foreground geofence-assisted arrival and Driver update integration phase; A–F are published, G validation is in progress. Yard workflows remain separate Issues; no #48 work or merge is authorized here.
 
 ### Evidence/alerts support
 - #53 after #52

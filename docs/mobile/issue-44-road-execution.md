@@ -1,5 +1,9 @@
 # Issue #44 — Driver execution boundary
 
+Evolution: [#47](issue-47-geofence-assisted-arrival.md) extends the same Arrival
+endpoint/ledger with GEOFENCE_CONFIRMED, bounded own-next-Site data and human
+confirmation. MANUAL and all #44 state/physical/authorization guarantees remain.
+
 Backend remains the only operational authority. Road detail uses fresh own-Driver
 `GET /driver/me/trips/{tripId}` because the administrative `GET /trips/{tripId}`
 contains actor/assignment histories that must not be exposed to Driver callers.

@@ -208,6 +208,22 @@ Departure is manual.
 
 ## 7. Arrival
 
+Implemented #47 extends #44 at the same endpoint. Both `MANUAL` and
+`GEOFENCE_CONFIRMED` require human confirmation, fresh current assignment and
+the existing capabilities/state/ledger rules. MANUAL never requires GPS.
+GEOFENCE_CONFIRMED requires coordinates with positive finite accuracy at most
+half the live configured Site radius, and Haversine distance plus accuracy within
+that radius. The Site must be active and belong to the next EN_ROUTE Stop on an
+IN_TRANSIT Trip; missing context is a safe 409 RESOURCE_CONFLICT. No default radius
+or snapshot-derived target. Evidence is not proof of presence or permission.
+
+Own authenticated Trip detail adds nullable `arrivalAssistance` with exactly that
+next Trip/Stop/Site, configured geography and context versions/equipment. Driver
+Stop snapshots omit latitude/longitude/radius. Stop and applicable Trailer events
+derive HUMAN_USER + USER_ACTION for manual, HUMAN_USER + MOBILE_AUTOMATION for
+geofence, and matching arrivalSource. Flutter supplies no actor/source_type.
+See [architecture and validation](../mobile/issue-47-geofence-assisted-arrival.md).
+
 ### POST /stops/{stopId}/arrivals
 
 Capabilities:
@@ -234,7 +250,8 @@ Source:
 - MANUAL
 - GEOFENCE_CONFIRMED
 
-Coordinates are optional evidence, not continuous route history.
+Coordinates are optional for MANUAL and required for GEOFENCE_CONFIRMED;
+they are event evidence, not continuous route history.
 
 Side effects:
 
@@ -611,7 +628,7 @@ is delivered by #39.
 
 ## Issue #44 implementation boundary
 
-See [Driver execution implementation](../mobile/issue-44-road-execution.md) for the five strict execution commands, own assigned detail, V18 Stop facts, physical projection and foreground idempotent recovery. First departure now uses real #43 duty/Pre-Trip validation; no fabricated prerequisites. Ordinary non-POD completion still rejects Delivery; the separate implemented #45 completion validates #53 evidence. Manual arrival only; geofence assistance remains #47. QR identification adds version for the existing Hook contract. #46 follows #44 for the offline replay worker. All capabilities and #38 physical contracts remain unchanged.
+See [Driver execution implementation](../mobile/issue-44-road-execution.md) for the five strict execution commands, own assigned detail, V18 Stop facts, physical projection and foreground idempotent recovery. First departure now uses real #43 duty/Pre-Trip validation; no fabricated prerequisites. Ordinary non-POD completion still rejects Delivery; the separate implemented #45 completion validates #53 evidence. #47 implements human-confirmed geofence assistance with independent manual fallback. QR identification adds version for the existing Hook contract. #46 supplies the existing offline replay worker. All capabilities and #38 physical contracts remain unchanged.
 
 ## Issue #46 client replay boundary
 

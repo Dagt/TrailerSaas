@@ -7,6 +7,17 @@
 
 ## Goal
 
+Issue #47 implements optional foreground arrival assistance. **Check arrival
+location** explains and requests during-use location, then evaluates one reading
+against the next authorized Site only. A reliable precise fix displays
+“It looks like you arrived at [destination].” with **Confirm Arrival** / **Not Yet**.
+Not Yet suppresses that context; confirmation rechecks permission/age/identity.
+The suggestion never changes Stop state. Existing manual arrival remains
+available with denied/reduced permission, GPS failure, missing config or offline.
+Reroute/cancellation/instructions refresh uses the same Driver Updates panel;
+downloading a new instruction cancels the previous suggestion before refreshing
+own work. Background/Road exit/account changes discard readings. No route trail.
+
 The Driver app should make the required action obvious, minimize typing, tolerate temporary connectivity loss and preserve accurate operational history.
 
 A Driver should rarely need to understand internal status names.

@@ -45,3 +45,153 @@ An offline confirmed operation keeps its original occurrence/evidence and is
 re-authorized by existing server state rules on replay. Site changes may cause a
 safe conflict. Already committed requests retain the existing ledger replay
 semantics after fresh current authorization.
+
+## Architecture and authorized data
+
+`GET /api/v1/tenants/{tenantId}/driver/me/trips/{tripId}` adds nullable
+`arrivalAssistance`. Fresh TRIP_VIEW_ASSIGNED, active membership, active linked
+Driver and current assignment precede the projection. Only the first nonterminal
+Stop on an IN_TRANSIT Trip, with status EN_ROUTE, can supply its active normalized
+Physical Site. A supplied Operational Location must belong to that Site/Tenant
+and be active. The projection includes Trip/Stop/Site versions, Driver/Tractor/
+expected Trailer, destination label, Site coordinates and configured radius.
+Null disables geography only. Driver Stop snapshots omit geographic keys;
+neither historical instructions nor address text create an authorized region.
+There is no new directory, capability, endpoint, SQL table or migration.
+
+`ArrivalTarget` checks this identity against current own work. Its stable identity
+includes versions and equipment; session ownership is separately fenced by
+Firebase User, internal User, Tenant and Driver. The evaluator is pure and uses
+the mean Earth radius 6,371,008.8 m, degrees converted to radians, clamped
+Haversine input and uncertainty containment `distance + accuracy <= radius`.
+Dateline, poles, antipodes, age and accuracy boundaries are reproducible tests.
+
+## Permissions and human UX
+
+The selected MIT Geolocator package and compatibility tradeoff are recorded in
+[ADR-024](../decisions/ADR-024-foreground-arrival-location-adapter.md). Android
+declares COARSE/FINE only; no background or foreground-service permission.
+iOS declares NSLocationWhenInUseUsageDescription only; no Always purpose key or
+background mode. The upstream Android plugin includes a dormant service class;
+our adapter never supplies foregroundNotificationConfig or enables background
+mode. Native platform source review is evidence, not a physical-device test.
+
+The Driver taps **Check arrival location** after the UI explains the purpose:
+suggest an arrival while Road Mode is open, without recording a route. The port
+checks support, services, foreground permission and OS precision before reading,
+then rechecks before showing or confirming a suggestion. Approximate/reduced
+precision never produces a suggestion. Errors, disabled GPS, denied/revoked
+permission, timeout or missing config leave the existing manual arrival control.
+An OS permission dialog that suspends the app cancels that check; a fresh
+foreground check is intentional. It never silently starts GPS on reopening.
+
+The prompt reads **It looks like you arrived at [destination].** Its actions are
+**Confirm Arrival** and **Not Yet**. Not Yet suppresses that exact context until
+it changes. No dialog suggestion mutates Trip/Stop or invokes the Backend.
+Confirmation rechecks permission, freshness and the exact context, consumes the
+suggestion once, and captures occurredAt at that operation. If it expires, only
+manual arrival/new explicit check remains. Pending queue/uncertain commands
+disable another arrival without fabricating a local Stop transition.
+
+## Backend and provenance
+
+TripExecutionRequests accepts exactly MANUAL and GEOFENCE_CONFIRMED. Unknown
+body/query fields and nonfinite/out-of-range evidence fail strict validation.
+MANUAL can omit coordinates and is independent of geographic configuration.
+GEOFENCE_CONFIRMED requires positive accurate coordinates, next active EN_ROUTE
+Stop, IN_TRANSIT Trip and a live active Site with coordinates/radius. The ledger
+winner checks the spatial envelope against that Site under shared lock and
+validates destination compatibility. Missing/stale geographic context is a safe
+409 RESOURCE_CONFLICT; invalid state remains INVALID_STATE_TRANSITION.
+
+Existing authorization, TRIP_EXECUTE_ASSIGNED + ARRIVAL_CONFIRM, Driver/Trip/
+Stop locks, chronological checks and physical Trailer policy remain mandatory.
+Fresh authority still precedes ledger replay. Coordinates/source cannot grant
+access or prove presence. No strict global Trip-version check is added to the
+offline command. A normalized Site without Operational Location can record Stop
+arrival but cannot invent an AT_LOCATION Trailer projection.
+
+Both events derive HUMAN_USER and actor_user_id from the authenticated principal.
+MANUAL derives USER_ACTION; GEOFENCE_CONFIRMED derives MOBILE_AUTOMATION and
+arrivalSource=GEOFENCE_CONFIRMED. Applicable Trailer movement receives the same
+provenance/source. Hook, Drop, departure and service remain USER_ACTION. A
+suggestion creates no Stop/Trailer/Order/Shift/audit fact.
+
+## Offline and Driver Updates
+
+RoadTripController calls the existing RoadCommandCapture, CommandStore and
+ReplayWorker. One clientOperationId/path/body is materialized durably before
+HTTP. Confirmed coordinates never change on retry, lost ACK or SQLite reopen.
+Only expressly confirmed Arrival evidence is permitted in that payload. There
+is no raw-fix table/history, new queue, Drift version or sync endpoint. The server
+ACK triggers authoritative refresh, not a local status edit or reuse of an old
+ledger response as current work. Existing 408/429/5xx/backoff, 401 recovery,
+403/404/409 reconciliation and immutable UUID semantics remain in one lane.
+
+The same DriverUpdatesStore/Panel used by #45 is passed into RoadTripScreen.
+New validated instructions emit an in-memory invalidation before persistence,
+then refresh own Trip detail after that download commits. Deduplicated historical
+tail rows do not emit repeated resets. The existing cursor, pagination and
+User/Tenant/Driver namespaces are unchanged. Instructions appear inside Road
+Mode as well as home, including without push. Manual refresh, initial load,
+foreground and reconnect continue to use the existing API.
+
+Reroute, instructions, reassignment, Trailer expectation, cancellation and work
+removal cancel the previous target/read and fence late callbacks. Fresh detail
+recomputes the next Stop and live Site; failed reads leave assistance disabled.
+Historical instructions confer no execution rights; planned substitution remains
+distinct from the physical Hook. Logout/Tenant/Driver/permission change, app
+background, Road disposal, terminal Trip or removal of enabled work discard
+ephemeral evidence. No Off Duty sampling, GPS timer, breadcrumbs, tracking map,
+periodic coordinate upload, external geolocation service or FCM is introduced.
+
+## Security review evidence
+
+This is implementation self-review; the open PR is the artifact for independent
+external technical review. Test execution results below must distinguish local
+and CI evidence.
+
+| # | Question / answer | Evidence |
+| --- | --- | --- |
+| 1 | Suggestion cannot mutate Stop | ArrivalAssistanceController has no API/DB; widget checks zero POST; own detail no-mutating SQL test |
+| 2 | Forged source cannot bypass permissions | Authorization precedes ledger; geofence current-authority matrix and historical auth suites |
+| 3 | Foreign Sites are not exposed | Own Trip/Driver authorization, Tenant predicates/FKs/RLS; foreign Tenant/Stop tests |
+| 4 | Only next operational geography is returned | arrivalContext query, withoutGeography projection; live-next-Site test |
+| 5 | No position history | No schema change; only confirmed CommandIntent/evidence metadata; privacy contract test |
+| 6 | No unauthorized background location | Lifecycle cancels native subscription; foreground-only settings; native adapter/manifest tests |
+| 7 | Works without GPS | Manual widget and real offline queue regression |
+| 8 | Old suggestion cannot retarget another Stop | Immutable target identity, generation/owner/age checks, confirmedEvidence; next-Stop backend tests |
+| 9 | Reroute cancels old context | Store pre-download invalidation, controller generation, late-reading update tests |
+| 10 | Human actor retained | Authenticated principal; Stop/Trailer provenance SQL assertions |
+| 11 | MOBILE_AUTOMATION only for confirmed geofence | Closed source DTO; all other commands default USER_ACTION; physical Hook/Depart SQL regression |
+| 12 | Replay retains body/UUID | Existing immutable store; real SQLite lost-ACK/reopen and retry tests |
+| 13 | Double Arrival avoided | Same/different-key PostgreSQL concurrency and unique ledger; consume-once UI |
+| 14 | Account change invalidates callbacks | Session generation and four ownership fields; account/widget/update tests |
+| 15 | Distance is reproducible | Pure shared-policy Haversine calculations; poles/dateline/antipodes and boundary tests |
+| 16 | Approximate location avoids false positives | OS reduced-accuracy gate plus accuracy envelope; adapter/evaluator tests |
+| 17 | All RLS restrictions retained | V1–V22 byte-identical, no SQL/schema/grant changes; complete Backend Flyway/RLS suite |
+| 18 | #45 guarantees retained | Same Store/Panel/cursor tables; deduplicated-tail regression plus full POD/Fuel/exception/media suites |
+| 19 | Manual offline preserved | Existing capture/replay API, no GPS dependency; manual real SQLite test and historical suites |
+| 20 | OpenAPI matches code | Implemented #47 source/evidence/own-context schemas; historical 14 plus four new contract tests |
+
+## QA and release gate #65
+
+Local Java25/PostgreSQL18 Testcontainers, full Web/OpenAPI and Flutter
+format/analyze/generation are run without changing CI. Local Flutter pure/widget
+tests run; Windows policy blocks native SQLite DLL loading with error 4551, so
+real SQLite integration and the full suite require the unchanged Linux CI.
+No security policy, test or gate is bypassed. CI counts and exact-head evidence
+are recorded in the PR after completion.
+
+No physical Android/iOS tests have been performed in this task. Release #65 must
+test the project minimum Android version and supported current Android/iOS:
+precise/approximate and reduced accuracy, grant/denial/revocation, disabled GPS,
+foreground/background during acquisition/permission/confirmation, Road exit,
+reroute/cancel while reading, process close/reopen with pending confirmed command,
+and absence of background location/notification/service activity. Native build,
+signing and SPM privacy-manifest verification remain device/release work.
+
+Before production, review purpose text, privacy notice, personal-device consent,
+company policy and retention under NFR-050/051 and OQ-057. No legal conclusion
+or consent entitlement is implied by OS permission. Continuous tracking, push,
+Maps, stronger location grants, route history and #48 are outside this issue.
