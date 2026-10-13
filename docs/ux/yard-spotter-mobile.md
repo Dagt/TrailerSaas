@@ -5,6 +5,18 @@
 **Related requirements:** FR-050–055, FR-090–103, FR-120–136, FR-170–174  
 **Related state machines:** Shift, Trailer, Yard Check, Alert
 
+## Issue #49 implemented corrective and damage boundary
+
+Yard Home now supports explicit Location Correction, Load State Correction,
+Discrepancy Report and Report Damage / Mark OOS. The original Yard Move remains
+unchanged. Yard Check, Missing reconciliation and notifications remain #50/#51/#55.
+No capability or role grant changes: YARD_SPOTTER is Tenant-scoped, has the two
+correction capabilities, and has no OOS grant; a currently authorized multi-role
+user may use OOS. Selecting Site, QR scan, a local draft or an upload grants no
+mutation authority. Return to Service and unresolved OQ-054 remain separate.
+
+See [#49 contracts, acceptance, tests and release limitations](../mobile/issue-49-yard-discrepancy-oos.md).
+
 ## Implemented slice — issue #48
 
 The current application provides Yard Home, authorized Site selection, existing
@@ -30,8 +42,8 @@ authorized downloaded recorded location/version with refresh time. Failed or
 partial downloads do not authorize an old context. Offline use requires an
 established session and downloaded context/scanned Trailer; replay re-authorizes.
 Consecutive moves depend on the previous same-Trailer ACK, never a guessed version;
-a parent conflict blocks descendants while other assets may sync. Correction,
-OOS reporting, Yard Check and reconciliation actions below remain #49–#51.
+a parent conflict blocks descendants while other assets may sync. Correction and OOS reporting are implemented in #49;
+Yard Check and reconciliation remain #50–#51.
 Physical camera/permission/lifecycle QA remains #65.
 
 The following sections describe the accepted broader Yard UX, beyond this slice.
@@ -548,3 +560,25 @@ Ready for wireframes when:
 8. OOS reporting is explicit and evidence-based.
 9. Offline Yard Moves/Yard Check scans have deterministic sync behavior.
 10. Post-Trip and Off Duty close the shift without erasing unsynced operations.
+
+### #49 implemented review and damage UX
+
+Scan → recorded Trailer → explicit action. Location uses current recorded value,
+authorized destination, reason and Confirm Correction. Load State shows current
+and new value/reason and preserves other dimensions. Without correction grant,
+Report Discrepancy is available and explicitly creates no state change.
+
+Damage uses the existing injected NativeInspectionCamera/ImagePicker: real image
+bytes are privately copied/hash-verified, comment and all photo IDs retained before
+explicit Confirm Mark OOS. Not Yet preserves drafts/photos and sends no OOS.
+Upload/finalization is independently visible and never serviceability success.
+Saved local, waiting evidence, queued/sending, server ACK and conflicts are distinct.
+There is no Return-to-Service shortcut or new capability grant. Forms close on
+User/Tenant/Driver/Site/Trailer/version/mode changes; double confirmation is fenced.
+
+Conflict handling retains original commands and descendants. A fresh authorized
+read and explicit review may create a new action; failed reload or uncertain ACK
+does not permit rebasing. Old damaged evidence can be explicitly retained in a new
+reviewed draft without changing its file/hash/identity. Physical Android/iOS camera,
+permission/reduced access/background/restart/lost-data QA remains #65; injected
+camera/Linux widget tests are not physical-device QA.

@@ -150,11 +150,18 @@ class YardFixture {
     return mobile.response({'items': mobile.trips, 'nextCursor': null});
   }
 
-  Future<void> open({bool dual = false}) async {
+  Future<void> open({
+    bool dual = false,
+    List<String> capabilities = const [],
+  }) async {
     mobile.memberships = [
       membership(
         'A',
-        capabilities: ['YARD_MOVE_EXECUTE', if (dual) 'TRIP_VIEW_ASSIGNED'],
+        capabilities: [
+          'YARD_MOVE_EXECUTE',
+          ...capabilities,
+          if (dual) 'TRIP_VIEW_ASSIGNED',
+        ],
       ),
     ];
     mobile.handler = (r) async {

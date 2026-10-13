@@ -8,6 +8,18 @@ Base:
 
 Binary objects live in Cloudflare R2. The API authorizes metadata and signed URL issuance.
 
+## Issue #49 implemented corrective and damage boundary
+
+Yard Home now supports explicit Location Correction, Load State Correction,
+Discrepancy Report and Report Damage / Mark OOS. The original Yard Move remains
+unchanged. Yard Check, Missing reconciliation and notifications remain #50/#51/#55.
+No capability or role grant changes: YARD_SPOTTER is Tenant-scoped, has the two
+correction capabilities, and has no OOS grant; a currently authorized multi-role
+user may use OOS. Selecting Site, QR scan, a local draft or an upload grants no
+mutation authority. Return to Service and unresolved OQ-054 remain separate.
+
+See [#49 contracts, acceptance, tests and release limitations](../mobile/issue-49-yard-discrepancy-oos.md).
+
 ## 1. Initialize upload
 
 ### POST /documents/uploads
@@ -148,12 +160,11 @@ Pre-Trip completion requires finalized Documents of types:
 
 The API should reject completion when required images are missing.
 
-## 10. Damage evidence (#45/#53); OOS workflow deferred to #49
+## 10. Damage evidence (#45/#53) and implemented Yard OOS (#49)
 
-Damage/OOS commands may reference:
-
-- DAMAGE_PHOTO;
-- other approved evidence type.
+The implemented Yard OOS command requires one to fifty distinct finalized own
+DAMAGE_PHOTO documents bound exclusively to its Trailer. Driver damage remains
+the separate assigned-work workflow; no arbitrary evidence type is accepted by OOS.
 
 Server validates all Document IDs belong to the active Tenant and caller may link them to the Trailer/exception.
 
@@ -257,7 +268,7 @@ exception, Fuel or Yard command endpoint is implemented here.
 | Four PRETRIP positions | PRETRIP_CREATE + active own Driver | Current assigned TRIP; validator also checks the real current active Tractor |
 | FUEL_RECEIPT | FUEL_EVENT_CREATE + active own Driver | Current assigned TRIP and real current active Tractor |
 | DAMAGE_PHOTO (Driver) | EXCEPTION_REPORT + active own Driver | Current assigned TRIP or TRIP_STOP; never arbitrary Trailer authority |
-| DAMAGE_PHOTO (OOS) | TRAILER_OOS_MARK in the concrete Trailer context | Validation port prepared; public upload/attachment workflow remains #49 |
+| DAMAGE_PHOTO (OOS) | TRAILER_OOS_MARK in the concrete Trailer context | #49 scoped producer, exclusive TRAILER link and atomic MARKED_OOS evidence association |
 
 Finalization resolves the persisted type before checking its capability, including
 ledger replay. Unlinked uploader metadata management uses that type's current
@@ -325,3 +336,23 @@ and recordDelivery around the real completion/fulfillment callback. Fuel/damage
 have equivalent fresh policy checks for committed terminal replay; historical
 uploader identity never overrides lost resource authorization. No receiver alerts,
 Yard/OOS producer, retention or background jobs are implemented here.
+
+### #49 scoped Trailer DAMAGE_PHOTO producer
+
+POST /trailers/{trailerId}/damage-uploads requires TRAILER_OOS_MARK, ACTIVE Tenant/
+membership and a real active own-Tenant Trailer; no Driver/Trip is required. The
+existing closed Initialize DTO admits documentType=DAMAGE_PHOTO, image/jpeg or
+image/png, positive deployment-bounded sizeBytes and optional SHA-256. Mobile
+always captures and verifies a private byte copy/hash. It returns the existing
+201 PENDING signed PUT reservation and persists an exclusive TRAILER link.
+Initialization is not idempotent; lost ACK can leave an unused PENDING reservation.
+
+The original upload-completion/metadata/download routes are reused. Completion
+requires own uploader, fresh OOS capability and active Trailer, verifies bytes/
+size/hash and the same-key ledger before UPLOADED. Generic links cannot relink a
+Trailer-scoped photo into assigned Trip work. No permanent private URLs or R2
+credentials enter SQLite. Metadata/download retain all-linked-resource scope;
+no DOCUMENT_VIEW_ALL grant is added to Spotter. Upload/finalization alone is no
+OOS event or accepted operational evidence: /yard/out-of-service validates and
+associates the finalized set atomically to the actual event. Road/POD/Fuel/inspection
+transport and evidence policy remain unchanged.

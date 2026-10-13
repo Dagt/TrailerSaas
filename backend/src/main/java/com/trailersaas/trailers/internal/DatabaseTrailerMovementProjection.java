@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.*;
 
 @Service
 @Transactional(propagation = Propagation.MANDATORY)
-class DatabaseTrailerMovementProjection implements TrailerMovementProjection {
+class DatabaseTrailerMovementProjection implements TrailerMovementProjection, com.trailersaas.trailers.TrailerServiceabilityCommands {
   private final EntityManager em;
   private final OperationalLocationDirectory locations;
   private final TrailerEventWriter writer;
@@ -61,7 +61,7 @@ class DatabaseTrailerMovementProjection implements TrailerMovementProjection {
     return apply(tenant, c.target(), c.context(), s -> MovementRules.load(s, c));
   }
 
-  private Result apply(UUID tenant, Target target, Context context, Function<State, Change> rule) {
+  private TrailerEntity locked(UUID tenant, Target target, Context context) {
     validate(target, context);
     pinned(tenant);
     var t =
@@ -77,16 +77,40 @@ class DatabaseTrailerMovementProjection implements TrailerMovementProjection {
     // A caller may already have a managed projection; refresh while holding the row lock.
     em.refresh(t, LockModeType.PESSIMISTIC_WRITE);
     if (t.version != target.expectedVersion()) throw fail(STALE_VERSION);
+    return t;
+  }
+
+  public Result markOutOfService(UUID tenant, com.trailersaas.trailers.TrailerServiceabilityCommands.OutOfService c) {
+    require(c != null);
+    require(c.comment()!=null && !c.comment().isBlank());
+    var t=locked(tenant,c.target(),c.context());
+    if(!"IN_SERVICE".equals(t.serviceabilityState)) throw fail(INVALID_STATE_TRANSITION);
+    var e=writer.markOutOfService(t,c.context(),c.comment());
+    t.serviceabilityState="OUT_OF_SERVICE";
+    flushProjection();
+    return result(t,e);
+  }
+
+  private Result apply(UUID tenant, Target target, Context context, Function<State, Change> rule) {
+    var t=locked(tenant,target,context);
     var change = rule.apply(state(t));
     if (change.locationId() != null && locations.lockSiteId(tenant, change.locationId()).isEmpty())
       throw fail(RESOURCE_NOT_FOUND);
     var e = write(t, context, change);
+    flushProjection();
+    return result(t,e);
+  }
+
+  private void flushProjection() {
     try {
       em.flush();
     } catch (RuntimeException failure) {
       if (TrailerFailure.expectedIntegrity(failure)) throw fail(RESOURCE_CONFLICT);
       throw failure;
     }
+  }
+
+  private Result result(TrailerEntity t,TrailerMovementEntity e) {
     return new Result(
         t.id,
         t.version,

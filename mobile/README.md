@@ -1,5 +1,81 @@
 # TrailerSaaS Mobile
 
+## Issue #49 — Yard discrepancy, load correction and evidenced OOS
+
+
+## #49 typed corrective graph and evidence recovery
+
+YARD_MOVE, LOCATION_CORRECTION, LOAD_STATE_CHANGE and OOS share the existing
+TRAILER resource lane, CommandStore, ReplayWorker, immutable request/result and
+UUID/Idempotency-Key. The next physical intent references the previous physical
+operation, never an invented version. It materializes only after a verified
+same-User/Tenant/Trailer ACK result. OOS additionally waits for every own bound
+photo to be FINALIZED; document IDs are resolved once before sending. A frozen
+request never recalculates coordinates/location/version/photos during replay.
+
+DISCREPANCY_REPORT is append-only observation with its historical downloaded
+location/version; it does not increment Trailer version and cannot be a physical
+predecessor. Its observation resource lane can sync even after a physical conflict.
+Existing failed physical parents continue blocking old descendants; unrelated
+Trailers continue normally. No operation is converted into another type.
+
+Explicit conflict review first downloads current authorized Trailer state. Failed
+reload remains closed. Only definitive failed same-Trailer Yard work may receive
+an explicit new root action with a new UUID/version, recorded in immutable local
+yard_conflict_reviews. Original requests/UUIDs/failed states remain preserved,
+covered old retries are prohibited and old descendants never automatically run.
+Uncertain queued/sending/retryable work cannot be replaced. No false ACK is forged.
+
+Damage drafts/capture metadata persist before the native camera and survive restart.
+Photos use existing private files/hash, LocalMedia, R2 processor and finalized
+media edges, not a second queue/worker. Late camera results stay in their original
+User/Tenant namespace; current account permission never transfers. Missing bytes,
+denials, upload retries and partial sets retain draft/evidence for explicit review.
+Network 408/429 Retry-After/5xx, 401 refresh, 403/404/409, lost ACK and two workers
+retain the original same-key frozen request. Only a real server receipt is success.
+
+## #49 deployed schema: Drift v8
+
+Version 8 preserves the one v7 command/media graph and adds nullable immutable
+local_media.trailer_id for DAMAGE_PHOTO without Trip. Three narrow metadata stores:
+yard_drafts (owner, selected Site/Trailer, immutable observed version/ref/time,
+comment, retained photo IDs, eventual command ID), yard_captures (persisted camera
+ownership and PENDING/CAPTURED/FAILED/CANCELLED outcome), yard_conflict_reviews
+(immutable old-failed/new-action links and reviewed authorized projection/version).
+They are not queues. Existing local_commands/materialized_requests/command_results/
+command_media_dependencies remain the only durable operation graph.
+
+Scope/FK/content/queued-draft/late-camera and immutable review guards apply in
+SQLite. One native camera acquisition across Inspection/Road/Yard contexts is
+allowed. v7→v8 adds metadata without rebuilding commands/results/requests. A
+frozen actual published v7 DDL fixture verifies migration and retained ACK bytes;
+earlier v1–v6 migrations retain their historical constraints and data. Fresh schema
+has 21 tables; all upgrades, FK checks, namespace and ledger guards are tested.
+Read caches may be cleared on logout; pending commands/drafts/private bytes are
+retained in their original owner namespace. There is no GPS/history store.
+
+### #49 implemented review and damage UX
+
+Scan → recorded Trailer → explicit action. Location uses current recorded value,
+authorized destination, reason and Confirm Correction. Load State shows current
+and new value/reason and preserves other dimensions. Without correction grant,
+Report Discrepancy is available and explicitly creates no state change.
+
+Damage uses the existing injected NativeInspectionCamera/ImagePicker: real image
+bytes are privately copied/hash-verified, comment and all photo IDs retained before
+explicit Confirm Mark OOS. Not Yet preserves drafts/photos and sends no OOS.
+Upload/finalization is independently visible and never serviceability success.
+Saved local, waiting evidence, queued/sending, server ACK and conflicts are distinct.
+There is no Return-to-Service shortcut or new capability grant. Forms close on
+User/Tenant/Driver/Site/Trailer/version/mode changes; double confirmation is fenced.
+
+Conflict handling retains original commands and descendants. A fresh authorized
+read and explicit review may create a new action; failed reload or uncertain ACK
+does not permit rebasing. Old damaged evidence can be explicitly retained in a new
+reviewed draft without changing its file/hash/identity. Physical Android/iOS camera,
+permission/reduced access/background/restart/lost-data QA remains #65; injected
+camera/Linux widget tests are not physical-device QA.
+
 ## Issue #48 — real Yard Mode
 
 SessionView provides Yard-only entry and Road/Yard switching with the existing
@@ -15,7 +91,7 @@ ledger. Consecutive offline moves wait for the first verified ACK to resolve the
 second version; source/UUID/frozen request remain immutable. Parent conflicts
 block descendants while independent Trailers continue. QR/confirmation routes
 close on owner changes; explicit denial cannot restore cached Yard permission.
-Correction/OOS UI and Yard Checks remain #49–#51. Physical Android/iOS camera,
+Correction/OOS UI is implemented in #49; Yard Checks remain #50–#51. Physical Android/iOS camera,
 permission/lifecycle/process and release QA remains #65.
 
 See [contracts, acceptance, offline recovery and tests](../docs/mobile/issue-48-yard-move.md).

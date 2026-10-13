@@ -2196,8 +2196,11 @@ paths:
       operationId: completeDocumentUpload
       x-implementation-status: implemented-issue-52
       description: >-
-        Requires uploader identity, fresh authority for the persisted document type and active own Driver,
-        including on replay (POD_UPLOAD, PRETRIP_CREATE, FUEL_EVENT_CREATE or EXCEPTION_REPORT).
+        Requires uploader identity and fresh authority for the persisted document type,
+        including on replay. Generic Driver uploads require active own Driver with
+        POD_UPLOAD, PRETRIP_CREATE, FUEL_EVENT_CREATE or EXCEPTION_REPORT. The #49
+        scoped Trailer DAMAGE_PHOTO producer instead requires TRAILER_OOS_MARK,
+        ACTIVE Tenant/membership and the active own-Tenant Trailer, without a Driver.
         Existing links must remain fully authorized before returning finalized metadata or ledger replay.
         Copies the temporary object to a new private publication key, verifies actual bytes,
         size, content type and SHA-256, and atomically commits UPLOADED and the existing ledger
@@ -2410,6 +2413,220 @@ paths:
               schema: { $ref: '#/components/schemas/YardConflictProblem' }
         default: { $ref: '#/components/responses/Problem' }
 
+  /api/v1/tenants/{tenantId}/yard/location-corrections:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Yard]
+      operationId: executeYardLocationCorrection
+      x-implementation-status: implemented-issue-49
+      description: >-
+        YARD_MOVE_EXECUTE and TRAILER_LOCATION_CORRECT, ACTIVE membership and ACTIVE Tenant
+        are freshly checked before MobileOperationLedger and after lock waits.
+        Active own-Tenant Trailer and selected active Site are mandatory. Existing
+        Tenant-wide scope is preserved; selecting a Site grants no permission.
+        Same-Site active normalized destination, different from recorded location; no chronology regression. TrailerMovementProjection.correctLocation preserves Load State, coupling, Orders and designated Customer.
+        Server derives HUMAN_USER and USER_ACTION with authenticated actor User,
+        clientOperationId, observedAt and recordedAt; no fake Driver/Trip/Tractor.
+        Closed JSON and query fields. Same UUID/logical request replays the saved
+        historical result after fresh authorization; changed body/User/type yields
+        IDEMPOTENCY_KEY_REUSED. Physical commands require the exact locked version;
+        failures roll back all changes. Refresh current authorized state after ACK.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/YardLocationCorrectionRequest' }
+      responses:
+        '200':
+          description: Saved historical receipt; only this response confirms the operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardLocationCorrectionResult' }
+        '409':
+          description: STALE_VERSION, RESOURCE_CONFLICT, INVALID_STATE_TRANSITION, EVIDENCE_REQUIRED or IDEMPOTENCY_KEY_REUSED; retain original intent for explicit review
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/YardConflictProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/yard/load-state-changes:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Yard]
+      operationId: executeYardLoadStateChange
+      x-implementation-status: implemented-issue-49
+      description: >-
+        YARD_MOVE_EXECUTE and TRAILER_STATE_CORRECT, ACTIVE membership and ACTIVE Tenant
+        are freshly checked before MobileOperationLedger and after lock waits.
+        Active own-Tenant Trailer and selected active Site are mandatory. Existing
+        Tenant-wide scope is preserved; selecting a Site grants no permission.
+        Different Load State only through TrailerMovementProjection.changeLoadState; location (including LOCATION_UNKNOWN or IN_TRANSIT), lastSeenAt, coupling, Orders and designated Customer are preserved. If a current Location exists it must belong to the selected Site and remain active.
+        Server derives HUMAN_USER and USER_ACTION with authenticated actor User,
+        clientOperationId, observedAt and recordedAt; no fake Driver/Trip/Tractor.
+        Closed JSON and query fields. Same UUID/logical request replays the saved
+        historical result after fresh authorization; changed body/User/type yields
+        IDEMPOTENCY_KEY_REUSED. Physical commands require the exact locked version;
+        failures roll back all changes. Refresh current authorized state after ACK.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/YardLoadStateChangeRequest' }
+      responses:
+        '200':
+          description: Saved historical receipt; only this response confirms the operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardLoadStateChangeResult' }
+        '409':
+          description: STALE_VERSION, RESOURCE_CONFLICT, INVALID_STATE_TRANSITION, EVIDENCE_REQUIRED or IDEMPOTENCY_KEY_REUSED; retain original intent for explicit review
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/YardConflictProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/yard/out-of-service:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Yard]
+      operationId: executeYardOos
+      x-implementation-status: implemented-issue-49
+      description: >-
+        YARD_MOVE_EXECUTE and TRAILER_OOS_MARK, ACTIVE membership and ACTIVE Tenant
+        are freshly checked before MobileOperationLedger and after lock waits.
+        Active own-Tenant Trailer and selected active Site are mandatory. Existing
+        Tenant-wide scope is preserved; selecting a Site grants no permission.
+        TrailerServiceabilityCommands and the existing event writer are shared with the unchanged #40 administrative API. Requires IN_SERVICE and one to fifty own UPLOADED DAMAGE_PHOTO documents exclusively linked to this Trailer. Evidence association, MARKED_OOS, projection/version and ledger commit atomically in PostgreSQL; signed R2 upload precedes this transaction. A photo may be consumed by only one Yard OOS event. No automatic Drop, Trip closure, location or Load State change. No Return grant is inferred.
+        Server derives HUMAN_USER and USER_ACTION with authenticated actor User,
+        clientOperationId, observedAt and recordedAt; no fake Driver/Trip/Tractor.
+        Closed JSON and query fields. Same UUID/logical request replays the saved
+        historical result after fresh authorization; changed body/User/type yields
+        IDEMPOTENCY_KEY_REUSED. Physical commands require the exact locked version;
+        failures roll back all changes. Refresh current authorized state after ACK.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/YardOosRequest' }
+      responses:
+        '200':
+          description: Saved historical receipt; only this response confirms the operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardOosResult' }
+        '409':
+          description: STALE_VERSION, RESOURCE_CONFLICT, INVALID_STATE_TRANSITION, EVIDENCE_REQUIRED or IDEMPOTENCY_KEY_REUSED; retain original intent for explicit review
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/YardConflictProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/yard/discrepancy-reports:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      tags: [Yard]
+      operationId: executeYardDiscrepancyReport
+      x-implementation-status: implemented-issue-49
+      description: >-
+        YARD_MOVE_EXECUTE, ACTIVE membership and ACTIVE Tenant
+        are freshly checked before MobileOperationLedger and after lock waits.
+        Active own-Tenant Trailer and selected active Site are mandatory. Existing
+        Tenant-wide scope is preserved; selecting a Site grants no permission.
+        Append-only discrepancy report requires only Yard authority, not corrective capability.
+        Historical recorded location/version and the reported active same-Site location
+        are retained. No Trailer mutation, version increment, physical event, Orders
+        or serviceability change. Reports are never physical version predecessors.
+        Report records authenticated actorUserId, clientOperationId, observedAt and
+        recordedAt. HUMAN_USER and USER_ACTION apply to physical events, which this
+        report does not create; no fake Driver/Trip/Tractor or client provenance fields.
+        Closed JSON and query fields. Same UUID/logical request replays the saved
+        historical result after fresh authorization; changed body/User/type yields
+        IDEMPOTENCY_KEY_REUSED. Physical commands require the exact locked version;
+        failures roll back all changes. Refresh current authorized state after ACK.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/YardDiscrepancyReportRequest' }
+      responses:
+        '200':
+          description: Saved historical receipt; only this response confirms the operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardDiscrepancyReportResult' }
+        '409':
+          description: RESOURCE_CONFLICT or IDEMPOTENCY_KEY_REUSED; retain original historical observation, without a Trailer state transition
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/YardConflictProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+    get:
+      tags: [Yard]
+      operationId: reviewYardDiscrepancyReports
+      x-implementation-status: implemented-issue-49
+      description: >-
+        Fresh TRAILER_VIEW_ALL, ACTIVE membership and ACTIVE Tenant for bounded
+        same-Tenant administrative review. No Yard grant or generic audit worker.
+        UUID cursor addresses ordered recordedAt/id; a foreign cursor is safe 404.
+        Only cursor/limit query fields are allowed; no mutation or notifications.
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 50 }
+      responses:
+        '200':
+          description: Append-only reports visible to the current administrative principal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardDiscrepancyReportsPage' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/trailers/{trailerId}/damage-uploads:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TrailerId'
+    post:
+      tags: [Documents]
+      operationId: initializeTrailerDamageUpload
+      x-implementation-status: implemented-issue-49
+      description: >-
+        Fresh TRAILER_OOS_MARK, ACTIVE membership and ACTIVE Tenant with an active
+        own-Tenant Trailer. No Driver/Trip or generic Trailer attachment grant.
+        Closed Initialize DTO restricted to DAMAGE_PHOTO and JPEG/PNG. Same R2
+        size/checksum/private signed URL transport; persists a single TRAILER link
+        with PENDING metadata. Initialization is not idempotent and a lost ACK may
+        leave an unused PENDING object; it never creates MARKED_OOS. Existing
+        document upload-completion rechecks uploader/capability/Trailer and actual
+        bytes before UPLOADED; it retains the existing Idempotency-Key. Download
+        and metadata retain all-linked-resource authorization. Generic links cannot
+        relink a Trailer-scoped photograph. Only Yard out-of-service accepts the
+        finalized set as evidence in the atomic event/projection/ledger transaction.
+        No query parameters or private permanent URL exposure.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TrailerDamageUploadRequest' }
+      responses:
+        '201':
+          description: Pending private upload reservation, not evidence acceptance or OOS
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InitializeUploadResponseImplemented' }
+        default: { $ref: '#/components/responses/Problem' }
+
 components:
   securitySchemes:
     firebaseBearer:
@@ -2418,6 +2635,11 @@ components:
       bearerFormat: JWT
 
   parameters:
+    TrailerId:
+      name: trailerId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     TenantId:
       name: tenantId
       in: path
@@ -2569,6 +2791,134 @@ components:
         couplingState: { type: string, enum: [UNCOUPLED, COUPLED] }
         active: { type: boolean }
         version: { type: integer, minimum: 0 }
+    YardLocationCorrectionRequest:
+      type: object
+      additionalProperties: false
+      required: [trailerId, siteId, expectedTrailerVersion, observedAt, reason, newLocationId]
+      properties:
+        trailerId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        expectedTrailerVersion: { type: integer, minimum: 0 }
+        observedAt: { type: string, format: date-time, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]', description: Original observation; not future; persisted at microsecond precision. }
+        reason: { type: string, minLength: 1, maxLength: 4000, description: Unicode-trimmed nonblank reason; server does not accept blank text. }
+        newLocationId: { type: string, format: uuid }
+    YardLocationCorrectionResult:
+      type: object
+      additionalProperties: false
+      required: [trailer, movementEvent]
+      properties:
+        trailer: { $ref: '#/components/schemas/YardTrailer' }
+        movementEvent:
+          type: object
+          additionalProperties: false
+          required: [id, eventType, occurredAt, recordedAt]
+          properties:
+            id: { type: string, format: uuid }
+            eventType: { type: string, const: LOCATION_CORRECTED }
+            occurredAt: { type: string, format: date-time }
+            recordedAt: { type: string, format: date-time }
+    YardLoadStateChangeRequest:
+      type: object
+      additionalProperties: false
+      required: [trailerId, siteId, expectedTrailerVersion, observedAt, reason, loadState]
+      properties:
+        trailerId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        expectedTrailerVersion: { type: integer, minimum: 0 }
+        observedAt: { type: string, format: date-time, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]', description: Original observation; not future; persisted at microsecond precision. }
+        reason: { type: string, minLength: 1, maxLength: 4000, description: Unicode-trimmed nonblank reason; server does not accept blank text. }
+        loadState: { type: string, enum: [EMPTY, LOADED, UNKNOWN] }
+    YardLoadStateChangeResult:
+      type: object
+      additionalProperties: false
+      required: [trailer, movementEvent]
+      properties:
+        trailer: { $ref: '#/components/schemas/YardTrailer' }
+        movementEvent:
+          type: object
+          additionalProperties: false
+          required: [id, eventType, occurredAt, recordedAt]
+          properties:
+            id: { type: string, format: uuid }
+            eventType: { type: string, const: LOAD_STATE_CHANGED }
+            occurredAt: { type: string, format: date-time }
+            recordedAt: { type: string, format: date-time }
+    YardOosRequest:
+      type: object
+      additionalProperties: false
+      required: [trailerId, siteId, expectedTrailerVersion, observedAt, comment, documentIds]
+      properties:
+        trailerId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        expectedTrailerVersion: { type: integer, minimum: 0 }
+        observedAt: { type: string, format: date-time, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]', description: Original observation; not future; persisted at microsecond precision. }
+        comment: { type: string, minLength: 1, maxLength: 4000, description: Unicode-trimmed nonblank reason; server does not accept blank text. }
+        documentIds: { type: array, minItems: 1, maxItems: 50, uniqueItems: true, items: { type: string, format: uuid }, description: Own finalized DAMAGE_PHOTO documents bound exclusively to this Trailer; not previously consumed by another Yard OOS event. }
+    YardOosResult:
+      type: object
+      additionalProperties: false
+      required: [trailer, movementEvent, documentIds]
+      properties:
+        trailer: { $ref: '#/components/schemas/YardTrailer' }
+        movementEvent:
+          type: object
+          additionalProperties: false
+          required: [id, eventType, occurredAt, recordedAt]
+          properties:
+            id: { type: string, format: uuid }
+            eventType: { type: string, const: MARKED_OOS }
+            occurredAt: { type: string, format: date-time }
+            recordedAt: { type: string, format: date-time }
+        documentIds: { type: array, minItems: 1, maxItems: 50, uniqueItems: true, items: { type: string, format: uuid } }
+    YardDiscrepancyReportRequest:
+      type: object
+      additionalProperties: false
+      required: [trailerId, siteId, observedAt, reason, recordedLocationId, reportedLocationId, observedTrailerVersion]
+      properties:
+        trailerId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        observedAt: { type: string, format: date-time, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]', description: Original observation; not future; persisted at microsecond precision. }
+        reason: { type: string, minLength: 1, maxLength: 4000, description: Unicode-trimmed nonblank reason; server does not accept blank text. }
+        recordedLocationId: { type: [string, "null"], format: uuid, description: Historical recorded observation; never used to overwrite current location. }
+        reportedLocationId: { type: string, format: uuid }
+        observedTrailerVersion: { type: integer, minimum: 0, description: Historical downloaded version; may precede but cannot exceed the current version. }
+    YardDiscrepancyReportResult:
+      type: object
+      additionalProperties: false
+      required: [trailer, report]
+      properties:
+        trailer: { $ref: '#/components/schemas/YardTrailer' }
+        report: { $ref: '#/components/schemas/YardDiscrepancyReport' }
+    YardDiscrepancyReport:
+      type: object
+      additionalProperties: false
+      required: [id, trailerId, siteId, recordedLocationId, reportedLocationId, observedTrailerVersion, actorUserId, reason, observedAt, recordedAt, clientOperationId]
+      properties:
+        id: { type: string, format: uuid }
+        trailerId: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        recordedLocationId: { type: [string, "null"], format: uuid }
+        reportedLocationId: { type: string, format: uuid }
+        observedTrailerVersion: { type: integer, minimum: 0 }
+        actorUserId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, maxLength: 4000 }
+        observedAt: { type: string, format: date-time }
+        recordedAt: { type: string, format: date-time }
+        clientOperationId: { type: string, format: uuid }
+    YardDiscrepancyReportsPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/YardDiscrepancyReport' } }
+        nextCursor: { type: [string, "null"], format: uuid }
+    TrailerDamageUploadRequest:
+      allOf:
+        - { $ref: '#/components/schemas/InitializeUploadRequestImplemented' }
+        - type: object
+          properties:
+            documentType: { type: string, const: DAMAGE_PHOTO }
+            contentType: { type: string, enum: [image/jpeg, image/png] }
     YardMoveRequest:
       type: object
       additionalProperties: false
@@ -4699,7 +5049,7 @@ components:
         documentType:
           type: string
           enum: [BOL, POD, DELIVERY_PHOTO, PRETRIP_FRONT, PRETRIP_REAR, PRETRIP_DRIVER_SIDE, PRETRIP_PASSENGER_SIDE, DAMAGE_PHOTO, FUEL_RECEIPT]
-          description: "#53: POD_UPLOAD for BOL/POD/DELIVERY_PHOTO; PRETRIP_CREATE for four Pre-Trip images; FUEL_EVENT_CREATE for receipts; EXCEPTION_REPORT for Driver damage. Active own Driver required; Yard/OOS producer remains #49."
+          description: "#53: POD_UPLOAD for BOL/POD/DELIVERY_PHOTO; PRETRIP_CREATE for four Pre-Trip images; FUEL_EVENT_CREATE for receipts; EXCEPTION_REPORT for Driver damage. Active own Driver required on the generic route; #49 has a distinct scoped Trailer damage producer under TRAILER_OOS_MARK."
         contentType:
           type: string
           enum: [image/jpeg, image/png, application/pdf]
@@ -4735,7 +5085,7 @@ components:
       additionalProperties: false
       required: [entityType, entityId]
       properties:
-        entityType: { type: string, enum: [TRIP_STOP, TRIP], description: "TRIP_STOP for delivery/Driver damage; TRIP for Pre-Trip/fuel/Driver damage. No public Trailer/OOS attachment yet." }
+        entityType: { type: string, enum: [TRIP_STOP, TRIP], description: "TRIP_STOP for delivery/Driver damage; TRIP for Pre-Trip/fuel/Driver damage. Trailer/OOS attachment is performed only by the #49 scoped producer, never this generic link request." }
         entityId: { type: string, format: uuid }
 
     DocumentLinkImplemented:
@@ -4744,7 +5094,7 @@ components:
       required: [id, entityType, entityId, createdAt]
       properties:
         id: { type: string, format: uuid }
-        entityType: { type: string, enum: [TRIP_STOP, TRIP, TRAILER, INSPECTION], description: "INSPECTION is attached atomically by #43 and read through the own-inspection directory. TRAILER is reserved for #49. Public link requests accept only TRIP_STOP/TRIP." }
+        entityType: { type: string, enum: [TRIP_STOP, TRIP, TRAILER, INSPECTION], description: "INSPECTION is attached atomically by #43 and read through the own-inspection directory. TRAILER is exclusively attached by the #49 scoped damage producer. Public generic link requests accept only TRIP_STOP/TRIP." }
         entityId: { type: string, format: uuid }
         createdAt: { type: string, format: date-time }
 

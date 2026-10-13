@@ -8,10 +8,22 @@ Base:
 
 Critical Yard mobile mutations require `Idempotency-Key`.
 
+## Issue #49 implemented corrective and damage boundary
+
+Yard Home now supports explicit Location Correction, Load State Correction,
+Discrepancy Report and Report Damage / Mark OOS. The original Yard Move remains
+unchanged. Yard Check, Missing reconciliation and notifications remain #50/#51/#55.
+No capability or role grant changes: YARD_SPOTTER is Tenant-scoped, has the two
+correction capabilities, and has no OOS grant; a currently authorized multi-role
+user may use OOS. Selecting Site, QR scan, a local draft or an upload grants no
+mutation authority. Return to Service and unresolved OQ-054 remain separate.
+
+See [#49 contracts, acceptance, tests and release limitations](../mobile/issue-49-yard-discrepancy-oos.md).
+
 ## Issue #48 implemented boundary
 
-Yard context and Yard Move are implemented; the later correction/OOS UI and
-Yard Check/reconciliation workflows remain #49–#51. Fresh YARD_MOVE_EXECUTE,
+Yard context and Yard Move are implemented; correction/OOS are implemented in #49 below;
+Yard Check/reconciliation workflows remain #50–#51. Fresh YARD_MOVE_EXECUTE,
 ACTIVE membership and Tenant status ACTIVE precede all Yard reads and ledger
 replay. The accepted YARD_SPOTTER scope is TENANT; there is no invented Site,
 Driver or Tractor assignment, and selecting a Site does not grant permission.
@@ -349,5 +361,49 @@ actor/time and durable history. No generic physical-state PATCH or offline repla
 wrapper is added here. Mark unknown preserves the last physical observation.
 
 Yard Move and its mobile UI are implemented by #48 as documented above.
-Discrepancy UI/OOS evidence remains #49; Yard Check and its scoped reconciliation
+Discrepancy UI/OOS evidence is implemented by #49; Yard Check and its scoped reconciliation
 remain #50/#51. The #40 commands are not exposed as an implicit Yard correction.
+
+### #49 implemented HTTP contracts
+
+All four POSTs require a UUID Idempotency-Key, closed JSON, no query fields,
+fresh YARD_MOVE_EXECUTE, ACTIVE membership/Tenant and same-Tenant active Trailer
+and selected active Site. Mutations additionally require their exact capability.
+Common physical fields: trailerId, siteId, expectedTrailerVersion (integer >=0),
+observedAt (nonfuture RFC3339, four-digit year), and reason (trimmed nonblank <=4000).
+
+| POST route | Additional fields / change | Capability / event |
+| --- | --- | --- |
+| /yard/location-corrections | newLocationId, different active same-Site normalized destination, no lastSeenAt regression | TRAILER_LOCATION_CORRECT / LOCATION_CORRECTED |
+| /yard/load-state-changes | loadState EMPTY/LOADED/UNKNOWN, different from prior value | TRAILER_STATE_CORRECT / LOAD_STATE_CHANGED |
+| /yard/out-of-service | comment replaces reason; documentIds 1–50 distinct finalized own exact-Trailer DAMAGE_PHOTO IDs | TRAILER_OOS_MARK / MARKED_OOS |
+| /yard/discrepancy-reports | No expectedTrailerVersion; recordedLocationId nullable but present, reportedLocationId, observedTrailerVersion | YARD_MOVE_EXECUTE / no physical event |
+
+Report fields also include trailerId/siteId/observedAt/reason. Historical versions
+may be older, never future. Report preserves historical recorded observation,
+does not update Trailer/version/location/load/serviceability and needs no correction
+grant. POST returns {trailer,report}; report includes id, actorUserId, observedAt,
+recordedAt and clientOperationId. GET /yard/discrepancy-reports is separately
+authorized with TRAILER_VIEW_ALL, bounded limit 1–50 and UUID chronological cursor;
+no update/delete or notification worker is provided.
+
+Physical commands return {trailer,movementEvent}; OOS also returns documentIds.
+Events contain id/eventType/occurredAt/recordedAt. Provenance is HUMAN_USER /
+USER_ACTION, authenticated actor and original UUID; no invented Trip/Driver/Tractor.
+Trailer row then live Site/Locations are locked before authority is rechecked.
+Version conflicts are STALE_VERSION; invalid/context conflicts RESOURCE_CONFLICT;
+evidence failures include EVIDENCE_REQUIRED/UPLOAD_NOT_COMPLETE/RESOURCE_NOT_FOUND.
+Foreign/invisible resources are safe 404; there is no silent location repair.
+Location correction is an explicit physical observation. Load State correction
+preserves location (including unknown/in-transit), lastSeenAt, coupling, serviceability,
+Orders and designation. OOS changes serviceability only and never closes a Trip or
+performs Drop. Original #40 administrative routes/body/server-time behavior remain
+compatible and share the same physical projection/event writer.
+
+V23 adds append-only yard_discrepancy_reports and trailer_oos_evidence with Tenant
+composite FKs, runtime RLS, SELECT/INSERT-only runtime grants and immutable history.
+The OOS association guard requires the actual same-transaction MARKED_OOS event,
+same Trailer/actor/UUID and one uploaded own exclusive Trailer link per document.
+Each document may be consumed by one Yard OOS event. State, event, accepted evidence
+and ledger receipt commit together; complete rollback includes version and event.
+R2 transport precedes PostgreSQL and is not a distributed transaction.

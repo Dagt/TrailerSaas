@@ -605,3 +605,34 @@ never reuploads confirmed files. Confirmed ACK survives failed authoritative ref
 SQLite retry deadlines round UP to seconds so restart cannot retry before Retry-After.
 Authorization/state conflicts retain intent/photos for review. No second worker,
 generic endpoint executor, push dependency or server-state simulation is added.
+
+## #49 typed corrective graph and evidence recovery
+
+YARD_MOVE, LOCATION_CORRECTION, LOAD_STATE_CHANGE and OOS share the existing
+TRAILER resource lane, CommandStore, ReplayWorker, immutable request/result and
+UUID/Idempotency-Key. The next physical intent references the previous physical
+operation, never an invented version. It materializes only after a verified
+same-User/Tenant/Trailer ACK result. OOS additionally waits for every own bound
+photo to be FINALIZED; document IDs are resolved once before sending. A frozen
+request never recalculates coordinates/location/version/photos during replay.
+
+DISCREPANCY_REPORT is append-only observation with its historical downloaded
+location/version; it does not increment Trailer version and cannot be a physical
+predecessor. Its observation resource lane can sync even after a physical conflict.
+Existing failed physical parents continue blocking old descendants; unrelated
+Trailers continue normally. No operation is converted into another type.
+
+Explicit conflict review first downloads current authorized Trailer state. Failed
+reload remains closed. Only definitive failed same-Trailer Yard work may receive
+an explicit new root action with a new UUID/version, recorded in immutable local
+yard_conflict_reviews. Original requests/UUIDs/failed states remain preserved,
+covered old retries are prohibited and old descendants never automatically run.
+Uncertain queued/sending/retryable work cannot be replaced. No false ACK is forged.
+
+Damage drafts/capture metadata persist before the native camera and survive restart.
+Photos use existing private files/hash, LocalMedia, R2 processor and finalized
+media edges, not a second queue/worker. Late camera results stay in their original
+User/Tenant namespace; current account permission never transfers. Missing bytes,
+denials, upload retries and partial sets retain draft/evidence for explicit review.
+Network 408/429 Retry-After/5xx, 401 refresh, 403/404/409, lost ACK and two workers
+retain the original same-key frozen request. Only a real server receipt is success.

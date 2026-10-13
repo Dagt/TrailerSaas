@@ -47,6 +47,12 @@ class YardModeController extends ChangeNotifier {
       usable &&
       trailer?.movable == true &&
       trailer!.location?['siteId'] == selectedSiteId;
+  String? get contextToken => key(session.snapshot) == null
+      ? null
+      : '${key(session.snapshot)}|$selectedSiteId|${trailer?.id}|${trailer?.data['version']}|$_generation';
+  bool permits(String capability) =>
+      usable &&
+      session.snapshot?.membership.capabilities.contains(capability) == true;
   String? key(SessionSnapshot? s) =>
       s == null || session.auth.uid != s.firebaseUid
       ? null
@@ -60,11 +66,15 @@ class YardModeController extends ChangeNotifier {
       session.snapshot!.membership.capabilities.contains('YARD_MOVE_EXECUTE') &&
       {SessionState.ready, SessionState.offline}.contains(session.state);
   void _notify() {
-    if (!_disposed) notifyListeners();
+    if (!_disposed) {
+      notifyListeners();
+    }
   }
 
   void start() {
-    if (_started) return;
+    if (_started) {
+      return;
+    }
     _started = true;
     session.addListener(_sessionChanged);
     _sessionChanged();
@@ -94,7 +104,9 @@ class YardModeController extends ChangeNotifier {
     final loadNow = next != null && (changed || (ready && !_wasReady));
     _wasReady = ready;
     _notify();
-    if (loadNow) unawaited(load());
+    if (loadNow) {
+      unawaited(load());
+    }
   }
 
   Future<CachedYardContext?> cached(SessionSnapshot owner) =>
@@ -111,7 +123,9 @@ class YardModeController extends ChangeNotifier {
     String? selection, {
     bool denied = false,
   }) => db.transaction(() async {
-    if (!current(owner, generation)) return;
+    if (!current(owner, generation)) {
+      return;
+    }
     await db
         .into(db.cachedYardContexts)
         .insertOnConflictUpdate(
@@ -159,7 +173,9 @@ class YardModeController extends ChangeNotifier {
         all.add(row);
       }
       final next = response['nextCursor'];
-      if (next == null) return all;
+      if (next == null) {
+        return all;
+      }
       yardUuid(next);
       if (next == cursor || !seen.contains(next)) {
         throw const FormatException('Invalid Yard continuation');
@@ -174,7 +190,9 @@ class YardModeController extends ChangeNotifier {
     SessionSnapshot owner,
     int generation,
   ) async {
-    if (site.nextLocationCursor == null) return site;
+    if (site.nextLocationCursor == null) {
+      return site;
+    }
     final all = await pages(
       'tenants/${owner.membership.tenantId}/yard/sites/${site.id}/locations',
       {'limit': '200'},
@@ -191,7 +209,9 @@ class YardModeController extends ChangeNotifier {
 
   Future<void> load({bool manual = false}) async {
     final owner = session.snapshot;
-    if (owner == null || _disposed) return;
+    if (owner == null || _disposed) {
+      return;
+    }
     final generation = ++_generation;
     if (scanner is CancellableQrScanner) {
       (scanner as CancellableQrScanner).cancel();
@@ -203,7 +223,9 @@ class YardModeController extends ChangeNotifier {
     _notify();
     try {
       final old = await cached(owner);
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       blocked = old?.accessBlocked ?? false;
       if (blocked && !manual) {
         sites = [];
@@ -215,7 +237,9 @@ class YardModeController extends ChangeNotifier {
           session.state == SessionState.offline ||
           await session.network.currentStatus() ==
               ConnectivityStatus.unavailable;
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       if (offline) {
         if (blocked || old == null) {
           sites = [];
@@ -245,18 +269,26 @@ class YardModeController extends ChangeNotifier {
         final complete = await completeSite(selection, owner, generation);
         downloaded[downloaded.indexOf(selection)] = complete;
       }
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       await save(owner, generation, downloaded, selection?.id);
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       sites = downloaded;
       selectedSiteId = selection?.id;
       blocked = false;
       refreshedAt = now();
     } on ApiProblem catch (e) {
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       if ({401, 403}.contains(e.status)) {
         await save(owner, generation, const [], null, denied: true);
-        if (!current(owner, generation)) return;
+        if (!current(owner, generation)) {
+          return;
+        }
         blocked = true;
         sites = [];
         selectedSiteId = null;
@@ -279,7 +311,9 @@ class YardModeController extends ChangeNotifier {
   Future<void> selectSite(String id) async {
     final owner = session.snapshot,
         site = sites.where((s) => s.id == id).firstOrNull;
-    if (owner == null || site == null || busy || loading || blocked) return;
+    if (owner == null || site == null || busy || loading || blocked) {
+      return;
+    }
     final generation = ++_generation;
     trailer = null;
     loading = true;
@@ -292,7 +326,9 @@ class YardModeController extends ChangeNotifier {
         return;
       }
       final complete = await completeSite(site, owner, generation);
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       final updated = sites.map((s) => s.id == id ? complete : s).toList();
       await save(owner, generation, updated, id);
       if (current(owner, generation)) {
@@ -314,7 +350,9 @@ class YardModeController extends ChangeNotifier {
 
   Future<void> scan() async {
     final owner = session.snapshot;
-    if (owner == null || !usable) return;
+    if (owner == null || !usable) {
+      return;
+    }
     final generation = _generation;
     busy = true;
     trailer = null;
@@ -322,18 +360,26 @@ class YardModeController extends ChangeNotifier {
     _notify();
     try {
       final raw = await scanner.scan();
-      if (!current(owner, generation) || raw == null) return;
+      if (!current(owner, generation) || raw == null) {
+        return;
+      }
       final token = trailerPublicToken(raw);
-      if (token == null) throw const FormatException('Invalid QR');
+      if (token == null) {
+        throw const FormatException('Invalid QR');
+      }
       final offline =
           session.state == SessionState.offline ||
           await session.network.currentStatus() ==
               ConnectivityStatus.unavailable;
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       YardTrailer result;
       if (offline) {
         final stored = await session.cache.identifiedTrailer(owner, token);
-        if (!current(owner, generation)) return;
+        if (!current(owner, generation)) {
+          return;
+        }
         if (stored == null || stored['yardProjection'] != true) {
           message = 'Scan this Trailer online once before using its recorded Yard projection offline.';
           return;
@@ -341,14 +387,18 @@ class YardModeController extends ChangeNotifier {
         result = YardTrailer.fromJson({...stored}..remove('yardProjection'));
       } else {
         final qr = await session.api.get('trailer-qr/$token');
-        if (!current(owner, generation)) return;
+        if (!current(owner, generation)) {
+          return;
+        }
         yardUuid(qr['trailerId']);
         result = YardTrailer.fromJson(
           await session.api.get(
             'tenants/${owner.membership.tenantId}/yard/trailers/${qr['trailerId']}',
           ),
         );
-        if (!current(owner, generation)) return;
+        if (!current(owner, generation)) {
+          return;
+        }
         if (result.id != qr['trailerId']) {
           throw const FormatException('QR identity differs');
         }
@@ -356,7 +406,9 @@ class YardModeController extends ChangeNotifier {
           ...result.data,
           'yardProjection': true,
         }, () => current(owner, generation));
-        if (!current(owner, generation)) return;
+        if (!current(owner, generation)) {
+          return;
+        }
       }
       trailer = result;
       if (result.location?['siteId'] != selectedSiteId) {
@@ -365,17 +417,23 @@ class YardModeController extends ChangeNotifier {
         message = 'This recorded Trailer state does not permit a Yard Move.';
       }
     } on ApiProblem catch (e) {
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       if ({401, 403}.contains(e.status)) {
         await save(owner, generation, const [], null, denied: true);
-        if (!current(owner, generation)) return;
+        if (!current(owner, generation)) {
+          return;
+        }
         blocked = true;
         sites = [];
         selectedSiteId = null;
       }
       message = '${e.code}: ${e.detail}';
     } catch (_) {
-      if (current(owner, generation)) message = 'The Trailer could not be identified. Its recorded location was not changed.';
+      if (current(owner, generation)) {
+        message = 'The Trailer could not be identified. Its recorded location was not changed.';
+      }
     } finally {
       if (current(owner, generation)) {
         busy = false;
@@ -386,25 +444,122 @@ class YardModeController extends ChangeNotifier {
 
   Future<String?> plannedOrigin() async {
     final owner = session.snapshot, asset = trailer;
-    if (owner == null || asset == null) return null;
-    final rows = await worker.store.list(
-      owner.userId,
-      owner.membership.tenantId,
-    );
-    final last = rows
-        .where(
-          (r) =>
-              r.state != 'ACKNOWLEDGED' &&
-              YardMoveIntent.recognizes(r) &&
-              r.aggregateId == asset.id,
-        )
-        .lastOrNull;
-    if (last != null &&
-        {'CONFLICT', 'BLOCKED', 'PERMANENT_FAILURE'}.contains(last.state)) {
+    if (owner == null || asset == null) {
       return null;
     }
-    if (last == null) return asset.location?['id'] as String?;
-    return (jsonDecode(last.payloadJson) as Map)['toLocationId'] as String;
+    try {
+      final pending = await YardReplay(worker.store)
+          .pending(owner.userId, owner.membership.tenantId, asset.id);
+      if (pending.any((c) => c.commandType == 'OOS')) {
+        return null;
+      }
+      return YardReplay(worker.store).plannedLocation(asset.data, pending);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<YardTrailer?> refreshScannedTrailer() async {
+    final owner = session.snapshot, asset = trailer;
+    if (owner == null || asset == null || session.state != SessionState.ready) {
+      return null;
+    }
+    final generation = _generation;
+    Map<String, dynamic> data;
+    try {
+      data = await session.api.get(
+        'tenants/${owner.membership.tenantId}/yard/trailers/${asset.id}',
+      );
+    } on ApiProblem catch (e) {
+      if (current(owner, generation) && {401, 403}.contains(e.status)) {
+        await save(owner, generation, const [], null, denied: true);
+        if (current(owner, generation)) {
+          blocked = true;
+          sites = [];
+          selectedSiteId = null;
+          trailer = null;
+          _notify();
+        }
+      } else if (current(owner, generation) && e.status == 404) {
+        trailer = null;
+        _notify();
+      }
+      rethrow;
+    }
+    final fresh = YardTrailer.fromJson(data);
+    if (!current(owner, generation) || fresh.id != asset.id) {
+      return null;
+    }
+    trailer = fresh;
+    _notify();
+    return fresh;
+  }
+
+  Future<bool> hasPhysicalConflict() async {
+    final owner = session.snapshot, asset = trailer;
+    if (owner == null || asset == null) {
+      return false;
+    }
+    return (await YardReplay(
+      worker.store,
+    ).pending(owner.userId, owner.membership.tenantId, asset.id)).any(
+      (c) => {'CONFLICT', 'BLOCKED', 'PERMANENT_FAILURE'}.contains(c.state),
+    );
+  }
+
+  Future<void> confirmAction(
+    String kind,
+    Map<String, dynamic> fields,
+    DateTime observedAt, {
+    bool reviewedConflict = false,
+  }) async {
+    final owner = session.snapshot, asset = trailer;
+    if (owner == null ||
+        asset == null ||
+        !permits(YardCommandIntent.capabilityFor(kind))) {
+      return;
+    }
+    final generation = _generation;
+    busy = true;
+    message = null;
+    _notify();
+    try {
+      await YardReplay(worker.store).captureAction(
+        owner.userId,
+        owner.membership.tenantId,
+        asset.data,
+        kind,
+        fields,
+        observedAt,
+        reviewedConflict: reviewedConflict,
+        stillCurrent: () =>
+            current(owner, generation) &&
+            session.snapshot!.membership.capabilities.contains(
+              YardCommandIntent.capabilityFor(kind),
+            ),
+      );
+      if (!current(owner, generation)) {
+        return;
+      }
+      message = switch (kind) {
+        'LOCATION_CORRECTION' =>
+          'Location correction saved on this device — waiting to sync.',
+        'LOAD_STATE_CHANGE' =>
+          'Load correction saved on this device — waiting to sync.',
+        'DISCREPANCY_REPORT' => 'Discrepancy report saved on this device — waiting for server confirmation.',
+        _ => 'Saved on this device — waiting to sync.',
+      };
+      unawaited(worker.sync());
+    } catch (_) {
+      if (current(owner, generation)) {
+        message = 'The action was not saved. Review the current Trailer and pending operations.';
+      }
+    } finally {
+      if (current(owner, generation)) {
+        busy = false;
+        _notify();
+      }
+    }
   }
 
   Future<void> confirmMove(
@@ -425,7 +580,9 @@ class YardModeController extends ChangeNotifier {
     _notify();
     try {
       final from = await plannedOrigin();
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       if (from != reviewedOrigin || from == destination) {
         message =
             'Pending moves changed. Review the origin and destination again.';
@@ -440,11 +597,15 @@ class YardModeController extends ChangeNotifier {
         reviewedOrigin: reviewedOrigin,
         stillCurrent: () => current(owner, generation),
       );
-      if (!current(owner, generation)) return;
+      if (!current(owner, generation)) {
+        return;
+      }
       message = 'Saved on this device — waiting to sync. The server has not confirmed this move.';
       unawaited(worker.sync());
     } catch (_) {
-      if (current(owner, generation)) message = 'The move could not be saved. Review the pending operations before retrying.';
+      if (current(owner, generation)) {
+        message = 'The move could not be saved. Review the pending operations before retrying.';
+      }
     } finally {
       if (current(owner, generation)) {
         busy = false;

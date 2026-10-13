@@ -23,21 +23,37 @@ class DocumentService {
   private final DocumentStopDirectory stops;
   private final EvidenceWorkDirectory work;
   private final MobileOperationLedger ledger;
+  private final com.trailersaas.trailers.TrailerEvidenceDirectory trailers;
+  private final org.springframework.jdbc.core.JdbcTemplate jdbc;
   DocumentService(DocumentRepository r,ObjectStoragePort s,R2Configuration.Settings c,TenantAuthorization a,
       DocumentAccessPolicy p,DocumentUploadAuthority d,DocumentStopDirectory t,MobileOperationLedger l,
-      DocumentResourceAccess v,EvidenceWorkDirectory w) {
-    repository=r;storage=s;settings=c;authorization=a;access=p;uploads=d;stops=t;ledger=l;resources=v;work=w;
+      DocumentResourceAccess v,EvidenceWorkDirectory w,com.trailersaas.trailers.TrailerEvidenceDirectory trailers,org.springframework.jdbc.core.JdbcTemplate jdbc) {
+    repository=r;storage=s;settings=c;authorization=a;access=p;uploads=d;stops=t;ledger=l;resources=v;work=w;this.trailers=trailers;this.jdbc=jdbc;
   }
 
   @Transactional
   Upload initialize(AuthenticatedUserPrincipal actor,UUID tenant,Initialize request) {
+    if(request==null || request.documentType()==null) throw DocumentFailure.invalid();
+    uploads.require(actor,tenant,request.documentType(),true);
+    return createUpload(actor,tenant,request);
+  }
+
+  @Transactional
+  Upload initializeTrailer(AuthenticatedUserPrincipal actor,UUID tenant,UUID trailer,Initialize request) {
+    if(request==null || request.documentType()!=Type.DAMAGE_PHOTO) throw DocumentFailure.invalid();
+    trailerAuthority(actor,tenant,trailer,true);
+    var upload=createUpload(actor,tenant,request);
+    repository.link(tenant,upload.documentId(),new LinkRequest(Target.TRAILER,trailer));
+    return upload;
+  }
+
+  private Upload createUpload(AuthenticatedUserPrincipal actor,UUID tenant,Initialize request) {
     if(request==null || request.documentType()==null || request.contentType()==null || request.sizeBytes()==null
         || request.sizeBytes()<1 || request.sizeBytes()>settings.maxBytes()) throw DocumentFailure.invalid();
     String mime=request.contentType();
     if(!settings.allowedTypes().contains(mime) || !(Set.of("image/jpeg","image/png").contains(mime)
         || (mime.equals("application/pdf") && Set.of(Type.BOL,Type.POD).contains(request.documentType())))) throw DocumentFailure.invalid();
     String sha=checksum(request.checksumSha256());
-    uploads.require(actor,tenant,request.documentType(),true);
     UUID id=UUID.randomUUID(); Instant time=Instant.now(); String key=temporary(tenant,id);
     var signed=storage.put(key,mime,request.sizeBytes(),settings.uploadTtl());
     repository.insert(new DocumentRepository.Row(id,tenant,key,request.documentType(),mime,request.sizeBytes(),sha,
@@ -51,9 +67,12 @@ class DocumentService {
     String supplied=checksum(request.checksumSha256());
     access.readScope(actor,tenant);
     var identity=repository.find(tenant,document,false);
-    uploads.require(actor,tenant,identity.type(),true);
+    var trailerContext=trailerContext(identity,repository.links(tenant,document));
+    if(trailerContext!=null) trailerAuthority(actor,tenant,trailerContext,true);
+    else uploads.require(actor,tenant,identity.type(),true);
     var row=repository.find(tenant,document,true);
-    uploads.require(actor,tenant,row.type(),false);
+    if(trailerContext!=null) trailerAuthority(actor,tenant,trailerContext,false);
+    else uploads.require(actor,tenant,row.type(),false);
     if(!actor.userId().equals(row.uploader())) throw DocumentFailure.missing();
     if(row.status()!=Status.PENDING && row.status()!=Status.UPLOADED) throw DocumentFailure.conflict("RESOURCE_CONFLICT");
     var linked=repository.links(tenant,document);
@@ -84,6 +103,7 @@ class DocumentService {
     access.readScope(actor,tenant);
     var identity=repository.find(tenant,document,false);
     authorization.requireTenantCapability(actor,tenant,DocumentUploadAuthority.capability(identity.type()));
+    if(repository.links(tenant,document).stream().anyMatch(l->l.entityType()==Target.TRAILER)) throw DocumentFailure.invalid();
     UUID assigned;
     if(request.entityType()==Target.TRIP_STOP) {
       if(!Set.of(Type.BOL,Type.POD,Type.DELIVERY_PHOTO,Type.DAMAGE_PHOTO).contains(identity.type())) throw DocumentFailure.invalid();
@@ -129,6 +149,18 @@ class DocumentService {
     if(row.status()!=Status.UPLOADED) throw DocumentFailure.conflict("UPLOAD_NOT_COMPLETE");
     if(!storage.exists(row.key())) throw DocumentFailure.storage();
     var signed=storage.get(row.key(),settings.downloadTtl());return new Download(signed.url(),signed.expiresAt());
+  }
+
+  private UUID trailerContext(DocumentRepository.Row row,List<Link> links) {
+    if(row.type()!=Type.DAMAGE_PHOTO || links.size()!=1 || links.getFirst().entityType()!=Target.TRAILER) return null;
+    return links.getFirst().entityId();
+  }
+  private void trailerAuthority(AuthenticatedUserPrincipal actor,UUID tenant,UUID trailer,boolean lock) {
+    authorization.requireTenantCapability(actor,tenant,Capability.TRAILER_OOS_MARK);
+    if(!Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from tenants where id=? and status='ACTIVE')",Boolean.class,tenant))) throw new com.trailersaas.documents.EvidenceValidationException(com.trailersaas.documents.EvidenceValidationException.Code.CAPABILITY_DENIED);
+    if(!(lock?trailers.lockExists(tenant,trailer):trailers.exists(tenant,trailer))
+       || !Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from trailers where tenant_id=? and id=? and active)",Boolean.class,tenant,trailer))) throw DocumentFailure.missing();
+    authorization.requireTenantCapability(actor,tenant,Capability.TRAILER_OOS_MARK);
   }
 
   static String checksum(String value) {

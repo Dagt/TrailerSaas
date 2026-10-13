@@ -242,7 +242,7 @@ void main() {
       expect(
         (await v4.customSelect('PRAGMA user_version').getSingle())
             .data['user_version'],
-        7,
+        8,
       );
       expect(
         (await v4.customSelect('SELECT * FROM local_commands').getSingle())

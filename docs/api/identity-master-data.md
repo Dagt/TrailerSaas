@@ -11,6 +11,18 @@ All Tenant-owned paths use:
 
 `/api/v1/tenants/{tenantId}`
 
+## Issue #49 implemented corrective and damage boundary
+
+Yard Home now supports explicit Location Correction, Load State Correction,
+Discrepancy Report and Report Damage / Mark OOS. The original Yard Move remains
+unchanged. Yard Check, Missing reconciliation and notifications remain #50/#51/#55.
+No capability or role grant changes: YARD_SPOTTER is Tenant-scoped, has the two
+correction capabilities, and has no OOS grant; a currently authorized multi-role
+user may use OOS. Selecting Site, QR scan, a local draft or an upload grants no
+mutation authority. Return to Service and unresolved OQ-054 remain separate.
+
+See [#49 contracts, acceptance, tests and release limitations](../mobile/issue-49-yard-discrepancy-oos.md).
+
 ## 1. Current identity/context
 
 ### GET /api/v1/me

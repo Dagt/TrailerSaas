@@ -13,6 +13,7 @@ import '../road/driver_updates_store.dart';
 import '../road/driver_updates_view.dart';
 import '../yard/yard_view.dart';
 import '../platform/qr_scanner.dart';
+import '../shift/camera_capture.dart';
 
 class SessionView extends StatefulWidget {
   const SessionView({
@@ -22,12 +23,14 @@ class SessionView extends StatefulWidget {
     this.worker,
     this.updates,
     this.yardScanner,
+    this.yardCamera,
   });
   final OnlineCommandJournal? journal;
   final SessionController session;
   final ReplayWorker? worker;
   final DriverUpdatesStore? updates;
   final QrScanner? yardScanner;
+  final InspectionCamera? yardCamera;
   @override
   State<SessionView> createState() => _SessionViewState();
 }
@@ -210,6 +213,7 @@ class _SessionViewState extends State<SessionView> {
                         session: session,
                         worker: widget.worker!,
                         scanner: widget.yardScanner,
+                        camera: widget.yardCamera,
                       )
                     else
                       const Column(

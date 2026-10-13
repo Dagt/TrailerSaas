@@ -37,7 +37,10 @@ class DocumentsClient implements DocumentTransport {
 
   @override
   Future<PendingDocumentUpload> initialize(LocalMediaData row) async {
-    final response = await _post('tenants/${row.tenantId}/documents/uploads', {
+    final path = row.trailerId == null
+        ? 'tenants/${row.tenantId}/documents/uploads'
+        : 'tenants/${row.tenantId}/trailers/${row.trailerId}/damage-uploads';
+    final response = await _post(path, {
       'documentType': row.documentType,
       'contentType': row.contentType,
       'sizeBytes': row.sizeBytes,

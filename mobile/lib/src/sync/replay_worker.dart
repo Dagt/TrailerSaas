@@ -57,11 +57,15 @@ class ReplayWorker extends ChangeNotifier {
   bool get sending => _running != null;
 
   void start() {
-    if (_started) return;
+    if (_started) {
+      return;
+    }
     _started = true;
     session.addListener(_sessionChanged);
     _network = session.network.changes.listen((status) {
-      if (status == ConnectivityStatus.available) unawaited(sync());
+      if (status == ConnectivityStatus.available) {
+        unawaited(sync());
+      }
     });
     _sessionChanged();
   }
@@ -82,7 +86,9 @@ class ReplayWorker extends ChangeNotifier {
       _scope = next;
       _timer?.cancel();
       message = null;
-      if (!_disposed) notifyListeners();
+      if (!_disposed) {
+        notifyListeners();
+      }
     }
     // Same-scope offline notifications pause sending, not request another pass.
     // Otherwise a failed authoritative refresh on an available network link can
@@ -92,7 +98,9 @@ class ReplayWorker extends ChangeNotifier {
         (ready && (changed || !_wasReady)) ||
         (session.state == SessionState.offline && changed);
     _wasReady = ready;
-    if (shouldSync) unawaited(sync());
+    if (shouldSync) {
+      unawaited(sync());
+    }
   }
 
   bool _current(SessionSnapshot owner) =>
@@ -108,7 +116,9 @@ class ReplayWorker extends ChangeNotifier {
           ));
 
   Future<void> sync() {
-    if (_disposed) return Future.value();
+    if (_disposed) {
+      return Future.value();
+    }
     if (_running != null) {
       _requested = true;
       return _running!;
@@ -136,7 +146,9 @@ class ReplayWorker extends ChangeNotifier {
     notifyListeners();
     return run.whenComplete(() {
       _running = null;
-      if (!_disposed) notifyListeners();
+      if (!_disposed) {
+        notifyListeners();
+      }
       if (_requested && !_disposed) {
         _requested = false;
         unawaited(sync());
@@ -163,7 +175,9 @@ class ReplayWorker extends ChangeNotifier {
     }
     try {
       await store.importLegacy(owner.userId, owner.membership.tenantId, legacy);
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       if (await session.network.currentStatus() ==
               ConnectivityStatus.unavailable ||
           !_current(owner)) {
@@ -181,25 +195,35 @@ class ReplayWorker extends ChangeNotifier {
           owner.membership.tenantId,
         )).where((r) => r.state == 'FINALIZED').length;
         await media!.process(session, owner, () => _current(owner));
-        if (!_current(owner)) return;
+        if (!_current(owner)) {
+          return;
+        }
         final after = (await media!.store.list(
           owner.userId,
           owner.membership.tenantId,
         )).where((r) => r.state == 'FINALIZED').length;
         if (after > before) {
           await session.refresh();
-          if (!_current(owner)) return;
+          if (!_current(owner)) {
+            return;
+          }
         }
       }
       // Bound one foreground pass; another timer/manual/reconnect pass continues
       // a larger backlog. No unlimited mutation burst.
       for (var sent = 0; sent < 100 && _current(owner); sent++) {
         final rows = await store.list(owner.userId, owner.membership.tenantId);
-        if (!_current(owner)) return;
+        if (!_current(owner)) {
+          return;
+        }
         await _dependencies(rows);
         await _mediaDependencies(rows);
         await _shiftDependencies(rows);
         final fresh = await store.list(owner.userId, owner.membership.tenantId);
+        final reviewed = await store.reviewedYardFailures(
+          owner.userId,
+          owner.membership.tenantId,
+        );
         final byId = {for (final r in fresh) r.clientOperationId: r};
         final candidate = fresh
             .where(
@@ -213,7 +237,7 @@ class ReplayWorker extends ChangeNotifier {
                   dependencies(c).every(
                     (id) => byId[id]?.state == CommandState.acknowledged.value,
                   ) &&
-                  !_earlierSharedResource(c, fresh),
+                  !_earlierSharedResource(c, fresh, reviewed),
             )
             .firstOrNull;
         if (candidate == null) {
@@ -222,9 +246,12 @@ class ReplayWorker extends ChangeNotifier {
           return;
         }
         final isShift = ShiftCommandIntent.recognizes(candidate);
-        final isYard = YardMoveIntent.recognizes(candidate);
+        final isYard = YardCommandIntent.recognizes(candidate);
         if (isYard
-            ? !owner.membership.capabilities.contains('YARD_MOVE_EXECUTE')
+            ? !owner.membership.capabilities.contains('YARD_MOVE_EXECUTE') ||
+                  !owner.membership.capabilities.contains(
+                    YardCommandIntent.capabilityFor(candidate.commandType),
+                  )
             : owner.driver == null) {
           await store.result(
             candidate,
@@ -237,7 +264,9 @@ class ReplayWorker extends ChangeNotifier {
         if (isYard) {
           try {
             final request = await YardReplay(store).materialize(candidate);
-            if (!_current(owner)) return;
+            if (!_current(owner)) {
+              return;
+            }
             if (request == null) {
               await store.result(
                 candidate,
@@ -247,8 +276,12 @@ class ReplayWorker extends ChangeNotifier {
               );
               continue;
             }
-            if (!await store.claim(candidate)) continue;
-            if (!_current(owner)) return;
+            if (!await store.claim(candidate)) {
+              continue;
+            }
+            if (!_current(owner)) {
+              return;
+            }
             await _send(
               candidate,
               owner,
@@ -275,8 +308,12 @@ class ReplayWorker extends ChangeNotifier {
                   : jsonDecode(shiftRequest.payloadJson)
                         as Map<String, dynamic>)
             : await bindings.materialize(candidate);
-        if (body == null || !_current(owner)) continue;
-        if (!await store.claim(candidate)) continue;
+        if (body == null || !_current(owner)) {
+          continue;
+        }
+        if (!await store.claim(candidate)) {
+          continue;
+        }
         if (!_current(owner)) {
           return; // SENDING is recovered in its original namespace.
         }
@@ -285,7 +322,9 @@ class ReplayWorker extends ChangeNotifier {
         } else {
           await _send(candidate, owner, body);
         }
-        if (!_current(owner)) return;
+        if (!_current(owner)) {
+          return;
+        }
       }
       if (_current(owner)) {
         _schedule(
@@ -294,14 +333,50 @@ class ReplayWorker extends ChangeNotifier {
         );
       }
     } catch (_) {
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       message = 'Synchronization could not access saved operations. They are retained. Retry sync.';
     }
   }
 
   Future<void> _mediaDependencies(List<LocalCommand> rows) async {
     for (final c in rows) {
-      if (ShiftCommandIntent.recognizes(c)) continue;
+      if (ShiftCommandIntent.recognizes(c)) {
+        continue;
+      }
+      if (YardCommandIntent.recognizes(c)) {
+        if ({
+          'ACKNOWLEDGED',
+          'SENDING',
+          'CONFLICT',
+          'PERMANENT_FAILURE',
+        }.contains(c.state)) {
+          continue;
+        }
+        try {
+          final ready = await YardReplay(store).mediaReady(c);
+          if (!ready) {
+            await store.result(
+              c,
+              CommandState.blocked,
+              code: 'EVIDENCE_PENDING',
+              category: 'MEDIA',
+            );
+          } else if (c.state == 'BLOCKED' &&
+              c.lastErrorCode == 'EVIDENCE_PENDING') {
+            await store.result(c, CommandState.queued);
+          }
+        } on FormatException {
+          await store.result(
+            c,
+            CommandState.permanentFailure,
+            code: 'INVALID_MEDIA_DEPENDENCY',
+            category: 'INVALID_SEQUENCE',
+          );
+        }
+        continue;
+      }
       if ({
         'ACKNOWLEDGED',
         'SENDING',
@@ -398,9 +473,13 @@ class ReplayWorker extends ChangeNotifier {
   ) async {
     try {
       final result = await shifts!.send(c, body);
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       await shifts!.acknowledge(c, result);
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       await session.refresh();
       await _refreshExecutionContext(c, owner);
       if (_current(owner)) {
@@ -408,13 +487,17 @@ class ReplayWorker extends ChangeNotifier {
             'Confirmed Shift/inspection reconciled with current server work.';
       }
     } on ApiProblem catch (e) {
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       final current = await store.find(
         c.userId,
         c.tenantId,
         c.clientOperationId,
       );
-      if (current?.state == 'ACKNOWLEDGED') return;
+      if (current?.state == 'ACKNOWLEDGED') {
+        return;
+      }
       if ({401, 403, 404, 409}.contains(e.status)) {
         await store.result(
           c,
@@ -459,7 +542,9 @@ class ReplayWorker extends ChangeNotifier {
         );
       }
     } catch (_) {
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       final current = await store.find(
         c.userId,
         c.tenantId,
@@ -477,7 +562,9 @@ class ReplayWorker extends ChangeNotifier {
   }
 
   Future<void> _scheduleMedia(SessionSnapshot owner) async {
-    if (media == null || !scheduleTimers || !_current(owner)) return;
+    if (media == null || !scheduleTimers || !_current(owner)) {
+      return;
+    }
     final at = await media!.nextRetry(owner.userId, owner.membership.tenantId);
     if (at != null && (_scheduledAt == null || at.isBefore(_scheduledAt!))) {
       final delay = at.difference(store.now());
@@ -497,10 +584,22 @@ class ReplayWorker extends ChangeNotifier {
   static Set<String> resources(LocalCommand c) =>
       Set<String>.from(jsonDecode(c.resourceKeysJson) as List);
 
-  bool _earlierSharedResource(LocalCommand c, List<LocalCommand> rows) {
+  bool _earlierSharedResource(
+    LocalCommand c,
+    List<LocalCommand> rows,
+    Set<String> reviewed,
+  ) {
     for (final earlier in rows) {
-      if (earlier.clientOperationId == c.clientOperationId) break;
+      if (earlier.clientOperationId == c.clientOperationId) {
+        break;
+      }
       if (earlier.state != CommandState.acknowledged.value &&
+          !(reviewed.contains(earlier.clientOperationId) &&
+              {
+                'CONFLICT',
+                'BLOCKED',
+                'PERMANENT_FAILURE',
+              }.contains(earlier.state)) &&
           resources(earlier).intersection(resources(c)).isNotEmpty) {
         return true;
       }
@@ -511,11 +610,17 @@ class ReplayWorker extends ChangeNotifier {
   Future<void> _dependencies(List<LocalCommand> rows) async {
     final byId = {for (final c in rows) c.clientOperationId: c};
     bool invalid(String id, Set<String> visiting) {
-      if (!visiting.add(id)) return true;
+      if (!visiting.add(id)) {
+        return true;
+      }
       final c = byId[id];
-      if (c == null) return true;
+      if (c == null) {
+        return true;
+      }
       for (final d in dependencies(c)) {
-        if (invalid(d, Set.of(visiting))) return true;
+        if (invalid(d, Set.of(visiting))) {
+          return true;
+        }
       }
       return false;
     }
@@ -580,9 +685,10 @@ class ReplayWorker extends ChangeNotifier {
         frozenBody,
       );
       final kind = EvidenceCommandIntent.kindFor(c);
-      if (YardMoveIntent.recognizes(c)) {
-        YardMoveIntent(command).validate(c.tenantId);
-        if (command.body['expectedTrailerVersion'] is! int) {
+      if (YardCommandIntent.recognizes(c)) {
+        YardCommandIntent(c.commandType, command).validate(c.tenantId);
+        if (c.commandType != 'DISCREPANCY_REPORT' &&
+            command.body['expectedTrailerVersion'] is! int) {
           throw const FormatException('Yard request must already be frozen');
         }
       } else if (kind == null) {
@@ -624,7 +730,9 @@ class ReplayWorker extends ChangeNotifier {
                 forceRefresh: false,
               );
       } on ApiProblem catch (e) {
-        if (e.status != 401 || !_current(owner)) rethrow;
+        if (e.status != 401 || !_current(owner)) {
+          rethrow;
+        }
         response =
             futureEvidence is TypedEvidenceReplayPort &&
                 EvidenceCommandIntent.kindFor(c) != null
@@ -642,7 +750,9 @@ class ReplayWorker extends ChangeNotifier {
                 forceRefresh: true,
               );
       }
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       if (futureEvidence is TypedEvidenceReplayPort &&
           EvidenceCommandIntent.kindFor(c) != null) {
         (futureEvidence! as TypedEvidenceReplayPort).validateResponse(
@@ -651,21 +761,23 @@ class ReplayWorker extends ChangeNotifier {
           frozenBody,
         );
       } else {
-        if (YardMoveIntent.recognizes(c)) {
+        if (YardCommandIntent.recognizes(c)) {
           YardReplay.validateResponse(c, response, frozenBody);
         } else {
           _validateResponse(c, response);
         }
       }
-      if (YardMoveIntent.recognizes(c)) {
+      if (YardCommandIntent.recognizes(c)) {
         await YardReplay(store).acknowledge(c, response, frozenBody);
       } else {
         await store.result(c, CommandState.acknowledged, status: 200);
       }
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       // Replayed responses are historical acknowledgments, never current projections.
       await session.refresh();
-      if (YardMoveIntent.recognizes(c)) {
+      if (YardCommandIntent.recognizes(c)) {
         await _refreshYardTrailer(c, owner);
       } else {
         await _refreshExecutionContext(c, owner);
@@ -674,7 +786,9 @@ class ReplayWorker extends ChangeNotifier {
         message = 'Confirmed operations reconciled with current server work.';
       }
     } on ApiProblem catch (e) {
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       if ((await store.find(
             c.userId,
             c.tenantId,
@@ -707,7 +821,9 @@ class ReplayWorker extends ChangeNotifier {
           category: e.code == 'IDEMPOTENCY_KEY_REUSED' ? 'IDENTITY' : 'STATE',
         );
         await session.refresh();
-        if (YardMoveIntent.recognizes(c)) await _refreshYardTrailer(c, owner);
+        if (YardCommandIntent.recognizes(c)) {
+          await _refreshYardTrailer(c, owner);
+        }
       } else if (e.status == 408 ||
           e.status == 429 ||
           e.status >= 500 ||
@@ -802,14 +918,18 @@ class ReplayWorker extends ChangeNotifier {
     LocalCommand c,
     SessionSnapshot owner,
   ) async {
-    if (!_current(owner)) return;
+    if (!_current(owner)) {
+      return;
+    }
     try {
       final fresh = YardTrailer.fromJson(
         await session.api.get(
           'tenants/${c.tenantId}/yard/trailers/${c.aggregateId}',
         ),
       );
-      if (!_current(owner) || fresh.id != c.aggregateId) return;
+      if (!_current(owner) || fresh.id != c.aggregateId) {
+        return;
+      }
       final cached =
           await (store.db.select(store.db.cachedTrailers)..where(
                 (r) =>
@@ -818,7 +938,9 @@ class ReplayWorker extends ChangeNotifier {
                     r.id.equals(c.aggregateId!),
               ))
               .getSingleOrNull();
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       final token = cached == null
           ? null
           : (jsonDecode(cached.projectionJson) as Map)['qrPublicToken'];
@@ -839,7 +961,9 @@ class ReplayWorker extends ChangeNotifier {
             ),
           );
     } on ApiProblem catch (e) {
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       if ({401, 403}.contains(e.status)) {
         await session.rejectOperationalContext(e);
       } else if (e.status == 404) {
@@ -852,7 +976,9 @@ class ReplayWorker extends ChangeNotifier {
             .go();
       }
     } catch (_) {
-      if (_current(owner)) message = 'Yard operation retained; reconnect and refresh the recorded Trailer location.';
+      if (_current(owner)) {
+        message = 'Yard operation retained; reconnect and refresh the recorded Trailer location.';
+      }
     }
   }
 
@@ -869,7 +995,9 @@ class ReplayWorker extends ChangeNotifier {
       final detail = await session.api.get(
         'tenants/${c.tenantId}/driver/me/trips/${c.tripId}',
       );
-      if (!_current(owner) || !identical(session.snapshot, current)) return;
+      if (!_current(owner) || !identical(session.snapshot, current)) {
+        return;
+      }
       _validateResponse(c.copyWith(commandType: 'arrivals'), detail);
       await session.cacheConfirmedTrip(current, {
         ...detail['trip'] as Map<String, dynamic>,
@@ -882,7 +1010,9 @@ class ReplayWorker extends ChangeNotifier {
         },
       });
     } on ApiProblem catch (e) {
-      if (!_current(owner)) return;
+      if (!_current(owner)) {
+        return;
+      }
       if (e.status == 401 || e.status == 403) {
         await session.rejectOperationalContext(e);
       } else if (e.status == 404) {
@@ -891,7 +1021,9 @@ class ReplayWorker extends ChangeNotifier {
     } catch (_) {
       // The own-work directory was refreshed already. No stale physical context
       // is synthesized if the additional equipment read cannot be completed.
-      if (_current(owner)) message = 'Assigned work refreshed; reconnect and reload physical equipment context.';
+      if (_current(owner)) {
+        message = 'Assigned work refreshed; reconnect and reload physical equipment context.';
+      }
     }
   }
 
@@ -906,7 +1038,9 @@ class ReplayWorker extends ChangeNotifier {
   }
 
   void _schedule(List<LocalCommand> rows, {bool more = false}) {
-    if (_disposed || !scheduleTimers) return;
+    if (_disposed || !scheduleTimers) {
+      return;
+    }
     final retryTimes =
         rows
             .where(
@@ -941,7 +1075,9 @@ class ReplayWorker extends ChangeNotifier {
 
   @override
   void dispose() {
-    if (_disposed) return;
+    if (_disposed) {
+      return;
+    }
     _disposed = true;
     media?.forgetGrants();
     _timer?.cancel();

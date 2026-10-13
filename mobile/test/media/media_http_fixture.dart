@@ -23,6 +23,7 @@ import 'package:trailersaas_mobile/src/road/road_evidence_replay.dart';
 import '../road/online_execution_test.dart' show MemoryJournal;
 import '../session/fixtures.dart' show FakeAuth, FakeNetwork, work;
 import 'media_storage_test.dart' show user, tenant, other;
+import '../yard/fixtures.dart' show yardTrailer, yardSite, trailerId;
 
 class TestEvidencePort implements EvidenceReplayPort {
   @override
@@ -72,6 +73,11 @@ class MediaHttpFixture {
   bool switchUser = false;
   bool shiftWorkflows = false, reassigned = false, shiftRevoked = false;
   bool roadWorkflows = false, roadCompleted = false;
+  bool yardWorkflows = false, yardOosDenied = false;
+  Map<String, dynamic> yardState = yardTrailer();
+  final yardLedger =
+      <String, ({String logical, Map<String, dynamic> result})>{};
+  final yardConsumedDocuments = <String>{};
   static const roadTrip = '55555555-5555-4555-8555-555555555555';
   static const roadStop = '66666666-6666-4666-8666-666666666666';
   final roadLinks = <String, Set<String>>{};
@@ -232,22 +238,43 @@ class MediaHttpFixture {
                 'tenantName': 'Operations',
                 'status': 'ACTIVE',
                 'roles': [],
-                'capabilities': [
-                  'TRIP_VIEW_ASSIGNED',
-                  'POD_UPLOAD',
-                  'PRETRIP_CREATE',
-                  'FUEL_EVENT_CREATE',
-                  'EXCEPTION_REPORT',
-                  if (roadWorkflows) 'TRIP_EXECUTE_ASSIGNED',
-                  if (shiftWorkflows) ...[
-                    'SHIFT_START',
-                    'SHIFT_END',
-                    'POSTTRIP_CREATE',
-                  ],
-                ],
+                'capabilities': yardWorkflows
+                    ? [
+                        'YARD_MOVE_EXECUTE',
+                        'TRAILER_LOCATION_CORRECT',
+                        'TRAILER_STATE_CORRECT',
+                        if (!yardOosDenied) 'TRAILER_OOS_MARK',
+                      ]
+                    : [
+                        'TRIP_VIEW_ASSIGNED',
+                        'POD_UPLOAD',
+                        'PRETRIP_CREATE',
+                        'FUEL_EVENT_CREATE',
+                        'EXCEPTION_REPORT',
+                        if (roadWorkflows) 'TRIP_EXECUTE_ASSIGNED',
+                        if (shiftWorkflows) ...[
+                          'SHIFT_START',
+                          'SHIFT_END',
+                          'POSTTRIP_CREATE',
+                        ],
+                      ],
               },
             ],
           });
+        } else if (yardWorkflows && path.endsWith('/yard/sites')) {
+          await reply(r, {
+            'items': [yardSite()],
+            'nextCursor': null,
+          });
+        } else if (yardWorkflows && path.contains('/trailer-qr/')) {
+          await reply(r, {
+            'trailerId': trailerId,
+            'version': yardState['version'],
+            'operationalNumber': 'T114',
+            'active': true,
+          });
+        } else if (yardWorkflows && path.contains('/yard/trailers/')) {
+          await reply(r, yardState);
         } else if (path.endsWith('/driver/me')) {
           await reply(r, {
             'id': driverIdentityOverride ?? user,
@@ -349,9 +376,22 @@ class MediaHttpFixture {
         }, status);
         return;
       }
-      if (path.endsWith('/documents/uploads')) {
+      if (path.endsWith('/documents/uploads') ||
+          yardWorkflows && path.endsWith('/damage-uploads')) {
+        if (yardWorkflows &&
+            (yardOosDenied ||
+                body['documentType'] != 'DAMAGE_PHOTO' ||
+                !path.contains(trailerId))) {
+          await reply(r, {'code': 'CAPABILITY_DENIED'}, 403);
+          return;
+        }
         final id = operationUuid();
-        documents[id] = {...body, 'id': id, 'uploadStatus': 'PENDING'};
+        documents[id] = {
+          ...body,
+          'id': id,
+          'uploadStatus': 'PENDING',
+          if (yardWorkflows) 'trailerId': trailerId,
+        };
         if (loseInitAck) {
           loseInitAck = false;
           final socket = await r.response.detachSocket(writeHeaders: false);
@@ -368,6 +408,10 @@ class MediaHttpFixture {
         return;
       }
       if (path.endsWith('/upload-completion')) {
+        if (yardWorkflows && yardOosDenied) {
+          await reply(r, {'code': 'CAPABILITY_DENIED'}, 403);
+          return;
+        }
         if (finalizeEntered != null && !finalizeEntered!.isCompleted) {
           finalizeEntered!.complete();
         }
@@ -407,6 +451,132 @@ class MediaHttpFixture {
         final override = finalizeResponseOverride;
         finalizeResponseOverride = null;
         await reply(r, override == null ? doc : {...doc, ...override});
+        return;
+      }
+      if (yardWorkflows &&
+          (path.endsWith('/yard-moves') || path.contains('/yard/'))) {
+        if (key == null || switchUser || body['trailerId'] != trailerId) {
+          await reply(r, {'code': 'RESOURCE_NOT_FOUND'}, 404);
+          return;
+        }
+        final logical = '$path|${jsonEncode(body)}';
+        final saved = yardLedger[key];
+        if (saved != null && saved.logical != logical) {
+          await reply(r, {'code': 'IDEMPOTENCY_KEY_REUSED'}, 409);
+          return;
+        }
+        if (saved == null) {
+          Map<String, dynamic> result;
+          if (path.endsWith('/discrepancy-reports')) {
+            result = {
+              'trailer': {...yardState},
+              'report': {
+                'id': operationUuid(),
+                'trailerId': trailerId,
+                'siteId': body['siteId'],
+                'recordedLocationId': body['recordedLocationId'],
+                'reportedLocationId': body['reportedLocationId'],
+                'observedTrailerVersion': body['observedTrailerVersion'],
+                'actorUserId': user,
+                'reason': body['reason'],
+                'observedAt': body['observedAt'],
+                'recordedAt': now.toUtc().toIso8601String(),
+                'clientOperationId': key,
+              },
+            };
+          } else {
+            if (body['expectedTrailerVersion'] != yardState['version']) {
+              await reply(r, {'code': 'STALE_VERSION'}, 409);
+              return;
+            }
+            String event;
+            if (path.endsWith('/yard-moves') ||
+                path.endsWith('/location-corrections')) {
+              final destination =
+                  body[path.endsWith('/yard-moves')
+                          ? 'toLocationId'
+                          : 'newLocationId']
+                      as String;
+              if (path.endsWith('/yard-moves') &&
+                  (body['fromLocationId'] !=
+                          (yardState['currentLocation'] as Map)['id'] ||
+                      yardState['serviceabilityState'] != 'IN_SERVICE')) {
+                await reply(r, {'code': 'LOCATION_MISMATCH'}, 409);
+                return;
+              }
+              yardState = {
+                ...yardState,
+                ...{
+                  'currentLocation': yardTrailer(
+                    current: destination,
+                  )['currentLocation'],
+                  'lastKnownLocationId': destination,
+                  'lastSeenAt': body['observedAt'],
+                },
+              };
+              event = path.endsWith('/yard-moves')
+                  ? 'YARD_MOVED'
+                  : 'LOCATION_CORRECTED';
+            } else if (path.endsWith('/load-state-changes')) {
+              if (yardState['loadState'] == body['loadState']) {
+                await reply(r, {'code': 'RESOURCE_CONFLICT'}, 409);
+                return;
+              }
+              yardState = {...yardState, 'loadState': body['loadState']};
+              event = 'LOAD_STATE_CHANGED';
+            } else {
+              final photos = List<String>.from(body['documentIds'] as List);
+              if (yardOosDenied) {
+                await reply(r, {'code': 'CAPABILITY_DENIED'}, 403);
+                return;
+              }
+              if (photos.isEmpty ||
+                  photos.any(
+                    (id) =>
+                        documents[id]?['uploadStatus'] != 'UPLOADED' ||
+                        documents[id]?['documentType'] != 'DAMAGE_PHOTO' ||
+                        documents[id]?['trailerId'] != trailerId ||
+                        yardConsumedDocuments.contains(id),
+                  )) {
+                await reply(r, {'code': 'EVIDENCE_REQUIRED'}, 409);
+                return;
+              }
+              if (yardState['serviceabilityState'] != 'IN_SERVICE') {
+                await reply(r, {'code': 'INVALID_STATE_TRANSITION'}, 409);
+                return;
+              }
+              yardConsumedDocuments.addAll(photos);
+              yardState = {
+                ...yardState,
+                'serviceabilityState': 'OUT_OF_SERVICE',
+              };
+              event = 'MARKED_OOS';
+            }
+            yardState = {
+              ...yardState,
+              'version': (yardState['version'] as int) + 1,
+            };
+            result = {
+              'trailer': {...yardState},
+              'movementEvent': {
+                'id': operationUuid(),
+                'eventType': event,
+                'occurredAt': body['observedAt'],
+                'recordedAt': now.toUtc().toIso8601String(),
+              },
+              if (event == 'MARKED_OOS') 'documentIds': body['documentIds'],
+            };
+          }
+          yardLedger[key] = (logical: logical, result: result);
+          businessEffects++;
+        }
+        if (loseBusinessAck) {
+          loseBusinessAck = false;
+          final socket = await r.response.detachSocket(writeHeaders: false);
+          socket.destroy();
+          return;
+        }
+        await reply(r, yardLedger[key]!.result);
         return;
       }
       if (roadWorkflows && path.endsWith('/links')) {
