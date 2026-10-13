@@ -193,3 +193,23 @@ survives removal of current work. Instructions and cursors additionally bind to 
 current own Driver ID; a durable denial marker hides cached instructions after
 explicit 401/403 until authorized refresh. Fuel drafts freeze the captured Tractor
 and reject reassignment before queuing. No token, signed URL or binary enters these tables.
+
+## #49 deployed schema: Drift v8
+
+Version 8 preserves the one v7 command/media graph and adds nullable immutable
+local_media.trailer_id for DAMAGE_PHOTO without Trip. Three narrow metadata stores:
+yard_drafts (owner, selected Site/Trailer, immutable observed version/ref/time,
+comment, retained photo IDs, eventual command ID), yard_captures (persisted camera
+ownership and PENDING/CAPTURED/FAILED/CANCELLED outcome), yard_conflict_reviews
+(immutable old-failed/new-action links and reviewed authorized projection/version).
+They are not queues. Existing local_commands/materialized_requests/command_results/
+command_media_dependencies remain the only durable operation graph.
+
+Scope/FK/content/queued-draft/late-camera and immutable review guards apply in
+SQLite. One native camera acquisition across Inspection/Road/Yard contexts is
+allowed. v7→v8 adds metadata without rebuilding commands/results/requests. A
+frozen actual published v7 DDL fixture verifies migration and retained ACK bytes;
+earlier v1–v6 migrations retain their historical constraints and data. Fresh schema
+has 21 tables; all upgrades, FK checks, namespace and ledger guards are tested.
+Read caches may be cleared on logout; pending commands/drafts/private bytes are
+retained in their original owner namespace. There is no GPS/history store.

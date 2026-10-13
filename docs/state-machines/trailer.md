@@ -186,3 +186,12 @@ A read projection may materialize availability later.
 - `TrailerMarkedOutOfService`
 - `TrailerReturnedToService`
 - `TrailerDesignatedCustomerChanged`
+
+## #49 orchestration boundary (no state-machine change)
+
+Yard correction and Load State use existing projection/MovementRules and events.
+Yard OOS and admin #40 share the serviceability transition/event writer. Yard
+adds exact-Trailer finalized damage evidence and ledger atomicity, not another
+state machine. Discrepancy Report is an immutable observation and emits no Trailer
+event/version change. OOS neither repairs location nor drops coupling/closes Trip.
+Return to Service remains the independent existing capability and OQ-054 policy.

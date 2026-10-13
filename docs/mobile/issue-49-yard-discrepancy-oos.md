@@ -61,7 +61,7 @@ port/writer. Validated own finalized exact-Trailer evidence, MARKED_OOS, version
 and ledger commit together. 370 transport/evidence/administrative/Yard/Modulith
 tests pass (0 failures/errors/skips), including 23 new OOS cases. Confirmed
 audit corrections preserve legacy integrity-error mapping and exact V23 version
-inventories. Native QA is not claimed. D is implemented: real corrective forms, native camera injection, durable v8 drafts and typed existing replay graph. E adds mixed replay/recovery/security proofs and two audit corrections: load correction preserves null unknown/in-transit location; reports reject invented future observed versions. F–G validation/publication remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
+inventories. Native QA is not claimed. D is implemented: real corrective forms, native camera injection, durable v8 drafts and typed existing replay graph. E adds mixed replay/recovery/security proofs and two audit corrections: load correction preserves null unknown/in-transit location; reports reject invented future observed versions. F1–F4 audit/contracts/documentation are implemented below; G publication and final exact-head CI remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
 camera and Linux tests do not count as physical device evidence. OQ-054 return
 policy and production privacy/retention remain unresolved. No Yard Check, Missing
 reconciliation, notifications, generic audit worker or GPS tracking is included.
@@ -98,23 +98,77 @@ ignored or relaxed. Native Android/iOS physical QA remains unperformed (#65).
 
 | Requirement / critical audit question | Implemented | Available evidence | Defect / pending | Action |
 | --- | --- | --- | --- | --- |
-| 1,3 Report cannot overwrite current or historical state | Separate append-only row, no physical port | YardReportsPostgresTests historic/nonmutating; mobile report replay | Add actual-correction and nullable-origin cases | Focused F2 proof |
+| 1,3 Report cannot overwrite current or historical state | Separate append-only row, no physical port | YardReportsPostgresTests historic/nonmutating, actual-correction and nullable-origin cases; mobile report replay | None found | F2 verified |
 | 2 Location correction requires exact capability | Before ledger and after Trailer/Site locks | YardActionPermissionTests; all Yard invalid/revoked cases | None found | Retain |
 | 4,5 OOS rejects foreign/wrong-Trailer/pending/unvalidated photos | Own exclusive Trailer link, type/UPLOADED/scope checks | YardOosEvidencePostgresTests actual signed HTTP bytes | None found | Retain |
-| 6,7 Evidence belongs to actual MARKED_OOS and rolls back together | Shared writer plus V23 event/document guard | Real event association and controlled post-flush rollback | Direct runtime operation-kind/current-transaction audit pending | Add adversarial runtime probes |
+| 6,7 Evidence belongs to actual MARKED_OOS and rolls back together | Shared writer plus strengthened V23 event/document/processing-ledger/state guard | Real event association, post-flush rollback and runtime wrong-kind/historical-event/actor/Trailer/state rejection | Reproduced wrong ledger kind was accepted before F2 | Fixed and verified |
 | 8 No photo reuse for another OOS | Tenant/document unique constraint and business conflict check | Administrative Return then rejected consumed photo | None found | Retain |
 | 9 Replay never bypasses current authority | Fresh capability/Tenant/membership and OOS contextual rechecks | Revoked role/membership and same-key tests | None found | Retain |
 | 10 Driverless Yard photo upload | Scoped OOS producer; no fabricated Driver/Trip | Actual zero-Driver-profile upload/finalize/OOS and camera tests | Native devices pending | #65 |
-| 11 Tenant isolation and downloads | Composite FKs, runtime Tenant RLS, all-linked reads | Strict security inventories, reports RLS, document transport security | Direct OOS RLS/immutability probe pending | Add runtime-role proof |
+| 11 Tenant isolation and downloads | Composite FKs, runtime Tenant RLS, all-linked reads | Strict inventories, reports RLS, document transport security and direct OOS runtime RLS/grant/immutability proof | None found | F2 verified |
 | 12 Return remains independent | Original #40 endpoint/capability unchanged | Entire admin regression suite; Yard no-Return test | OQ-054 remains unresolved | No policy invention |
 | 13 Versions derive only from actual predecessor ACK | Typed same-Trailer physical refs; report never predecessor | Four-command offline mixed chain and SQLite reopen | None found | Retain |
 | 14 Conflicts do not release old descendants | Existing dependency graph plus explicit retained failed/new-root review | Conflict/review and independent #48 asset tests | None found | Retain |
 | 15 Lost ACK creates no duplicate transition | Same UUID/frozen request and original ledger | All corrective kinds/OOS loss and two workers | None found | Retain |
 | 16 Account switch fences late callbacks | Dialog/context/version fencing; private capture retains original owner | Native late-account test and widget review switch | Physical process/lifecycle pending | #65 |
 | 17 Preserve all 2,762 baseline tests | No removed tests/workflow changes | Mobile/Web/OpenAPI retained full counts; Backend 2,139 executed | Full Backend Linux approval pending | CI gate |
-| 18 OpenAPI equals actual six method surfaces | Closed DTOs, scoped producer, separate bounded review | 30 contract tests, including original #45/#48 | Local docs not yet published | F3/F4 |
-| 19 V1–V22 remain intact, V23 isolated | Only V23 diff from baseline; strict catalog/Flyway | Git diff and security inventories | Latest description assertion stale | Exact F2 correction |
+| 18 OpenAPI equals actual six method surfaces | Closed DTOs, scoped producer, separate bounded review | 30 contract tests, including original #45/#48 | None found | F3 published; F4 documentation |
+| 19 V1–V22 remain intact, V23 isolated | Only V23 diff from baseline; strict catalog/Flyway | Git diff and security inventories | Latest description assertion stale before F2 | Exact F2 correction verified |
 | 20 Yard Check/Missing remains outside scope | No #50/#51 route/workflow or grant | Existing implemented-route inventories and scope review | None found | Do not start #50 |
+
+## F2–F4 final local evidence and transaction audit
+
+F2 (`3fadc34`) closes the reproduced runtime association gap: V23 now requires
+the matching actor's OOS/PROCESSING ledger row, actual OUT_OF_SERVICE projection
+and MARKED_OOS fact written in the same transaction. Historical or other-kind
+ledgers cannot authorize a new association. Both `xmin` comparisons use PostgreSQL's
+native `pg_current_xact_id()::xid` conversion, replacing the manual numeric modulo.
+The documented [xid8-to-xid cast](https://www.postgresql.org/docs/18/functions-info.html#FUNCTIONS-TXID-SNAPSHOT)
+preserves low unsigned bits; actual PostgreSQL 18.6 tests cover wrap-sized and
+maximum unsigned xid8 values without integer overflow. Production joins one
+top-level REQUIRED transaction; nested/savepoint event creation is not introduced.
+An inconsistent transaction fails closed with the SQL constraint, never acceptance.
+
+The lock order remains fresh authorization → ledger claim → Trailer UPDATE lock →
+live Site/Locations SHARE locks → sorted Document locks → shared transition/event
+flush → evidence association → saved ledger response. Historical receipt replay
+uses fresh authority, Trailer/Site and document/association checks in this same
+order, does not append evidence or repeat the physical transition, and returns the
+stored historical receipt. The client downloads current authorized state after ACK.
+Existing #38–#48 parent/Trailer/document locking protocols remain unchanged.
+
+F2 tests directly use runtime credentials for illegal association inserts,
+cross-Tenant reads, SELECT/INSERT-only grants and UPDATE/DELETE rejection; the
+migration owner also cannot rewrite accepted history. Nullable recorded locations
+and an old offline report after an actual correction leave current state unchanged.
+The exact latest migration description is updated to V23's actual name, not removed.
+The final focused 57 cases (30 OOS, 20 reports, seven application/Flyway) pass with
+zero failures/errors/skips. The previous focused 140 cases also passed, including
+all 84 Trip assignment cases that reproduced the Windows-only connection problem.
+
+F3 (`3e30d7e`) publishes all six actual method surfaces and seven new contract tests,
+retaining #40/#45/#48 and generic Documents contracts. #47's schema-version privacy
+assertion advances to v8 while retaining every original native/privacy assertion.
+F4 completes all required API/UX/offline/data-model/backlog/README documentation.
+No workflows, role grants, V1–V22, Web code, dependency lockfiles or native permission
+files are changed. Initial signed upload remains non-idempotent and may leave an
+unused PENDING reservation after lost ACK; this does not mutate Trailer or accept
+evidence, and retention/cleanup is not silently enabled.
+
+| Local gate | Actual result | Scope / limitation |
+| --- | --- | --- |
+| Backend full clean verify | 2,139 executed; 1 failure, 1 Windows connection error, 0 skipped before F2 | Not approved; exact failed assertion fixed and affected tests rechecked. Final full Linux CI required. |
+| Backend final focused verification | 57 passed, 0 failures/errors/skipped; preceding 140 passed | Actual Java 25.0.3, PostgreSQL 18.6 Testcontainers/R2 signed HTTP, Flyway V23/runtime credentials |
+| Mobile complete suite | 467 passed, 0 failures/skipped | Flutter 3.47.6/Dart 3.13.5; locked pub, reproducible Drift, format, fatal-info analysis, Linux real SQLite |
+| Web complete | 244 passed, 0 failures/skipped | npm ci, typecheck, lint and production build |
+| OpenAPI complete | Valid; 30 passed, 0 failures/skipped | All 23 prior cases plus seven #49 cases; no test removal or ignore-file change |
+
+Final Backend CI is expected to collect 2,148 cases (2,071 retained + 77 added);
+only actual completed Linux CI logs may establish the release count/approval.
+Native Android/iOS permissions, real camera, physical process death/lost-data,
+background/reopen and signed release builds remain #65. No physical QA is claimed.
+OQ-054 Return policy and production privacy/retention remain unresolved; #50/#51
+Yard Check/Missing, #55 notifications and #61 generic audit remain outside this PR.
 
 ### #49 implemented HTTP contracts
 

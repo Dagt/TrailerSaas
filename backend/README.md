@@ -1,5 +1,72 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Issue #49 — Yard discrepancy, load correction and evidenced OOS
+
+
+### #49 implemented HTTP contracts
+
+All four POSTs require a UUID Idempotency-Key, closed JSON, no query fields,
+fresh YARD_MOVE_EXECUTE, ACTIVE membership/Tenant and same-Tenant active Trailer
+and selected active Site. Mutations additionally require their exact capability.
+Common physical fields: trailerId, siteId, expectedTrailerVersion (integer >=0),
+observedAt (nonfuture RFC3339, four-digit year), and reason (trimmed nonblank <=4000).
+
+| POST route | Additional fields / change | Capability / event |
+| --- | --- | --- |
+| /yard/location-corrections | newLocationId, different active same-Site normalized destination, no lastSeenAt regression | TRAILER_LOCATION_CORRECT / LOCATION_CORRECTED |
+| /yard/load-state-changes | loadState EMPTY/LOADED/UNKNOWN, different from prior value | TRAILER_STATE_CORRECT / LOAD_STATE_CHANGED |
+| /yard/out-of-service | comment replaces reason; documentIds 1–50 distinct finalized own exact-Trailer DAMAGE_PHOTO IDs | TRAILER_OOS_MARK / MARKED_OOS |
+| /yard/discrepancy-reports | No expectedTrailerVersion; recordedLocationId nullable but present, reportedLocationId, observedTrailerVersion | YARD_MOVE_EXECUTE / no physical event |
+
+Report fields also include trailerId/siteId/observedAt/reason. Historical versions
+may be older, never future. Report preserves historical recorded observation,
+does not update Trailer/version/location/load/serviceability and needs no correction
+grant. POST returns {trailer,report}; report includes id, actorUserId, observedAt,
+recordedAt and clientOperationId. GET /yard/discrepancy-reports is separately
+authorized with TRAILER_VIEW_ALL, bounded limit 1–50 and UUID chronological cursor;
+no update/delete or notification worker is provided.
+
+Physical commands return {trailer,movementEvent}; OOS also returns documentIds.
+Events contain id/eventType/occurredAt/recordedAt. Provenance is HUMAN_USER /
+USER_ACTION, authenticated actor and original UUID; no invented Trip/Driver/Tractor.
+Trailer row then live Site/Locations are locked before authority is rechecked.
+Version conflicts are STALE_VERSION; invalid/context conflicts RESOURCE_CONFLICT;
+evidence failures include EVIDENCE_REQUIRED/UPLOAD_NOT_COMPLETE/RESOURCE_NOT_FOUND.
+Foreign/invisible resources are safe 404; there is no silent location repair.
+Location correction is an explicit physical observation. Load State correction
+preserves location (including unknown/in-transit), lastSeenAt, coupling, serviceability,
+Orders and designation. OOS changes serviceability only and never closes a Trip or
+performs Drop. Original #40 administrative routes/body/server-time behavior remain
+compatible and share the same physical projection/event writer.
+
+V23 adds append-only yard_discrepancy_reports and trailer_oos_evidence with Tenant
+composite FKs, runtime RLS, SELECT/INSERT-only runtime grants and immutable history.
+The OOS association guard requires the actual same-transaction MARKED_OOS event,
+same Trailer/actor/UUID and one uploaded own exclusive Trailer link per document.
+Each document may be consumed by one Yard OOS event. State, event, accepted evidence
+and ledger receipt commit together; complete rollback includes version and event.
+R2 transport precedes PostgreSQL and is not a distributed transaction.
+
+### #49 scoped Trailer DAMAGE_PHOTO producer
+
+POST /trailers/{trailerId}/damage-uploads requires TRAILER_OOS_MARK, ACTIVE Tenant/
+membership and a real active own-Tenant Trailer; no Driver/Trip is required. The
+existing closed Initialize DTO admits documentType=DAMAGE_PHOTO, image/jpeg or
+image/png, positive deployment-bounded sizeBytes and optional SHA-256. Mobile
+always captures and verifies a private byte copy/hash. It returns the existing
+201 PENDING signed PUT reservation and persists an exclusive TRAILER link.
+Initialization is not idempotent; lost ACK can leave an unused PENDING reservation.
+
+The original upload-completion/metadata/download routes are reused. Completion
+requires own uploader, fresh OOS capability and active Trailer, verifies bytes/
+size/hash and the same-key ledger before UPLOADED. Generic links cannot relink a
+Trailer-scoped photo into assigned Trip work. No permanent private URLs or R2
+credentials enter SQLite. Metadata/download retain all-linked-resource scope;
+no DOCUMENT_VIEW_ALL grant is added to Spotter. Upload/finalization alone is no
+OOS event or accepted operational evidence: /yard/out-of-service validates and
+associates the finalized set atomically to the actual event. Road/POD/Fuel/inspection
+transport and evidence policy remain unchanged.
+
 ## Issue #48 — authorized Yard context and moves
 
 GET /api/v1/tenants/{tenantId}/yard/sites returns bounded active Site/Location
@@ -23,7 +90,7 @@ location. Load, Orders, designation and coupling are not rewritten; no fictitiou
 Trip/Driver/Tractor. Original conflicts never silently correct location.
 
 See [API](../docs/api/yard.md) and [architecture/QA](../docs/mobile/issue-48-yard-move.md).
-Correction/OOS mobile UI and Yard Checks/reconciliation remain #49–#51.
+Correction/OOS mobile UI is implemented by #49; Yard Checks/reconciliation remain #50–#51.
 
 ## Operational evidence policy (#53)
 
@@ -39,7 +106,7 @@ APIs; Trips never imports Documents. `recordDelivery` validates, runs the owner'
 completion action, verifies actual persisted Stop completion/event, and records
 evidence in that same transaction. #45 owns service obligations, fulfillment,
 Trip effects and the existing ledger. Production inspection, delivery and Fuel
-workflows consume this policy. Yard/OOS orchestration remains #49. PostgreSQL tests
+workflows consume this policy. Yard/OOS orchestration is implemented by #49. PostgreSQL tests
 prove joint commit and rollback, including the real production Road lifecycle.
 
 See [rules, architecture and traceability](../docs/api/issue-53-evidence-validation.md).
@@ -1017,9 +1084,9 @@ location, designation and coupling: planning/new Hook rejects it, existing Drop
 continues to close the interval. OQ-054 stays unresolved; 57 capabilities and
 all role mappings are unchanged.
 
-No Alerts/outbox (#57), evidence/documentIds (#49/#53 after #52), timeline (#41),
-discrepancy/OOS UI (#49), second ledger or generic Audit (#61) is implemented.
-The later #48 Yard Move UI/queue now reuses this engine as described above.
+This #40 boundary introduced no Alerts/outbox (#57), second ledger or generic
+Audit (#61). Later #41 reads, #48 Yard Move and #49 discrepancy/OOS evidence/UI
+now reuse this engine as described above; original admin contracts remain compatible.
 Movement reconciliation preserves its six-field coverage across the three
 known non-owned administrative facts.
 
