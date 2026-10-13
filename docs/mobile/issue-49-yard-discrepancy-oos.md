@@ -61,7 +61,7 @@ port/writer. Validated own finalized exact-Trailer evidence, MARKED_OOS, version
 and ledger commit together. 370 transport/evidence/administrative/Yard/Modulith
 tests pass (0 failures/errors/skips), including 23 new OOS cases. Confirmed
 audit corrections preserve legacy integrity-error mapping and exact V23 version
-inventories. Native QA is not claimed. D is implemented: real corrective forms, native camera injection, durable v8 drafts and typed existing replay graph. E adds mixed replay/recovery/security proofs and two audit corrections: load correction preserves null unknown/in-transit location; reports reject invented future observed versions. F1–F4 audit/contracts/documentation are implemented below; G publication and final exact-head CI remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
+inventories. Native QA is not claimed. D is implemented: real corrective forms, native camera injection, durable v8 drafts and typed existing replay graph. E adds mixed replay/recovery/security proofs and two audit corrections: load correction preserves null unknown/in-transit location; reports reject invented future observed versions. F1–F5 audit/contracts/documentation are implemented below; the G publication and final CI record is linked below. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
 camera and Linux tests do not count as physical device evidence. OQ-054 return
 policy and production privacy/retention remain unresolved. No Yard Check, Missing
 reconciliation, notifications, generic audit worker or GPS tracking is included.
@@ -182,6 +182,42 @@ An added contract regression enforces the single camera/library key, stated dama
 purpose and absence of background/Always location. All 31 OpenAPI tests pass,
 retaining 23 prior cases and adding eight #49 cases. Physical OS permission/camera
 behavior remains #65; this static verification is not a device test.
+
+## G — published PR and final review gate
+
+PR [#106](https://github.com/Dagt/TrailerSaas/pull/106) was opened as Draft from
+this existing branch to main, with `Closes #49`, on 2026-10-13. Base remains
+`82a48132b9153aaa6445ac890040e219f82a24f3`; recovered E is
+`590e328cf82ffa797b152aa881fef1af5723159b`. F5 implementation source is
+`6b2b8e043bec5d96366b43f11f51f347d038cd53`. Published checkpoints:
+
+| Checkpoint | Commit | Result |
+| --- | --- | --- |
+| A | fc91d82 | Authorized corrective Backend |
+| B | d07b87c | Immutable reports / V23 foundation |
+| C | 14ef62b | Real scoped upload and atomic OOS evidence |
+| D | c735b7b | Flutter forms, camera and durable v8 metadata |
+| E | 590e328 | Mixed replay/recovery proofs and independent-state fixes |
+| F1 | daad6f8 | Recovered-state acceptance/security audit |
+| F2 | 3fadc34 | Reproduced runtime association gap fixed; exact Flyway assertion |
+| F3 | 3e30d7e | Actual closed HTTP contracts / eight final #49 contract regressions |
+| F4 | 4249e82 | Required documentation and honest full/local test evidence |
+| F5 | 6b2b8e0 | One accurate shared iOS camera purpose, no new permission |
+| G | This publication record | PR exists; final evidence is maintained in PR metadata |
+
+The first [CI run 38484093888](https://github.com/Dagt/TrailerSaas/actions/runs/38484093888)
+was triggered by F4. Later pushes supersede it; it is not evidence for the final
+HEAD. The final SHA, workflow URL/run ID, completed per-job counts, review/thread
+checks and Draft/Ready state are recorded in the PR description after the last
+publication commit. This avoids adding a further commit just to embed its own SHA.
+
+The release gate requires all four unchanged jobs (Backend, Mobile, Web, OpenAPI)
+to complete successfully for the final published PR HEAD, with zero test failures,
+errors or skipped tests; no conflicting change, rejected review or unresolved
+thread. Only then may the PR become Ready for Review. Completed Linux Backend
+CI supersedes the explicitly unapproved Windows infrastructure run above.
+Acceptance details and residual native/production policy limits remain in this
+document. PR review is not a merge or closure of the Issue. **NO MERGE; no #50 work.**
 
 ### #49 implemented HTTP contracts
 
