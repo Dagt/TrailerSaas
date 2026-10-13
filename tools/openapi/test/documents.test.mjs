@@ -60,7 +60,7 @@ test('#52 strict upload/finalization/link shapes retain closed catalogs and UUID
   assert.match(completion.post.description, /IDEMPOTENCY_KEY_REUSED/);
 });
 
-test('#53 type authority and context links do not advertise future workflow endpoints', () => {
+test('#53 type authority and context links preserve the separate implemented #43/#45 workflow boundaries', () => {
   const base = '/api/v1/tenants/{tenantId}/documents';
   const upload = api.paths[`${base}/uploads`].post;
   for (const capability of ['POD_UPLOAD', 'PRETRIP_CREATE', 'FUEL_EVENT_CREATE', 'EXCEPTION_REPORT']) {
@@ -76,7 +76,7 @@ test('#53 type authority and context links do not advertise future workflow endp
       assert.equal(item.post?.['x-implementation-status'], 'implemented-issue-43', path);
     }
     if (/delivery-completions|fuel-events|\/exceptions$/.test(path)) {
-      assert(!item.post?.['x-implementation-status']?.startsWith('implemented'), path);
+      assert.equal(item.post?.['x-implementation-status'], 'implemented-issue-45', path);
     }
   }
 });

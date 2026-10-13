@@ -122,3 +122,11 @@ Completing a Stop does **not** automatically:
 - `StopExceptionResolved`
 - `StopCompleted`
 - `StopCancelled`
+
+## Issue #45 implemented completion boundary
+
+DELIVERY IN_SERVICE -> COMPLETED is owned by the existing Trip execution domain,
+coordinated synchronously with finalized POD and immutable delivery_evidence.
+Missing evidence never advances state. Stop/event, required Order delivery
+fulfillment and possible Trip completion commit or roll back together. An
+operational exception report records a fact; it is not a generic Stop state edit.

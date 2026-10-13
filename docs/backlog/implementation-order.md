@@ -90,7 +90,7 @@ closing the Trips/dispatch Web wave.
 #39 is merged/complete via [PR #93](https://github.com/Dagt/TrailerSaas/pull/93).
 #40 is merged/complete via [PR #94](https://github.com/Dagt/TrailerSaas/pull/94).
 #41 is merged/complete via [PR #95](https://github.com/Dagt/TrailerSaas/pull/95).
-The Trailer movement/read surface wave is complete. #42 is merged/complete via [PR #96](https://github.com/Dagt/TrailerSaas/pull/96). #44 is merged/complete via [PR #97](https://github.com/Dagt/TrailerSaas/pull/97); #43 is the current phase for required real duty/inspection integration. Yard workflows remain separate Issues.
+The Trailer movement/read surface wave is complete. #42 is merged/complete via [PR #96](https://github.com/Dagt/TrailerSaas/pull/96). #44 is merged/complete via [PR #97](https://github.com/Dagt/TrailerSaas/pull/97); #43 is merged/complete via PR #102; #45 is the current Road evidence phase. Yard workflows remain separate Issues.
 
 ### Evidence/alerts support
 - #53 after #52
@@ -102,7 +102,7 @@ These streams may overlap according to each Issue's explicit dependencies.
 #52 is merged/complete via [PR #99](https://github.com/Dagt/TrailerSaas/pull/99).
 #53 is merged/complete via [PR #100](https://github.com/Dagt/TrailerSaas/pull/100).
 #43/#45/#49 consume its synchronous policies and still own their respective
-operational workflows. #54 is complete via PR #101; #43 is the current bounded Shift/inspection implementation;
+operational workflows. #54 is complete via PR #101; #43 is complete via PR #102; #45 is the current bounded Road implementation;
 #55 jobs remain pending.
 
 ## Wave 4 — Mobile synchronization foundation
@@ -115,9 +115,9 @@ These should be implemented before relying on offline behavior in completed Road
 
 ## Wave 5 — Road Driver
 
-- #43 Shift/inspections — current; real Shift, evidence and departure integration
-- #44 Trip execution — merged/complete via PR #97; real #43 duty/inspection integration is the current phase
-- #45 POD/Fuel/exceptions
+- #43 Shift/inspections — merged/complete via PR #102
+- #44 Trip execution — merged/complete via PR #97; real #43 duty/inspection integration is complete via PR #102
+- #45 POD/Fuel/exceptions — current; no merge or completion claimed
 - #47 geofence-assisted arrival/updates
 
 Validate full online and offline sequences on real devices.

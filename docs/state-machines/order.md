@@ -89,3 +89,18 @@ After execution begins, changes to destination/appointment/critical instructions
 - `OrderCancellationRequested`
 - `OrderCancelled`
 - `OrderRerouted`
+
+## Issue #45 fulfillment projection
+
+First real departure starts fulfillment of persistently allocated Orders through
+the existing lifecycle port. A delivery checks all actual DELIVERY mappings plus
+requested DELIVERY visits; one physical visit cannot satisfy two separate requested
+visits at the same destination. Explicit order_stop_id is authoritative; otherwise
+matching requires the requested Site/Location or frozen destination snapshot.
+Missing/unmapped required work cannot count as delivered. Previous completed visits
+require actual delivery_evidence; the current visit must have its real completion
+row/event in the same transaction and then receive evidence atomically. Partial
+work yields PARTIALLY_DELIVERED; all obligations yield DELIVERED. No administrative
+COMPLETED and no silent CANCELLING/CANCELLED change. Deterministic Order locks precede
+Trip locks, matching cancellation; immutable fulfillment facts prevent duplicate
+recording. Planning and requested destinations remain separate from physical cargo.

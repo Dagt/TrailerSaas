@@ -635,4 +635,21 @@ Native camera capture writes to private #54 media storage. Local draft/photos,
 upload/finalization and accepted inspection are distinct. Offline commands retain
 intention/IDs; Pre-Trip waits for real On Duty result and all four finalized photos.
 Departure remains subject to fresh server checks. Completed Trips do not close
-Shift, and Post-Trip does not perform OOS/exception workflow. #45 remains deferred.
+Shift, and Post-Trip does not perform an OOS/exception workflow. Separate #45 actions are implemented below.
+
+## Issue #45 implementation note
+
+Road Trip detail now provides functional Signed BOL / No Receiver, Fuel and Report
+Problem forms. They use the existing native camera and private media store, durable
+borradores, confirmation and synchronization panel. Local photos and intent are
+clearly pending until all files finalize and the server accepts the business action.
+No Receiver requires BOL, delivery photo and comment; Fuel asks for assigned Trip/
+Tractor, odometer and receipt; damage asks for finalized photos and comment. Other
+problem categories do not invent mandatory photos. A recorded offline service can
+precede POD without advancing the cached Stop; the resource chain waits for its ACK.
+Drafts and sync history remain available without assigned Trips. Targeted reroute,
+assignment/substitution and cancellation instructions are downloaded initially,
+manually, on reconnect/foreground and retained even after the Trip leaves work.
+A downloaded historical instruction grants no permission. Camera permissions and
+Android/iOS process recovery still require real-device release QA; host tests use
+an injected camera with real private files, SQLite and controlled HTTP.

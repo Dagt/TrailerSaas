@@ -1981,6 +1981,18 @@ paths:
     post:
       tags: [DriverMobile]
       operationId: completeDeliveryStop
+      x-implementation-status: implemented-issue-45
+      description: >-
+        POD_UPLOAD plus TRIP_EXECUTE_ASSIGNED, ACTIVE membership and own active Driver
+        currently assigned to the exact DELIVERY Stop. IN_SERVICE/AT_STOP only for new
+        commands. Finalized own BOL, exact Stop links and all linked-resource access
+        are revalidated before ledger replay. Evidence, Stop/event, Order fulfillment
+        and possible Trip completion commit together. BASE_RETURN and Shift remain
+        independent. Same UUID/body replays; incompatible key returns 409.
+        Problem Details: 400 VALIDATION_FAILED; 403 CAPABILITY_DENIED or TENANT_ACCESS_DENIED;
+        404 RESOURCE_NOT_FOUND; 409 EVIDENCE_REQUIRED, UPLOAD_NOT_COMPLETE,
+        INVALID_STATE_TRANSITION, RESOURCE_CONFLICT or IDEMPOTENCY_KEY_REUSED.
+        Infrastructure failures remain safe 5xx; unknown fields/query parameters are rejected.
       requestBody:
         required: true
         content:
@@ -1989,7 +2001,78 @@ paths:
               $ref: '#/components/schemas/DeliveryCompletionRequest'
       responses:
         '200':
-          description: Delivery completed
+          description: Confirmed logical delivery result; refresh authoritative work after replay.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeliveryCompletionResultImplemented' }
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/driver/me/fuel-events:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: createOwnFuelEvent
+      x-implementation-status: implemented-issue-45
+      description: >-
+        FUEL_EVENT_CREATE, ACTIVE membership, own active Driver, currently assigned
+        executing Trip/current active Tractor and own open Shift. Requires finalized
+        own FUEL_RECEIPT with exact authorized Trip links. Trip is required by HTTP.
+        No cost, gallons or operational state changes. Current authority and evidence
+        are revalidated before replay, including terminal Trips for an existing own
+        committed result only. Same key/body returns the same event.
+        Problem Details: 400 VALIDATION_FAILED; 403 CAPABILITY_DENIED or TENANT_ACCESS_DENIED;
+        404 RESOURCE_NOT_FOUND; 409 EVIDENCE_REQUIRED, UPLOAD_NOT_COMPLETE,
+        INVALID_STATE_TRANSITION, RESOURCE_CONFLICT or IDEMPOTENCY_KEY_REUSED.
+        Infrastructure failures remain safe 5xx; unknown fields/query parameters are rejected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FuelEventRequestImplemented' }
+      responses:
+        '200':
+          description: Confirmed immutable Fuel Event, or its authorized ledger replay.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FuelEventResultImplemented' }
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/trips/{tripId}/exceptions:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [DriverMobile]
+      operationId: reportOwnTripProblem
+      x-implementation-status: implemented-issue-45
+      description: >-
+        EXCEPTION_REPORT, ACTIVE membership, own active Driver/current assignment.
+        Optional Stop must belong to the exact Trip. EQUIPMENT_DAMAGE requires at
+        least one distinct finalized own DAMAGE_PHOTO with exact context links.
+        Other categories do not require photos; attached photos are equally checked.
+        A normalized nonblank comment is required. Append-only fact; no lifecycle,
+        OOS, cancellation, reassignment or location editor. Fresh authority before
+        every idempotent replay; safe 404 for invisible resources.
+        Problem Details: 400 VALIDATION_FAILED; 403 CAPABILITY_DENIED or TENANT_ACCESS_DENIED;
+        404 RESOURCE_NOT_FOUND; 409 EVIDENCE_REQUIRED, UPLOAD_NOT_COMPLETE,
+        INVALID_STATE_TRANSITION, RESOURCE_CONFLICT or IDEMPOTENCY_KEY_REUSED.
+        Infrastructure failures remain safe 5xx; unknown fields/query parameters are rejected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OperationalExceptionRequestImplemented' }
+      responses:
+        '200':
+          description: Confirmed immutable operational fact, or its authorized replay.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OperationalExceptionResultImplemented' }
         default:
           $ref: '#/components/responses/Problem'
 
@@ -4241,6 +4324,7 @@ components:
     DeliveryCompletionRequest:
       oneOf:
         - type: object
+          additionalProperties: false
           required: [evidenceMode, bolDocumentId, occurredAt]
           properties:
             evidenceMode:
@@ -4249,6 +4333,7 @@ components:
             bolDocumentId: { type: string, format: uuid }
             occurredAt: { type: string, format: date-time }
         - type: object
+          additionalProperties: false
           required: [evidenceMode, bolDocumentId, deliveryPhotoDocumentId, comment, occurredAt]
           properties:
             evidenceMode:
@@ -4256,8 +4341,77 @@ components:
               const: NO_RECEIVER_AVAILABLE
             bolDocumentId: { type: string, format: uuid }
             deliveryPhotoDocumentId: { type: string, format: uuid }
-            comment: { type: string, minLength: 1 }
+            comment: { type: string, minLength: 1, maxLength: 4000, description: Unicode whitespace-only text is rejected. }
             occurredAt: { type: string, format: date-time }
+
+    DeliveryCompletionResultImplemented:
+      type: object
+      additionalProperties: false
+      required: [stopId, tripId, stopStatus, tripStatus, stopVersion, tripVersion, completedAt]
+      properties:
+        stopId: { type: string, format: uuid }
+        tripId: { type: string, format: uuid }
+        stopStatus: { type: string, enum: [COMPLETED] }
+        tripStatus: { type: string, enum: [AT_STOP, COMPLETED] }
+        stopVersion: { type: integer, format: int64, minimum: 1 }
+        tripVersion: { type: integer, format: int64, minimum: 1 }
+        completedAt: { type: string, format: date-time }
+
+    FuelEventRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [tripId, tractorId, odometer, receiptDocumentId, occurredAt]
+      properties:
+        tripId: { type: string, format: uuid }
+        tractorId: { type: string, format: uuid }
+        odometer: { type: number, minimum: 0, maximum: 1000000000000, multipleOf: 0.001 }
+        receiptDocumentId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+
+    FuelEventResultImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, tripId, tractorId, odometer, receiptDocumentId, occurredAt, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        tripId: { type: string, format: uuid }
+        tractorId: { type: string, format: uuid }
+        odometer: { type: number }
+        receiptDocumentId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    OperationalExceptionRequestImplemented:
+      type: object
+      additionalProperties: false
+      required: [category, comment, occurredAt]
+      properties:
+        stopId: { type: [string, "null"], format: uuid }
+        category: { type: string, enum: [DELAY_TRAFFIC, EQUIPMENT_DAMAGE, DESTINATION_CUSTOMER_ISSUE, LOAD_REJECTED, OTHER] }
+        comment: { type: string, minLength: 1, maxLength: 4000 }
+        documentIds:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items: { type: string, format: uuid }
+          description: Finalized DAMAGE_PHOTO IDs; at least one required for EQUIPMENT_DAMAGE. No client status fields.
+        occurredAt: { type: string, format: date-time }
+
+    OperationalExceptionResultImplemented:
+      type: object
+      additionalProperties: false
+      required: [id, tripId, stopId, category, comment, documentIds, occurredAt, recordedAt]
+      properties:
+        id: { type: string, format: uuid }
+        tripId: { type: string, format: uuid }
+        stopId: { type: [string, "null"], format: uuid }
+        category: { type: string, enum: [DELAY_TRAFFIC, EQUIPMENT_DAMAGE, DESTINATION_CUSTOMER_ISSUE, LOAD_REJECTED, OTHER] }
+        comment: { type: string }
+        documentIds:
+          type: array
+          items: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+        recordedAt: { type: string, format: date-time }
 
     StartYardCheckRequest:
       type: object

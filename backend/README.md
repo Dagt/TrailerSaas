@@ -9,13 +9,13 @@ Trailer OOS and Fuel receipt rules are implemented. Type-specific upload authori
 uses existing capabilities; read grants never authorize writes. V20 adds immutable
 insert-only `delivery_evidence` with Tenant RLS and exact context attachment types.
 
-Future #43/#45/#49 application orchestration calls Documents and Trips public
+The #43/#45 application orchestration calls Documents and Trips public
 APIs; Trips never imports Documents. `recordDelivery` validates, runs the owner's
 completion action, verifies actual persisted Stop completion/event, and records
 evidence in that same transaction. #45 owns service obligations, fulfillment,
-Trip effects and the existing ledger. No production delivery/inspection/Fuel/OOS
-evidence workflow is added. The PostgreSQL test harness proves joint commit and
-rollback without a mocked validator or fictitious production Shift.
+Trip effects and the existing ledger. Production inspection, delivery and Fuel
+workflows consume this policy. Yard/OOS orchestration remains #49. PostgreSQL tests
+prove joint commit and rollback, including the real production Road lifecycle.
 
 See [rules, architecture and traceability](../docs/api/issue-53-evidence-validation.md).
 
@@ -1051,4 +1051,16 @@ Inspections orchestrates typed public Driver/Tractor/Trip/Documents policies and
 existing MobileOperationLedger. No circular Java dependencies. Four explicit commands
 and own-driver home are documented in docs/mobile/issue-43-shift-inspections.md.
 Run ./mvnw -B -ntp clean verify with Java25 and Docker/PostgreSQL18 Testcontainers.
-No correction endpoint, generic Audit, payroll or #45 delivery/Fuel is implemented.
+No correction endpoint, generic Audit or payroll is implemented. Delivery/Fuel is implemented by #45 below.
+
+## Issue #45 Road evidence execution
+
+V22 adds append-only fuel_events/receipt association, operational_exceptions and
+operational_exception_documents, and order_fulfillment_events, all with Tenant RLS
+and SELECT/INSERT-only runtime grants. V1–V21 are preserved. Three strict mobile
+commands implement POD, Fuel and problems with existing ledger/evidence ports.
+Inspections orchestrates public Trips/Documents/Orders APIs without a cycle. Order
+locks precede Trip/Driver/Stops/document locks. Run ./mvnw clean verify with Java25
+and Docker/PostgreSQL18; RoadOperationsPostgresTests uses real HTTP, SQL and signed
+S3 transport, including complete Shift-to-Off-Duty and joint rollback scenarios.
+See docs/mobile/issue-45-pod-fuel-exceptions.md for contracts and scope boundaries.

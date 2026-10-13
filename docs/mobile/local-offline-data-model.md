@@ -167,4 +167,7 @@ queued drafts cannot change. Camera context is recorded before native launch;
 namespace FKs and global camera claims protect cross-account references and live
 captures. Confirmed updates are namespaced, immutable server identities with stable
 sequence from createdAt/id pagination, not an authorization cache. Update history
-survives removal of current work. No token, signed URL or binary enters these tables.
+survives removal of current work. Instructions and cursors additionally bind to the
+current own Driver ID; a durable denial marker hides cached instructions after
+explicit 401/403 until authorized refresh. Fuel drafts freeze the captured Tractor
+and reject reassignment before queuing. No token, signed URL or binary enters these tables.

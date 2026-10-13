@@ -211,6 +211,32 @@ a lock inversion. The actual Stop transition port requires the caller's transact
 Typed mobile acknowledgments reject unexpected fields and never downgrade an ACK
 because the subsequent refresh fails. Retry deadlines round upward to honor 429.
 
+### Checkpoint G1–G3 publication
+
+Recovered E/F and published the continuity matrix before correction. OpenAPI now
+marks the three actual commands implemented-issue-45, with strict mode-specific
+requests, exact safe result fields, UUID replay headers and documented Problem
+Details. Fourteen contract tests and validation pass. Stale current implementation
+wording has been corrected without marking future Yard endpoints implemented.
+
+The Road/module subset passes 57 tests (55 real HTTP/PostgreSQL Road scenarios and
+2 module checks). Added different-key Delivery and cross-Trip receipt races, fresh
+assignment/capability/membership/document-link checks while a real Order lock is
+held, invisible-resource checks before Order locks, and foreign-parent lock-order
+regressions. Receipt insertion atomically detects competing reuse as a business
+409. Existing joint rollback and real multistop lifecycle tests remain unchanged.
+Unicode NEL-only comments were reproduced as invalidly accepted by the old normalizer;
+the explicit White_Space handling and unit/HTTP regressions now reject them.
+
+Web's full 244 tests plus typecheck/lint/build pass locally with one test worker;
+the existing CI command/configuration is unchanged. Locked Mobile dependencies,
+generated-code reproducibility, format and fatal-info analysis pass. Road's 78
+tests passed before the latest native asset reinstall; Windows then denied loading
+the sqlite3 native DLL (4551). No security policy or test gate was disabled. Full
+Mobile verification therefore requires the unchanged Linux CI. Earlier full suites
+are historical evidence only. Final Backend clean verify and exact-head CI are
+pending; the one PR stays Draft until all four current jobs are successful.
+
 The complete local Backend clean verify passed 1,972 tests (0/0/0), before the final
 focused audit additions; the latest pre-addition Road/module subset passed 48.
 The full Mobile suite passed 315 before the final Tractor/profile-denial additions;

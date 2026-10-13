@@ -127,3 +127,10 @@ If needed:
 - `TripCompleted`
 - `TripDriverReassigned`
 - `TripTractorReassigned`
+
+## Issue #45 integration
+
+Accepted completion rules are unchanged. POD reuses the real completion transition;
+all ordered required Stops, including BASE_RETURN, remain terminal prerequisites.
+Ordinary delivery cannot finish CANCELLING. Fuel/problem reports do not change Trip
+state. Trip completion never closes Shift or manufactures physical Trailer facts.

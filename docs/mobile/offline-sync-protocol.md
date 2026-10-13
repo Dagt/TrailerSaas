@@ -562,7 +562,7 @@ and original Idempotency-Key are reused after crash/timeout. Intent and dependen
 records never change after first send. ACK is historical; home/work refresh remains
 authoritative. Pending matching Pre-Trip can precede a recorded departure, but cannot
 grant departure permission: dependencies require ACK and PostgreSQL revalidates.
-Reassignment/revocation retains conflicts, draft and photos. No #45 endpoint is enabled.
+Reassignment/revocation retains conflicts, draft and photos. The #45 adapters extend this lane below.
 
 ## Issue #45 production evidence adapters
 

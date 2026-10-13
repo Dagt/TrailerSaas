@@ -113,7 +113,7 @@ Normal users do not physically delete evidence through MVP APIs.
 
 Retention deletion is a controlled background/policy process and remains blocked until production retention policy is resolved.
 
-## 8. Delivery evidence (future #45/#53)
+## 8. Delivery evidence (implemented #45/#53)
 
 Delivery completion uses the mobile execution endpoint:
 
@@ -135,9 +135,9 @@ Required:
 - DELIVERY_PHOTO;
 - nonblank comment.
 
-The server creates/updates the structured `delivery_evidence` record only when the evidence set is valid.
+The server inserts one immutable `delivery_evidence` record only when the evidence set is valid and the real Stop completion, event and fulfillment commit in the same transaction.
 
-## 9. Pre-Trip evidence (future #43/#53)
+## 9. Pre-Trip evidence (implemented #43/#53)
 
 Pre-Trip completion requires finalized Documents of types:
 
@@ -148,7 +148,7 @@ Pre-Trip completion requires finalized Documents of types:
 
 The API should reject completion when required images are missing.
 
-## 10. OOS/damage evidence (future #49/#53)
+## 10. Damage evidence (#45/#53); OOS workflow deferred to #49
 
 Damage/OOS commands may reference:
 
@@ -157,7 +157,7 @@ Damage/OOS commands may reference:
 
 Server validates all Document IDs belong to the active Tenant and caller may link them to the Trailer/exception.
 
-## 11. Fuel receipt (future #45/#53)
+## 11. Fuel receipt (implemented #45/#53)
 
 Fuel Event requires a finalized FUEL_RECEIPT Document.
 
@@ -310,4 +310,18 @@ DOCUMENT_VIEW_ALL may read them. Customer scope grants no inspection access. If
 other links coexist, all must still be currently authorized; historical uploader
 identity cannot override a revoked Trip assignment. Unlinked upload management,
 R2 final publication/checksum/immutable bytes and replay authorization stay intact.
-No #45/#49 evidence workflow endpoint is introduced.
+The #43 extension does not add a Yard/OOS endpoint. The implemented #45 consumers are described below.
+
+## Issue #45 consumers implemented
+
+Road POD, Fuel and Driver exceptions now consume the #53 policy from their own
+application transaction. Documents transport, all-or-nothing linked authorization,
+private staging/publication, actual SHA-256 and finalized-object immutability are
+unchanged. The mobile worker finalizes each required file, freezes its Document IDs,
+then attaches to the exact authorized TRIP_STOP (POD/Stop damage) or TRIP (Fuel/Trip
+damage) before the business command. A link alone never accepts evidence.
+The production delivery endpoint uses validateDeliveryForReplay before the ledger
+and recordDelivery around the real completion/fulfillment callback. Fuel/damage
+have equivalent fresh policy checks for committed terminal replay; historical
+uploader identity never overrides lost resource authorization. No receiver alerts,
+Yard/OOS producer, retention or background jobs are implemented here.
