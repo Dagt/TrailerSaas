@@ -1,5 +1,30 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Issue #48 — authorized Yard context and moves
+
+GET /api/v1/tenants/{tenantId}/yard/sites returns bounded active Site/Location
+pages. Selected Site continuation and minimal /yard/trailers/{trailerId} reads
+require fresh YARD_MOVE_EXECUTE, ACTIVE membership and ACTIVE Tenant. Existing
+YARD_SPOTTER scope is TENANT; no invented per-Site, Driver or Tractor relationship.
+The global QR resolver is reused and does not grant authority. There is no Yard
+Trailer directory or Customer/Order/Driver data beyond operational review needs.
+
+POST /yard-moves accepts only trailerId/fromLocationId/toLocationId/observedAt/
+expectedTrailerVersion plus Idempotency-Key. MobileOperationLedger and
+TrailerMovementProjection.yardMove/MovementRules.yard are reused transactionally,
+with Trailer and live Site/location locks, unchanged RLS and no server migration.
+Active IN_SERVICE/AT_LOCATION/UNCOUPLED and distinct same-Site active locations
+are mandatory. Physical origin mismatch yields LOCATION_MISMATCH before stale
+version; matching origin requires exact version. Invalid/future/expanded-year
+time is safely rejected, and lastSeenAt cannot regress. Authority is checked
+before ledger replay and again after context lock waits. YARD_MOVED preserves
+HUMAN_USER/USER_ACTION, authenticated User, original time/UUID and before/after
+location. Load, Orders, designation and coupling are not rewritten; no fictitious
+Trip/Driver/Tractor. Original conflicts never silently correct location.
+
+See [API](../docs/api/yard.md) and [architecture/QA](../docs/mobile/issue-48-yard-move.md).
+Correction/OOS mobile UI and Yard Checks/reconciliation remain #49–#51.
+
 ## Operational evidence policy (#53)
 
 `documents.OperationalEvidencePolicy` validates finalized own documents and fresh
@@ -993,7 +1018,8 @@ continues to close the interval. OQ-054 stays unresolved; 57 capabilities and
 all role mappings are unchanged.
 
 No Alerts/outbox (#57), evidence/documentIds (#49/#53 after #52), timeline (#41),
-Yard/offline UI (#48/#49), second ledger or generic Audit (#61) is implemented.
+discrepancy/OOS UI (#49), second ledger or generic Audit (#61) is implemented.
+The later #48 Yard Move UI/queue now reuses this engine as described above.
 Movement reconciliation preserves its six-field coverage across the three
 known non-owned administrative facts.
 

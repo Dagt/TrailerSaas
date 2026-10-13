@@ -70,7 +70,7 @@ test('#47 next operational Site extends only authenticated own detail', () => {
   assert.ok(api.components.schemas.DriverExecutionDetail.required.includes('arrivalAssistance'));
 });
 
-test('#47 native privacy permissions and unchanged durable schema are inspectable', () => {
+test('#47 native privacy and the same Arrival lane remain intact after the #48 schema upgrade', () => {
   const read = path => readFileSync(fileURLToPath(new URL(`../../../${path}`, import.meta.url)), 'utf8');
   const android = read('mobile/android/app/src/main/AndroidManifest.xml');
   assert.ok(android.includes('ACCESS_COARSE_LOCATION') && android.includes('ACCESS_FINE_LOCATION'));
@@ -82,6 +82,6 @@ test('#47 native privacy permissions and unchanged durable schema are inspectabl
   assert.ok(adapter.includes('allowBackgroundLocationUpdates: false'));
   assert.ok(!adapter.includes('foregroundNotificationConfig:'));
   const schema = read('mobile/lib/src/persistence/app_database.dart');
-  assert.match(schema, /schemaVersion\s*=>\s*6/);
+  assert.match(schema, /schemaVersion\s*=>\s*7/);
   assert.ok(!/gps|breadcrumb|coordinate_history/i.test(schema));
 });

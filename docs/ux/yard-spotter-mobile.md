@@ -5,6 +5,37 @@
 **Related requirements:** FR-050–055, FR-090–103, FR-120–136, FR-170–174  
 **Related state machines:** Shift, Trailer, Yard Check, Alert
 
+## Implemented slice — issue #48
+
+The current application provides Yard Home, authorized Site selection, existing
+native QR scan, recorded Trailer review, constrained destination selection,
+explicit Review/Confirm Move and Not Yet, and durable pending/conflict/server-ACK
+states. Yard-only users enter this real context; users with Road and Yard access
+retain the mode switch and existing Road controls. Current Yard capabilities are
+Tenant-wide and do not require or invent a linked Driver/Tractor/Shift. Existing
+Driver Shift/inspection functionality remains available in Road for dual-role
+users; no new Yard-specific Shift grant or equipment policy is inferred here.
+
+Only configured active normalized Locations at the selected active Site are
+destinations. The UI shows recorded origin, planned origin after an earlier
+pending move, Customer designation, load/serviceability/coupling/version and
+observed time. Confirmation attests the reviewed physical origin; a discrepancy
+must be reviewed, not corrected by this flow. A local save is explicitly waiting
+to sync, never presented as a server location change. Scan and Not Yet create
+no physical command/event. Review dialogs and scanner callbacks are fenced and
+closed on account/Tenant/Driver/mode change.
+
+LOCATION_MISMATCH and STALE_VERSION retain the original move and show the latest
+authorized downloaded recorded location/version with refresh time. Failed or
+partial downloads do not authorize an old context. Offline use requires an
+established session and downloaded context/scanned Trailer; replay re-authorizes.
+Consecutive moves depend on the previous same-Trailer ACK, never a guessed version;
+a parent conflict blocks descendants while other assets may sync. Correction,
+OOS reporting, Yard Check and reconciliation actions below remain #49–#51.
+Physical camera/permission/lifecycle QA remains #65.
+
+The following sections describe the accepted broader Yard UX, beyond this slice.
+
 ## Goal
 
 Provide a fast mobile workflow for physical Trailer movement and Yard inventory reconciliation.

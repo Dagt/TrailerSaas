@@ -105,3 +105,49 @@ non-RFC3339 years reject safely before JDBC instead of returning 500; fresh
 membership/capability/Tenant authorization is rechecked after waiting for live
 Site locks. The original pre-ledger check remains mandatory for replay. All three
 regressions now pass; the complete Backend suite is being rerun on these changes.
+
+## Security and acceptance evidence
+
+| Risk / gate | Result and inspectable evidence |
+| --- | --- |
+| Fresh authority / scope | YardContextService.authorize uses current Tenant capability/membership and ACTIVE Tenant. YardPostgresTests covers Tenant/role revocation before replay and during Site lock waits. No role grants changed. |
+| Foreign Site/Trailer | Every resource query/join carries Tenant; invalid foreign IDs return safe 404/403 without currentTrailer. Real runtime PostgreSQL RLS remains in place. |
+| Physical state | The existing MovementRules.yard owns the transition; YardMoveService adds required active/IN_SERVICE/AT_LOCATION/UNCOUPLED and live same-Site preconditions. No snapshot/address/unknown location authority. |
+| Source/version conflicts | Wrong stationary origin is LOCATION_MISMATCH; matching origin with stale version is STALE_VERSION. Original body/UUID is retained, with authorized downloaded recorded state shown separately. |
+| Atomic event/projection/ledger | Existing engine, row locks and MobileOperationLedger; concurrent same/different-key tests yield one physical winner. Failure saving ledger response rolls back event, version and location. |
+| Provenance | SQL assertions prove HUMAN_USER/USER_ACTION, authenticated User, original observedAt/clientOperationId and previous/new location; no fictitious Trip/Driver/Tractor. Load and designation preserved. |
+| QR reads | Existing real QR resolver, revoked QR regression and zero movement/event from lookup. A token/cached scan never grants server capability. |
+| Human UI | Six widget tests prove review/Not Yet/confirmation, server ACK distinction, mode switching, recorded mismatch and closed account-bound dialog. |
+| Durable sequential moves | Seventeen real SQLite replay tests plus v6 upgrade preserve frozen UUID/path/body; predecessor ACK alone resolves the second version. No speculative counter or source rebasing. |
+| Late results / two workers | Same-database lane serializes; two actual file connections use the same immutable request/ledger identity. One verified result and terminal ACK survive a late lost ACK. |
+| Privacy / ownership | User/Tenant/Driver identity fences callbacks; cancelled scanner/review routes. No new location permission, GPS, raw coordinates, tracking or asset-history replica. |
+| Regression / contract | Full Mobile 424 (389 historical +35); Web 244; OpenAPI 23 (18 historical +5) and validation pass. Native device evidence remains separate. |
+
+## Local validation and release limits
+
+Flutter 3.47.6 / Dart 3.13.5, enforce-lockfile, reproducible Drift generation,
+format and analyze --fatal-infos pass. All 424 Flutter tests pass in the isolated
+local Linux checkout with real SQLite; Windows native SQLite policy limitation
+from #47 remains unchanged. All original Web commands pass on the same source
+in Linux, including 244 tests. OpenAPI validation and all 23 tests pass.
+
+Backend uses Java 25 and real PostgreSQL 18.6 Testcontainers. The first complete
+2068-test suite passed before the three audit regressions; each of those corrected
+regressions then passed. A later 2071-test full run had no assertion failures but
+one Windows setup connection error (BindException: Address already in use:
+getsockopt) in historical EvidencePostgresTests. The affected concurrency test
+passed on repeat. That failed full run is not reported as green; a complete
+verification is being repeated. Final exact-head counts/CI belong in the PR.
+
+No physical Android/iOS QA was performed. Release #65 must verify camera grant/
+denial/revocation, actual QR labels, mode/account/foreground changes while scanning
+or reviewing, process kill/reopen with two pending moves, native builds/signing,
+and minimum supported devices. Production privacy/consent/retention review remains
+open; no legal conclusion or destructive retention is introduced. Yard-specific
+Shift/equipment policy is not invented from Driver grants. #49 correction/OOS UI,
+#50/#51 Yard Check/reconciliation, tracking and continuous GPS remain outside scope.
+
+F: OpenAPI documents the four scoped context/move operations, strict request,
+safe errors/current projection, provenance and bounded pages. Historical Arrival
+privacy tests retain their assertions while recognizing the actual v7 upgrade.
+No workflows, historical test cases, backend migrations or RLS policies weakened.

@@ -19,6 +19,22 @@ The server remains authoritative. Offline mode records local intent/facts and re
 
 # 1. Core model
 
+Issue #48 adds typed YARD_MOVE to the same CommandStore/ReplayWorker lane and
+MobileOperationLedger endpoint POST /yard-moves. The command is saved before
+HTTP with immutable UUID/User/Tenant/Trailer/source/destination/observedAt.
+No Trip, Tractor, second queue, worker or local Trailer state-machine replay.
+For two consecutive offline moves, the second stores expectedTrailerVersion as
+a local operation reference, not an invented number. Explicit dependency blocks
+materialization until the preceding same-Trailer verified ACK is durably stored
+in command_results (kind TRAILER). Its actual version and matching intended
+destination resolve the final request once in materialized_requests. That request
+never changes after the first send, including timeout, ACK loss or SQLite reopen.
+Conflict cannot convert into correction or silently rebase source/version.
+Parent conflicts block descendants; independent Trailers may continue.
+ACK is terminal even if another worker's late response fails. Current Yard
+projection is refreshed after ACK/semantic conflict; historical ACK is not current
+location. See [implementation and proof](issue-48-yard-move.md).
+
 Issue #47 adds GEOFENCE_CONFIRMED to the existing Arrival command only after a
 human confirms a fresh authorized suggestion. At confirmation, occurredAt and
 coordinates are materialized with one immutable clientOperationId in the same
