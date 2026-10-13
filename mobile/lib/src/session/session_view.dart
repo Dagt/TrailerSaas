@@ -254,6 +254,7 @@ class _SessionViewState extends State<SessionView> {
                                               cached: trip,
                                               journal: _journal,
                                               worker: widget.worker,
+                                              updates: widget.updates,
                                             ),
                                           ),
                                         )

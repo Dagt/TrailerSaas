@@ -337,7 +337,7 @@ void main() {
       native.reduced = true;
       expect((await granted.access()).approximate, isTrue);
       granted.cancel();
-      await native.positions.close();
+      unawaited(native.positions.close());
     },
   );
   for (final device in [TargetPlatform.android, TargetPlatform.iOS]) {
@@ -382,7 +382,7 @@ void main() {
           );
         }
         real.cancel();
-        await native.positions.close();
+        unawaited(native.positions.close());
       },
     );
   }

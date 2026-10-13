@@ -117,13 +117,17 @@ class ArrivalAssistanceController extends ChangeNotifier {
 
   Future<ArrivalSuggestion?> confirmedEvidence() async {
     final candidate = suggestion, generation = _generation;
-    if (candidate == null) return null;
+    if (candidate == null) {
+      invalidate();
+      return null;
+    }
     try {
       final access = await location.access();
       if (_disposed ||
           generation != _generation ||
           !access.usable ||
           !identical(suggestion, candidate)) {
+        invalidate();
         return null;
       }
       invalidate();
