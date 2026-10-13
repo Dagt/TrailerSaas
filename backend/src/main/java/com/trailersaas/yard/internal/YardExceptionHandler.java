@@ -9,7 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes={YardController.class,YardMoveController.class,YardActionController.class,YardReportController.class})
+@RestControllerAdvice(assignableTypes={YardController.class,YardMoveController.class,YardActionController.class,YardReportController.class,YardOosController.class})
 @Order(10)
 class YardExceptionHandler {
   @ExceptionHandler(YardFailure.class)
@@ -25,6 +25,8 @@ class YardExceptionHandler {
   ProblemDetail invalid(Exception ignored) { return failure(YardFailure.invalid()); }
   @ExceptionHandler(com.trailersaas.identity.IdempotencyKeyReusedException.class)
   ProblemDetail reused(Exception ignored) { return failure(new YardFailure(409,"IDEMPOTENCY_KEY_REUSED","The operation identity was already used for a different request.")); }
+  @ExceptionHandler(com.trailersaas.documents.EvidenceValidationException.class)
+  ProblemDetail evidence(com.trailersaas.documents.EvidenceValidationException e) { return failure(new YardFailure(e.status(),e.code().name(),e.getMessage())); }
   @ExceptionHandler(com.trailersaas.trailers.TrailerMovementRejectedException.class)
   ProblemDetail movement(com.trailersaas.trailers.TrailerMovementRejectedException e) {
     return failure(switch(e.reason()) {

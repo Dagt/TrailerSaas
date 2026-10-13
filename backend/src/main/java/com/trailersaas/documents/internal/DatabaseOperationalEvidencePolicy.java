@@ -112,6 +112,15 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
     auth.requireTenantCapability(actor,tenant,Capability.TRAILER_OOS_MARK);
     validateDocuments(actor,tenant,expected(photos,Type.DAMAGE_PHOTO),Target.TRAILER,trailer,Capability.TRAILER_OOS_MARK);
   }
+  public void recordTrailerOosEvidence(AuthenticatedUserPrincipal actor,UUID tenant,UUID trailer,UUID event,UUID operation,List<UUID> photos) {
+    validateTrailerOos(actor,tenant,trailer,photos);
+    for(var id:photos.stream().sorted().toList()) {
+      var links=documents.links(tenant,id);
+      if(links.size()!=1 || links.getFirst().entityType()!=Target.TRAILER || !links.getFirst().entityId().equals(trailer)) throw failure(RESOURCE_NOT_FOUND);
+      if(Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from trailer_oos_evidence where tenant_id=? and document_id=?)",Boolean.class,tenant,id))) throw failure(RESOURCE_CONFLICT);
+      jdbc.update("insert into trailer_oos_evidence(tenant_id,trailer_id,event_id,document_id,actor_user_id,client_operation_id) values(?,?,?,?,?,?)",tenant,trailer,event,id,actor.userId(),operation);
+    }
+  }
   public void validateDelivery(AuthenticatedUserPrincipal actor,UUID tenant,UUID stop,Delivery request) {
     delivery(actor,tenant,stop,request,false,false);
   }

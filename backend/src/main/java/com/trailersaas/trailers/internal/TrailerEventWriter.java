@@ -22,8 +22,8 @@ class TrailerEventWriter {
     return append(t, c, change.type(), change.locationId(), change.reason(), change.metadata());
   }
 
-  void markOutOfService(TrailerEntity t, Context c, String comment) {
-    append(
+  TrailerMovementEntity markOutOfService(TrailerEntity t, Context c, String comment) {
+    return append(
         t,
         c,
         "MARKED_OOS",

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 class TrailerAdministrativeCommandService {
   private final TenantAuthorization authorization;
   private final TrailerMovementProjection movement;
+  private final com.trailersaas.trailers.TrailerServiceabilityCommands serviceability;
   private final TrailerEventWriter writer;
   private final TrailerRepository repository;
   private final CustomerIdentityPolicy customers;
@@ -27,12 +28,14 @@ class TrailerAdministrativeCommandService {
   TrailerAdministrativeCommandService(
       TenantAuthorization authorization,
       TrailerMovementProjection movement,
+      com.trailersaas.trailers.TrailerServiceabilityCommands serviceability,
       TrailerEventWriter writer,
       TrailerRepository repository,
       CustomerIdentityPolicy customers,
       EntityManager em) {
     this.authorization = authorization;
     this.movement = movement;
+    this.serviceability = serviceability;
     this.writer = writer;
     this.repository = repository;
     this.customers = customers;
@@ -83,12 +86,8 @@ class TrailerAdministrativeCommandService {
       UUID id,
       TrailerCommandRequests.OutOfService c) {
     authorization.requireTenantCapability(actor, tenant, TRAILER_OOS_MARK);
-    var t = locked(tenant, id, c.expectedVersion());
-    if (!"IN_SERVICE".equals(t.serviceabilityState)) throw TrailerFailure.transition();
-    writer.markOutOfService(t, context(actor), c.comment());
-    t.serviceabilityState = "OUT_OF_SERVICE";
-    flush();
-    return Trailer.of(t);
+    serviceability.markOutOfService(tenant,new com.trailersaas.trailers.TrailerServiceabilityCommands.OutOfService(new Target(id,c.expectedVersion()),context(actor),c.comment()));
+    return current(tenant,id);
   }
 
   Trailer restore(

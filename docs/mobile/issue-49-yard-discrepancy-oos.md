@@ -55,7 +55,13 @@ B: append-only discrepancy reports and bounded separately authorized review are
 implemented. V23 adds Tenant-safe reports and the immutable OOS event/evidence
 association foundation, with RLS and SELECT/INSERT-only grants. 147 PostgreSQL,
 authorization, strict catalog, correction/#48 and Modulith tests pass (0/0/0),
-including 17 new report cases. C–G remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
+including 17 new report cases. C: scoped DAMAGE_PHOTO initialization uses the existing signed R2 transport and
+finalization, without a Driver/Trip. OOS and #40 share the same public transition
+port/writer. Validated own finalized exact-Trailer evidence, MARKED_OOS, version
+and ledger commit together. 370 transport/evidence/administrative/Yard/Modulith
+tests pass (0 failures/errors/skips), including 23 new OOS cases. Confirmed
+audit corrections preserve legacy integrity-error mapping and exact V23 version
+inventories. Native QA is not claimed. D–G remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
 camera and Linux tests do not count as physical device evidence. OQ-054 return
 policy and production privacy/retention remain unresolved. No Yard Check, Missing
 reconciliation, notifications, generic audit worker or GPS tracking is included.

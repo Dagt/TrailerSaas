@@ -26,6 +26,8 @@ public interface OperationalEvidencePolicy {
   void validateDeliveryForReplay(AuthenticatedUserPrincipal actor, UUID tenant, UUID stop, Delivery delivery);
   void validateDriverDamage(AuthenticatedUserPrincipal actor, UUID tenant, UUID trip, UUID stop, List<UUID> photos);
   void validateTrailerOos(AuthenticatedUserPrincipal actor, UUID tenant, UUID trailer, List<UUID> photos);
+  /** Associates the validated set with a newly written OOS event in the caller transaction. */
+  void recordTrailerOosEvidence(AuthenticatedUserPrincipal actor,UUID tenant,UUID trailer,UUID event,UUID operation,List<UUID> photos);
   void validateFuel(AuthenticatedUserPrincipal actor, UUID tenant, UUID trip, UUID tractor, UUID receipt);
   /** Terminal Trip replay still requires current assignment, type/links and a committed own ledger result. */
   void validateFuelForReplay(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID tractor,UUID receipt,UUID operation);

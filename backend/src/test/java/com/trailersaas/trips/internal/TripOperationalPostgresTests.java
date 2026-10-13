@@ -1031,7 +1031,7 @@ class TripOperationalPostgresTests extends PostgresIntegrationTest {
   @Test
   void exactV15ColumnsGrantsRlsAndNoFutureTables() throws Exception {
     flyway.validate();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("22");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
     var columns =
         Map.of(
             "trip_operational_events",
