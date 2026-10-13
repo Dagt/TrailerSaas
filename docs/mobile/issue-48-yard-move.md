@@ -62,3 +62,12 @@ PostgreSQL tests pass with 0 failures/errors/skipped, including manual rollback
 invariants, matching event/projection and stable ledger replay. Device-future
 observations are rejected, following the existing Shift time policy; chronology
 cannot move lastSeenAt backwards. No Trip/Driver/Tractor is invented.
+
+C: Forty-nine Yard PostgreSQL tests plus two Modulith tests pass (0 failures,
+errors or skipped), including same/different-key concurrency, revocation before
+ledger replay, real QR revocation, coupled/OOS/unknown states, Site write locking,
+and a ledger-result failure after physical writing that rolls back all effects.
+The audit found that shared capability authorization does not itself reject a
+cancelled Tenant. Yard now explicitly requires Tenant status ACTIVE before every
+context read and command/replay; Candidate/Suspended/Cancelled regressions pass.
+This is bounded to Yard and does not change historical grants or other workflows.

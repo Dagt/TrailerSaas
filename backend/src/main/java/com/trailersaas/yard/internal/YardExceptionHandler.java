@@ -15,7 +15,7 @@ class YardExceptionHandler {
   @ExceptionHandler(YardFailure.class)
   ProblemDetail failure(YardFailure e) {
     var body=ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(e.status),e.getMessage());
-    body.setTitle(e.status==400?"Validation failed":e.status==404?"Resource not found":"Conflict");
+    body.setTitle(e.status==400?"Validation failed":e.status==403?"Forbidden":e.status==404?"Resource not found":"Conflict");
     body.setType(URI.create("https://api.trailersaas.example/problems/"+e.code.toLowerCase(Locale.ROOT).replace('_','-')));
     body.setProperty("code",e.code);
     if(e.currentTrailer!=null)body.setProperty("currentTrailer",e.currentTrailer);

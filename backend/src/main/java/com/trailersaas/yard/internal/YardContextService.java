@@ -39,6 +39,8 @@ class YardContextService {
   }
   void authorize(AuthenticatedUserPrincipal actor, UUID tenant) {
     authorization.requireTenantCapability(actor,tenant,Capability.YARD_MOVE_EXECUTE);
+    if(!Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from tenants where id=? and status='ACTIVE')",Boolean.class,tenant)))
+      throw new YardFailure(403,"TENANT_ACCESS_DENIED","An active Tenant is required for Yard operations.");
   }
   private YardDtos.Page<YardDtos.Location> locationPage(UUID tenant, UUID site, UUID cursor, int limit) {
     var items=jdbc.query("select l.id,l.site_id,l.name,l.type,l.version,c.id,c.name from operational_locations l "
