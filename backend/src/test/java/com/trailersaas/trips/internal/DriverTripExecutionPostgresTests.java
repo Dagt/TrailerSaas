@@ -24,6 +24,81 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
+  Map<String,Object> changedOccurrence(Map<String,Object> original) {
+    var changed=new LinkedHashMap<>(original);changed.put("occurredAt",at.plusSeconds(1).toString());return changed;
+  }
+  void configureGeofence() throws Exception {
+    f.db.execute("update physical_sites set latitude=41,longitude=-88,geofence_radius_m=250 where id=?",site);
+  }
+  Map<String,Object> arrival(String source) throws Exception {
+    if (source.equals("GEOFENCE_CONFIRMED")) {
+      configureGeofence();
+      return Map.of("occurredAt",at.toString(),"source",source,"coordinates",Map.of("latitude",41,"longitude",-88,"accuracyM",25));
+    }
+    return Map.of("occurredAt",at.toString(),"source",source);
+  }
+  HttpResponse<String> ownDetail() throws Exception {
+    return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+base()+"/driver/me/trips/"+trip))
+        .header("Authorization","Bearer driver").GET().build(),HttpResponse.BodyHandlers.ofString());
+  }
+  @Test
+  void nextLiveSiteOnlyIsProjectedAndReadingNeverMutates() throws Exception {
+    configureGeofence();
+    var next=stop(2,"OTHER");
+    f.db.execute("update trip_stops set site_snapshot=cast(? as jsonb) where id=?","{\"name\":\"Old target\",\"latitude\":10,\"longitude\":20,\"geofenceRadiusM\":99}",next);
+    assertThat(JsonPath.<Object>read(ownDetail().body(),"$.arrivalAssistance")).isNull();
+    depart();
+    var detail=ownDetail();ok(detail);
+    assertThat(JsonPath.<String>read(detail.body(),"$.arrivalAssistance.stopId")).isEqualTo(stop.toString());
+    assertThat(JsonPath.<String>read(detail.body(),"$.arrivalAssistance.siteId")).isEqualTo(site.toString());
+    assertThat(JsonPath.<Number>read(detail.body(),"$.arrivalAssistance.latitude").doubleValue()).isEqualTo(41);
+    assertThat(detail.body()).doesNotContain("\"latitude\":10","\"longitude\":20","\"geofenceRadiusM\":99");
+    assertThat(value("trip_stops","status",stop)).isEqualTo("EN_ROUTE");
+    assertThat(f.db.value("select count(*) from trip_stop_events where trip_id=? and event_type='ARRIVAL_CONFIRMED'",trip)).isEqualTo(0L);
+    f.db.execute("update physical_sites set latitude=42,version=version+1 where id=?",site);
+    assertThat(JsonPath.<Number>read(ownDetail().body(),"$.arrivalAssistance.latitude").doubleValue()).isEqualTo(42);
+  }
+  @ParameterizedTest
+  @ValueSource(strings={"missingSite","missingCoordinates","missingRadius","inactive","outside","accuracy","zeroAccuracy","changedSite","laterStop"})
+  void invalidGeographicContextCannotAdvanceAndManualStillWorks(String mode) throws Exception {
+    depart();var body=arrival("GEOFENCE_CONFIRMED");
+    UUID target=stop;
+    switch(mode) {
+      case "missingSite" -> f.db.execute("update trip_stops set site_id=null,location_id=null,site_snapshot='{\"name\":\"Ad hoc\"}'::jsonb where id=?",stop);
+      case "missingCoordinates" -> f.db.execute("update physical_sites set latitude=null where id=?",site);
+      case "missingRadius" -> f.db.execute("update physical_sites set geofence_radius_m=null where id=?",site);
+      case "inactive" -> f.db.execute("update physical_sites set active=false where id=?",site);
+      case "changedSite" -> f.db.execute("update physical_sites set latitude=42,version=version+1 where id=?",site);
+      case "outside" -> body=Map.of("occurredAt",at.toString(),"source","GEOFENCE_CONFIRMED","coordinates",Map.of("latitude",42,"longitude",-88,"accuracyM",25));
+      case "accuracy","zeroAccuracy" -> body=Map.of("occurredAt",at.toString(),"source","GEOFENCE_CONFIRMED","coordinates",Map.of("latitude",41,"longitude",-88,"accuracyM",mode.equals("accuracy")?126:0));
+      case "laterStop" -> { target=stop(2,"OTHER");f.db.execute("update trip_stops set status='EN_ROUTE' where id=?",target); }
+    }
+    assertThat(post("/stops/"+target+"/arrivals",UUID.randomUUID().toString(),body).statusCode()).isEqualTo(409);
+    assertThat(value("trips","status",trip)).isEqualTo("IN_TRANSIT");
+    assertThat(value("trip_stops","status",stop)).isEqualTo("EN_ROUTE");
+    if(mode.equals("inactive"))f.db.execute("update physical_sites set active=true where id=?",site);
+    ok(action("/stops/"+stop+"/arrivals",Map.of("source","MANUAL")));
+  }
+  @Test
+  void geofenceWithoutOperationalLocationRecordsStopWithoutFabricatingTrailerLocation() throws Exception {
+    depart();configureGeofence();
+    f.db.execute("update trip_stops set location_id=null where id=?",stop);
+    ok(post("/stops/"+stop+"/arrivals",UUID.randomUUID().toString(),arrival("GEOFENCE_CONFIRMED")));
+    assertThat(value("trips","status",trip)).isEqualTo("AT_STOP");
+    assertThat(value("trailers","location_state",trailer)).isEqualTo("IN_TRANSIT");
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trip_id=? and event_type='ARRIVED'",trip)).isEqualTo(0L);
+  }
+  @ParameterizedTest
+  @ValueSource(strings={"MANUAL","GEOFENCE_CONFIRMED"})
+  void confirmedSourceDerivesHumanActorAndMatchingMovementProvenance(String source) throws Exception {
+    depart();var key=UUID.randomUUID().toString();var body=arrival(source);
+    ok(post("/stops/"+stop+"/arrivals",key,body));
+    String provenance=source.equals("MANUAL")?"USER_ACTION":"MOBILE_AUTOMATION";
+    for(var table:List.of("trip_stop_events","trailer_movement_events")) {
+      assertThat(f.db.value("select count(*) from "+table+" where client_operation_id=? and actor_type='HUMAN_USER' and actor_user_id=? and source_type=? and metadata->>'arrivalSource'=?",UUID.fromString(key),user,provenance,source)).isEqualTo(1L);
+    }
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trip_id=? and event_type in ('HOOKED','DEPARTED') and source_type='USER_ACTION'",trip)).isEqualTo(2L);
+  }
   @Autowired Flyway flyway;
   @Autowired TenantTransactionExecutor transactions;
   @Autowired DriverTripExecutionService execution;
@@ -353,11 +428,12 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
     assertThat(value("trip_stops", "status", stop)).isEqualTo("EN_ROUTE");
   }
 
-  @Test
-  void replayIsSameLogicalResultAndChangedPayloadOrOperationConflicts() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings={"MANUAL","GEOFENCE_CONFIRMED"})
+  void replayIsSameLogicalResultAndChangedPayloadOrOperationConflicts(String source) throws Exception {
     depart();
     var key = UUID.randomUUID().toString();
-    var body = Map.<String, Object>of("occurredAt", at.toString(), "source", "MANUAL");
+    var body = arrival(source);
     var first = post("/stops/" + stop + "/arrivals", key, body);
     ok(first);
     var replay = post("/stops/" + stop + "/arrivals", key, body);
@@ -367,7 +443,7 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
         post(
             "/stops/" + stop + "/arrivals",
             key,
-            Map.of("occurredAt", at.plusSeconds(1).toString(), "source", "MANUAL")),
+            changedOccurrence(body)),
         409,
         "IDEMPOTENCY_KEY_REUSED");
     problem(
@@ -382,9 +458,11 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
         .isEqualTo(1L);
   }
 
-  @Test
-  void concurrentDistinctArrivalKeysProduceOneAdvance() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings={"MANUAL","GEOFENCE_CONFIRMED"})
+  void concurrentDistinctArrivalKeysProduceOneAdvance(String source) throws Exception {
     depart();
+    var arrivalBody=arrival(source);
     try (var workers = Executors.newFixedThreadPool(2)) {
       var latch = new CountDownLatch(1);
       var a =
@@ -394,7 +472,7 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
                 return post(
                     "/stops/" + stop + "/arrivals",
                     UUID.randomUUID().toString(),
-                    Map.of("occurredAt", at.toString(), "source", "MANUAL"));
+                    arrivalBody);
               });
       var b =
           workers.submit(
@@ -403,7 +481,7 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
                 return post(
                     "/stops/" + stop + "/arrivals",
                     UUID.randomUUID().toString(),
-                    Map.of("occurredAt", at.toString(), "source", "MANUAL"));
+                    arrivalBody);
               });
       latch.countDown();
       assertThat(
@@ -415,9 +493,11 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
     assertThat(value("trip_stops", "version", stop)).isEqualTo(2L);
   }
 
-  @Test
-  void eventFailureRollsBackTripStopTrailerAndOperationClaim() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings={"MANUAL","GEOFENCE_CONFIRMED"})
+  void eventFailureRollsBackTripStopTrailerAndOperationClaim(String source) throws Exception {
     depart();
+    var arrivalBody=arrival(source);
     var oldVersion = value("trailers", "version", trailer);
     var key = UUID.randomUUID().toString();
     f.db.execute(
@@ -434,7 +514,7 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
           post(
               "/stops/" + stop + "/arrivals",
               key,
-              Map.of("occurredAt", at.toString(), "source", "MANUAL"));
+              arrivalBody);
       assertThat(failed.statusCode()).isEqualTo(500);
       assertThat(failed.body())
           .contains("The server could not complete the request.", "traceId")
@@ -654,11 +734,12 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
     assertThat(value("trip_stops", "status", stop)).isEqualTo("IN_SERVICE");
   }
 
-  @Test
-  void concurrentIdenticalKeyReturnsOneDurableResult() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings={"MANUAL","GEOFENCE_CONFIRMED"})
+  void concurrentIdenticalKeyReturnsOneDurableResult(String source) throws Exception {
     depart();
     var key = UUID.randomUUID().toString();
-    var body = Map.<String, Object>of("occurredAt", at.toString(), "source", "MANUAL");
+    var body = arrival(source);
     try (var pool = Executors.newFixedThreadPool(2)) {
       var latch = new CountDownLatch(1);
       var a =

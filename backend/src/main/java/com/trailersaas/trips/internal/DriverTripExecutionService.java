@@ -172,6 +172,12 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
               case ARRIVAL -> {
                 state(trip, "IN_TRANSIT");
                 requiredActive(active, stop, "EN_ROUTE");
+                if ("GEOFENCE_CONFIRMED".equals(r.source())) {
+                  var target = arrivalContext(trip, true);
+                  if (target == null || !target.stopId().equals(stop.id)
+                      || !destinations.compatible(tenant, repository.stopCustomers(tenant, tripId, stop.id), stop.siteId, stop.locationId)
+                      || !GeofenceEvidence.inside(target, r.coordinates())) throw TripFailure.conflict();
+                }
                 chronology(r.occurredAt(), trip.startedAt);
                 stops.stream()
                     .filter(s -> s.sequenceNumber < stop.sequenceNumber && s.departedAt != null)
@@ -190,7 +196,7 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
                     driver.get(),
                     trip.currentTractorId,
                     stop.locationId,
-                    movement(actor, trip, stop, driver.get(), operation, r.occurredAt()));
+                    movement(actor, trip, stop, driver.get(), operation, r.occurredAt(), sourceType(r)));
                 stop.status = "ARRIVED";
                 stop.arrivedAt = r.occurredAt();
                 trip.status = "AT_STOP";
@@ -350,12 +356,13 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
     jdbc.update(
         "insert into"
             + " trip_stop_events(id,tenant_id,trip_stop_id,trip_id,event_type,actor_type,source_type,actor_user_id,occurred_at,recorded_at,client_operation_id,metadata)"
-            + " values(?,?,?,?,?,'HUMAN_USER','USER_ACTION',?,?,?,?,cast(? as jsonb))",
+            + " values(?,?,?,?,?,'HUMAN_USER',?,?,?,?,?,cast(? as jsonb))",
         UUID.randomUUID(),
         trip.tenantId,
         stop.id,
         trip.id,
         type,
+        sourceType(r).name(),
         actor.userId(),
         java.sql.Timestamp.from(r.occurredAt()),
         java.sql.Timestamp.from(Instant.now()),
@@ -370,11 +377,23 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
       UUID driver,
       UUID key,
       Instant at) {
+    return movement(actor,t,s,driver,key,at,TrailerMovementProjection.SourceType.USER_ACTION);
+  }
+
+  private static TrailerMovementProjection.SourceType sourceType(Command r) {
+    return "GEOFENCE_CONFIRMED".equals(r.source())
+        ? TrailerMovementProjection.SourceType.MOBILE_AUTOMATION
+        : TrailerMovementProjection.SourceType.USER_ACTION;
+  }
+
+  private static TrailerMovementProjection.Context movement(
+      AuthenticatedUserPrincipal actor,TripEntity t,TripStopEntity s,UUID driver,UUID key,Instant at,
+      TrailerMovementProjection.SourceType source) {
     return new TrailerMovementProjection.Context(
         at,
         new TrailerMovementProjection.Provenance(
             TrailerMovementProjection.ActorType.HUMAN_USER,
-            TrailerMovementProjection.SourceType.USER_ACTION,
+            source,
             actor.userId()),
         driver,
         t.id,

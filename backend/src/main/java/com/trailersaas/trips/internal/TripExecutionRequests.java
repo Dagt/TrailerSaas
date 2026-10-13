@@ -36,8 +36,7 @@ final class TripExecutionRequests {
     Map<String, Object> coordinates = null;
     if (action == Action.ARRIVAL) {
       source = TripValidation.text(body.get("source"), false);
-      // #47 owns confirmed geofence assistance; do not accept a fabricated signal in #44.
-      if (!"MANUAL".equals(source)) throw TripFailure.invalid("source");
+      if (!Set.of("MANUAL", "GEOFENCE_CONFIRMED").contains(source)) throw TripFailure.invalid("source");
       if (body.get("coordinates") != null) {
         if (!(body.get("coordinates") instanceof Map<?, ?> raw))
           throw TripFailure.invalid("coordinates");
@@ -56,6 +55,8 @@ final class TripExecutionRequests {
           canonical.put(field, ((Number) coordinates.get(field)).doubleValue());
         coordinates = canonical;
       }
+      if ("GEOFENCE_CONFIRMED".equals(source) && coordinates == null)
+        throw TripFailure.invalid("coordinates");
     }
     return new Command(
         at,
