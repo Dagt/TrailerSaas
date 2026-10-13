@@ -10,6 +10,7 @@ record YardMoveRequest(UUID trailerId,UUID fromLocationId,UUID toLocationId,Inst
     var v=body.get("expectedTrailerVersion");
     if(!(v instanceof Integer||v instanceof Long)||((Number)v).longValue()<0)throw YardFailure.invalid();
     Instant at;
+    if(!(body.get("observedAt") instanceof String time)||!time.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt].*"))throw YardFailure.invalid();
     try {at=Instant.parse((String)body.get("observedAt"));}catch(RuntimeException e){throw YardFailure.invalid();}
     if(at.isAfter(Instant.now()))throw YardFailure.invalid();
     return new YardMoveRequest(uuid(body.get("trailerId")),uuid(body.get("fromLocationId")),uuid(body.get("toLocationId")),at.truncatedTo(ChronoUnit.MICROS),((Number)v).longValue());

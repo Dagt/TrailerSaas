@@ -189,6 +189,31 @@ class YardPostgresTests extends PostgresIntegrationTest {
     problem(get("/yard/trailers/"+trailer),403,"TENANT_ACCESS_DENIED");
     problem(post(UUID.randomUUID().toString(),moveBody()),403,"TENANT_ACCESS_DENIED");unchanged();
   }
+  @Test void changedOriginHasSpecificMismatchEvenWhenVersionAlsoChanged() throws Exception {
+    f.db.execute("update trailers set current_location_id=?,last_known_location_id=?,version=1 where id=?",b,b,trailer);
+    var body=moveBody();body.put("toLocationId",location(site,"YARD").toString());
+    var r=post(UUID.randomUUID().toString(),body);problem(r,409,"LOCATION_MISMATCH");
+    assertThat(JsonPath.<String>read(r.body(),"$.currentTrailer.currentLocation.id")).isEqualTo(b.toString());
+    assertThat(f.db.value("select version from trailers where id=?",trailer)).isEqualTo(1L);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=?",trailer)).isEqualTo(0L);
+  }
+  @Test void invalidRfc3339ObservationIsRejectedBeforeStorage() throws Exception {
+    f.db.execute("update trailers set last_seen_at=null where id=?",trailer);
+    var body=moveBody();body.put("observedAt","-1000000000-01-01T00:00:00Z");
+    problem(post(UUID.randomUUID().toString(),body),400,"VALIDATION_FAILED");unchanged();
+  }
+  @Test void authorityRevokedWhileWaitingForSiteCannotCommit() throws Exception {
+    var held=new CountDownLatch(1);var release=new CountDownLatch(1);var body=moveBody();
+    try(var pool=Executors.newFixedThreadPool(2)){
+      var update=pool.submit(()->transactions.execute(tenant,()->{jdbc.update("update physical_sites set version=version+1 where tenant_id=? and id=?",tenant,site);held.countDown();
+        try{if(!release.await(20,TimeUnit.SECONDS))throw new IllegalStateException("Lock timeout");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IllegalStateException(e);}return true;}));
+      assertThat(held.await(20,TimeUnit.SECONDS)).isTrue();var confirm=pool.submit(()->post(UUID.randomUUID().toString(),body));
+      try{await().atMost(Duration.ofSeconds(15)).untilAsserted(()->assertThat((Long)f.db.value("select count(*) from pg_stat_activity where wait_event_type='Lock' and query like '%for share of l,s%'")).isPositive());
+        f.db.execute("update tenant_memberships set status='DISABLED' where id=?",membership);
+      }finally{release.countDown();}
+      assertThat(update.get(30,TimeUnit.SECONDS)).isTrue();assertThat(confirm.get(30,TimeUnit.SECONDS).statusCode()).isEqualTo(403);unchanged();
+    }finally{release.countDown();}
+  }
   @Test void activeContextHasOnlyTenantSitesAndNormalizedLocations() throws Exception {
     var foreign=f.location(other);var inactive=f.location(tenant);
     f.db.execute("update physical_sites set active=false where id=(select site_id from operational_locations where id=?)",inactive);

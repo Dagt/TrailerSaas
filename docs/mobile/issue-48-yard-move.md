@@ -87,3 +87,21 @@ Drift v7 adds only cached_yard_contexts and extends existing aggregate/result
 constraints to TRAILER. Existing queues, frozen requests and confirmed results
 are retained; real v1–v6 migration/reopen checks exercise namespace integrity.
 Native camera/device QA is pending #65; Linux widget tests do not claim it.
+
+E: Seventeen file-backed SQLite replay tests pass, plus the real v6 migration
+regression. Two offline moves keep their original UUIDs and intended origins;
+the second has a typed operation reference instead of a fabricated version.
+Only the first verified same-Trailer ACK resolves that version, and the HTTP
+request then freezes in the existing materialized_requests table. Lost ACK,
+reopen, 408/429/500/503, Firebase 401 refresh, 403/404, semantic 409, malformed ACK,
+User/Tenant fencing and two workers/connections retain identity. A failed parent
+blocks its descendants while independent Trailers continue. ACK is terminal;
+a late timeout cannot downgrade it. Existing command_results retains the verified
+Trailer result; no second queue, worker or client state machine.
+
+Focused audit regressions reproduced and corrected three Backend edge cases:
+stationary origin mismatch takes precedence over version mismatch; expanded
+non-RFC3339 years reject safely before JDBC instead of returning 500; fresh
+membership/capability/Tenant authorization is rechecked after waiting for live
+Site locks. The original pre-ledger check remains mandatory for replay. All three
+regressions now pass; the complete Backend suite is being rerun on these changes.

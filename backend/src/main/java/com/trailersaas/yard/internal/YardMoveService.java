@@ -31,16 +31,17 @@ class YardMoveService {
     return ledger.execute(tenant,actor.userId(),operation,"YARD_MOVE",hash,"TRAILER",result -> result.trailer().trailerId(),Result.class,() -> {
       if(jdbc.query("select id from trailers where tenant_id=? and id=? for update",(rs,n)->rs.getObject(1,UUID.class),tenant,r.trailerId()).isEmpty())throw YardFailure.missing();
       var current=reads.projection(tenant,r.trailerId());
-      if(current.version()!=r.expectedTrailerVersion())throw new YardFailure(409,"STALE_VERSION","The Trailer changed. Refresh before reviewing this move.",current);
       if(!"AT_LOCATION".equals(current.locationState())||!"IN_SERVICE".equals(current.serviceabilityState())||!"UNCOUPLED".equals(current.couplingState()))
         throw new YardFailure(409,"INVALID_STATE_TRANSITION","Only an active, in-service, stationary uncoupled Trailer can be moved.",current);
       if(!current.currentLocation().id().equals(r.fromLocationId()))throw new YardFailure(409,"LOCATION_MISMATCH","The submitted origin differs from the recorded location. Review without correcting it.",current);
+      if(current.version()!=r.expectedTrailerVersion())throw new YardFailure(409,"STALE_VERSION","The Trailer changed. Refresh before reviewing this move.",current);
       if(r.fromLocationId().equals(r.toLocationId()))throw YardFailure.conflict();
       if(current.lastSeenAt()!=null&&r.observedAt().isBefore(current.lastSeenAt()))throw YardFailure.conflict();
       var locations=new LinkedHashMap<UUID,Location>();
       for(var id:List.of(r.fromLocationId(),r.toLocationId()).stream().sorted().toList())locations.put(id,lockedLocation(tenant,id));
       var from=locations.get(r.fromLocationId());var to=locations.get(r.toLocationId());
       if(!from.site().equals(to.site()))throw YardFailure.conflict();
+      reads.authorize(actor,tenant); // Recheck authority after potentially waiting on live context locks.
       var c=new Context(r.observedAt(),new Provenance(ActorType.HUMAN_USER,SourceType.USER_ACTION,actor.userId()),null,null,null,null,operation);
       var applied=movement.yardMove(tenant,new YardMove(new Target(r.trailerId(),r.expectedTrailerVersion()),c,r.fromLocationId(),r.toLocationId()));
       return new Result(reads.projection(tenant,r.trailerId()),applied.movementEvent());
