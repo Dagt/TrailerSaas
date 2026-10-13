@@ -115,3 +115,10 @@ test('#49 SQLite preserves a single operation graph and native camera reuses exi
   assert.match(db, /schemaVersion\s*=>\s*8/);
   assert.ok(!/gps|breadcrumb|coordinate_history/i.test(db));
 });
+test('#49 one shared iOS camera purpose explains QR inspection and damage without background permissions', () => {
+  const ios = readFileSync(fileURLToPath(new URL('../../../mobile/ios/Runner/Info.plist', import.meta.url)), 'utf8');
+  assert.equal(ios.match(/<key>NSCameraUsageDescription<\/key>/g)?.length, 1);
+  assert.equal(ios.match(/<key>NSPhotoLibraryUsageDescription<\/key>/g)?.length, 1);
+  assert.ok(ios.includes('Scan Trailer QR labels and capture inspection or damage photographs'));
+  assert.ok(!ios.includes('NSLocationAlways') && !ios.includes('UIBackgroundModes'));
+});

@@ -151,7 +151,7 @@ retaining #40/#45/#48 and generic Documents contracts. #47's schema-version priv
 assertion advances to v8 while retaining every original native/privacy assertion.
 F4 completes all required API/UX/offline/data-model/backlog/README documentation.
 No workflows, role grants, V1–V22, Web code, dependency lockfiles or native permission
-files are changed. Initial signed upload remains non-idempotent and may leave an
+grants are changed. F5 below consolidates existing iOS purpose descriptions. Initial signed upload remains non-idempotent and may leave an
 unused PENDING reservation after lost ACK; this does not mutate Trailer or accept
 evidence, and retention/cleanup is not silently enabled.
 
@@ -169,6 +169,19 @@ Native Android/iOS permissions, real camera, physical process death/lost-data,
 background/reopen and signed release builds remain #65. No physical QA is claimed.
 OQ-054 Return policy and production privacy/retention remain unresolved; #50/#51
 Yard Check/Missing, #55 notifications and #61 generic audit remain outside this PR.
+
+### Final native-purpose correction F5
+
+The final native file review found two inherited NSCameraUsageDescription entries:
+one described QR Hook/Drop, the other only inspections. Neither described the new
+Yard damage purpose. F5 consolidates one shared QR/inspection/damage description
+and broadens the existing private Photo Library purpose text to operational evidence.
+No native permission, dependency, background mode or location grant is introduced.
+Python plist parsing and the duplicate-key count verify the actual published XML.
+An added contract regression enforces the single camera/library key, stated damage
+purpose and absence of background/Always location. All 31 OpenAPI tests pass,
+retaining 23 prior cases and adding eight #49 cases. Physical OS permission/camera
+behavior remains #65; this static verification is not a device test.
 
 ### #49 implemented HTTP contracts
 
