@@ -193,7 +193,15 @@ class RoadTripController extends ChangeNotifier {
   }
 
   void _sessionChanged() {
-    if (identical(_snapshot, session.snapshot) && online) return;
+    if (identical(_snapshot, session.snapshot) && online) {
+      // cacheConfirmedTrip can update downloaded work in the same owner snapshot.
+      // Its removal/version change must still fence a previous arrival context.
+      if (!session.snapshot!.trips.any((trip) => trip.id == tripId)) {
+        detail = null;
+      }
+      _notify();
+      return;
+    }
     _snapshot = session.snapshot;
     ++_generation;
     detail = null;
@@ -206,7 +214,9 @@ class RoadTripController extends ChangeNotifier {
     if ((online || (worker != null && canRecord)) &&
         _snapshot?.userId == _owner?.userId &&
         _snapshot?.firebaseUid == _owner?.firebaseUid &&
-        _snapshot?.membership.tenantId == _owner?.membership.tenantId) {
+        _snapshot?.membership.tenantId == _owner?.membership.tenantId &&
+        _snapshot?.driver?.id == _owner?.driver?.id &&
+        (_snapshot?.trips.any((trip) => trip.id == tripId) ?? false)) {
       unawaited(load());
     }
   }
@@ -245,6 +255,13 @@ class RoadTripController extends ChangeNotifier {
           'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
         );
         if (!_readCurrent(generation, s)) return;
+        final projected = data['trip'];
+        if (projected is! Map<String, dynamic> ||
+            projected['id'] != tripId ||
+            projected['currentDriverId'] != s.driver?.id ||
+            projected['stops'] is! List) {
+          throw const FormatException('Unconfirmed own Trip projection');
+        }
         detail = data;
         if (worker != null) {
           await session.cacheConfirmedTrip(s, {
@@ -276,6 +293,7 @@ class RoadTripController extends ChangeNotifier {
       if (_readCurrent(generation, s)) {
         message =
             'Work could not be refreshed. Connect and reload before acting.';
+        detail = null;
       }
     } finally {
       if (_readCurrent(generation, s)) {

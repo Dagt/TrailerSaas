@@ -155,7 +155,6 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
   @Autowired Flyway flyway;
   @Autowired TenantTransactionExecutor transactions;
   @Autowired DriverTripExecutionService execution;
-  @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
   @MockitoBean FirebaseTokenVerifier verifier;
   // Domain integration seam only. Production denies departure until #43 supplies actual evidence.
   @MockitoBean TripDeparturePrerequisites prerequisites;

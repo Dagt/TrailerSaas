@@ -4,7 +4,7 @@ Base verified before editing: `df5be704594f4ef2810b7c3e5f3dcdb7ad528e07`,
 merged PR #103; #45 closed. Working tree clean, no stashes, prior branches retained.
 Branch: `issue-47-geofence-assisted-arrival`. No merge; no #48 work.
 
-## Acceptance matrix (implementation plan)
+## Acceptance matrix
 
 | Gate | Implementation / evidence required |
 | --- | --- |
@@ -176,12 +176,43 @@ and CI evidence.
 
 ## QA and release gate #65
 
-Local Java25/PostgreSQL18 Testcontainers, full Web/OpenAPI and Flutter
-format/analyze/generation are run without changing CI. Local Flutter pure/widget
-tests run; Windows policy blocks native SQLite DLL loading with error 4551, so
-real SQLite integration and the full suite require the unchanged Linux CI.
-No security policy, test or gate is bypassed. CI counts and exact-head evidence
-are recorded in the PR after completion.
+Local Java25/PostgreSQL18.6 Testcontainers, full Web/OpenAPI and Flutter
+format/analyze/generation run without changing CI. Windows policy blocks native
+SQLite DLL loading with error 4551. The same Flutter 3.47.6 / Dart 3.13.5 source
+and official engine were therefore provisioned in an isolated local Ubuntu Docker
+checkout: all 389 tests pass, including 70 new geofence tests with real SQLite,
+lost ACK/reopen, Driver rebound and targeted instruction persistence. Host source
+was mounted read-only; no security policy or test gate was bypassed. This remains
+automated local Linux validation, not Android/iOS hardware QA. Final exact-head
+CI counts and links are recorded in the PR after completion.
+
+The unmodified Web command also passes all 244 tests, typecheck/lint/build in a
+local Linux checkout. Parallel Windows runs under load exposed existing timing
+failures; both affected files and the complete suite pass serially, and the
+original command passes in Linux. No Web source/tests or CI configuration changed.
+
+G2–G4 corrected late confirmation callbacks affecting newer suggestions,
+failed reload restoring old context, Driver fencing during HTTP/replay, and Not
+Yet suppression across reload gaps. Commit-success instruction signals are
+tested after the SQLite transaction commits; malformed pages never signal success.
+Same-owner authoritative work removal also clears detail and assistance even when
+the session snapshot object is retained. The Site-update locking regression
+proves that an Arrival waiting on a concurrent Site writer evaluates its committed
+new coordinates and rejects stale evidence with RESOURCE_CONFLICT.
+Fresh own-detail validation rejects malformed/wrong-Trip responses. Automatic
+reloads stop when work is withdrawn; the 404 regression uses the real queue and
+SQLite rather than allowing an old instruction to restore authority. Reroute
+coverage also proves the new Site is reloaded and can produce a new suggestion.
+
+Final local validation: Backend `clean verify` **2,019** (0 failures/errors/skipped)
+on Java25/PostgreSQL18.6; Mobile **389** (all historical 319 retained), plus locked
+dependencies, reproducible Drift, unchanged format and fatal-info analysis;
+Web **244** with the original command plus typecheck/lint/build in Linux;
+OpenAPI **18** plus contract validation. An initial Linux Backend experiment was
+rejected by the existing loopback guard/Docker Desktop networking; that guard was
+preserved and the complete final verification ran in the working Windows setup.
+No CI, historical tests, migrations V1–V22, RLS policies or capabilities were altered.
+The PR remains Draft until its four unchanged jobs pass on its exact final HEAD.
 
 No physical Android/iOS tests have been performed in this task. Release #65 must
 test the project minimum Android version and supported current Android/iOS:

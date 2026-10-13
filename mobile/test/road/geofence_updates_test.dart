@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trailersaas_mobile/src/road/driver_updates_store.dart';
 import 'package:trailersaas_mobile/src/road/online_command_journal.dart';
 import 'package:trailersaas_mobile/src/road/road_trip_controller.dart';
+import 'package:trailersaas_mobile/src/sync/command_store.dart';
+import 'package:trailersaas_mobile/src/sync/replay_worker.dart';
 
 import '../session/fixtures.dart';
 import 'arrival_assistance_test.dart';
@@ -14,10 +16,12 @@ void main() {
   late MobileFixture f;
   late DriverUpdatesStore updates;
   late RoadTripController controller;
+  late ReplayWorker worker;
   late FakeLocation location;
   late Map<String, dynamic> trip, target;
   late List<Map<String, dynamic>> instructions;
   late int reads;
+  bool noWork = false;
   setUp(() async {
     trip = geoTrip()..['id'] = activeTrip;
     target = geoTarget()..['tripId'] = activeTrip;
@@ -35,6 +39,7 @@ void main() {
       ];
     await f.session.start();
     reads = 0;
+    noWork = false;
     instructions = [];
     f.handler = (r) async {
       if (r.url.path.endsWith('/updates')) {
@@ -42,6 +47,12 @@ void main() {
       }
       if (r.url.path.endsWith('/driver/me/trips/$activeTrip')) {
         reads++;
+        if (noWork) {
+          return f.response({
+            'code': 'RESOURCE_NOT_FOUND',
+            'detail': 'Trip unavailable',
+          }, 404);
+        }
         return f.response({
           'trip': trip,
           'arrivalAssistance': target,
@@ -56,12 +67,18 @@ void main() {
         return f.response({'id': 'driver', 'name': 'Jane', 'active': true});
       }
       return f.response({
-        'items': [trip],
+        'items': noWork ? [] : [trip],
         'nextCursor': null,
       });
     };
     updates = DriverUpdatesStore(f.db, f.session);
     location = FakeLocation();
+    worker = ReplayWorker(
+      f.session,
+      CommandStore(f.db),
+      MemoryJournal(),
+      scheduleTimers: false,
+    );
     controller = RoadTripController(
       f.session,
       activeTrip,
@@ -69,11 +86,13 @@ void main() {
       location: location,
       clock: () => geoNow,
       updates: updates,
+      worker: worker,
     );
     await controller.load();
   });
   tearDown(() async {
     controller.dispose();
+    await worker.shutdown();
     await updates.shutdown();
     await f.close();
   });
@@ -126,6 +145,7 @@ void main() {
           case 'completed':
             trip['status'] = 'COMPLETED';
           case 'workRemoved':
+            noWork = true;
             f.session.snapshot!.trips.clear();
         }
         instructions.add({
@@ -144,6 +164,18 @@ void main() {
         await controller.confirmAssistedArrival();
         expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
         expect(reads, greaterThan(1));
+        if (mode == 'reroute') {
+          await controller.load();
+          expect(controller.assistance.target?.data['siteId'], 'site-B');
+          expect(controller.assistance.target?.latitude, 42);
+          location.waiting = null;
+          location.fix = geoFix(latitude: 42);
+          await controller.assistance.check();
+          expect(
+            controller.assistance.suggestion?.target.data['siteId'],
+            'site-B',
+          );
+        }
         expect(
           (await updates.watch('user-A', 'A').first).single.projectionJson,
           contains('Operations: $mode'),
@@ -171,6 +203,16 @@ void main() {
     await controller.confirmAssistedArrival();
     expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
   });
+  test('removed Trip refresh settles without repeated 404 reloads', () async {
+    noWork = true;
+    await controller.load();
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    final settled = reads;
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(reads, settled);
+    expect(f.session.snapshot!.trips, isEmpty);
+    expect(controller.assistance.target, isNull);
+  });
   test(
     'failed authoritative reload cannot restore previous geographic context',
     () async {
@@ -184,6 +226,19 @@ void main() {
       expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
     },
   );
+  test('same-owner authoritative work removal invalidates assistance without a new snapshot', () async {
+    await controller.assistance.check();
+    expect(controller.assistance.suggestion, isNotNull);
+    final owner = f.session.snapshot!;
+    await f.session.cacheConfirmedTrip(owner, {...trip, 'status': 'COMPLETED'});
+    expect(f.session.snapshot, same(owner));
+    expect(f.session.snapshot!.trips, isEmpty);
+    expect(controller.detail, isNull);
+    expect(controller.assistance.suggestion, isNull);
+    expect(controller.assistance.target, isNull);
+    await controller.confirmAssistedArrival();
+    expect(f.requests.where((request) => request.method == 'POST'), isEmpty);
+  });
   test(
     'malformed new instruction does not publish success or advance cursor',
     () async {
@@ -201,6 +256,27 @@ void main() {
       await subscription.cancel();
     },
   );
+  for (final invalid in ['malformed', 'wrongTrip']) {
+    test(
+      '$invalid live Trip response never restores cached geographic authority',
+      () async {
+        await controller.assistance.check();
+        expect(controller.assistance.suggestion, isNotNull);
+        f.handler = (request) async => f.response({
+          'trip': invalid == 'malformed' ? null : {...trip, 'id': 'other-trip'},
+          'arrivalAssistance': target,
+        });
+        await controller.load();
+        expect(controller.detail, isNull);
+        expect(controller.assistance.target, isNull);
+        await controller.confirmAssistedArrival();
+        expect(
+          f.requests.where((request) => request.method == 'POST'),
+          isEmpty,
+        );
+      },
+    );
+  }
   test('success signal observes committed instruction and cursor, tail emits no duplicates', () async {
     final observations = <Future<bool>>[];
     final subscription = updates.operationalChanges.listen((event) {

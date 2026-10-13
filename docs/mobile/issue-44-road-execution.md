@@ -143,12 +143,14 @@ explicitly, with no manually entered ID. It does not depend on public QR resolut
 closing an existing inactive/OOS coupling remains possible under #38's server rules.
 The replacement Hook still requires camera QR identification and fresh server validation.
 
-## Deferred
+## Historical #44 successor scope
 
 #43 real duty/inspection prerequisites; #45 POD/Fuel/exceptions and fulfillment; #46
-SQLite command queue, dependency/replay worker; #47 geofence assistance/Driver update
+SQLite command queue, dependency/replay worker; #47 now supplies geofence assistance/Driver update
 UX; #52/#53 finalized documents/evidence; #54 media queue. Native Android/iOS permission,
 camera lifecycle and physical end-to-end validation on devices remain deployment gates.
+The numbered successor workflows above are now implemented; this section preserves
+the original #44 boundary rather than describing current missing functionality.
 No production demo states, forced transitions, fake evidence, Shift auto-completion,
 Yard workflow or authorization bypass are present.
 

@@ -200,7 +200,7 @@ and targeted instructions. Actual v1–v5 upgrade/reopen/rollback tests verify p
 Secure storage, Firebase identity and connectivity use the #42 native adapters.
 QR identification uses the #44 scanner; photographs use the #43 image_picker camera
 adapter and private #54 storage. Tests inject adapters; production has no fake photo
-or insecure credential fallback. Geofencing remains #47; no permanent background service.
+or insecure credential fallback. #47 implements bounded foreground arrival assistance; no permanent background location service.
 
 Issue #47 supplies the native bounded foreground location adapter and operational
 caller under ADR-014. It returns one reading or unavailable, cancels the observer,

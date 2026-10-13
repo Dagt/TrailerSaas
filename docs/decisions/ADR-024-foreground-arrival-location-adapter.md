@@ -11,7 +11,9 @@ connectivity downgrade. The lockfile selects current compatible native adapters
 
 Checked the upstream [package](https://pub.dev/packages/geolocator), MIT license,
 published dependency metadata and resolved native source. Android uses Flutter's
-compile/min SDK settings and the project's AGP9/Java17 native toolchain. Apple
+compile/min SDK settings and the project's AGP9/Java17 native toolchain.
+Flutter 3.47.6 currently resolves Android compile/target API36 and minimum API24;
+the native adapter uses those same defaults. Apple
 supports iOS11+, below the project's iOS15 deployment target, and Swift packages.
 The project uses SPM; its permission handler requests WhenInUse when that sole
 Info.plist purpose key exists. No Always key, background mode or stronger
