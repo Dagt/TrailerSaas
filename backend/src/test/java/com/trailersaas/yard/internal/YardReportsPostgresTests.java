@@ -50,7 +50,7 @@ class YardReportsPostgresTests extends YardPostgresFixture {
     assertThat(f.db.value("select version from trailers where id=?",trailer)).isEqualTo(3L);
     assertThat(f.db.value("select current_location_id from trailers where id=?",trailer)).isEqualTo(a);
   }
-  @ParameterizedTest @ValueSource(strings={"reason","same","foreignRecorded","foreignReported","foreignTrailer","wrongSite","inactiveSite","badVersion","unknown","future","noKey","revoked"})
+  @ParameterizedTest @ValueSource(strings={"reason","same","foreignRecorded","foreignReported","foreignTrailer","wrongSite","inactiveSite","badVersion","futureVersion","unknown","future","noKey","revoked"})
   void invalidReportsAreSafe(String mode) throws Exception {
     var body=report();String key=UUID.randomUUID().toString();int status=400;String code="VALIDATION_FAILED";
     switch(mode) {
@@ -62,6 +62,7 @@ class YardReportsPostgresTests extends YardPostgresFixture {
       case "wrongSite" -> {body.put("siteId",UUID.randomUUID().toString());status=404;code="RESOURCE_NOT_FOUND";}
       case "inactiveSite" -> {f.db.execute("update physical_sites set active=false where id=?",site);status=409;code="RESOURCE_CONFLICT";}
       case "badVersion" -> body.put("observedTrailerVersion",1.5);
+      case "futureVersion" -> body.put("observedTrailerVersion",1);
       case "unknown" -> body.put("source_type","SYSTEM_PROCESS");
       case "future" -> body.put("observedAt",Instant.now().plusSeconds(300).toString());
       case "noKey" -> key=null;

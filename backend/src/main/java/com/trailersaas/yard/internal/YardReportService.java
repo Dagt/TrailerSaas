@@ -26,6 +26,7 @@ class YardReportService {
     reads.authorize(actor,tenant);var r=YardReportRequest.parse(body);var operation=YardMoveRequest.uuid(key);
     return ledger.execute(tenant,actor.userId(),operation,"DISCREPANCY_REPORT",actions.hash(r),"YARD_REPORT",result->result.report().id(),Result.class,()->{
       var trailer=actions.lockTrailer(tenant,r.trailerId());actions.lockSite(tenant,r.siteId());
+      if(r.observedTrailerVersion()>trailer.version()) throw YardFailure.invalid();
       if(!locations.lockedLocation(tenant,r.reportedLocationId()).site().equals(r.siteId())) throw YardFailure.missing();
       if(r.recordedLocationId()!=null && jdbc.query("select id from operational_locations where tenant_id=? and id=?",(row,n)->row.getObject(1,UUID.class),tenant,r.recordedLocationId()).isEmpty()) throw YardFailure.missing();
       if(Objects.equals(r.recordedLocationId(),r.reportedLocationId())) throw YardFailure.conflict();

@@ -61,6 +61,20 @@ class YardCorrectionsPostgresTests extends YardPostgresFixture {
     }
     problem(send(type,UUID.randomUUID().toString(),body),status,code);unchanged();
   }
+  @ParameterizedTest @ValueSource(strings={"LOCATION_UNKNOWN","IN_TRANSIT"})
+  void loadCorrectionDoesNotRequireOrInventAPhysicalLocation(String state) throws Exception {
+    f.db.execute("update trailers set location_state=?,current_location_id=null where id=?",state,trailer);
+    var before=f.db.value("select last_seen_at from trailers where id=?",trailer);
+    var r=send("load-state-changes",UUID.randomUUID().toString(),action("load-state-changes"));
+    assertThat(r.statusCode()).as(r.body()).isEqualTo(200);
+    assertThat(f.db.value("select location_state from trailers where id=?",trailer)).isEqualTo(state);
+    assertThat(f.db.value("select current_location_id from trailers where id=?",trailer)).isNull();
+    assertThat(f.db.value("select last_known_location_id from trailers where id=?",trailer)).isEqualTo(a);
+    assertThat(f.db.value("select last_seen_at from trailers where id=?",trailer)).isEqualTo(before);
+    assertThat(f.db.value("select load_state from trailers where id=?",trailer)).isEqualTo("EMPTY");
+    assertThat(JsonPath.<String>read(r.body(),"$.trailer.couplingState")).isEqualTo("UNCOUPLED");
+    assertThat(f.db.value("select designated_customer_id from trailers where id=?",trailer)).isEqualTo(customer);
+  }
   @ParameterizedTest @ValueSource(strings={"location-corrections","load-state-changes"})
   void lostAckAndRevocation(String type) throws Exception {
     var key=UUID.randomUUID().toString();var body=action(type);var first=send(type,key,body);assertThat(first.statusCode()).as(first.body()).isEqualTo(200);assertThat(send(type,key,body).body()).isEqualTo(first.body());

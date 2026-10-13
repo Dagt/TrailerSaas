@@ -38,10 +38,10 @@ class YardActionService {
         if(!contexts.lockedLocation(tenant,r.newLocationId()).site().equals(r.siteId())) throw YardFailure.missing();
         if(current.currentLocation()!=null && current.currentLocation().id().equals(r.newLocationId())) throw YardFailure.conflict();
         if(current.lastSeenAt()!=null && r.observedAt().isBefore(current.lastSeenAt())) throw YardFailure.conflict();
-      } else if(current.currentLocation()==null || !current.currentLocation().siteId().equals(r.siteId())) {
+      } else if(current.currentLocation()!=null && !current.currentLocation().siteId().equals(r.siteId())) {
         throw YardFailure.conflict();
       }
-      if(type.equals("LOAD_STATE_CHANGE")) contexts.lockedLocation(tenant,current.currentLocation().id());
+      if(type.equals("LOAD_STATE_CHANGE") && current.currentLocation()!=null) contexts.lockedLocation(tenant,current.currentLocation().id());
       authorize(actor,tenant,type);
       var context=new Context(r.observedAt(),new Provenance(ActorType.HUMAN_USER,SourceType.USER_ACTION,actor.userId()),null,null,null,null,operation);
       var target=new Target(r.trailerId(),r.expectedTrailerVersion());
