@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trailersaas_mobile/src/persistence/app_database.dart';
 
 void main() {
-  test('opens SQLite and creates the exact version 6 cache command media and Shift schema', () async {
+  test('opens SQLite and creates the exact version 7 cache command media Shift and Yard schema', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
@@ -13,7 +13,7 @@ void main() {
     final version = await database
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(version.read<int>('user_version'), 6);
+    expect(version.read<int>('user_version'), 7);
     final tables = await database
         .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
         .get();
@@ -35,6 +35,7 @@ void main() {
       'road_captures',
       'cached_driver_updates',
       'driver_update_cursors',
+      'cached_yard_contexts',
     });
   });
 
@@ -58,7 +59,7 @@ void main() {
     final version = await reopened
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(version.read<int>('user_version'), 6);
-    expect(reopened.allTables.length, 17);
+    expect(version.read<int>('user_version'), 7);
+    expect(reopened.allTables.length, 18);
   });
 }

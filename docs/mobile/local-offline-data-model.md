@@ -1,6 +1,20 @@
 # Mobile Local Offline Data Model v0.1
 
-Issue #47 keeps Drift v6 and all existing tables. The cached own Trip execution
+Issue #48 evolves the deployed schema to Drift v7 with incremental v1–v6 upgrades.
+cached_yard_contexts stores only authorized Site/Location projections, selected
+Site, refresh time and denial marker under User/Tenant. Existing cached_trailers
+retains relevant scanned Yard projections, with no raw GPS. Explicit denial closes
+cached Yard continuity; logout clears read caches, never unresolved commands.
+local_commands permits aggregate_type TRAILER with a real aggregate_id and NULL
+trip_id. command_results permits TRAILER and retains its verified immutable
+projection_json. Existing materialized_requests freezes the eventual HTTP body.
+The pending version reference is part of immutable logical intent/dependencies;
+it resolves only from a same-namespace same-Trailer ACK. No future version, second
+queue or table of positions. Real v6 file migration tests preserve commands,
+results/frozen bodies, foreign keys and immutability guards. Older tables/edges
+and all Road/Shift/media/update data remain intact.
+
+At its baseline, issue #47 kept Drift v6 and all existing tables. The cached own Trip execution
 context may contain `arrivalAssistance` for the next authorized Site only, including
 Trip/Stop/Site versions and explicit geography. Historical snapshots are never
 evaluated. Raw GPS readings/suggestions are in-memory only. Existing immutable

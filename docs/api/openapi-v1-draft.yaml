@@ -2304,6 +2304,112 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/yard/sites:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Yard]
+      operationId: listAuthorizedYardSites
+      x-implementation-status: implemented-issue-48
+      description: >-
+        Fresh YARD_MOVE_EXECUTE, ACTIVE membership and ACTIVE Tenant. The accepted
+        YARD_SPOTTER scope is TENANT, with no invented per-Site/Driver/Tractor assignments.
+        Returns active normalized Sites and active same-Tenant Operational Locations.
+        Customer-context Locations require an ACTIVE Customer and live customer_sites
+        association; neutral areas remain valid. No coordinates or foreign directory.
+        UUID keyset cursor is a position, never authority. Unknown query fields reject.
+      parameters:
+        - { name: cursor, in: query, schema: { type: string, format: uuid } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 50 } }
+      responses:
+        '200':
+          description: Up to 50 active Sites with up to 200 locations per embedded page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardSitesPage' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/yard/sites/{siteId}/locations:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/SiteId'
+    get:
+      tags: [Yard]
+      operationId: listAuthorizedYardLocations
+      x-implementation-status: implemented-issue-48
+      description: Fresh YARD_MOVE_EXECUTE, ACTIVE membership and ACTIVE Tenant. Same active normalized Site/Location and Customer association policy as Yard context. Invisible/inactive Site is safe 404 RESOURCE_NOT_FOUND. Only cursor/limit query fields.
+      parameters:
+        - { name: cursor, in: query, schema: { type: string, format: uuid } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 200 } }
+      responses:
+        '200':
+          description: Active authorized operational locations; continuation does not grant access
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardLocationsPage' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/yard/trailers/{trailerId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - { name: trailerId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Yard]
+      operationId: getAuthorizedYardTrailer
+      x-implementation-status: implemented-issue-48
+      description: Fresh YARD_MOVE_EXECUTE, ACTIVE membership and ACTIVE Tenant. Minimal active same-Tenant Trailer projection used after existing QR resolution and after ACK/conflict. No Trailer directory, Orders, Driver/Tractor identity or mutation. QR alone never authorizes this read. Unknown query fields reject. Invisible/inactive Trailer is safe 404 RESOURCE_NOT_FOUND.
+      responses:
+        '200':
+          description: Current recorded state, designation, coupling and version; unknown/in-transit has no stationary currentLocation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardTrailer' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/yard-moves:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Yard]
+      operationId: executeYardMove
+      x-implementation-status: implemented-issue-48
+      description: >-
+        YARD_MOVE_EXECUTE, ACTIVE membership and ACTIVE Tenant are re-authorized
+        before MobileOperationLedger, including successful replay, and after context
+        lock waits for a new operation. The existing TrailerMovementProjection.yardMove
+        and MovementRules.yard own the physical transition. An active IN_SERVICE,
+        AT_LOCATION, UNCOUPLED Trailer and distinct active normalized from/to Locations
+        in the same Site are mandatory. Customer areas require a live association.
+        For a stationary compatible Trailer, wrong origin returns LOCATION_MISMATCH
+        with authorized currentTrailer, even if version also changed; matching origin
+        with wrong expectedTrailerVersion returns STALE_VERSION. No silent correction.
+        observedAt is RFC3339 with a four-digit year, not future and not earlier than
+        lastSeenAt; original physical observation and server recordedAt are retained.
+        Locking, YARD_MOVED, projection/version and ledger result commit atomically.
+        Server derives HUMAN_USER and USER_ACTION from authenticated User; no fictitious
+        Trip/Driver/Tractor or arbitrary provenance. Load State, Orders and designated
+        Customer remain unchanged. Same key/logical body replays the original result;
+        different body/User/type returns IDEMPOTENCY_KEY_REUSED. JSON/query fields are
+        closed; invalid state/context rolls back; infrastructure errors remain safe 5xx.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/YardMoveRequest' }
+      responses:
+        '200':
+          description: Verified physical move or saved historical acknowledgment; refresh current state after ACK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardMoveResult' }
+        '409':
+          description: LOCATION_MISMATCH, STALE_VERSION, INVALID_STATE_TRANSITION, RESOURCE_CONFLICT or IDEMPOTENCY_KEY_REUSED; original command must be preserved for review
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/YardConflictProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+
 components:
   securitySchemes:
     firebaseBearer:
@@ -2382,6 +2488,118 @@ components:
             $ref: '#/components/schemas/PagedResponse'
 
   schemas:
+    YardCustomer:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+    YardLocation:
+      type: object
+      additionalProperties: false
+      required: [id, siteId, name, type, version, customer]
+      properties:
+        id: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: [BASE, YARD, DOCK, CUSTOMER_AREA, SHOP, OTHER] }
+        version: { type: integer, minimum: 0 }
+        customer:
+          oneOf:
+            - { type: 'null' }
+            - { $ref: '#/components/schemas/YardCustomer' }
+    YardSite:
+      type: object
+      additionalProperties: false
+      required: [id, name, timezone, version, locations, nextLocationCursor]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        timezone: { type: string }
+        version: { type: integer, minimum: 0 }
+        locations: { type: array, maxItems: 200, items: { $ref: '#/components/schemas/YardLocation' } }
+        nextLocationCursor: { type: [string, 'null'], format: uuid }
+    YardSitesPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/YardSite' } }
+        nextCursor: { type: [string, 'null'], format: uuid }
+    YardLocationsPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, maxItems: 200, items: { $ref: '#/components/schemas/YardLocation' } }
+        nextCursor: { type: [string, 'null'], format: uuid }
+    YardRecordedLocation:
+      type: object
+      additionalProperties: false
+      required: [id, name, type, siteId, siteName, active, siteActive]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: [BASE, YARD, DOCK, CUSTOMER_AREA, SHOP, OTHER] }
+        siteId: { type: string, format: uuid }
+        siteName: { type: string }
+        active: { type: boolean }
+        siteActive: { type: boolean }
+    YardTrailer:
+      type: object
+      additionalProperties: false
+      required: [trailerId, operationalNumber, designatedCustomer, locationState, currentLocation, lastKnownLocationId, lastSeenAt, loadState, serviceabilityState, couplingState, active, version]
+      properties:
+        trailerId: { type: string, format: uuid }
+        operationalNumber: { type: string }
+        designatedCustomer:
+          oneOf:
+            - { type: 'null' }
+            - { $ref: '#/components/schemas/YardCustomer' }
+        locationState: { type: string, enum: [AT_LOCATION, IN_TRANSIT, LOCATION_UNKNOWN] }
+        currentLocation:
+          oneOf:
+            - { type: 'null' }
+            - { $ref: '#/components/schemas/YardRecordedLocation' }
+        lastKnownLocationId: { type: [string, 'null'], format: uuid }
+        lastSeenAt: { type: [string, 'null'], format: date-time }
+        loadState: { type: string, enum: [EMPTY, LOADED, UNKNOWN] }
+        serviceabilityState: { type: string, enum: [IN_SERVICE, OUT_OF_SERVICE] }
+        couplingState: { type: string, enum: [UNCOUPLED, COUPLED] }
+        active: { type: boolean }
+        version: { type: integer, minimum: 0 }
+    YardMoveRequest:
+      type: object
+      additionalProperties: false
+      required: [trailerId, fromLocationId, toLocationId, observedAt, expectedTrailerVersion]
+      properties:
+        trailerId: { type: string, format: uuid }
+        fromLocationId: { type: string, format: uuid }
+        toLocationId: { type: string, format: uuid }
+        observedAt: { type: string, format: date-time, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]', description: Original physical observation; no future time or chronology regression. }
+        expectedTrailerVersion: { type: integer, minimum: 0 }
+    YardMoveResult:
+      type: object
+      additionalProperties: false
+      required: [trailer, movementEvent]
+      properties:
+        trailer: { $ref: '#/components/schemas/YardTrailer' }
+        movementEvent:
+          type: object
+          additionalProperties: false
+          required: [id, eventType, occurredAt, recordedAt]
+          properties:
+            id: { type: string, format: uuid }
+            eventType: { type: string, const: YARD_MOVED }
+            occurredAt: { type: string, format: date-time }
+            recordedAt: { type: string, format: date-time }
+    YardConflictProblem:
+      allOf:
+        - { $ref: '#/components/schemas/Problem' }
+        - type: object
+          properties:
+            currentTrailer: { $ref: '#/components/schemas/YardTrailer', description: Optional minimal authorized own-Tenant projection; never foreign data. }
     Problem:
       type: object
       required: [title, status, code]

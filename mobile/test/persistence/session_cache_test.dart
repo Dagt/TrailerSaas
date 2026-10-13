@@ -19,7 +19,7 @@ void main() {
         DateTime.utc(2026, 10, 10),
         [WorkTrip(work('trip-$tenant'))],
       );
-  test('real SQLite v1 upgrades to seventeen exact cache command media and Shift tables', () async {
+  test('real SQLite v1 upgrades to eighteen exact cache command media Shift and Yard tables', () async {
     final dir = await Directory.systemTemp.createTemp('mobile-v1-');
     addTearDown(() => dir.delete(recursive: true));
     final file = File('${dir.path}/v1.sqlite');
@@ -33,7 +33,7 @@ void main() {
     expect(
       (await upgraded.customSelect('PRAGMA user_version').getSingle())
           .read<int>('user_version'),
-      6,
+      7,
     );
     final tables =
         (await upgraded
@@ -61,6 +61,7 @@ void main() {
       'road_captures',
       'cached_driver_updates',
       'driver_update_cursors',
+      'cached_yard_contexts',
     });
   });
   test('file reopen restores only matching Firebase User namespace', () async {

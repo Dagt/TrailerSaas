@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:drift/drift.dart';
 
 import '../persistence/app_database.dart';
 import '../platform/connectivity.dart';
@@ -14,6 +15,8 @@ import 'command_store.dart';
 import '../media/media_processor.dart';
 import '../media/media_dependencies.dart';
 import '../shift/shift_commands.dart';
+import '../yard/yard_commands.dart';
+import '../yard/yard_contracts.dart';
 
 /// Foreground/reconnect worker. A single serialized lane for this SQLite database
 /// prevents overlapping Trip/Trailer/Tractor sends, including independent chains.
@@ -99,7 +102,10 @@ class ReplayWorker extends ChangeNotifier {
       session.snapshot?.userId == owner.userId &&
       session.snapshot?.membership.tenantId == owner.membership.tenantId &&
       session.snapshot?.driver?.id == owner.driver?.id &&
-      session.snapshot?.driver != null;
+      (session.snapshot?.driver != null ||
+          session.snapshot!.membership.capabilities.contains(
+            'YARD_MOVE_EXECUTE',
+          ));
 
   Future<void> sync() {
     if (_disposed) return Future.value();
@@ -216,6 +222,50 @@ class ReplayWorker extends ChangeNotifier {
           return;
         }
         final isShift = ShiftCommandIntent.recognizes(candidate);
+        final isYard = YardMoveIntent.recognizes(candidate);
+        if (isYard
+            ? !owner.membership.capabilities.contains('YARD_MOVE_EXECUTE')
+            : owner.driver == null) {
+          await store.result(
+            candidate,
+            CommandState.conflict,
+            code: 'CAPABILITY_DENIED',
+            category: 'AUTHORIZATION',
+          );
+          continue;
+        }
+        if (isYard) {
+          try {
+            final request = await YardReplay(store).materialize(candidate);
+            if (!_current(owner)) return;
+            if (request == null) {
+              await store.result(
+                candidate,
+                CommandState.blocked,
+                code: 'RESULT_PENDING',
+                category: 'DEPENDENCY',
+              );
+              continue;
+            }
+            if (!await store.claim(candidate)) continue;
+            if (!_current(owner)) return;
+            await _send(
+              candidate,
+              owner,
+              jsonDecode(request.payloadJson) as Map<String, dynamic>,
+            );
+          } on FormatException {
+            if (_current(owner)) {
+              await store.result(
+                candidate,
+                CommandState.permanentFailure,
+                code: 'INVALID_COMMAND',
+                category: 'VALIDATION',
+              );
+            }
+          }
+          continue;
+        }
         final shiftRequest = isShift
             ? await shifts?.materialize(candidate)
             : null;
@@ -530,7 +580,12 @@ class ReplayWorker extends ChangeNotifier {
         frozenBody,
       );
       final kind = EvidenceCommandIntent.kindFor(c);
-      if (kind == null) {
+      if (YardMoveIntent.recognizes(c)) {
+        YardMoveIntent(command).validate(c.tenantId);
+        if (command.body['expectedTrailerVersion'] is! int) {
+          throw const FormatException('Yard request must already be frozen');
+        }
+      } else if (kind == null) {
         CommandIntent(command).validate(c.tenantId);
       } else {
         if (futureEvidence == null) {
@@ -596,13 +651,25 @@ class ReplayWorker extends ChangeNotifier {
           frozenBody,
         );
       } else {
-        _validateResponse(c, response);
+        if (YardMoveIntent.recognizes(c)) {
+          YardReplay.validateResponse(c, response, frozenBody);
+        } else {
+          _validateResponse(c, response);
+        }
       }
-      await store.result(c, CommandState.acknowledged, status: 200);
+      if (YardMoveIntent.recognizes(c)) {
+        await YardReplay(store).acknowledge(c, response, frozenBody);
+      } else {
+        await store.result(c, CommandState.acknowledged, status: 200);
+      }
       if (!_current(owner)) return;
       // Replayed responses are historical acknowledgments, never current projections.
       await session.refresh();
-      await _refreshExecutionContext(c, owner);
+      if (YardMoveIntent.recognizes(c)) {
+        await _refreshYardTrailer(c, owner);
+      } else {
+        await _refreshExecutionContext(c, owner);
+      }
       if (_current(owner)) {
         message = 'Confirmed operations reconciled with current server work.';
       }
@@ -640,6 +707,7 @@ class ReplayWorker extends ChangeNotifier {
           category: e.code == 'IDEMPOTENCY_KEY_REUSED' ? 'IDENTITY' : 'STATE',
         );
         await session.refresh();
+        if (YardMoveIntent.recognizes(c)) await _refreshYardTrailer(c, owner);
       } else if (e.status == 408 ||
           e.status == 429 ||
           e.status >= 500 ||
@@ -727,6 +795,64 @@ class ReplayWorker extends ChangeNotifier {
       }
     } else if (trip['stops'] is! List) {
       throw const FormatException();
+    }
+  }
+
+  Future<void> _refreshYardTrailer(
+    LocalCommand c,
+    SessionSnapshot owner,
+  ) async {
+    if (!_current(owner)) return;
+    try {
+      final fresh = YardTrailer.fromJson(
+        await session.api.get(
+          'tenants/${c.tenantId}/yard/trailers/${c.aggregateId}',
+        ),
+      );
+      if (!_current(owner) || fresh.id != c.aggregateId) return;
+      final cached =
+          await (store.db.select(store.db.cachedTrailers)..where(
+                (r) =>
+                    r.userId.equals(c.userId) &
+                    r.tenantId.equals(c.tenantId) &
+                    r.id.equals(c.aggregateId!),
+              ))
+              .getSingleOrNull();
+      if (!_current(owner)) return;
+      final token = cached == null
+          ? null
+          : (jsonDecode(cached.projectionJson) as Map)['qrPublicToken'];
+      await store.db
+          .into(store.db.cachedTrailers)
+          .insertOnConflictUpdate(
+            CachedTrailersCompanion.insert(
+              userId: c.userId,
+              tenantId: c.tenantId,
+              id: fresh.id,
+              serverVersion: fresh.data['version'] as int,
+              projectionJson: jsonEncode({
+                ...fresh.data,
+                'yardProjection': true,
+                'qrPublicToken': ?token,
+              }),
+              refreshedAt: store.now(),
+            ),
+          );
+    } on ApiProblem catch (e) {
+      if (!_current(owner)) return;
+      if ({401, 403}.contains(e.status)) {
+        await session.rejectOperationalContext(e);
+      } else if (e.status == 404) {
+        await (store.db.delete(store.db.cachedTrailers)..where(
+              (r) =>
+                  r.userId.equals(c.userId) &
+                  r.tenantId.equals(c.tenantId) &
+                  r.id.equals(c.aggregateId!),
+            ))
+            .go();
+      }
+    } catch (_) {
+      if (_current(owner)) message = 'Yard operation retained; reconnect and refresh the recorded Trailer location.';
     }
   }
 

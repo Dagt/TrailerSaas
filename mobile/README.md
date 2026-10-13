@@ -1,5 +1,25 @@
 # TrailerSaaS Mobile
 
+## Issue #48 — real Yard Mode
+
+SessionView provides Yard-only entry and Road/Yard switching with the existing
+worker. Download authorized Sites/Locations, reuse NativeQrScanner and actual QR
+resolution, read minimal Yard Trailer state, select destination and consciously
+confirm. Recorded/pending/planned/ACK states remain distinct. No fake Driver,
+Tractor, Shift, correction, GPS or additional native permission. Backend requires
+ACTIVE Tenant/membership and YARD_MOVE_EXECUTE; cached context grants no authority.
+
+Drift v7 preserves the existing command/media/results/request graph and adds a
+small User/Tenant Yard-context cache. Typed YARD_MOVE uses the same worker and
+ledger. Consecutive offline moves wait for the first verified ACK to resolve the
+second version; source/UUID/frozen request remain immutable. Parent conflicts
+block descendants while independent Trailers continue. QR/confirmation routes
+close on owner changes; explicit denial cannot restore cached Yard permission.
+Correction/OOS UI and Yard Checks remain #49–#51. Physical Android/iOS camera,
+permission/lifecycle/process and release QA remains #65.
+
+See [contracts, acceptance, offline recovery and tests](../docs/mobile/issue-48-yard-move.md).
+
 ## Issue #47 foreground arrival assistance
 
 Road Mode offers a deliberate Check arrival location for the next authenticated
@@ -17,7 +37,8 @@ through the same durable command/replay lane; Not Yet suppresses that context.
 No Stop status changes before ACK. Driver Updates invalidates obsolete contexts
 before download completes and refreshes live own work after commit. Offline/lost
 ACK/reopen retains the original UUID/body; no automatic conversion to MANUAL.
-Raw readings are never persisted; Drift v6 is unchanged. See the [acceptance,
+Raw readings are never persisted; #47 left Drift v6 unchanged, and #48 evolves the
+schema without changing this Arrival/privacy lane. See the [acceptance,
 security and native QA matrix](../docs/mobile/issue-47-geofence-assisted-arrival.md).
 
 Physical Android/iOS permission, reduced-accuracy, revocation, lifecycle/process

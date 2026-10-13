@@ -8,6 +8,65 @@ Base:
 
 Critical Yard mobile mutations require `Idempotency-Key`.
 
+## Issue #48 implemented boundary
+
+Yard context and Yard Move are implemented; the later correction/OOS UI and
+Yard Check/reconciliation workflows remain #49–#51. Fresh YARD_MOVE_EXECUTE,
+ACTIVE membership and Tenant status ACTIVE precede all Yard reads and ledger
+replay. The accepted YARD_SPOTTER scope is TENANT; there is no invented Site,
+Driver or Tractor assignment, and selecting a Site does not grant permission.
+
+GET /yard/sites accepts only UUID cursor and limit (1–50, default 50). It returns
+{items,nextCursor}; each active normalized Site has id/name/timezone/version,
+locations (up to 200) and nullable nextLocationCursor. Locations include
+id/siteId/name/type/version and nullable Customer id/name. Active Site/Location
+and live Customer association are required; Customer-context Locations also
+require an ACTIVE Customer. Neutral locations are valid. No coordinates,
+address-derived target, open Yard Check or foreign directory is returned.
+GET /yard/sites/{siteId}/locations continues a selected Site with limit 1–200
+(default 200). Every page freshly authorizes; cursor is a position, not authority.
+
+The existing GET /api/v1/trailer-qr/{publicToken} remains the real QR resolver.
+GET /yard/trailers/{trailerId} is a minimal freshly authorized active same-Tenant
+read for review/ACK/conflict refresh, not a Trailer listing. It supplies
+trailerId/operationalNumber/designatedCustomer, locationState/currentLocation,
+lastKnownLocationId/lastSeenAt, loadState/serviceabilityState/couplingState,
+active/version. Recorded location includes id/name/type/siteId/siteName and
+live active/siteActive flags; unknown/in-transit has no stationary location.
+It exposes no Orders, Driver/Tractor identities or mutation. A QR grants no access.
+
+POST /yard-moves accepts exactly the five fields below, a UUID Idempotency-Key
+and no query fields. All three IDs are real UUIDs; expectedTrailerVersion is a
+nonnegative integer. observedAt must be valid RFC3339 with four-digit year, not
+future and not earlier than lastSeenAt, following the existing Shift time policy.
+Delayed offline time is retained at PostgreSQL microsecond precision.
+
+The ledger winner locks the Trailer, validates active/IN_SERVICE/AT_LOCATION/
+UNCOUPLED, checks real source and exact version, and locks live normalized from/to
+Locations and their Site with the existing master-data parent protocol. Both
+locations must be distinct and in the same active Site; BASE/YARD/DOCK/
+CUSTOMER_AREA/SHOP/OTHER are real location types, never LOCATION_UNKNOWN.
+Fresh authority is rechecked after lock waits. The existing
+TrailerMovementProjection.yardMove / DatabaseTrailerMovementProjection /
+MovementRules.yard appends YARD_MOVED and updates current/last-known location,
+lastSeenAt, recordedAt and version in the same transaction as the ledger result.
+Last Driver is preserved when no Driver is involved. User is HUMAN_USER and
+source USER_ACTION; Trip/Driver/Tractor references remain NULL, never fabricated.
+Load State, designated Customer and Orders are not changed.
+
+200 returns {trailer,movementEvent}; event has id/eventType/occurredAt/recordedAt.
+Same key and same logical body returns the saved historical result after fresh
+authorization; different body/User/type returns IDEMPOTENCY_KEY_REUSED. The
+client must refresh current state after ACK. A stationary compatible Trailer's
+wrong origin returns 409 LOCATION_MISMATCH even if version also changed;
+matching origin with stale version returns STALE_VERSION. Authorized minimal
+currentTrailer may accompany these/state conflicts. Foreign/invisible resources
+are safe 404 without projection; invalid state/context rejects with 409, malformed
+request with 400, authorization with 401/403 and infrastructure with safe 5xx.
+Failure rolls back event, projection/version and ledger. No silent correction.
+
+See [architecture, acceptance and QA](../mobile/issue-48-yard-move.md).
+
 ## 1. Yard context
 
 ### GET /yard/sites
@@ -289,5 +348,6 @@ observation. Both require reason/expectedVersion, fresh capabilities, server
 actor/time and durable history. No generic physical-state PATCH or offline replay
 wrapper is added here. Mark unknown preserves the last physical observation.
 
-Yard Move remains #48; discrepancy UI/OOS evidence remains #49; Yard Check and
-its scoped reconciliation remain #50/#51. No Yard UI or Documents is implemented.
+Yard Move and its mobile UI are implemented by #48 as documented above.
+Discrepancy UI/OOS evidence remains #49; Yard Check and its scoped reconciliation
+remain #50/#51. The #40 commands are not exposed as an implicit Yard correction.

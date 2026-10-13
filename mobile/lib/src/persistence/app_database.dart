@@ -51,6 +51,18 @@ class CachedTrailers extends Table {
   Set<Column> get primaryKey => {userId, tenantId, id};
 }
 
+class CachedYardContexts extends Table {
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get projectionJson => text()();
+  TextColumn get selectedSiteId => text().nullable()();
+  DateTimeColumn get refreshedAt => dateTime()();
+  BoolColumn get accessBlocked =>
+      boolean().withDefault(const Constant(false))();
+  @override
+  Set<Column> get primaryKey => {userId, tenantId};
+}
+
 class LocalCommands extends Table {
   TextColumn get clientOperationId => text()();
   TextColumn get userId => text()();
@@ -79,8 +91,9 @@ class LocalCommands extends Table {
   List<String> get customConstraints => [
     "CHECK (state IN ('QUEUED','SENDING','ACKNOWLEDGED','RETRYABLE_FAILURE','CONFLICT','BLOCKED','PERMANENT_FAILURE'))",
     'CHECK (attempt_count >= 0)',
-    "CHECK (aggregate_type IN ('TRIP','SHIFT','INSPECTION'))",
+    "CHECK (aggregate_type IN ('TRIP','SHIFT','INSPECTION','TRAILER'))",
     "CHECK (aggregate_type <> 'TRIP' OR (trip_id IS NOT NULL AND aggregate_id IS NOT NULL))",
+    "CHECK (aggregate_type <> 'TRAILER' OR (trip_id IS NULL AND aggregate_id IS NOT NULL))",
     'UNIQUE (user_id,tenant_id,queue_sequence)',
     "CHECK (http_method = 'POST')",
   ];
@@ -196,7 +209,7 @@ class CommandResults extends Table {
   @override
   List<String> get customConstraints => [
     'FOREIGN KEY(client_operation_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
-    "CHECK (result_kind IN ('SHIFT','INSPECTION'))",
+    "CHECK (result_kind IN ('SHIFT','INSPECTION','TRAILER'))",
   ];
 }
 
@@ -341,6 +354,7 @@ class DriverUpdateCursors extends Table {
     CachedTrips,
     CachedStops,
     CachedTrailers,
+    CachedYardContexts,
     LocalCommands,
     LocalSyncIssues,
     LocalMedia,
@@ -369,7 +383,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -380,12 +394,12 @@ class AppDatabase extends _$AppDatabase {
         await _mediaIndexesAndImmutability();
         await _shiftIndexesAndImmutability();
         await _roadIndexesAndImmutability();
-        await customStatement('PRAGMA user_version=6');
+        await customStatement('PRAGMA user_version=7');
       });
     },
     onUpgrade: (migrator, from, to) async {
       // v1 was the empty scaffold. Its deployed schema remains an explicit upgrade source.
-      if (from < 1 || from > 5 || to != 6) {
+      if (from < 1 || from > 6 || to != 7) {
         throw StateError('No migration from schema $from to $to is defined.');
       }
       // Whole upgrade and version marker commit together. TableMigration alone
@@ -438,17 +452,41 @@ class AppDatabase extends _$AppDatabase {
             await migrator.createTable(cameraCaptures);
             await _shiftIndexesAndImmutability();
           }
-          await migrator.createTable(roadDrafts);
-          await migrator.createTable(roadCaptures);
-          await migrator.createTable(cachedDriverUpdates);
-          await migrator.createTable(driverUpdateCursors);
-          await _roadIndexesAndImmutability();
+          if (from < 6) {
+            await migrator.createTable(roadDrafts);
+            await migrator.createTable(roadCaptures);
+            await migrator.createTable(cachedDriverUpdates);
+            await migrator.createTable(driverUpdateCursors);
+            await _roadIndexesAndImmutability();
+          }
+          if (from >= 5) {
+            await customStatement(
+              'DROP TRIGGER IF EXISTS local_command_intent_immutable',
+            );
+            await migrator.alterTable(TableMigration(localCommands));
+            await _queueIndexesAndImmutability();
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
+            );
+            for (final operation in ['UPDATE', 'DELETE']) {
+              await customStatement(
+                'DROP TRIGGER IF EXISTS command_results_${operation.toLowerCase()}_immutable',
+              );
+            }
+            await migrator.alterTable(TableMigration(commandResults));
+            for (final operation in ['UPDATE', 'DELETE']) {
+              await customStatement(
+                'CREATE TRIGGER command_results_${operation.toLowerCase()}_immutable BEFORE $operation ON command_results BEGIN SELECT RAISE(ABORT,\'Confirmed identity and dependencies are immutable\'); END',
+              );
+            }
+          }
+          await migrator.createTable(cachedYardContexts);
           if ((await customSelect(
             'PRAGMA foreign_key_check',
           ).get()).isNotEmpty) {
             throw StateError('Migration cannot preserve foreign-key integrity');
           }
-          await customStatement('PRAGMA user_version=6');
+          await customStatement('PRAGMA user_version=7');
         });
       } finally {
         await customStatement('PRAGMA foreign_keys=ON');
