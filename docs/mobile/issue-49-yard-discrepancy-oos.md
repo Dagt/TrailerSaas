@@ -61,7 +61,194 @@ port/writer. Validated own finalized exact-Trailer evidence, MARKED_OOS, version
 and ledger commit together. 370 transport/evidence/administrative/Yard/Modulith
 tests pass (0 failures/errors/skips), including 23 new OOS cases. Confirmed
 audit corrections preserve legacy integrity-error mapping and exact V23 version
-inventories. Native QA is not claimed. D–G remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
+inventories. Native QA is not claimed. D is implemented: real corrective forms, native camera injection, durable v8 drafts and typed existing replay graph. E adds mixed replay/recovery/security proofs and two audit corrections: load correction preserves null unknown/in-transit location; reports reject invented future observed versions. F–G validation/publication remain pending. Native Android/iOS camera/build/lifecycle QA remains #65; simulated
 camera and Linux tests do not count as physical device evidence. OQ-054 return
 policy and production privacy/retention remain unresolved. No Yard Check, Missing
 reconciliation, notifications, generic audit worker or GPS tracking is included.
+
+## Recovery audit F1 (2026-10-13)
+
+Recovered local and remote HEAD: `590e328cf82ffa797b152aa881fef1af5723159b`.
+Five A–E commits preserved; main remains the verified PR #105 baseline. No stash,
+staged change, later unpublished commit, existing PR or V1–V22 change was found.
+Local OpenAPI/documentation after E were retained. No branch recreation or reset.
+
+Local Flutter 3.47.6/Dart 3.13.5 locked dependency resolution, reproducible Drift
+generation, format, fatal-info analysis and the entire 467-test suite pass. This
+retains all 424 baseline tests and adds 43. Real Linux SQLite and HTTP/private-file
+tests cover all typed commands, mixed ACK-derived versions, lost ACK/reopen,
+408/429/5xx, 401 refresh, 403/404/409, two separate SQLite connections, report-only
+independence, explicit conflict review, native callback ownership and widget forms.
+OpenAPI validation and all 30 tests pass (23 retained, seven new). Web full checks
+also pass with 244 tests, typecheck/lint/build. These are local results, not CI.
+
+The complete Windows Java 25/PostgreSQL 18.6 run executed 2,139 tests and ended
+with one failure and one error, zero skipped; it is **not an approved Backend run**.
+The failure is the exact latest migration-description assertion still expecting
+V22's description despite already checking V23. It will be corrected to the actual
+V23 name, preserving exact inventory assertions. The error is an existing Trip
+assignment connection failing with Windows `BindException: Address already in use:
+getsockopt`; it must be rechecked and definitive full validation completed in Linux
+CI. The affected 43 correction/report cases already passed independently.
+
+Previously reproduced D defects were corrected before publication: typed-history
+rendering no longer casts nonexistent move fields in corrective rows; text
+controllers remain alive until dialog exit animation completes. No test was removed,
+ignored or relaxed. Native Android/iOS physical QA remains unperformed (#65).
+
+| Requirement / critical audit question | Implemented | Available evidence | Defect / pending | Action |
+| --- | --- | --- | --- | --- |
+| 1,3 Report cannot overwrite current or historical state | Separate append-only row, no physical port | YardReportsPostgresTests historic/nonmutating; mobile report replay | Add actual-correction and nullable-origin cases | Focused F2 proof |
+| 2 Location correction requires exact capability | Before ledger and after Trailer/Site locks | YardActionPermissionTests; all Yard invalid/revoked cases | None found | Retain |
+| 4,5 OOS rejects foreign/wrong-Trailer/pending/unvalidated photos | Own exclusive Trailer link, type/UPLOADED/scope checks | YardOosEvidencePostgresTests actual signed HTTP bytes | None found | Retain |
+| 6,7 Evidence belongs to actual MARKED_OOS and rolls back together | Shared writer plus V23 event/document guard | Real event association and controlled post-flush rollback | Direct runtime operation-kind/current-transaction audit pending | Add adversarial runtime probes |
+| 8 No photo reuse for another OOS | Tenant/document unique constraint and business conflict check | Administrative Return then rejected consumed photo | None found | Retain |
+| 9 Replay never bypasses current authority | Fresh capability/Tenant/membership and OOS contextual rechecks | Revoked role/membership and same-key tests | None found | Retain |
+| 10 Driverless Yard photo upload | Scoped OOS producer; no fabricated Driver/Trip | Actual zero-Driver-profile upload/finalize/OOS and camera tests | Native devices pending | #65 |
+| 11 Tenant isolation and downloads | Composite FKs, runtime Tenant RLS, all-linked reads | Strict security inventories, reports RLS, document transport security | Direct OOS RLS/immutability probe pending | Add runtime-role proof |
+| 12 Return remains independent | Original #40 endpoint/capability unchanged | Entire admin regression suite; Yard no-Return test | OQ-054 remains unresolved | No policy invention |
+| 13 Versions derive only from actual predecessor ACK | Typed same-Trailer physical refs; report never predecessor | Four-command offline mixed chain and SQLite reopen | None found | Retain |
+| 14 Conflicts do not release old descendants | Existing dependency graph plus explicit retained failed/new-root review | Conflict/review and independent #48 asset tests | None found | Retain |
+| 15 Lost ACK creates no duplicate transition | Same UUID/frozen request and original ledger | All corrective kinds/OOS loss and two workers | None found | Retain |
+| 16 Account switch fences late callbacks | Dialog/context/version fencing; private capture retains original owner | Native late-account test and widget review switch | Physical process/lifecycle pending | #65 |
+| 17 Preserve all 2,762 baseline tests | No removed tests/workflow changes | Mobile/Web/OpenAPI retained full counts; Backend 2,139 executed | Full Backend Linux approval pending | CI gate |
+| 18 OpenAPI equals actual six method surfaces | Closed DTOs, scoped producer, separate bounded review | 30 contract tests, including original #45/#48 | Local docs not yet published | F3/F4 |
+| 19 V1–V22 remain intact, V23 isolated | Only V23 diff from baseline; strict catalog/Flyway | Git diff and security inventories | Latest description assertion stale | Exact F2 correction |
+| 20 Yard Check/Missing remains outside scope | No #50/#51 route/workflow or grant | Existing implemented-route inventories and scope review | None found | Do not start #50 |
+
+### #49 implemented HTTP contracts
+
+All four POSTs require a UUID Idempotency-Key, closed JSON, no query fields,
+fresh YARD_MOVE_EXECUTE, ACTIVE membership/Tenant and same-Tenant active Trailer
+and selected active Site. Mutations additionally require their exact capability.
+Common physical fields: trailerId, siteId, expectedTrailerVersion (integer >=0),
+observedAt (nonfuture RFC3339, four-digit year), and reason (trimmed nonblank <=4000).
+
+| POST route | Additional fields / change | Capability / event |
+| --- | --- | --- |
+| /yard/location-corrections | newLocationId, different active same-Site normalized destination, no lastSeenAt regression | TRAILER_LOCATION_CORRECT / LOCATION_CORRECTED |
+| /yard/load-state-changes | loadState EMPTY/LOADED/UNKNOWN, different from prior value | TRAILER_STATE_CORRECT / LOAD_STATE_CHANGED |
+| /yard/out-of-service | comment replaces reason; documentIds 1–50 distinct finalized own exact-Trailer DAMAGE_PHOTO IDs | TRAILER_OOS_MARK / MARKED_OOS |
+| /yard/discrepancy-reports | No expectedTrailerVersion; recordedLocationId nullable but present, reportedLocationId, observedTrailerVersion | YARD_MOVE_EXECUTE / no physical event |
+
+Report fields also include trailerId/siteId/observedAt/reason. Historical versions
+may be older, never future. Report preserves historical recorded observation,
+does not update Trailer/version/location/load/serviceability and needs no correction
+grant. POST returns {trailer,report}; report includes id, actorUserId, observedAt,
+recordedAt and clientOperationId. GET /yard/discrepancy-reports is separately
+authorized with TRAILER_VIEW_ALL, bounded limit 1–50 and UUID chronological cursor;
+no update/delete or notification worker is provided.
+
+Physical commands return {trailer,movementEvent}; OOS also returns documentIds.
+Events contain id/eventType/occurredAt/recordedAt. Provenance is HUMAN_USER /
+USER_ACTION, authenticated actor and original UUID; no invented Trip/Driver/Tractor.
+Trailer row then live Site/Locations are locked before authority is rechecked.
+Version conflicts are STALE_VERSION; invalid/context conflicts RESOURCE_CONFLICT;
+evidence failures include EVIDENCE_REQUIRED/UPLOAD_NOT_COMPLETE/RESOURCE_NOT_FOUND.
+Foreign/invisible resources are safe 404; there is no silent location repair.
+Location correction is an explicit physical observation. Load State correction
+preserves location (including unknown/in-transit), lastSeenAt, coupling, serviceability,
+Orders and designation. OOS changes serviceability only and never closes a Trip or
+performs Drop. Original #40 administrative routes/body/server-time behavior remain
+compatible and share the same physical projection/event writer.
+
+V23 adds append-only yard_discrepancy_reports and trailer_oos_evidence with Tenant
+composite FKs, runtime RLS, SELECT/INSERT-only runtime grants and immutable history.
+The OOS association guard requires the actual same-transaction MARKED_OOS event,
+same Trailer/actor/UUID and one uploaded own exclusive Trailer link per document.
+Each document may be consumed by one Yard OOS event. State, event, accepted evidence
+and ledger receipt commit together; complete rollback includes version and event.
+R2 transport precedes PostgreSQL and is not a distributed transaction.
+
+### #49 scoped Trailer DAMAGE_PHOTO producer
+
+POST /trailers/{trailerId}/damage-uploads requires TRAILER_OOS_MARK, ACTIVE Tenant/
+membership and a real active own-Tenant Trailer; no Driver/Trip is required. The
+existing closed Initialize DTO admits documentType=DAMAGE_PHOTO, image/jpeg or
+image/png, positive deployment-bounded sizeBytes and optional SHA-256. Mobile
+always captures and verifies a private byte copy/hash. It returns the existing
+201 PENDING signed PUT reservation and persists an exclusive TRAILER link.
+Initialization is not idempotent; lost ACK can leave an unused PENDING reservation.
+
+The original upload-completion/metadata/download routes are reused. Completion
+requires own uploader, fresh OOS capability and active Trailer, verifies bytes/
+size/hash and the same-key ledger before UPLOADED. Generic links cannot relink a
+Trailer-scoped photo into assigned Trip work. No permanent private URLs or R2
+credentials enter SQLite. Metadata/download retain all-linked-resource scope;
+no DOCUMENT_VIEW_ALL grant is added to Spotter. Upload/finalization alone is no
+OOS event or accepted operational evidence: /yard/out-of-service validates and
+associates the finalized set atomically to the actual event. Road/POD/Fuel/inspection
+transport and evidence policy remain unchanged.
+
+## #49 typed corrective graph and evidence recovery
+
+YARD_MOVE, LOCATION_CORRECTION, LOAD_STATE_CHANGE and OOS share the existing
+TRAILER resource lane, CommandStore, ReplayWorker, immutable request/result and
+UUID/Idempotency-Key. The next physical intent references the previous physical
+operation, never an invented version. It materializes only after a verified
+same-User/Tenant/Trailer ACK result. OOS additionally waits for every own bound
+photo to be FINALIZED; document IDs are resolved once before sending. A frozen
+request never recalculates coordinates/location/version/photos during replay.
+
+DISCREPANCY_REPORT is append-only observation with its historical downloaded
+location/version; it does not increment Trailer version and cannot be a physical
+predecessor. Its observation resource lane can sync even after a physical conflict.
+Existing failed physical parents continue blocking old descendants; unrelated
+Trailers continue normally. No operation is converted into another type.
+
+Explicit conflict review first downloads current authorized Trailer state. Failed
+reload remains closed. Only definitive failed same-Trailer Yard work may receive
+an explicit new root action with a new UUID/version, recorded in immutable local
+yard_conflict_reviews. Original requests/UUIDs/failed states remain preserved,
+covered old retries are prohibited and old descendants never automatically run.
+Uncertain queued/sending/retryable work cannot be replaced. No false ACK is forged.
+
+Damage drafts/capture metadata persist before the native camera and survive restart.
+Photos use existing private files/hash, LocalMedia, R2 processor and finalized
+media edges, not a second queue/worker. Late camera results stay in their original
+User/Tenant namespace; current account permission never transfers. Missing bytes,
+denials, upload retries and partial sets retain draft/evidence for explicit review.
+Network 408/429 Retry-After/5xx, 401 refresh, 403/404/409, lost ACK and two workers
+retain the original same-key frozen request. Only a real server receipt is success.
+
+## #49 deployed schema: Drift v8
+
+Version 8 preserves the one v7 command/media graph and adds nullable immutable
+local_media.trailer_id for DAMAGE_PHOTO without Trip. Three narrow metadata stores:
+yard_drafts (owner, selected Site/Trailer, immutable observed version/ref/time,
+comment, retained photo IDs, eventual command ID), yard_captures (persisted camera
+ownership and PENDING/CAPTURED/FAILED/CANCELLED outcome), yard_conflict_reviews
+(immutable old-failed/new-action links and reviewed authorized projection/version).
+They are not queues. Existing local_commands/materialized_requests/command_results/
+command_media_dependencies remain the only durable operation graph.
+
+Scope/FK/content/queued-draft/late-camera and immutable review guards apply in
+SQLite. One native camera acquisition across Inspection/Road/Yard contexts is
+allowed. v7→v8 adds metadata without rebuilding commands/results/requests. A
+frozen actual published v7 DDL fixture verifies migration and retained ACK bytes;
+earlier v1–v6 migrations retain their historical constraints and data. Fresh schema
+has 21 tables; all upgrades, FK checks, namespace and ledger guards are tested.
+Read caches may be cleared on logout; pending commands/drafts/private bytes are
+retained in their original owner namespace. There is no GPS/history store.
+
+### #49 implemented review and damage UX
+
+Scan → recorded Trailer → explicit action. Location uses current recorded value,
+authorized destination, reason and Confirm Correction. Load State shows current
+and new value/reason and preserves other dimensions. Without correction grant,
+Report Discrepancy is available and explicitly creates no state change.
+
+Damage uses the existing injected NativeInspectionCamera/ImagePicker: real image
+bytes are privately copied/hash-verified, comment and all photo IDs retained before
+explicit Confirm Mark OOS. Not Yet preserves drafts/photos and sends no OOS.
+Upload/finalization is independently visible and never serviceability success.
+Saved local, waiting evidence, queued/sending, server ACK and conflicts are distinct.
+There is no Return-to-Service shortcut or new capability grant. Forms close on
+User/Tenant/Driver/Site/Trailer/version/mode changes; double confirmation is fenced.
+
+Conflict handling retains original commands and descendants. A fresh authorized
+read and explicit review may create a new action; failed reload or uncertain ACK
+does not permit rebasing. Old damaged evidence can be explicitly retained in a new
+reviewed draft without changing its file/hash/identity. Physical Android/iOS camera,
+permission/reduced access/background/restart/lost-data QA remains #65; injected
+camera/Linux widget tests are not physical-device QA.
