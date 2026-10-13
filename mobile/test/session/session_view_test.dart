@@ -97,7 +97,9 @@ void main() {
       await tester.pump();
       expect(find.byKey(const Key('yard-mode')), findsOneWidget);
       expect(
-        find.text('Yard workflows are not implemented in this version.'),
+        find.text(
+          'Synchronization is unavailable. Restart the application to recover saved operations.',
+        ),
         findsOneWidget,
       );
     },

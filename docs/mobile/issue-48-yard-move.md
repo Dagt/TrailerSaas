@@ -71,3 +71,19 @@ The audit found that shared capability authorization does not itself reject a
 cancelled Tenant. Yard now explicitly requires Tenant status ACTIVE before every
 context read and command/replay; Candidate/Suspended/Cancelled regressions pass.
 This is bounded to Yard and does not change historical grants or other workflows.
+
+D: Yard Home replaces the production SessionView placeholder. Yard-only users
+need no fabricated Driver/Tractor; multi-role users retain Road navigation and
+its existing Shift/inspection controls. NativeQrScanner is reused with scoped
+cancellation. QR lookup is followed by the authorized minimal Yard Trailer read.
+Site/destination selection, recorded state, human review/Not Yet, observed time,
+local pending state, server ACK and original conflicts are real. Review dialogs
+close on owner changes and cannot display/confirm the previous account's data.
+Six real SQLite widget tests cover this flow; the 11 controller/context tests
+also pass. No new native permission or package was introduced. Correction/OOS
+UI, Yard Check and reconciliation remain #49–#51.
+
+Drift v7 adds only cached_yard_contexts and extends existing aggregate/result
+constraints to TRAILER. Existing queues, frozen requests and confirmed results
+are retained; real v1–v6 migration/reopen checks exercise namespace integrity.
+Native camera/device QA is pending #65; Linux widget tests do not claim it.

@@ -64,6 +64,7 @@ class SessionCache {
       await db.delete(db.cachedStops).go();
       await db.delete(db.cachedTrips).go();
       await db.delete(db.cachedTrailers).go();
+      await db.delete(db.cachedYardContexts).go();
       await db.delete(db.localSessionContexts).go();
     }),
   );
@@ -87,6 +88,14 @@ class SessionCache {
       await (db.delete(
         db.cachedTrailers,
       )..where((r) => r.userId.equals(user) & r.tenantId.equals(tenant))).go();
+      if (snapshot.membership.capabilities.contains('YARD_MOVE_EXECUTE')) {
+        for (final old in oldTrailers) {
+          final projection = jsonDecode(old.projectionJson) as Map;
+          if (projection['yardProjection'] == true) {
+            await db.into(db.cachedTrailers).insert(old);
+          }
+        }
+      }
       for (final trip in snapshot.trips) {
         final projection = Map<String, dynamic>.from(trip.data)
           ..remove('stops');
@@ -125,6 +134,13 @@ class SessionCache {
           final token = old == null
               ? null
               : (jsonDecode(old.projectionJson) as Map)['qrPublicToken'];
+          if (old != null &&
+              old.serverVersion == trailer['version'] &&
+              (jsonDecode(old.projectionJson) as Map)['yardProjection'] ==
+                  true &&
+              snapshot.membership.capabilities.contains('YARD_MOVE_EXECUTE')) {
+            continue;
+          }
           await db
               .into(db.cachedTrailers)
               .insertOnConflictUpdate(

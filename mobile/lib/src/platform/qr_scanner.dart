@@ -2,3 +2,7 @@
 abstract interface class QrScanner {
   Future<String?> scan();
 }
+
+abstract interface class CancellableQrScanner implements QrScanner {
+  void cancel();
+}

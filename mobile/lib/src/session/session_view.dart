@@ -11,6 +11,8 @@ import '../sync/sync_panel.dart';
 import '../road/road_evidence_view.dart';
 import '../road/driver_updates_store.dart';
 import '../road/driver_updates_view.dart';
+import '../yard/yard_view.dart';
+import '../platform/qr_scanner.dart';
 
 class SessionView extends StatefulWidget {
   const SessionView({
@@ -19,11 +21,13 @@ class SessionView extends StatefulWidget {
     this.journal,
     this.worker,
     this.updates,
+    this.yardScanner,
   });
   final OnlineCommandJournal? journal;
   final SessionController session;
   final ReplayWorker? worker;
   final DriverUpdatesStore? updates;
+  final QrScanner? yardScanner;
   @override
   State<SessionView> createState() => _SessionViewState();
 }
@@ -194,12 +198,29 @@ class _SessionViewState extends State<SessionView> {
                   child: const Text('Change Tenant'),
                 ),
               if (showYard)
-                const Column(
-                  key: Key('yard-mode'),
+                Column(
+                  key: const Key('yard-mode'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Yard Mode'),
-                    Text('Yard workflows are not implemented in this version.'),
+                    if (widget.worker != null)
+                      YardHomePanel(
+                        key: ValueKey(
+                          'yard-${snapshot.firebaseUid}-${snapshot.userId}-${snapshot.membership.tenantId}-${snapshot.driver?.id}',
+                        ),
+                        session: session,
+                        worker: widget.worker!,
+                        scanner: widget.yardScanner,
+                      )
+                    else
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Yard Mode'),
+                          Text(
+                            'Synchronization is unavailable. Restart the application to recover saved operations.',
+                          ),
+                        ],
+                      ),
                   ],
                 )
               else

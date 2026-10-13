@@ -22,13 +22,40 @@ String? trailerPublicToken(String value) {
   return segments.last;
 }
 
-class NativeQrScanner implements QrScanner {
+class NativeQrScanner implements CancellableQrScanner {
   NativeQrScanner(this.context);
   final BuildContext context;
+  MaterialPageRoute<String>? _route;
+  NavigatorState? _navigator;
   @override
-  Future<String?> scan() =>
-      Navigator.of(context)
-          .push<String>(MaterialPageRoute(builder: (_) => const _ScanPage()));
+  Future<String?> scan() async {
+    final navigator = Navigator.of(context);
+    final route = MaterialPageRoute<String>(builder: (_) => const _ScanPage());
+    _navigator = navigator;
+    _route = route;
+    try {
+      return await navigator.push<String>(route);
+    } finally {
+      if (identical(_route, route)) {
+        _route = null;
+        _navigator = null;
+      }
+    }
+  }
+
+  @override
+  void cancel() {
+    final route = _route, navigator = _navigator;
+    _route = null;
+    _navigator = null;
+    if (route != null && navigator != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (navigator.mounted && route.isCurrent && route.isActive) {
+          navigator.removeRoute(route);
+        }
+      });
+    }
+  }
 }
 
 class _ScanPage extends StatefulWidget {

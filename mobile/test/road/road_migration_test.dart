@@ -23,6 +23,7 @@ class Version5Database extends AppDatabase {
           'road_captures',
           'cached_driver_updates',
           'driver_update_cursors',
+          'cached_yard_contexts',
         }.contains(t.actualTableName),
       )) {
         await m.createTable(table);
@@ -79,9 +80,9 @@ void main() {
     expect(
       (await db.customSelect('PRAGMA user_version').getSingle())
           .data['user_version'],
-      6,
+      7,
     );
-    expect(db.allTables, hasLength(17));
+    expect(db.allTables, hasLength(18));
     expect(
       (await db.customSelect('SELECT * FROM local_commands').getSingle()).data,
       before,
@@ -145,7 +146,7 @@ void main() {
       expect(
         (await db.customSelect('PRAGMA user_version').getSingle())
             .data['user_version'],
-        6,
+        7,
       );
     },
   );

@@ -289,21 +289,28 @@ class CommandStore {
     String? category,
   }) => db.transaction(() async {
     code = safeCode(code);
-    await (db.update(db.localCommands)..where(
-          (r) =>
-              r.clientOperationId.equals(c.clientOperationId) &
-              r.userId.equals(c.userId) &
-              r.tenantId.equals(c.tenantId),
-        ))
-        .write(
-          LocalCommandsCompanion(
-            state: Value(state.value),
-            lastHttpStatus: Value(status),
-            lastErrorCode: Value(code),
-            nextRetryAt: Value(durableRetryAt(retryAt)),
-            ackedAt: Value(state == CommandState.acknowledged ? now() : null),
-          ),
-        );
+    final updated =
+        await (db.update(db.localCommands)..where(
+              (r) =>
+                  r.clientOperationId.equals(c.clientOperationId) &
+                  r.userId.equals(c.userId) &
+                  r.tenantId.equals(c.tenantId) &
+                  r.state.equals('ACKNOWLEDGED').not(),
+            ))
+            .write(
+              LocalCommandsCompanion(
+                state: Value(state.value),
+                lastHttpStatus: Value(status),
+                lastErrorCode: Value(code),
+                nextRetryAt: Value(durableRetryAt(retryAt)),
+                ackedAt: Value(
+                  state == CommandState.acknowledged ? now() : null,
+                ),
+              ),
+            );
+    if (updated == 0) {
+      return; // A late timeout/denial from another worker cannot undo an ACK.
+    }
     if (category != null) {
       await db
           .into(db.localSyncIssues)

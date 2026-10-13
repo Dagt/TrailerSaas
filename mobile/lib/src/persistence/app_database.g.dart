@@ -1762,6 +1762,450 @@ class CachedTrailersCompanion extends UpdateCompanion<CachedTrailer> {
   }
 }
 
+class $CachedYardContextsTable extends CachedYardContexts
+    with TableInfo<$CachedYardContextsTable, CachedYardContext> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedYardContextsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectionJsonMeta = const VerificationMeta(
+    'projectionJson',
+  );
+  @override
+  late final GeneratedColumn<String> projectionJson = GeneratedColumn<String>(
+    'projection_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _selectedSiteIdMeta = const VerificationMeta(
+    'selectedSiteId',
+  );
+  @override
+  late final GeneratedColumn<String> selectedSiteId = GeneratedColumn<String>(
+    'selected_site_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _refreshedAtMeta = const VerificationMeta(
+    'refreshedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> refreshedAt = GeneratedColumn<DateTime>(
+    'refreshed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accessBlockedMeta = const VerificationMeta(
+    'accessBlocked',
+  );
+  @override
+  late final GeneratedColumn<bool> accessBlocked = GeneratedColumn<bool>(
+    'access_blocked',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("access_blocked" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    tenantId,
+    projectionJson,
+    selectedSiteId,
+    refreshedAt,
+    accessBlocked,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_yard_contexts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedYardContext> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('projection_json')) {
+      context.handle(
+        _projectionJsonMeta,
+        projectionJson.isAcceptableOrUnknown(
+          data['projection_json']!,
+          _projectionJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_projectionJsonMeta);
+    }
+    if (data.containsKey('selected_site_id')) {
+      context.handle(
+        _selectedSiteIdMeta,
+        selectedSiteId.isAcceptableOrUnknown(
+          data['selected_site_id']!,
+          _selectedSiteIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('refreshed_at')) {
+      context.handle(
+        _refreshedAtMeta,
+        refreshedAt.isAcceptableOrUnknown(
+          data['refreshed_at']!,
+          _refreshedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_refreshedAtMeta);
+    }
+    if (data.containsKey('access_blocked')) {
+      context.handle(
+        _accessBlockedMeta,
+        accessBlocked.isAcceptableOrUnknown(
+          data['access_blocked']!,
+          _accessBlockedMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId, tenantId};
+  @override
+  CachedYardContext map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedYardContext(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      projectionJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}projection_json'],
+      )!,
+      selectedSiteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}selected_site_id'],
+      ),
+      refreshedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}refreshed_at'],
+      )!,
+      accessBlocked: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}access_blocked'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedYardContextsTable createAlias(String alias) {
+    return $CachedYardContextsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedYardContext extends DataClass
+    implements Insertable<CachedYardContext> {
+  final String userId;
+  final String tenantId;
+  final String projectionJson;
+  final String? selectedSiteId;
+  final DateTime refreshedAt;
+  final bool accessBlocked;
+  const CachedYardContext({
+    required this.userId,
+    required this.tenantId,
+    required this.projectionJson,
+    this.selectedSiteId,
+    required this.refreshedAt,
+    required this.accessBlocked,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['projection_json'] = Variable<String>(projectionJson);
+    if (!nullToAbsent || selectedSiteId != null) {
+      map['selected_site_id'] = Variable<String>(selectedSiteId);
+    }
+    map['refreshed_at'] = Variable<DateTime>(refreshedAt);
+    map['access_blocked'] = Variable<bool>(accessBlocked);
+    return map;
+  }
+
+  CachedYardContextsCompanion toCompanion(bool nullToAbsent) {
+    return CachedYardContextsCompanion(
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      projectionJson: Value(projectionJson),
+      selectedSiteId: selectedSiteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(selectedSiteId),
+      refreshedAt: Value(refreshedAt),
+      accessBlocked: Value(accessBlocked),
+    );
+  }
+
+  factory CachedYardContext.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedYardContext(
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      projectionJson: serializer.fromJson<String>(json['projectionJson']),
+      selectedSiteId: serializer.fromJson<String?>(json['selectedSiteId']),
+      refreshedAt: serializer.fromJson<DateTime>(json['refreshedAt']),
+      accessBlocked: serializer.fromJson<bool>(json['accessBlocked']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'projectionJson': serializer.toJson<String>(projectionJson),
+      'selectedSiteId': serializer.toJson<String?>(selectedSiteId),
+      'refreshedAt': serializer.toJson<DateTime>(refreshedAt),
+      'accessBlocked': serializer.toJson<bool>(accessBlocked),
+    };
+  }
+
+  CachedYardContext copyWith({
+    String? userId,
+    String? tenantId,
+    String? projectionJson,
+    Value<String?> selectedSiteId = const Value.absent(),
+    DateTime? refreshedAt,
+    bool? accessBlocked,
+  }) => CachedYardContext(
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    projectionJson: projectionJson ?? this.projectionJson,
+    selectedSiteId: selectedSiteId.present
+        ? selectedSiteId.value
+        : this.selectedSiteId,
+    refreshedAt: refreshedAt ?? this.refreshedAt,
+    accessBlocked: accessBlocked ?? this.accessBlocked,
+  );
+  CachedYardContext copyWithCompanion(CachedYardContextsCompanion data) {
+    return CachedYardContext(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      projectionJson: data.projectionJson.present
+          ? data.projectionJson.value
+          : this.projectionJson,
+      selectedSiteId: data.selectedSiteId.present
+          ? data.selectedSiteId.value
+          : this.selectedSiteId,
+      refreshedAt: data.refreshedAt.present
+          ? data.refreshedAt.value
+          : this.refreshedAt,
+      accessBlocked: data.accessBlocked.present
+          ? data.accessBlocked.value
+          : this.accessBlocked,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedYardContext(')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('projectionJson: $projectionJson, ')
+          ..write('selectedSiteId: $selectedSiteId, ')
+          ..write('refreshedAt: $refreshedAt, ')
+          ..write('accessBlocked: $accessBlocked')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    userId,
+    tenantId,
+    projectionJson,
+    selectedSiteId,
+    refreshedAt,
+    accessBlocked,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedYardContext &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.projectionJson == this.projectionJson &&
+          other.selectedSiteId == this.selectedSiteId &&
+          other.refreshedAt == this.refreshedAt &&
+          other.accessBlocked == this.accessBlocked);
+}
+
+class CachedYardContextsCompanion extends UpdateCompanion<CachedYardContext> {
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> projectionJson;
+  final Value<String?> selectedSiteId;
+  final Value<DateTime> refreshedAt;
+  final Value<bool> accessBlocked;
+  final Value<int> rowid;
+  const CachedYardContextsCompanion({
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.projectionJson = const Value.absent(),
+    this.selectedSiteId = const Value.absent(),
+    this.refreshedAt = const Value.absent(),
+    this.accessBlocked = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedYardContextsCompanion.insert({
+    required String userId,
+    required String tenantId,
+    required String projectionJson,
+    this.selectedSiteId = const Value.absent(),
+    required DateTime refreshedAt,
+    this.accessBlocked = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       tenantId = Value(tenantId),
+       projectionJson = Value(projectionJson),
+       refreshedAt = Value(refreshedAt);
+  static Insertable<CachedYardContext> custom({
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? projectionJson,
+    Expression<String>? selectedSiteId,
+    Expression<DateTime>? refreshedAt,
+    Expression<bool>? accessBlocked,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (projectionJson != null) 'projection_json': projectionJson,
+      if (selectedSiteId != null) 'selected_site_id': selectedSiteId,
+      if (refreshedAt != null) 'refreshed_at': refreshedAt,
+      if (accessBlocked != null) 'access_blocked': accessBlocked,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedYardContextsCompanion copyWith({
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? projectionJson,
+    Value<String?>? selectedSiteId,
+    Value<DateTime>? refreshedAt,
+    Value<bool>? accessBlocked,
+    Value<int>? rowid,
+  }) {
+    return CachedYardContextsCompanion(
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      projectionJson: projectionJson ?? this.projectionJson,
+      selectedSiteId: selectedSiteId ?? this.selectedSiteId,
+      refreshedAt: refreshedAt ?? this.refreshedAt,
+      accessBlocked: accessBlocked ?? this.accessBlocked,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (projectionJson.present) {
+      map['projection_json'] = Variable<String>(projectionJson.value);
+    }
+    if (selectedSiteId.present) {
+      map['selected_site_id'] = Variable<String>(selectedSiteId.value);
+    }
+    if (refreshedAt.present) {
+      map['refreshed_at'] = Variable<DateTime>(refreshedAt.value);
+    }
+    if (accessBlocked.present) {
+      map['access_blocked'] = Variable<bool>(accessBlocked.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedYardContextsCompanion(')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('projectionJson: $projectionJson, ')
+          ..write('selectedSiteId: $selectedSiteId, ')
+          ..write('refreshedAt: $refreshedAt, ')
+          ..write('accessBlocked: $accessBlocked, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LocalCommandsTable extends LocalCommands
     with TableInfo<$LocalCommandsTable, LocalCommand> {
   @override
@@ -10162,6 +10606,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CachedTripsTable cachedTrips = $CachedTripsTable(this);
   late final $CachedStopsTable cachedStops = $CachedStopsTable(this);
   late final $CachedTrailersTable cachedTrailers = $CachedTrailersTable(this);
+  late final $CachedYardContextsTable cachedYardContexts =
+      $CachedYardContextsTable(this);
   late final $LocalCommandsTable localCommands = $LocalCommandsTable(this);
   late final $LocalSyncIssuesTable localSyncIssues = $LocalSyncIssuesTable(
     this,
@@ -10193,6 +10639,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cachedTrips,
     cachedStops,
     cachedTrailers,
+    cachedYardContexts,
     localCommands,
     localSyncIssues,
     localMedia,
