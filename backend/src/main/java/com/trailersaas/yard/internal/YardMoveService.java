@@ -48,7 +48,7 @@ class YardMoveService {
     });
   }
   record Location(UUID site,UUID customer) {}
-  private Location lockedLocation(UUID tenant,UUID id) {
+  Location lockedLocation(UUID tenant,UUID id) {
     // Same Site parent-lock protocol as master-data disassociation. Never lock
     // the SELECT/INSERT/DELETE-only association table or grant it new privileges.
     var rows=jdbc.query("select l.site_id,l.customer_id,l.active,s.active from operational_locations l join physical_sites s on s.tenant_id=l.tenant_id and s.id=l.site_id where l.tenant_id=? and l.id=? for share of l,s",
