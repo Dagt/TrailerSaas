@@ -32,12 +32,15 @@ void main() {
     'departurePrerequisitesSatisfied': false,
   };
   Future<http.Response> reads(http.Request r) async {
-    if (r.url.path.endsWith('/api/v1/me'))
+    if (r.url.path.endsWith('/api/v1/me')) {
       return f.response({'userId': 'user-A', 'memberships': f.memberships});
-    if (r.url.path.endsWith('/driver/me'))
+    }
+    if (r.url.path.endsWith('/driver/me')) {
       return f.response({'id': 'driver', 'name': 'Jane', 'active': true});
-    if (r.url.path.endsWith('/driver/me/trips/trip-A'))
+    }
+    if (r.url.path.endsWith('/driver/me/trips/trip-A')) {
       return f.response(detail());
+    }
     return f.response({
       'items': [geoTrip()],
       'nextCursor': null,
@@ -109,7 +112,7 @@ void main() {
     await f.close();
     await directory.delete(recursive: true);
   });
-  for (final status in [408, 429, 500, 503, 401, 403, 409]) {
+  for (final status in [408, 429, 500, 503, 401, 403, 404, 409]) {
     test(
       'confirmed geofence $status uses durable existing classification and unchanged evidence',
       () async {

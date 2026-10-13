@@ -146,6 +146,8 @@ class RoadTripController extends ChangeNotifier {
   void _notify() {
     if (!_disposed) {
       final s = session.snapshot;
+      final downloaded = s?.trips.where((t) => t.id == tripId).firstOrNull;
+      final rawTarget = detail?['arrivalAssistance'];
       assistance.update(
         canRecord &&
                 !sending &&
@@ -153,10 +155,10 @@ class RoadTripController extends ChangeNotifier {
                 pending == null &&
                 s!.membership.capabilities.contains('TRIP_EXECUTE_ASSIGNED') &&
                 s.membership.capabilities.contains('ARRIVAL_CONFIRM') &&
-                s.trips.any((t) => t.id == tripId)
+                downloaded != null
             ? ArrivalTarget.parse(
-                detail?['arrivalAssistance'] as Map<String, dynamic>?,
-                trip,
+                rawTarget is Map<String, dynamic> ? rawTarget : null,
+                downloaded.data,
                 s.driver!.id,
               )
             : null,
@@ -211,6 +213,7 @@ class RoadTripController extends ChangeNotifier {
 
   Future<void> load() async {
     assistance.update(null);
+    detail = null;
     final s = session.snapshot;
     if (worker != null && s != null && !online && canRecord) {
       final cached = s.trips.where((t) => t.id == tripId).firstOrNull;

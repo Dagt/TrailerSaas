@@ -37,8 +37,9 @@ void main() {
     reads = 0;
     instructions = [];
     f.handler = (r) async {
-      if (r.url.path.endsWith('/updates'))
+      if (r.url.path.endsWith('/updates')) {
         return f.response({'items': instructions, 'nextCursor': null});
+      }
       if (r.url.path.endsWith('/driver/me/trips/$activeTrip')) {
         reads++;
         return f.response({
@@ -48,10 +49,12 @@ void main() {
           'departurePrerequisitesSatisfied': false,
         });
       }
-      if (r.url.path.endsWith('/api/v1/me'))
+      if (r.url.path.endsWith('/api/v1/me')) {
         return f.response({'userId': 'user-A', 'memberships': f.memberships});
-      if (r.url.path.endsWith('/driver/me'))
+      }
+      if (r.url.path.endsWith('/driver/me')) {
         return f.response({'id': 'driver', 'name': 'Jane', 'active': true});
+      }
       return f.response({
         'items': [trip],
         'nextCursor': null,
@@ -167,5 +170,59 @@ void main() {
     expect(controller.canRecord, isFalse);
     await controller.confirmAssistedArrival();
     expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
+  });
+  test(
+    'failed authoritative reload cannot restore previous geographic context',
+    () async {
+      await controller.assistance.check();
+      expect(controller.assistance.suggestion, isNotNull);
+      f.handler = (request) async => throw StateError('read unavailable');
+      await controller.load();
+      expect(controller.detail, isNull);
+      expect(controller.assistance.target, isNull);
+      await controller.confirmAssistedArrival();
+      expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
+    },
+  );
+  test(
+    'malformed new instruction does not publish success or advance cursor',
+    () async {
+      await controller.assistance.check();
+      final events = <DriverOperationalChange>[];
+      final subscription = updates.operationalChanges.listen(events.add);
+      instructions.add({
+        'id': 'malformed',
+        'tripId': activeTrip,
+        'payload': {},
+      });
+      await expectLater(updates.refresh(), throwsA(isA<FormatException>()));
+      expect(events.where((event) => event.downloaded), isEmpty);
+      expect(await f.db.select(f.db.driverUpdateCursors).get(), isEmpty);
+      await subscription.cancel();
+    },
+  );
+  test('success signal observes committed instruction and cursor, tail emits no duplicates', () async {
+    final observations = <Future<bool>>[];
+    final subscription = updates.operationalChanges.listen((event) {
+      if (event.downloaded) {
+        observations.add(() async {
+          final rows = await f.db.select(f.db.cachedDriverUpdates).get();
+          final cursors = await f.db.select(f.db.driverUpdateCursors).get();
+          return rows.isNotEmpty && cursors.isNotEmpty;
+        }());
+      }
+    });
+    instructions.add({
+      'id': operationUuid(),
+      'tripId': activeTrip,
+      'updateType': 'TRIP_REROUTED',
+      'occurredAt': geoNow.toIso8601String(),
+      'payload': {'instructions': 'New instruction'},
+    });
+    await updates.refresh();
+    expect(await Future.wait(observations), [true]);
+    await updates.refresh();
+    expect(observations, hasLength(1));
+    await subscription.cancel();
   });
 }

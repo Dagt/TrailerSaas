@@ -67,11 +67,12 @@ class FakeLocation implements LocationAssistancePort {
   Completer<AssistanceFix?>? waiting;
   int reads = 0, cancels = 0, requests = 0;
   bool fail = false;
+  Completer<LocationAccess>? permissionCheck;
   @override
   Future<LocationAccess> access({bool request = false}) async {
     if (request) requests++;
     if (fail) throw StateError('unavailable');
-    return state;
+    return permissionCheck?.future ?? Future.value(state);
   }
 
   @override
@@ -127,6 +128,40 @@ void main() {
     controller.update(ArrivalTarget.parse(geoTarget(), geoTrip(), 'driver'));
   });
   tearDown(() => controller.dispose());
+  test('two confirmation taps consume exactly one suggestion', () async {
+    await controller.check();
+    port.permissionCheck = Completer();
+    final first = controller.confirmedEvidence(),
+        second = controller.confirmedEvidence();
+    port.permissionCheck!.complete(port.state);
+    expect(
+      (await Future.wait([first, second])).whereType<ArrivalSuggestion>(),
+      hasLength(1),
+    );
+  });
+  test(
+    'late confirmation cannot cancel a newer destination suggestion',
+    () async {
+      await controller.check();
+      port.permissionCheck = Completer();
+      final pending = port.permissionCheck!,
+          oldConfirmation = controller.confirmedEvidence();
+      controller.update(
+        ArrivalTarget.parse(
+          geoTarget()..['siteVersion'] = 2,
+          geoTrip(),
+          'driver',
+        ),
+      );
+      port.permissionCheck = null;
+      await controller.check();
+      final fresh = controller.suggestion;
+      expect(fresh, isNotNull);
+      pending.complete(port.state);
+      expect(await oldConfirmation, isNull);
+      expect(controller.suggestion, same(fresh));
+    },
+  );
   test(
     'precise inside reading suggests only; human confirmation returns evidence',
     () async {
@@ -403,6 +438,47 @@ void main() {
       real.cancel();
       expect(await result, isNull);
       await native.positions.close();
+    },
+  );
+  testWidgets('native acquisition timeout removes its observer', (
+    tester,
+  ) async {
+    final native = FakeGeolocator(),
+        adapter = NativeLocationAssistance(
+          platform: FakeGeolocator(),
+          device: TargetPlatform.android,
+        );
+    adapter.cancel();
+    final real = NativeLocationAssistance(
+      platform: native,
+      device: TargetPlatform.android,
+    );
+    final result = real.read();
+    await tester.pump(const Duration(seconds: 10, milliseconds: 1));
+    expect(await result, isNull);
+    expect(native.cancelled, isTrue);
+    unawaited(native.positions.close());
+    real.cancel();
+  });
+  test(
+    'native platform exception cancels observer without location evidence',
+    () async {
+      final native = FakeGeolocator(),
+          real = NativeLocationAssistance(
+            platform: FakeGeolocator(),
+            device: TargetPlatform.iOS,
+          );
+      real.cancel();
+      final adapter = NativeLocationAssistance(
+        platform: native,
+        device: TargetPlatform.iOS,
+      );
+      final result = adapter.read();
+      native.positions.addError(StateError('native'));
+      expect(await result, isNull);
+      expect(native.cancelled, isTrue);
+      await native.positions.close();
+      adapter.cancel();
     },
   );
 }

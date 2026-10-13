@@ -24,11 +24,64 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
+  @Test
+  void siteUpdateBeforeArrivalIsLockedAndRecheckedAgainstItsCommittedDestination() throws Exception {
+    depart();var body=arrival("GEOFENCE_CONFIRMED");
+    var held=new CountDownLatch(1);var release=new CountDownLatch(1);
+    try(var pool=Executors.newFixedThreadPool(2)) {
+      var update=pool.submit(() -> transactions.execute(tenant,() -> {
+        jdbc.update("update physical_sites set latitude=42,version=version+1 where tenant_id=? and id=?",tenant,site);
+        held.countDown();
+        try { if(!release.await(20,TimeUnit.SECONDS))throw new IllegalStateException("Lock timeout"); }
+        catch(InterruptedException e){Thread.currentThread().interrupt();throw new IllegalStateException(e);}
+        return true;
+      }));
+      assertThat(held.await(20,TimeUnit.SECONDS)).isTrue();
+      var confirmation=pool.submit(() -> post("/stops/"+stop+"/arrivals",UUID.randomUUID().toString(),body));
+      try {
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat((Long)f.db.value(
+          "select count(*) from pg_stat_activity where wait_event_type='Lock' and query like '%for share of p%'" )).isPositive());
+      } finally { release.countDown(); }
+      assertThat(update.get(30,TimeUnit.SECONDS)).isTrue();
+      problem(confirmation.get(30,TimeUnit.SECONDS),409,"RESOURCE_CONFLICT");
+      assertThat(value("trip_stops","status",stop)).isEqualTo("EN_ROUTE");
+    } finally { release.countDown(); }
+  }
   Map<String,Object> changedOccurrence(Map<String,Object> original) {
     var changed=new LinkedHashMap<>(original);changed.put("occurredAt",at.plusSeconds(1).toString());return changed;
   }
   void configureGeofence() throws Exception {
     f.db.execute("update physical_sites set latitude=41,longitude=-88,geofence_radius_m=250 where id=?",site);
+  }
+  @ParameterizedTest
+  @ValueSource(strings={"membership","capability","driver","assignment","foreignTenant","foreignStop"})
+  void geofenceSourceCannotBypassCurrentAuthority(String mode) throws Exception {
+    depart();var body=arrival("GEOFENCE_CONFIRMED");
+    String path="/stops/"+stop+"/arrivals";
+    switch(mode) {
+      case "membership" -> f.db.execute("update tenant_memberships set status='DISABLED' where id=?",membership);
+      case "capability" -> f.db.execute("delete from role_assignments where membership_id=?",membership);
+      case "driver" -> f.db.execute("update drivers set active=false where id=?",driver);
+      case "assignment" -> f.db.execute("update trips set current_driver_id=? where id=?",f.db.driver(tenant,null),trip);
+      case "foreignStop" -> path="/stops/"+UUID.randomUUID()+"/arrivals";
+      case "foreignTenant" -> tenant=other;
+    }
+    assertThat(post(path,UUID.randomUUID().toString(),body).statusCode()).isIn(403,404);
+    assertThat(value("trip_stops","status",stop)).isEqualTo("EN_ROUTE");
+  }
+  @ParameterizedTest
+  @ValueSource(strings={"ASSIGNED","AT_STOP","CANCELLING","COMPLETED","CANCELLED"})
+  void geofenceCannotBypassTripMachine(String state) throws Exception {
+    depart();var body=arrival("GEOFENCE_CONFIRMED");f.db.execute("update trips set status=? where id=?",state,trip);
+    problem(post("/stops/"+stop+"/arrivals",UUID.randomUUID().toString(),body),409,"INVALID_STATE_TRANSITION");
+    assertThat(value("trip_stops","status",stop)).isEqualTo("EN_ROUTE");
+  }
+  @ParameterizedTest
+  @ValueSource(strings={"PENDING","ARRIVED","IN_SERVICE","COMPLETED","CANCELLED"})
+  void geofenceRequiresNextEnRouteStop(String state) throws Exception {
+    depart();var body=arrival("GEOFENCE_CONFIRMED");f.db.execute("update trip_stops set status=? where id=?",state,stop);
+    problem(post("/stops/"+stop+"/arrivals",UUID.randomUUID().toString(),body),409,"INVALID_STATE_TRANSITION");
+    assertThat(value("trips","status",trip)).isEqualTo("IN_TRANSIT");
   }
   Map<String,Object> arrival(String source) throws Exception {
     if (source.equals("GEOFENCE_CONFIRMED")) {
@@ -102,6 +155,7 @@ class DriverTripExecutionPostgresTests extends PostgresIntegrationTest {
   @Autowired Flyway flyway;
   @Autowired TenantTransactionExecutor transactions;
   @Autowired DriverTripExecutionService execution;
+  @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
   @MockitoBean FirebaseTokenVerifier verifier;
   // Domain integration seam only. Production denies departure until #43 supplies actual evidence.
   @MockitoBean TripDeparturePrerequisites prerequisites;

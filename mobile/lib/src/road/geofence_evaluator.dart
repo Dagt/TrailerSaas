@@ -27,6 +27,10 @@ class ArrivalTarget {
     }
     final stops = trip['stops'];
     if (stops is! List) return null;
+    if (stops.any((stop) => stop is! Map)) return null;
+    for (final field in ['tripVersion', 'stopVersion', 'siteVersion']) {
+      if (raw[field] is! int || (raw[field] as int) < 0) return null;
+    }
     final next = stops
         .cast<Map>()
         .where((s) => !{'COMPLETED', 'CANCELLED'}.contains(s['status']))
@@ -51,7 +55,8 @@ class ArrivalTarget {
     for (final field in ['latitude', 'longitude', 'geofenceRadiusM']) {
       if (raw[field] is! num || !(raw[field] as num).isFinite) return null;
     }
-    if ((raw['latitude'] as num).abs() > 90 ||
+    if (raw['geofenceRadiusM'] is! int ||
+        (raw['latitude'] as num).abs() > 90 ||
         (raw['longitude'] as num).abs() > 180 ||
         (raw['geofenceRadiusM'] as num) <= 0) {
       return null;

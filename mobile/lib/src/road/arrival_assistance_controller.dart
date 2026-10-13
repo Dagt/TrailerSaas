@@ -76,6 +76,8 @@ class ArrivalAssistanceController extends ChangeNotifier {
         generation == _generation &&
         target?.identity == context.identity;
     _suggestion = null;
+    _expiry?.cancel();
+    _expiry = null;
     busy = true;
     message = null;
     notifyListeners();
@@ -123,17 +125,15 @@ class ArrivalAssistanceController extends ChangeNotifier {
     }
     try {
       final access = await location.access();
-      if (_disposed ||
-          generation != _generation ||
-          !access.usable ||
-          !identical(suggestion, candidate)) {
+      if (_disposed || generation != _generation) return null;
+      if (!access.usable || !identical(suggestion, candidate)) {
         invalidate();
         return null;
       }
       invalidate();
       return candidate;
     } catch (_) {
-      invalidate();
+      if (!_disposed && generation == _generation) invalidate();
       return null;
     }
   }
