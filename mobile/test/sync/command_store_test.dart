@@ -96,7 +96,7 @@ void main() {
     expect(
       (await upgraded.customSelect('PRAGMA user_version').getSingle())
           .read<int>('user_version'),
-      5,
+      6,
     );
     for (final table in before.keys) {
       expect(

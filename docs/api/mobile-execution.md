@@ -611,7 +611,7 @@ is delivered by #39.
 
 ## Issue #44 implementation boundary
 
-See [Driver execution implementation](../mobile/issue-44-road-execution.md) for the five strict execution commands, own assigned detail, V18 Stop facts, physical projection and foreground idempotent recovery. First departure fails closed pending real #43 duty/Pre-Trip validation; no fabricated prerequisites. Ordinary Delivery completion remains EVIDENCE_REQUIRED until #45/#53 finalized POD. Manual arrival only; geofence assistance remains #47. QR identification adds version for the existing Hook contract. #46 follows #44 for the offline replay worker. All capabilities and #38 physical contracts remain unchanged.
+See [Driver execution implementation](../mobile/issue-44-road-execution.md) for the five strict execution commands, own assigned detail, V18 Stop facts, physical projection and foreground idempotent recovery. First departure now uses real #43 duty/Pre-Trip validation; no fabricated prerequisites. Ordinary non-POD completion still rejects Delivery; the separate implemented #45 completion validates #53 evidence. Manual arrival only; geofence assistance remains #47. QR identification adds version for the existing Hook contract. #46 follows #44 for the offline replay worker. All capabilities and #38 physical contracts remain unchanged.
 
 ## Issue #46 client replay boundary
 
@@ -620,15 +620,14 @@ Flutter persists immutable command intents in Drift and replays the implemented
 No public API, capability or domain state machine changes. A ledger replay response
 is an acknowledgment; current own-Driver/work/detail reads reconcile state afterward.
 See [queue migration, dependencies and response policy](../mobile/issue-46-command-replay.md).
-First departure remains blocked pending real #43 prerequisites and Delivery completion
-remains blocked pending #45/#53 finalized evidence. No generic /sync or media workflow.
+First departure uses real #43 prerequisites. #45 delivery completion requires finalized #53 evidence. There is no generic /sync endpoint.
 
 ## Issue #53 evidence policy integration
 
 Backend `OperationalEvidencePolicy` now validates the four finalized Pre-Trip
 positions, signed BOL/no-receiver delivery, Driver damage and Fuel receipts from
-Tenant-pinned PostgreSQL state. This does not implement the future inspection,
-delivery-completions, Fuel or exception endpoints above. #43 still owns real
+Tenant-pinned PostgreSQL state. The #53 policy itself does not own the inspection,
+delivery-completions, Fuel or exception endpoints above. Their implemented #43/#45 orchestration owns real
 Shift/inspection context and departure prerequisites. #45 must invoke the typed
 policy inside its command/ledger transaction and coordinate Stop event, fulfillment
 and Trip effects. Its high-level application orchestration calls Documents and
@@ -663,5 +662,28 @@ used equipment. No override; closing Shift never completes work or changes coupl
 First departure reuses #44 and requires own open Shift, valid matching Driver/Shift/
 current Tractor Pre-Trip with four linked finalized photos. Explicit inspection Trip
 must match. Occurrence must follow inspection/Shift occurrence. Other-Shift history or
-reassigned Tractor cannot authorize it. Delivery/POD completion remains #45.
+reassigned Tractor cannot authorize it. Delivery/POD completion is implemented by #45 below.
 See ../mobile/issue-43-shift-inspections.md for locking, migrations and offline materialization.
+
+## Issue #45 implemented Road evidence workflows
+
+Delivery completion, own Fuel Events and Trip exceptions above are now implemented.
+All use strict DTOs and UUID Idempotency-Key, current membership/capability/Driver
+assignment checks before ledger replay. Signed BOL accepts only BOL; no-receiver
+requires a distinct DELIVERY_PHOTO and Unicode-normalized nonblank comment (max4000).
+Delivery requires IN_SERVICE/AT_STOP; recordDelivery wraps the actual Stop event,
+Order fulfillment and Trip effects in one transaction. Required BASE_RETURN is
+honored; Shift and physical Trailer state are unchanged. Fuel requires tripId,
+current active Tractor and own open Shift during execution; odometer 0..10^12,
+max3 decimals, finalized FUEL_RECEIPT. Exceptions require a comment, a closed
+category and optional exact Trip Stop; damage requires finalized DAMAGE_PHOTO.
+They never edit lifecycle, OOS or location. Committed Fuel/damage replays on a
+terminal Trip still revalidate current assignment, types and every link.
+
+Responses and exact schemas are marked implemented-issue-45 in OpenAPI. Safe
+errors include EVIDENCE_REQUIRED, UPLOAD_NOT_COMPLETE, VALIDATION_FAILED,
+RESOURCE_NOT_FOUND, CAPABILITY_DENIED, INVALID_STATE_TRANSITION, RESOURCE_CONFLICT
+and IDEMPOTENCY_KEY_REUSED. Infrastructure failures remain safe 5xx.
+Flutter retrieves the existing targeted Driver Updates API without push; original
+ascending server cursor semantics are preserved. See the [implementation and
+acceptance matrix](../mobile/issue-45-pod-fuel-exceptions.md).

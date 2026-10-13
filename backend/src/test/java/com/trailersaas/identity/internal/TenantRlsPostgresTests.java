@@ -310,18 +310,18 @@ class TenantRlsPostgresTests extends PostgresIntegrationTest {
     @Test
     void policiesTargetOnlyRuntimeWithSelectOnlyBootstrapAndNoForce() {
         tx(() -> {
-            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(42);
+            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(46);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='ALL' AND with_check IS NOT NULL"))
-                    .isEqualTo(34);
+                    .isEqualTo(38);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='SELECT' AND with_check IS NULL"))
                     .isEqualTo(7);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND roles::text='{"
-                    + RUNTIME_USERNAME + "}'")).isEqualTo(42);
+                    + RUNTIME_USERNAME + "}'")).isEqualTo(46);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relrowsecurity"))
-                    .isEqualTo(35);
+                    .isEqualTo(39);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relforcerowsecurity"))
                     .isZero();
-            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(37);
+            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(41);
             return null;
         });
     }

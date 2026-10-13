@@ -552,7 +552,14 @@ class ReplayWorker extends ChangeNotifier {
       Map<String, dynamic> response;
       try {
         response =
-            futureEvidence != null && EvidenceCommandIntent.kindFor(c) != null
+            futureEvidence is TypedEvidenceReplayPort &&
+                EvidenceCommandIntent.kindFor(c) != null
+            ? await (futureEvidence! as TypedEvidenceReplayPort).sendAuthorized(
+                c,
+                frozenBody,
+                forceRefresh: false,
+              )
+            : futureEvidence != null && EvidenceCommandIntent.kindFor(c) != null
             ? await futureEvidence!.send(c, frozenBody)
             : await session.api.post(
                 command.path,
@@ -563,7 +570,14 @@ class ReplayWorker extends ChangeNotifier {
       } on ApiProblem catch (e) {
         if (e.status != 401 || !_current(owner)) rethrow;
         response =
-            futureEvidence != null && EvidenceCommandIntent.kindFor(c) != null
+            futureEvidence is TypedEvidenceReplayPort &&
+                EvidenceCommandIntent.kindFor(c) != null
+            ? await (futureEvidence! as TypedEvidenceReplayPort).sendAuthorized(
+                c,
+                frozenBody,
+                forceRefresh: true,
+              )
+            : futureEvidence != null && EvidenceCommandIntent.kindFor(c) != null
             ? await futureEvidence!.send(c, frozenBody)
             : await session.api.post(
                 command.path,
@@ -573,7 +587,16 @@ class ReplayWorker extends ChangeNotifier {
               );
       }
       if (!_current(owner)) return;
-      _validateResponse(c, response);
+      if (futureEvidence is TypedEvidenceReplayPort &&
+          EvidenceCommandIntent.kindFor(c) != null) {
+        (futureEvidence! as TypedEvidenceReplayPort).validateResponse(
+          c,
+          response,
+          frozenBody,
+        );
+      } else {
+        _validateResponse(c, response);
+      }
       await store.result(c, CommandState.acknowledged, status: 200);
       if (!_current(owner)) return;
       // Replayed responses are historical acknowledgments, never current projections.
@@ -584,6 +607,14 @@ class ReplayWorker extends ChangeNotifier {
       }
     } on ApiProblem catch (e) {
       if (!_current(owner)) return;
+      if ((await store.find(
+            c.userId,
+            c.tenantId,
+            c.clientOperationId,
+          ))?.state ==
+          'ACKNOWLEDGED') {
+        return;
+      }
       if ({401, 403, 404}.contains(e.status)) {
         await store.result(
           c,
@@ -631,6 +662,14 @@ class ReplayWorker extends ChangeNotifier {
       }
     } on FormatException {
       if (_current(owner)) {
+        if ((await store.find(
+              c.userId,
+              c.tenantId,
+              c.clientOperationId,
+            ))?.state ==
+            'ACKNOWLEDGED') {
+          return;
+        }
         await store.result(
           c,
           CommandState.retryableFailure,
@@ -640,6 +679,14 @@ class ReplayWorker extends ChangeNotifier {
       }
     } catch (_) {
       if (_current(owner)) {
+        if ((await store.find(
+              c.userId,
+              c.tenantId,
+              c.clientOperationId,
+            ))?.state ==
+            'ACKNOWLEDGED') {
+          return;
+        }
         await store.result(
           c,
           CommandState.retryableFailure,

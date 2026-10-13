@@ -50,7 +50,7 @@ It now optionally awaits MediaProcessor in the same fenced lane, then releases
 only commands with their complete FINALIZED media set and durably frozen request.
 An app-private filesystem lock also covers separately opened database connections.
 Original command payload/keys and #98 interrupted-SENDING recovery are preserved.
-No future #43/#45 adapter is installed in production. See [media integration](issue-54-media-queue.md).
+The implemented #43/#45 typed adapters now share this production lane. See [media integration](issue-54-media-queue.md) and the extensions below.
 
 One foreground service owns synchronization for the app's single SQLite connection.
 Worker passes share a serialized lane, so no Trip/Trailer/Tractor sends overlap.
@@ -128,7 +128,7 @@ contract. The worker does not invent a new version or rewrite the request.
 
 ## Mandatory integration blocks and exclusions
 
-Production first departure still fails closed until #43 supplies real On Duty/Pre-Trip
+Production first departure requires the real #43 On Duty/Pre-Trip
 records. A cached hint cannot fabricate them. Tests start from a legitimately executing
 Trip or use only the existing test-confined prerequisite seam. DELIVERY completion
 still requires finalized POD (#45/#53); no fake evidence or load-state mutation is
@@ -136,7 +136,7 @@ introduced. Live Load/Unload retains #44 uninterrupted-coupling semantics. Unkno
 coupling/QR cannot be replaced by manually entered UUIDs. The original #46 scope
 added no Yard, geofence, media, Shift, document upload, background OS worker or
 generic sync/domain editor. #52/#53 are now merged and #54 adds the bounded media
-integration above; #45/#47 and Yard workflows remain separate.
+integration above. #45 extends the same lane below; #47 and Yard workflows remain separate.
 
 ## Verification
 
@@ -161,3 +161,13 @@ Shift-ID bindings. Schema v5 preserves v3/v4 queues. Physical command response c
 SENDING fencing/reconnect, immutable request and User/Tenant isolation remain intact.
 The media phase precedes Pre-Trip; real On Duty ACK and all four finalized images
 must resolve before request freezing. See issue-43-shift-inspections.md.
+
+## Issue #45 extension
+
+Typed production delivery/Fuel/exception response validation now runs in the same
+lane, alongside unchanged Shift and physical protocols. Materialization, media
+edges, SENDING/UPLOADING fencing and current owner checks remain authoritative.
+The #54 future-workflow gate now opens only for implemented #43/#45 paths. Business
+ACK persists before current work refresh; refresh failure cannot downgrade that ACK.
+Drift whole-second retry deadlines are rounded upward. No arbitrary endpoint or
+second queue is introduced. See issue-45-pod-fuel-exceptions.md.

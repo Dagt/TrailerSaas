@@ -276,8 +276,8 @@ Implementation note: #54 realizes this model in Drift v4 with a private streamin
 file store and media phases inside the existing #46 ReplayWorker. Finalization is
 confirmed from #52, while #53 and the future owning workflows retain evidence
 authority. See [implemented states, retry, fencing, materialization and cleanup](issue-54-media-queue.md).
-Future #43/#45 command contracts are prepared but are not replayed in production
-before their endpoints exist. A locally uploaded file is never business completion.
+The implemented #43/#45 adapters now consume these contracts in the same production
+replay lane. Unimplemented endpoints remain blocked. A locally uploaded file is never business completion.
 
 Suggested local structure:
 
@@ -562,4 +562,18 @@ and original Idempotency-Key are reused after crash/timeout. Intent and dependen
 records never change after first send. ACK is historical; home/work refresh remains
 authoritative. Pending matching Pre-Trip can precede a recorded departure, but cannot
 grant departure permission: dependencies require ACK and PostgreSQL revalidates.
-Reassignment/revocation retains conflicts, draft and photos. No #45 endpoint is enabled.
+Reassignment/revocation retains conflicts, draft and photos. The #45 adapters extend this lane below.
+
+## Issue #45 production evidence adapters
+
+The same ReplayWorker now installs typed #43/#45 evidence adapters. Signed BOL,
+No Receiver, Fuel and exceptions use immutable local intent, finalized media edges
+and separately frozen materialized_requests. No receiver waits for both files;
+Fuel waits for its receipt; damage waits for every attached photo. Linking and POST
+reauthorize on the server. Empty optional non-damage photo sets are valid.
+ACK requires the exact typed Stop/event result, identity/context and occurrence;
+physical Hook/Drop/Trip checks are unchanged. Lost ACK retains UUID/path/body and
+never reuploads confirmed files. Confirmed ACK survives failed authoritative refresh.
+SQLite retry deadlines round UP to seconds so restart cannot retry before Retry-After.
+Authorization/state conflicts retain intent/photos for review. No second worker,
+generic endpoint executor, push dependency or server-state simulation is added.

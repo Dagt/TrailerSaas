@@ -22,6 +22,7 @@ class ShiftController {
     if(text==null || text.length()>16384 || !query.isEmpty())throw ShiftFailure.invalid();
     try {return STRICT.readValue(text,type);}catch(RuntimeException e){throw ShiftFailure.invalid();}
   }
+  static boolean contains(String text,String field){return STRICT.readTree(text).has(field);}
   @PostMapping(value="/shifts/on-duty",consumes="application/json")
   DriverShiftContext.Shift start(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenantId,
       @RequestHeader("Idempotency-Key") UUID key,@RequestBody String body,@RequestParam Map<String,String> query) {

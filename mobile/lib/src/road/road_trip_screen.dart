@@ -9,6 +9,7 @@ import 'road_trip_controller.dart';
 import '../sync/replay_worker.dart';
 import '../sync/offline_actions.dart';
 import '../sync/sync_panel.dart';
+import 'road_evidence_view.dart';
 
 class RoadTripScreen extends StatefulWidget {
   const RoadTripScreen({
@@ -343,10 +344,20 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
                 ),
             ],
             if (active?['status'] == 'IN_SERVICE' &&
-                active?['stopType'] == 'DELIVERY')
+                active?['stopType'] == 'DELIVERY' &&
+                widget.worker == null)
               const Text(
-                'Delivery completion requires finalized POD. Evidence integration is not available yet.',
+                'Delivery completion requires finalized POD and the persistent command queue.',
               ),
+            if (widget.worker != null &&
+                downloaded != null &&
+                {
+                  'AT_STOP',
+                  'IN_TRANSIT',
+                  'ASSIGNED',
+                  'CANCELLING',
+                }.contains(trip['status']))
+              RoadEvidenceActions(worker: widget.worker!, trip: trip),
             if (execute &&
                 trip['status'] == 'AT_STOP' &&
                 active?['status'] == 'IN_SERVICE' &&

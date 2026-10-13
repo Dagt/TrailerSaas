@@ -1,14 +1,14 @@
 # TrailerSaaS Mobile
 
-## Current implementation — Issue #54
+## Media foundation — Issue #54 (extended by #43/#45 below)
 
 Drift v4 now persists private media and namespaced command dependencies alongside
 the #46 command queue. The shared foreground/reconnect worker initializes Documents,
 streams a direct R2 PUT without Firebase headers, confirms finalization with a stable
 UUID and freezes dependent HTTP requests before sending. Road's sync panel shows
-local/uploading/finalized/review states even without assigned Trips. Future #43/#45
-commands remain blocked: no Shift, inspection, POD/Fuel/exception or camera flow is
-implemented here. See [media queue, recovery and security](../docs/mobile/issue-54-media-queue.md).
+local/uploading/finalized/review states even without assigned Trips. The #43/#45
+sections below describe the implemented Shift, inspection, POD/Fuel/exception and
+camera consumers. See [media queue, recovery and security](../docs/mobile/issue-54-media-queue.md).
 
 Use the same locked SDK and dependencies; crypto 3.0.7 was already locked transitively
 and is now direct for streaming SHA-256. Files stay in application-support storage,
@@ -166,17 +166,17 @@ real open, handles failure with a generic error/retry state, and closes the
 database when the app root is disposed.
 
 Tests inject native SQLite executors and check the actual schema and file reopen.
-Manager API generation is disabled in `build.yaml` while no tables exist.
-Later schema versions must introduce explicit migrations and migration tests.
-The accepted command/media/cache tables are deliberately deferred; there are
-no queues, cached Trips, tenant context, media files or synchronization.
+Manager API generation remains disabled in `build.yaml`; explicit typed repositories
+use the generated Drift tables. Incremental schema v6 preserves cache, commands,
+media, dependencies, frozen requests and Shift results and adds Road drafts/captures
+and targeted instructions. Actual v1–v5 upgrade/reopen/rollback tests verify preservation.
 
 ## Platform boundaries
 
-Secure storage and connectivity are Dart interfaces only, with no concrete
-adapter, insecure in-memory production fallback or background listener.
-Camera, QR and location/geofence are also interfaces only. No capability plugin
-or permission is added for them.
+Secure storage, Firebase identity and connectivity use the #42 native adapters.
+QR identification uses the #44 scanner; photographs use the #43 image_picker camera
+adapter and private #54 storage. Tests inject adapters; production has no fake photo
+or insecure credential fallback. Geofencing remains #47; no permanent background service.
 
 Arrival location is a one-shot best-effort contract returning null when
 unavailable. It defines no location stream, route history, background service
@@ -234,4 +234,17 @@ SQLite and HTTP. Native encryption/backup limitations remain as documented in #5
 Locked dependencies: flutter pub get --enforce-lockfile. Generate with dart run
 build_runner build, format/analyze/test using existing CI. All older cache/command/
 media records are preserved; final requests freeze after real Shift/photo IDs resolve.
-See [architecture, safety and deferred #45 workflows](../docs/mobile/issue-43-shift-inspections.md).
+See [Shift architecture and safety](../docs/mobile/issue-43-shift-inspections.md); implemented #45 consumers follow below.
+
+## Issue #45 POD / Fuel / problem forms and instructions
+
+Road uses the existing image_picker camera adapter, private streaming file store,
+Drift v6 durable forms and the same replay/media lane. Four new local tables preserve
+unfinished captures and targeted Driver Updates. Existing migrations/queues remain.
+Only finalized server Document IDs enter frozen business requests. Local saving,
+upload finalization and server acceptance are distinct states; no fake success,
+new Firebase authority or extra worker is introduced. Instructions refresh without
+push and survive reassignment away. Native permissions/process-death behavior needs
+Android/iOS device QA; CI covers controlled camera + real files/SQLite/HTTP/widgets.
+Use locked dependencies, Drift generation/diff, format, fatal-info analyze and all
+tests as before. See docs/mobile/issue-45-pod-fuel-exceptions.md.

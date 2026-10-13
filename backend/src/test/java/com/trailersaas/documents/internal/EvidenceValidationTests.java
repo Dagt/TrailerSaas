@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class EvidenceValidationTests {
-  @ParameterizedTest @ValueSource(strings={""," ","\t\r\n","\u00a0","\u2007","\u202f","\u2003"})
+  @ParameterizedTest @ValueSource(strings={""," ","\t\r\n","\u00a0","\u2007","\u202f","\u2003","\u0085"})
   void whitespaceOnlyCommentsNormalizeToMissingEvidence(String value) {
     assertThat(DatabaseOperationalEvidencePolicy.comment(value)).isNull();
   }

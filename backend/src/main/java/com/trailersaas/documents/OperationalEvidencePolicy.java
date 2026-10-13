@@ -27,6 +27,9 @@ public interface OperationalEvidencePolicy {
   void validateDriverDamage(AuthenticatedUserPrincipal actor, UUID tenant, UUID trip, UUID stop, List<UUID> photos);
   void validateTrailerOos(AuthenticatedUserPrincipal actor, UUID tenant, UUID trailer, List<UUID> photos);
   void validateFuel(AuthenticatedUserPrincipal actor, UUID tenant, UUID trip, UUID tractor, UUID receipt);
+  /** Terminal Trip replay still requires current assignment, type/links and a committed own ledger result. */
+  void validateFuelForReplay(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID tractor,UUID receipt,UUID operation);
+  void validateDriverDamageForReplay(AuthenticatedUserPrincipal actor,UUID tenant,UUID trip,UUID stop,List<UUID> photos,UUID operation);
   /** Own, attachment-free receipt; #45 separately authorizes a Shift-only Fuel context. */
   void validateFuelUpload(AuthenticatedUserPrincipal actor, UUID tenant, UUID receipt);
 

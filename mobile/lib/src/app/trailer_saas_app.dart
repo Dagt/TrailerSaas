@@ -16,6 +16,9 @@ import '../media/documents_client.dart';
 import '../shift/shift_commands.dart';
 import '../shift/inspection_store.dart';
 import '../shift/camera_capture.dart';
+import '../road/road_evidence_replay.dart';
+import '../road/road_evidence_store.dart';
+import '../road/driver_updates_store.dart';
 
 class TrailerSaasApp extends StatefulWidget {
   const TrailerSaasApp({
@@ -39,6 +42,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
     with WidgetsBindingObserver {
   late Future<void> _databaseReady;
   ReplayWorker? _worker;
+  DriverUpdatesStore? _updates;
 
   @override
   void initState() {
@@ -55,14 +59,15 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
         CommandStore(widget.database),
         widget.session!,
       );
+      final mediaStore = MediaStore(widget.database, PrivateMediaFileStore());
       _worker ??= ReplayWorker(
         widget.session!,
         CommandStore(widget.database),
         FileOnlineCommandJournal(),
         shifts: shiftReplay,
-        futureEvidence: shiftReplay,
+        futureEvidence: RoadEvidenceReplay(shiftReplay, mediaStore),
         media: MediaProcessor(
-          MediaStore(widget.database, PrivateMediaFileStore()),
+          mediaStore,
           DocumentsClient(widget.session!.api),
           R2SignedPutTransport(),
         ),
@@ -72,6 +77,9 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
         _worker!.media!.store,
         NativeInspectionCamera(),
       ).recover();
+      await RoadEvidenceStore(_worker!.futureEvidence! as RoadEvidenceReplay)
+          .recover();
+      _updates ??= DriverUpdatesStore(widget.database, widget.session!);
       _worker!.start();
     }
   }
@@ -85,10 +93,14 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) unawaited(_worker?.sync());
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_worker?.sync());
+      unawaited(_updates?.refresh().catchError((Object _) {}));
+    }
   }
 
   Future<void> _close() async {
+    await _updates?.shutdown();
     await _worker?.shutdown();
     await widget.session?.shutdown();
     // No UI survives disposal, and no request/storage details are logged.
@@ -142,6 +154,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
                   session: widget.session!,
                   journal: widget.journal,
                   worker: _worker,
+                  updates: _updates,
                 );
         },
       ),

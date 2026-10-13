@@ -7,6 +7,8 @@ import com.trailersaas.drivers.DriverIdentityPolicy;
 import com.trailersaas.identity.*;
 import com.trailersaas.trailers.*;
 import com.trailersaas.trips.TripDeparturePrerequisites;
+import com.trailersaas.trips.DriverDeliveryExecution;
+import com.trailersaas.trips.DriverOperationRejectedException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.*;
@@ -19,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Transactional
-class DriverTripExecutionService {
+class DriverTripExecutionService implements DriverDeliveryExecution {
   private final TenantAuthorization auth;
   private final TenantContext context;
   private final DriverIdentityPolicy drivers;
@@ -31,6 +33,7 @@ class DriverTripExecutionService {
   private final MobileOperationLedger ledger;
   private final JdbcTemplate jdbc;
   private final JsonMapper json;
+  private final com.trailersaas.orders.OrderFulfillment fulfillment;
 
   DriverTripExecutionService(
       TenantAuthorization auth,
@@ -43,7 +46,7 @@ class DriverTripExecutionService {
       TripDeparturePrerequisites prerequisites,
       MobileOperationLedger ledger,
       JdbcTemplate jdbc,
-      JsonMapper json) {
+      JsonMapper json, com.trailersaas.orders.OrderFulfillment fulfillment) {
     this.auth = auth;
     this.context = context;
     this.drivers = drivers;
@@ -55,6 +58,7 @@ class DriverTripExecutionService {
     this.ledger = ledger;
     this.jdbc = jdbc;
     this.json = json;
+    this.fulfillment = fulfillment;
   }
 
   record Detail(
@@ -101,6 +105,7 @@ class DriverTripExecutionService {
                 .stream()
                 .findFirst()
                 .orElseThrow(TripFailure::missing);
+    var lockedOrders=action==Action.FIRST_DEPARTURE?fulfillment.lockTripOrders(tenant,tripId):List.<UUID>of();
     var trip = repository.resource(tenant, tripId, true);
     var driver = drivers.lockActiveForUser(tenant, actor.userId());
     auth.requireAssignedWorkCapability(
@@ -159,6 +164,7 @@ class DriverTripExecutionService {
                     movement(actor, trip, active, driver.get(), operation, r.occurredAt()));
                 trip.status = "IN_TRANSIT";
                 trip.startedAt = r.occurredAt();
+                fulfillment.started(tenant,lockedOrders);
                 active.status = "EN_ROUTE";
                 event(actor, trip, active, "ACTIVATED", operation, r, previous);
               }
@@ -198,24 +204,10 @@ class DriverTripExecutionService {
                 event(actor, trip, stop, "SERVICE_STARTED", operation, r, previous);
               }
               case COMPLETE -> {
-                state(trip, "AT_STOP");
-                requiredActive(active, stop, "IN_SERVICE");
-                chronology(r.occurredAt(), stop.serviceStartedAt);
+                state(trip,"AT_STOP");requiredActive(active,stop,"IN_SERVICE");chronology(r.occurredAt(),stop.serviceStartedAt);
                 if ("DELIVERY".equals(stop.stopType))
                   throw TripFailure.physical("EVIDENCE_REQUIRED");
-                if (!physical.serviceSatisfied(
-                    tenant, tripId, stop.id, stop.stopType, stop.serviceStartedAt))
-                  throw TripFailure.conflict();
-                stop.status = "COMPLETED";
-                stop.completedAt = r.occurredAt();
-                // Completion of one Stop is independent. Complete Trip only when no planned work
-                // remains.
-                if (stops.stream()
-                    .allMatch(s -> Set.of("COMPLETED", "CANCELLED").contains(s.status))) {
-                  trip.status = "COMPLETED";
-                  trip.completedAt = r.occurredAt();
-                }
-                event(actor, trip, stop, "COMPLETED", operation, r, previous);
+                completeStop(actor,trip,stops,active,stop,operation,r);
               }
               case DEPARTURE -> {
                 state(trip, "AT_STOP");
@@ -258,6 +250,46 @@ class DriverTripExecutionService {
       if (TripFailure.integrity(e)) throw TripFailure.conflict();
       throw e;
     }
+  }
+
+  @Transactional(propagation=Propagation.MANDATORY)
+  public Assignment prepare(AuthenticatedUserPrincipal actor,UUID tenant,UUID stop) {
+    try {
+      context.establishTenant(tenant);
+      UUID id=jdbc.query("SELECT trip_id FROM trip_stops WHERE tenant_id=? AND id=?",(r,n)->r.getObject(1,UUID.class),tenant,stop).stream().findFirst().orElseThrow(TripFailure::missing);
+      var trip=repository.resource(tenant,id,true);
+      var driver=drivers.lockActiveForUser(tenant,actor.userId());
+      auth.requireAssignedWorkCapability(actor,tenant,Capability.TRIP_EXECUTE_ASSIGNED,driver.isPresent());
+      auth.requireTenantCapability(actor,tenant,Capability.POD_UPLOAD);
+      if(!driver.orElseThrow(TripFailure::missing).equals(trip.currentDriverId))throw TripFailure.missing();
+      repository.lockedStops(tenant,id);
+      return new Assignment(trip.id,driver.get(),trip.currentTractorId);
+    } catch(TripFailure e){throw new DriverOperationRejectedException(e.status,e.code);}
+  }
+
+  @Transactional(propagation=Propagation.MANDATORY)
+  public Result complete(AuthenticatedUserPrincipal actor,UUID tenant,UUID id,UUID operation,Instant at) {
+    try {
+      var assigned=prepare(actor,tenant,id);var trip=repository.resource(tenant,assigned.tripId(),true);
+      var stops=repository.lockedStops(tenant,trip.id);
+      var stop=stops.stream().filter(s->s.id.equals(id)).findFirst().orElseThrow(TripFailure::missing);
+      var active=stops.stream().filter(s->!Set.of("COMPLETED","CANCELLED").contains(s.status)).findFirst().orElse(null);
+      if(!"DELIVERY".equals(stop.stopType) || at==null || at.isAfter(Instant.now()))throw TripFailure.tripState();
+      completeStop(actor,trip,stops,active,stop,operation,new Command(at,null,null,null,null,null));
+      trip.updatedAt=advance(trip.updatedAt);stop.updatedAt=advance(stop.updatedAt);repository.flush();
+      return new Result(stop.id,trip.id,stop.status,trip.status,stop.version,trip.version,stop.completedAt);
+    } catch(TripFailure e){throw new DriverOperationRejectedException(e.status,e.code);}
+  }
+
+  private void completeStop(AuthenticatedUserPrincipal actor,TripEntity trip,List<TripStopEntity> stops,
+      TripStopEntity active,TripStopEntity stop,UUID key,Command request) {
+    state(trip,"AT_STOP");requiredActive(active,stop,"IN_SERVICE");chronology(request.occurredAt(),stop.serviceStartedAt);
+    if(!physical.serviceSatisfied(trip.tenantId,trip.id,stop.id,stop.stopType,stop.serviceStartedAt))throw TripFailure.conflict();
+    String previous=trip.status;stop.status="COMPLETED";stop.completedAt=request.occurredAt();
+    if(stops.stream().allMatch(s->Set.of("COMPLETED","CANCELLED").contains(s.status))) {
+      trip.status="COMPLETED";trip.completedAt=request.occurredAt();
+    }
+    event(actor,trip,stop,"COMPLETED",key,request,previous);
   }
 
   private Detail detail(TripEntity t) {
