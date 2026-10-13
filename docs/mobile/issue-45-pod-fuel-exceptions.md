@@ -173,6 +173,54 @@ camera/process recovery and release signing remain native release QA requirement
 Final exact-head CI results are recorded in the PR; this document does not claim a
 merge or issue closure.
 
+## Final independent audit and corrections
+
+### Recovery checkpoint G (2026-10-12)
+
+Recovered local changes after published E/F `7c926daca28b2e4660ef47b972d9d9e043682967`;
+no files, commits or stashes were discarded. Main remains the approved #102 baseline.
+
+| Requirement | Implemented | Tested | Remaining |
+| --- | --- | --- | --- |
+| POD / fulfillment / joint transaction | Production ports, ledger and V22 | 102 affected PostgreSQL/evidence/module tests pass | Final full clean verify and exact-head CI |
+| Fuel / exceptions / fresh replay authorization | Production endpoints and owning-module replay SPI | Current-context, terminal replay, rollback and receipt concurrency | Final full suite and CI |
+| Mobile evidence / immutable requests | v6, real private capture and existing replay lane | Road folder: 78 passing; earlier full suite: 315 | Full suite after audit additions |
+| Driver Updates | Driver-scoped cursor/history and durable denial fencing | Paging/restart/profile switch/revocation | Final full suite and CI |
+| OpenAPI / documentation | Local strict implemented #45 contracts | 13 contract tests and validation pass | Publish G1, remove stale implementation wording |
+| Web regression | Production Web unchanged | Typecheck/lint/build pass | Repeat complete tests without competing Backend load |
+| Release | Same published branch; no PR created | Historical migrations and gates preserved | Four green suites, one PR, exact-head CI, Ready; no merge |
+
+Next step: verify remaining concurrency gaps and documentation, then complete the
+unchanged local gates, publish reviewed implementation, and run all four CI jobs.
+
+Reviewed production commands, public ports, V22 and historical inventory diffs,
+evidence/ledger ordering, client capture/materialization, lifecycle and authorization
+boundaries. Fuel drafts now retain the captured Tractor immutably; a later reassignment
+cannot silently substitute another Tractor. Driver instructions/cursors additionally
+bind to the current own Driver profile, preventing reuse after a profile relink.
+Explicit 401/403 invalidates operational context and durably blocks cached instruction
+visibility until an authorized refresh. Background read failures remain visible;
+app shutdown fences and awaits outstanding instruction reads before closing SQLite.
+
+Order destination matching uses bounded SQL-computed edges and PostgreSQL jsonb
+equality, avoiding a query for every candidate visit. Replay facts are supplied by
+an owning Inspections implementation of a Documents SPI, without a reverse module
+dependency or another ledger. Optional Stop-parent checks do not lock a different
+Trip; opposing foreign-Stop requests are tested to reject safely rather than creating
+a lock inversion. The actual Stop transition port requires the caller's transaction.
+Typed mobile acknowledgments reject unexpected fields and never downgrade an ACK
+because the subsequent refresh fails. Retry deadlines round upward to honor 429.
+
+The complete local Backend clean verify passed 1,972 tests (0/0/0), before the final
+focused audit additions; the latest pre-addition Road/module subset passed 48.
+The full Mobile suite passed 315 before the final Tractor/profile-denial additions;
+the strengthened Road subset now passes 78. OpenAPI validates with 13 tests.
+Web typecheck/lint/build passed locally; its parallel Windows run hit two unchanged
+timing failures under load. The unmodified Linux CI gates must all pass on the final
+HEAD before Ready for Review. Counts of that exact run supersede these checkpoints.
+Historical V1–V21, R2 signing/publication/byte verification, role mappings, 57
+capabilities, and all CI gates remain unchanged. No disabled or weakened tests.
+
 ### Checkpoints E/F
 
 Mobile infrastructure, forms and instructions are implemented and published with
