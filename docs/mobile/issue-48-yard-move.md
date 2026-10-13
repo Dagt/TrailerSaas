@@ -50,8 +50,7 @@ GET yard/trailers/{id} has fresh Yard capability and no listing surface. Eleven
 PostgreSQL context/security tests pass with 0 failures/errors/skipped. No server
 migration, role grant or RLS policy changed.
 
-Further implementation, tests and native QA limitations will be recorded as each
-recoverable checkpoint is published.
+Checkpoints A–F below are published; G records the actual review handoff.
 
 B: POST yard-moves uses the existing physical engine and MobileOperationLedger
 in one transaction. Trailer row locking precedes live Site/location/Customer
@@ -151,3 +150,20 @@ F: OpenAPI documents the four scoped context/move operations, strict request,
 safe errors/current projection, provenance and bounded pages. Historical Arrival
 privacy tests retain their assertions while recognizing the actual v7 upgrade.
 No workflows, historical test cases, backend migrations or RLS policies weakened.
+
+
+## G: published review handoff
+
+The real [PR #105](https://github.com/Dagt/TrailerSaas/pull/105) is open against
+main, initially Draft while final CI gates run. Checkpoints A–F are preserved on
+`issue-48-yard-mode-trailer-move`; implementation and local regression source is
+`3f30a49f27f7025519a4ed7a1a27b0b630f3e652`. G updates publication records only.
+The initial CI run is [38422691754](https://github.com/Dagt/TrailerSaas/actions/runs/38422691754);
+it is not a claim of final approval and is superseded by the publication HEAD run.
+
+The PR description and [checks](https://github.com/Dagt/TrailerSaas/pull/105/checks)
+record the exact final publication SHA, final run ID, completed counts for all
+four jobs, review readiness and any corrective commits. This avoids embedding
+this document's own commit hash in its contents. Ready for Review is permitted
+only after all four jobs pass on that same final HEAD, with no unresolved review
+threads or conflicts. No merge is performed. Native Android/iOS QA remains #65.
