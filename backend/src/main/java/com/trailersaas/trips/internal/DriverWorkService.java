@@ -156,7 +156,7 @@ class DriverWorkService {
                                       s.locationId,
                                       (String) l.get("site_name"),
                                       (String) l.get("location_name"),
-                                      s.siteSnapshot,
+                                      withoutGeography(s.siteSnapshot),
                                       s.scheduledAt,
                                       s.status,
                                       s.instructions,
@@ -168,5 +168,12 @@ class DriverWorkService {
                             .toList()))
             .toList();
     return work;
+  }
+
+  private static Map<String, Object> withoutGeography(Map<String, Object> snapshot) {
+    if (snapshot == null) return null;
+    var safe = new LinkedHashMap<>(snapshot);
+    safe.keySet().removeAll(Set.of("latitude", "longitude", "geofenceRadiusM"));
+    return Collections.unmodifiableMap(safe);
   }
 }

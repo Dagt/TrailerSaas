@@ -1025,6 +1025,16 @@ separately from ordered-index eligibility diagnostics, without exact cost assert
 
 ## Driver execution (#44)
 
+Issue #47 extends the same strict Arrival endpoint to MANUAL/GEOFENCE_CONFIRMED.
+The latter requires human confirmation and complete finite coordinates inside
+the next active Stop's live configured Site uncertainty envelope under locking.
+MANUAL remains independent of GPS. Fresh authorization, chronology, physical
+Trailer rules and the existing ledger remain mandatory. Own Trip detail adds
+nullable `arrivalAssistance` for that next Site only; Driver snapshots omit
+geographic fields. Stop and applicable Trailer events derive HUMAN_USER and
+USER_ACTION/MOBILE_AUTOMATION, plus matching arrivalSource. No tracking endpoints,
+schema/migration/RLS/grant changes. See [#47 architecture/security/QA](../docs/mobile/issue-47-geofence-assisted-arrival.md).
+
 [Execution boundary](../docs/mobile/issue-44-road-execution.md) documents V18 immutable Stop events, the shared V16 ledger, own assigned Trip detail and five typed execution commands. Production first departure now uses the real #43 duty/inspection policy. Ordinary completion rejects Delivery; #45 supplies the separate finalized-POD transaction below. No capability catalog, physical Hook/Drop contract or historical migration changes.
 ## Private documents (#52)
 

@@ -112,7 +112,9 @@ class DatabaseTrailerTripExecution implements TrailerTripExecution {
               new TrailerMovementProjection.Target(t.id, t.version),
               ctx,
               location,
-              TrailerMovementProjection.ArrivalSource.MANUAL));
+              ctx.provenance().sourceType() == TrailerMovementProjection.SourceType.MOBILE_AUTOMATION
+                  ? TrailerMovementProjection.ArrivalSource.GEOFENCE_CONFIRMED
+                  : TrailerMovementProjection.ArrivalSource.MANUAL));
   }
 
   public boolean serviceSatisfied(UUID tenant, UUID trip, UUID stop, String type, Instant at) {

@@ -67,7 +67,8 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
       TrailerTripExecution.Coupled currentCoupling,
       Instant startedAt,
       Instant completedAt,
-      boolean departurePrerequisitesSatisfied) {}
+      boolean departurePrerequisitesSatisfied,
+      ArrivalAssistanceContext arrivalAssistance) {}
 
   @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   Detail get(AuthenticatedUserPrincipal actor, UUID tenant, UUID id) {
@@ -171,6 +172,12 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
               case ARRIVAL -> {
                 state(trip, "IN_TRANSIT");
                 requiredActive(active, stop, "EN_ROUTE");
+                if ("GEOFENCE_CONFIRMED".equals(r.source())) {
+                  var target = arrivalContext(trip, true);
+                  if (target == null || !target.stopId().equals(stop.id)
+                      || !destinations.compatible(tenant, repository.stopCustomers(tenant, tripId, stop.id), stop.siteId, stop.locationId)
+                      || !GeofenceEvidence.inside(target, r.coordinates())) throw TripFailure.conflict();
+                }
                 chronology(r.occurredAt(), trip.startedAt);
                 stops.stream()
                     .filter(s -> s.sequenceNumber < stop.sequenceNumber && s.departedAt != null)
@@ -189,7 +196,7 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
                     driver.get(),
                     trip.currentTractorId,
                     stop.locationId,
-                    movement(actor, trip, stop, driver.get(), operation, r.occurredAt()));
+                    movement(actor, trip, stop, driver.get(), operation, r.occurredAt(), sourceType(r)));
                 stop.status = "ARRIVED";
                 stop.arrivedAt = r.occurredAt();
                 trip.status = "AT_STOP";
@@ -308,7 +315,28 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
         t.startedAt,
         t.completedAt,
         "ASSIGNED".equals(t.status)
-            && prerequisites.satisfied(t.tenantId, t.currentDriverId, t.currentTractorId, t.id));
+            && prerequisites.satisfied(t.tenantId, t.currentDriverId, t.currentTractorId, t.id),
+        arrivalContext(t, false));
+  }
+
+  private ArrivalAssistanceContext arrivalContext(TripEntity t, boolean lock) {
+    if (!"IN_TRANSIT".equals(t.status)) return null;
+    // One next nonterminal Stop. Never take coordinates from a historical snapshot.
+    var rows = jdbc.query(
+        "select s.id,s.version,s.status,s.site_id,s.location_id,p.name,p.version,p.latitude,p.longitude,p.geofence_radius_m "
+        + "from trip_stops s join physical_sites p on p.tenant_id=s.tenant_id and p.id=s.site_id "
+        + "left join operational_locations l on l.tenant_id=s.tenant_id and l.site_id=s.site_id and l.id=s.location_id "
+        + "where s.tenant_id=? and s.trip_id=? and s.id=(select id from trip_stops where tenant_id=? and trip_id=? "
+        + "and status not in ('COMPLETED','CANCELLED') order by sequence_number limit 1) "
+        + "and s.status='EN_ROUTE' and p.active and p.latitude is not null and p.longitude is not null "
+        + "and p.geofence_radius_m>0 and (s.location_id is null or l.active) "
+        + (lock ? "for share of p" : ""),
+        (r,n) -> new ArrivalAssistanceContext(t.id,t.version,t.currentDriverId,t.currentTractorId,t.plannedInitialTrailerId,
+            r.getObject(1,UUID.class),r.getLong(2),r.getString(3),r.getObject(4,UUID.class),r.getLong(7),
+            r.getObject(5,UUID.class),r.getString(6),r.getDouble(8),r.getDouble(9),r.getInt(10)),
+        t.tenantId,t.id,t.tenantId,t.id);
+    return rows.stream().filter(c -> ArrivalAssistanceContext.configured(c.latitude(),c.longitude(),c.geofenceRadiusM()))
+        .findFirst().orElse(null);
   }
 
   private void event(
@@ -328,12 +356,13 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
     jdbc.update(
         "insert into"
             + " trip_stop_events(id,tenant_id,trip_stop_id,trip_id,event_type,actor_type,source_type,actor_user_id,occurred_at,recorded_at,client_operation_id,metadata)"
-            + " values(?,?,?,?,?,'HUMAN_USER','USER_ACTION',?,?,?,?,cast(? as jsonb))",
+            + " values(?,?,?,?,?,'HUMAN_USER',?,?,?,?,?,cast(? as jsonb))",
         UUID.randomUUID(),
         trip.tenantId,
         stop.id,
         trip.id,
         type,
+        sourceType(r).name(),
         actor.userId(),
         java.sql.Timestamp.from(r.occurredAt()),
         java.sql.Timestamp.from(Instant.now()),
@@ -348,11 +377,23 @@ class DriverTripExecutionService implements DriverDeliveryExecution {
       UUID driver,
       UUID key,
       Instant at) {
+    return movement(actor,t,s,driver,key,at,TrailerMovementProjection.SourceType.USER_ACTION);
+  }
+
+  private static TrailerMovementProjection.SourceType sourceType(Command r) {
+    return "GEOFENCE_CONFIRMED".equals(r.source())
+        ? TrailerMovementProjection.SourceType.MOBILE_AUTOMATION
+        : TrailerMovementProjection.SourceType.USER_ACTION;
+  }
+
+  private static TrailerMovementProjection.Context movement(
+      AuthenticatedUserPrincipal actor,TripEntity t,TripStopEntity s,UUID driver,UUID key,Instant at,
+      TrailerMovementProjection.SourceType source) {
     return new TrailerMovementProjection.Context(
         at,
         new TrailerMovementProjection.Provenance(
             TrailerMovementProjection.ActorType.HUMAN_USER,
-            TrailerMovementProjection.SourceType.USER_ACTION,
+            source,
             actor.userId()),
         driver,
         t.id,

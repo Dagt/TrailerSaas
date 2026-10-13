@@ -10,6 +10,9 @@ import '../sync/replay_worker.dart';
 import '../sync/offline_actions.dart';
 import '../sync/sync_panel.dart';
 import 'road_evidence_view.dart';
+import '../platform/location_assistance.dart';
+import 'driver_updates_store.dart';
+import 'driver_updates_view.dart';
 
 class RoadTripScreen extends StatefulWidget {
   const RoadTripScreen({
@@ -19,36 +22,57 @@ class RoadTripScreen extends StatefulWidget {
     this.journal,
     this.scanner,
     this.worker,
+    this.location,
+    this.clock,
+    this.updates,
   });
   final SessionController session;
   final WorkTrip cached;
   final OnlineCommandJournal? journal;
   final QrScanner? scanner;
   final ReplayWorker? worker;
+  final LocationAssistancePort? location;
+  final DateTime Function()? clock;
+  final DriverUpdatesStore? updates;
   @override
   State<RoadTripScreen> createState() => _RoadTripScreenState();
 }
 
-class _RoadTripScreenState extends State<RoadTripScreen> {
+class _RoadTripScreenState extends State<RoadTripScreen>
+    with WidgetsBindingObserver {
   late final RoadTripController controller;
   late final SessionSnapshot owner;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     owner = widget.session.snapshot!;
     controller = RoadTripController(
       widget.session,
       widget.cached.id,
       widget.journal ?? FileOnlineCommandJournal(),
       worker: widget.worker,
+      location: widget.location,
+      clock: widget.clock,
+      updates: widget.updates,
     );
     controller.load();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     controller.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    controller.assistance.setForeground(state == AppLifecycleState.resumed);
+    if (state == AppLifecycleState.resumed) {
+      widget.updates?.refresh().catchError((Object _) {});
+      controller.load();
+    }
   }
 
   Future<bool> confirm(String title, String text) async =>
@@ -147,7 +171,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: controller,
+    listenable: Listenable.merge([controller, controller.assistance]),
     builder: (context, _) {
       final session = widget.session;
       final s = session.snapshot;
@@ -155,6 +179,7 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
           s != null &&
           s.userId == owner.userId &&
           s.membership.tenantId == owner.membership.tenantId &&
+          s.driver?.id == owner.driver?.id &&
           s.firebaseUid == owner.firebaseUid;
       if (!same) {
         return Scaffold(
@@ -251,6 +276,8 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
               Semantics(liveRegion: true, child: Text(controller.message!)),
             if (controller.traceId != null)
               Text('Support reference: ${controller.traceId}'),
+            if (widget.updates != null)
+              DriverUpdatesPanel(store: widget.updates!),
             if (widget.worker != null) ...[
               SyncPanel(worker: widget.worker!),
               OfflineActions(
@@ -306,6 +333,46 @@ class _RoadTripScreenState extends State<RoadTripScreen> {
             if (active != null)
               Text(
                 'Active destination: ${active['locationName'] ?? active['siteName'] ?? (active['siteSnapshot'] as Map?)?['name'] ?? 'Operational Stop'}',
+              ),
+            if (controller.assistance.available && execute) ...[
+              const Text(
+                'Use location once to suggest arrival. You confirm; your route is not continuously recorded.',
+              ),
+              TextButton(
+                onPressed: controller.assistance.busy
+                    ? null
+                    : controller.assistance.check,
+                child: const Text('Check arrival location'),
+              ),
+            ],
+            if (controller.assistance.busy) const LinearProgressIndicator(),
+            if (controller.assistance.message != null)
+              Text(controller.assistance.message!),
+            if (controller.assistance.suggestion case final suggestion?)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Text(
+                        'It looks like you arrived at ${suggestion.target.name}.',
+                      ),
+                      const Text(
+                        'This suggestion does not change the Stop. Confirm only after you have arrived.',
+                      ),
+                      FilledButton(
+                        onPressed: execute
+                            ? controller.confirmAssistedArrival
+                            : null,
+                        child: const Text('Confirm Arrival'),
+                      ),
+                      TextButton(
+                        onPressed: controller.assistance.notYet,
+                        child: const Text('Not Yet'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             if (execute &&
                 trip['status'] == 'IN_TRANSIT' &&

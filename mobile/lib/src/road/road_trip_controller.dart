@@ -11,6 +11,11 @@ import '../sync/replay_worker.dart';
 import '../sync/road_command_capture.dart';
 import '../persistence/app_database.dart';
 import '../sync/command_store.dart';
+import '../platform/location_assistance.dart';
+import '../platform/native_location_assistance.dart';
+import 'arrival_assistance_controller.dart';
+import 'geofence_evaluator.dart';
+import 'driver_updates_store.dart';
 
 class RoadTripController extends ChangeNotifier {
   RoadTripController(
@@ -19,10 +24,34 @@ class RoadTripController extends ChangeNotifier {
     this.journal, {
     this.recoveryOnly = false,
     this.worker,
-  }) {
+    this.updates,
+    LocationAssistancePort? location,
+    DateTime Function()? clock,
+  }) : assistance = ArrivalAssistanceController(
+         location ?? NativeLocationAssistance(),
+         clock: clock,
+       ) {
     _snapshot = session.snapshot;
     _owner = session.snapshot;
     session.addListener(_sessionChanged);
+    _updatesSubscription = updates?.operationalChanges.listen((change) {
+      if (_disposed ||
+          change.tripId != tripId ||
+          session.auth.uid != change.owner.firebaseUid ||
+          session.snapshot?.userId != change.owner.userId ||
+          session.snapshot?.membership.tenantId !=
+              change.owner.membership.tenantId ||
+          session.snapshot?.driver?.id != change.owner.driver?.id) {
+        return;
+      }
+      assistance.update(null);
+      ++_generation;
+      detail = null;
+      _notify();
+      if (change.downloaded) {
+        unawaited(load());
+      }
+    });
     hasQueued =
         worker !=
         null; // Fail closed until the initial persisted queue read completes.
@@ -70,11 +99,18 @@ class RoadTripController extends ChangeNotifier {
   final String tripId;
   final bool recoveryOnly;
   final ReplayWorker? worker;
+  final ArrivalAssistanceController assistance;
+  final DriverUpdatesStore? updates;
+  StreamSubscription<DriverOperationalChange>? _updatesSubscription;
   StreamSubscription<List<LocalCommand>>? _queueSubscription;
   bool hasQueued = false;
   bool pendingPreTrip = false;
   bool get canRecord =>
       session.snapshot?.driver != null &&
+      session.snapshot?.driver?.id == _owner?.driver?.id &&
+      session.snapshot?.userId == _owner?.userId &&
+      session.snapshot?.membership.tenantId == _owner?.membership.tenantId &&
+      session.auth.uid == _owner?.firebaseUid &&
       {SessionState.ready, SessionState.offline}.contains(session.state);
   DateTime? retryNotBefore;
   Timer? _retryTimer;
@@ -108,11 +144,64 @@ class RoadTripController extends ChangeNotifier {
       identical(session.snapshot, s) &&
       session.auth.uid == s.firebaseUid;
   void _notify() {
-    if (!_disposed) notifyListeners();
+    if (!_disposed) {
+      final s = session.snapshot;
+      final downloaded = s?.trips.where((t) => t.id == tripId).firstOrNull;
+      final rawTarget = detail?['arrivalAssistance'];
+      assistance.update(
+        canRecord &&
+                !sending &&
+                !hasQueued &&
+                pending == null &&
+                s!.membership.capabilities.contains('TRIP_EXECUTE_ASSIGNED') &&
+                s.membership.capabilities.contains('ARRIVAL_CONFIRM') &&
+                downloaded != null
+            ? ArrivalTarget.parse(
+                rawTarget is Map<String, dynamic> ? rawTarget : null,
+                downloaded.data,
+                s.driver!.id,
+              )
+            : null,
+      );
+      notifyListeners();
+    }
+  }
+
+  Future<void> confirmAssistedArrival() async {
+    final s = session.snapshot, generation = _generation;
+    if (s == null || !canRecord || sending || hasQueued || pending != null) {
+      return;
+    }
+    final evidence = await assistance.confirmedEvidence();
+    if (evidence == null ||
+        !_readCurrent(generation, s) ||
+        !canRecord ||
+        sending ||
+        hasQueued ||
+        evidence.target.tripId != tripId ||
+        assistance.target?.identity != evidence.target.identity) {
+      return;
+    }
+    await submit(
+      'tenants/${s.membership.tenantId}/stops/${evidence.target.stopId}/arrivals',
+      {
+        'occurredAt': assistance.now().toUtc().toIso8601String(),
+        'source': 'GEOFENCE_CONFIRMED',
+        'coordinates': evidence.fix.evidence,
+      },
+    );
   }
 
   void _sessionChanged() {
-    if (identical(_snapshot, session.snapshot) && online) return;
+    if (identical(_snapshot, session.snapshot) && online) {
+      // cacheConfirmedTrip can update downloaded work in the same owner snapshot.
+      // Its removal/version change must still fence a previous arrival context.
+      if (!session.snapshot!.trips.any((trip) => trip.id == tripId)) {
+        detail = null;
+      }
+      _notify();
+      return;
+    }
     _snapshot = session.snapshot;
     ++_generation;
     detail = null;
@@ -125,12 +214,16 @@ class RoadTripController extends ChangeNotifier {
     if ((online || (worker != null && canRecord)) &&
         _snapshot?.userId == _owner?.userId &&
         _snapshot?.firebaseUid == _owner?.firebaseUid &&
-        _snapshot?.membership.tenantId == _owner?.membership.tenantId) {
+        _snapshot?.membership.tenantId == _owner?.membership.tenantId &&
+        _snapshot?.driver?.id == _owner?.driver?.id &&
+        (_snapshot?.trips.any((trip) => trip.id == tripId) ?? false)) {
       unawaited(load());
     }
   }
 
   Future<void> load() async {
+    assistance.update(null);
+    detail = null;
     final s = session.snapshot;
     if (worker != null && s != null && !online && canRecord) {
       final cached = s.trips.where((t) => t.id == tripId).firstOrNull;
@@ -162,6 +255,13 @@ class RoadTripController extends ChangeNotifier {
           'tenants/${s.membership.tenantId}/driver/me/trips/$tripId',
         );
         if (!_readCurrent(generation, s)) return;
+        final projected = data['trip'];
+        if (projected is! Map<String, dynamic> ||
+            projected['id'] != tripId ||
+            projected['currentDriverId'] != s.driver?.id ||
+            projected['stops'] is! List) {
+          throw const FormatException('Unconfirmed own Trip projection');
+        }
         detail = data;
         if (worker != null) {
           await session.cacheConfirmedTrip(s, {
@@ -171,6 +271,7 @@ class RoadTripController extends ChangeNotifier {
               'tractorOperationalNumber': data['tractorOperationalNumber'],
               'departurePrerequisitesSatisfied':
                   data['departurePrerequisitesSatisfied'],
+              'arrivalAssistance': data['arrivalAssistance'],
             },
           });
         }
@@ -192,6 +293,7 @@ class RoadTripController extends ChangeNotifier {
       if (_readCurrent(generation, s)) {
         message =
             'Work could not be refreshed. Connect and reload before acting.';
+        detail = null;
       }
     } finally {
       if (_readCurrent(generation, s)) {
@@ -343,10 +445,16 @@ class RoadTripController extends ChangeNotifier {
         if ((refreshed['trip'] as Map)['id'] != tripId) {
           throw const FormatException();
         }
-        if (!await session.cacheConfirmedTrip(
-          s,
-          refreshed['trip'] as Map<String, dynamic>,
-        )) {
+        if (!await session.cacheConfirmedTrip(s, {
+          ...refreshed['trip'] as Map<String, dynamic>,
+          'executionContext': {
+            'currentCoupling': refreshed['currentCoupling'],
+            'tractorOperationalNumber': refreshed['tractorOperationalNumber'],
+            'departurePrerequisitesSatisfied':
+                refreshed['departurePrerequisitesSatisfied'],
+            'arrivalAssistance': refreshed['arrivalAssistance'],
+          },
+        })) {
           return;
         }
         if (!_current(generation, s)) return;
@@ -448,6 +556,8 @@ class RoadTripController extends ChangeNotifier {
 
   @override
   void dispose() {
+    unawaited(_updatesSubscription?.cancel());
+    assistance.dispose();
     unawaited(_queueSubscription?.cancel());
     _retryTimer?.cancel();
     _disposed = true;

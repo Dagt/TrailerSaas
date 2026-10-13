@@ -19,6 +19,18 @@ The server remains authoritative. Offline mode records local intent/facts and re
 
 # 1. Core model
 
+Issue #47 adds GEOFENCE_CONFIRMED to the existing Arrival command only after a
+human confirms a fresh authorized suggestion. At confirmation, occurredAt and
+coordinates are materialized with one immutable clientOperationId in the same
+RoadCommandCapture/CommandStore/ReplayWorker lane. Permission denial leaves
+MANUAL independent. GPS observations are ephemeral and never stored in SQLite;
+only confirmed Arrival evidence may be durable. No new queue, transport or schema
+version. Lost ACK/reopen retains the same body/UUID; ACK refreshes server state.
+Downloaded Driver Updates invalidate old suggestions before fetching the new
+own Trip context; historical instructions never authorize replay. Spatial
+context is revalidated server-side; freshness gates the human suggestion, not
+the later offline replay. See [#47](issue-47-geofence-assisted-arrival.md).
+
 The mobile client maintains two persistent queues:
 
 1. **Command queue** — structured operational actions.

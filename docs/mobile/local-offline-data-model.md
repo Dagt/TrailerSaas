@@ -1,5 +1,13 @@
 # Mobile Local Offline Data Model v0.1
 
+Issue #47 keeps Drift v6 and all existing tables. The cached own Trip execution
+context may contain `arrivalAssistance` for the next authorized Site only, including
+Trip/Stop/Site versions and explicit geography. Historical snapshots are never
+evaluated. Raw GPS readings/suggestions are in-memory only. Existing immutable
+Arrival payloads accept MANUAL or GEOFENCE_CONFIRMED; the latter contains expressly
+confirmed coordinates/accuracy with its original occurredAt/UUID. No GPS table,
+position history, new synchronization system or migration is introduced.
+
 **Status:** Accepted  
 **Storage:** SQLite via Drift  
 **Related:** offline-sync-protocol.md

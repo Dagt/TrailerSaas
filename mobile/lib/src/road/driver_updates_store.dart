@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -15,6 +16,10 @@ class DriverUpdatesStore extends ChangeNotifier {
   DriverUpdatesStore(this.db, this.session);
   final AppDatabase db;
   final SessionController session;
+  final _changes = StreamController<DriverOperationalChange>.broadcast(
+    sync: true,
+  );
+  Stream<DriverOperationalChange> get operationalChanges => _changes.stream;
   bool _closed = false;
   final _errors = <String, String>{};
   String? get message {
@@ -97,6 +102,7 @@ class DriverUpdatesStore extends ChangeNotifier {
     if (_closed) return;
     _closed = true;
     await _lanes[db]?.catchError((Object _) {});
+    await _changes.close();
     super.dispose();
   }
 
@@ -180,6 +186,7 @@ class DriverUpdatesStore extends ChangeNotifier {
           'payload': safe,
         });
       }
+      final affected = <String>{};
       await db.transaction(() async {
         if (!current(owner)) return;
         var sequence =
@@ -211,6 +218,11 @@ class DriverUpdatesStore extends ChangeNotifier {
               );
             }
             continue;
+          }
+          final trip = item['tripId'] as String;
+          if (affected.add(trip) && current(owner)) {
+            // Fence obsolete suggestions before durable download completes.
+            _changes.add(DriverOperationalChange(owner, trip, false));
           }
           await db
               .into(db.cachedDriverUpdates)
@@ -244,9 +256,21 @@ class DriverUpdatesStore extends ChangeNotifier {
               );
         }
       });
+      if (current(owner)) {
+        for (final trip in affected) {
+          _changes.add(DriverOperationalChange(owner, trip, true));
+        }
+      }
       if (next == null) return;
       cursor = next as String;
       seen.add(cursor);
     }
   }
+}
+
+class DriverOperationalChange {
+  const DriverOperationalChange(this.owner, this.tripId, this.downloaded);
+  final SessionSnapshot owner;
+  final String tripId;
+  final bool downloaded;
 }

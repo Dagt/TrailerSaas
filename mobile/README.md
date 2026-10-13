@@ -1,5 +1,29 @@
 # TrailerSaaS Mobile
 
+## Issue #47 foreground arrival assistance
+
+Road Mode offers a deliberate Check arrival location for the next authenticated
+Stop's live Site. Geolocator 14.0.1 with locked compatible Android/iOS adapters
+is behind LocationAssistancePort; [ADR-024](../docs/decisions/ADR-024-foreground-arrival-location-adapter.md)
+documents the Linux dependency conflict avoided without downgrading connectivity.
+Android uses COARSE/FINE only; iOS uses WhenInUse only. No background grant,
+tracking loop, map or GPS history. One first-reading observer times out at 10 s;
+precise readings up to 30 s old need accuracy <= radius/2 and distance+accuracy
+inside the explicitly configured radius. Approximate/denied/disabled GPS falls
+back to the existing manual arrival control.
+
+Confirm Arrival consumes a valid suggestion and materializes GEOFENCE_CONFIRMED
+through the same durable command/replay lane; Not Yet suppresses that context.
+No Stop status changes before ACK. Driver Updates invalidates obsolete contexts
+before download completes and refreshes live own work after commit. Offline/lost
+ACK/reopen retains the original UUID/body; no automatic conversion to MANUAL.
+Raw readings are never persisted; Drift v6 is unchanged. See the [acceptance,
+security and native QA matrix](../docs/mobile/issue-47-geofence-assisted-arrival.md).
+
+Physical Android/iOS permission, reduced-accuracy, revocation, lifecycle/process
+restart and release-build verification remain #65 work. Current automated
+adapter/widget/SQLite tests are not physical-device evidence.
+
 ## Media foundation — Issue #54 (extended by #43/#45 below)
 
 Drift v4 now persists private media and namespaced command dependencies alongside
@@ -176,12 +200,13 @@ and targeted instructions. Actual v1–v5 upgrade/reopen/rollback tests verify p
 Secure storage, Firebase identity and connectivity use the #42 native adapters.
 QR identification uses the #44 scanner; photographs use the #43 image_picker camera
 adapter and private #54 storage. Tests inject adapters; production has no fake photo
-or insecure credential fallback. Geofencing remains #47; no permanent background service.
+or insecure credential fallback. #47 implements bounded foreground arrival assistance; no permanent background location service.
 
-Arrival location is a one-shot best-effort contract returning null when
-unavailable. It defines no location stream, route history, background service
-or automatic arrival transition. Future callers must supply an explicitly active
-arrival context and preserve manual fallback under ADR-014.
+Issue #47 supplies the native bounded foreground location adapter and operational
+caller under ADR-014. It returns one reading or unavailable, cancels the observer,
+and keeps manual fallback. No route history, background service or automatic
+arrival transition is enabled. The earlier ArrivalLocation scaffold is retained
+as a compatibility contract; production assistance uses LocationAssistancePort.
 
 No Firebase, login, tenant selection, operational workflows, Yard Check,
 uploads, API calls, command/media queue or continuous GPS tracking are included.

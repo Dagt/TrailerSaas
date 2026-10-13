@@ -98,6 +98,7 @@ class ReplayWorker extends ChangeNotifier {
       session.state == SessionState.ready &&
       session.snapshot?.userId == owner.userId &&
       session.snapshot?.membership.tenantId == owner.membership.tenantId &&
+      session.snapshot?.driver?.id == owner.driver?.id &&
       session.snapshot?.driver != null;
 
   Future<void> sync() {
@@ -751,6 +752,7 @@ class ReplayWorker extends ChangeNotifier {
           'tractorOperationalNumber': detail['tractorOperationalNumber'],
           'departurePrerequisitesSatisfied':
               detail['departurePrerequisitesSatisfied'],
+          'arrivalAssistance': detail['arrivalAssistance'],
         },
       });
     } on ApiProblem catch (e) {

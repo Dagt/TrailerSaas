@@ -32,6 +32,10 @@ Architecture choices that materially affect the system are recorded here.
 
 ADR-013 through ADR-022 were reviewed and **Accepted** on 2026-10-04 as the architecture-completion package.
 
+## Implementation adapter decisions
+
+- [ADR-024 — Bounded foreground arrival location adapter](ADR-024-foreground-arrival-location-adapter.md), implements ADR-014 within the authorized #47 package selection.
+
 ## File naming
 
 `ADR-###-short-title.md`
