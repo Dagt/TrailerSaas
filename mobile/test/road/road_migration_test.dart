@@ -7,6 +7,7 @@ import 'package:trailersaas_mobile/src/persistence/app_database.dart';
 import 'package:trailersaas_mobile/src/sync/command_store.dart';
 
 import '../shift/legacy_database.dart';
+import '../persistence/legacy_schema.dart';
 import '../sync/command_store_test.dart' show intent;
 
 // The original intent guard and frozen request exist before the v6 migration.
@@ -24,9 +25,12 @@ class Version5Database extends AppDatabase {
           'cached_driver_updates',
           'driver_update_cursors',
           'cached_yard_contexts',
+          'yard_drafts',
+          'yard_captures',
+          'yard_conflict_reviews',
         }.contains(t.actualTableName),
       )) {
-        await m.createTable(table);
+        await createPublishedV7Table(this, table.actualTableName);
       }
       await customStatement(
         'CREATE UNIQUE INDEX local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
@@ -80,9 +84,9 @@ void main() {
     expect(
       (await db.customSelect('PRAGMA user_version').getSingle())
           .data['user_version'],
-      7,
+      8,
     );
-    expect(db.allTables, hasLength(18));
+    expect(db.allTables, hasLength(21));
     expect(
       (await db.customSelect('SELECT * FROM local_commands').getSingle()).data,
       before,
@@ -146,7 +150,7 @@ void main() {
       expect(
         (await db.customSelect('PRAGMA user_version').getSingle())
             .data['user_version'],
-        7,
+        8,
       );
     },
   );

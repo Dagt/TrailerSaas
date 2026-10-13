@@ -5,6 +5,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trailersaas_mobile/src/persistence/app_database.dart';
 
+import '../persistence/legacy_schema.dart';
+
 /// The actual v6 queue/result constraints, not the new v7 Table definitions.
 class Version6Database extends AppDatabase {
   Version6Database(super.executor);
@@ -35,9 +37,12 @@ class Version6Database extends AppDatabase {
           'local_commands',
           'command_results',
           'cached_yard_contexts',
+          'yard_drafts',
+          'yard_captures',
+          'yard_conflict_reviews',
         }.contains(t.actualTableName),
       )) {
-        await m.createTable(table);
+        await createPublishedV7Table(this, table.actualTableName);
       }
       await customStatement(
         "CREATE TRIGGER local_command_intent_immutable BEFORE UPDATE OF payload_json ON local_commands BEGIN SELECT RAISE(ABORT,'immutable'); END",
@@ -53,7 +58,7 @@ class Version6Database extends AppDatabase {
 }
 
 void main() {
-  test('real v6 file preserves queue, ACK results, frozen requests and immutable namespace graph in v7', () async {
+  test('real v6 file preserves queue, ACK results, frozen requests and immutable namespace graph through v8', () async {
     final directory = await Directory.systemTemp.createTemp('yard-v6-');
     addTearDown(() => directory.delete(recursive: true));
     final file = File('${directory.path}/device.sqlite');
@@ -91,7 +96,7 @@ void main() {
     expect(
       (await upgraded.customSelect('PRAGMA user_version').getSingle())
           .data['user_version'],
-      7,
+      8,
     );
     expect(
       (await upgraded.customSelect('SELECT * FROM local_commands').getSingle())

@@ -135,6 +135,7 @@ class LocalMedia extends Table {
   BoolColumn get reviewRequired =>
       boolean().withDefault(const Constant(false))();
   TextColumn get tripId => text().nullable()();
+  TextColumn get trailerId => text().nullable()();
   DateTimeColumn get capturedAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get finalizedAt => dateTime().nullable()();
@@ -348,6 +349,70 @@ class DriverUpdateCursors extends Table {
   Set<Column> get primaryKey => {userId, tenantId, driverId};
 }
 
+class YardDrafts extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get trailerId => text()();
+  TextColumn get siteId => text()();
+  TextColumn get requestJson => text()();
+  TextColumn get photosJson => text().withDefault(const Constant('[]'))();
+  TextColumn get comment => text().withDefault(const Constant(''))();
+  TextColumn get commandId => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {id};
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(id,user_id,tenant_id)',
+    'FOREIGN KEY(command_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
+    'CHECK(json_valid(request_json) AND json_valid(photos_json))',
+    'CHECK(length(comment)<=4000)',
+  ];
+}
+
+class YardCaptures extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get draftId => text()();
+  TextColumn get mediaId => text().nullable()();
+  TextColumn get state => text().withDefault(const Constant('PENDING'))();
+  DateTimeColumn get createdAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {id};
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(draft_id,user_id,tenant_id) REFERENCES yard_drafts(id,user_id,tenant_id)',
+    'FOREIGN KEY(media_id,user_id,tenant_id) REFERENCES local_media(id,user_id,tenant_id)',
+    "CHECK(state IN ('PENDING','CAPTURED','FAILED','CANCELLED'))",
+    "CHECK(state<>'CAPTURED' OR media_id IS NOT NULL)",
+  ];
+}
+
+/// Explicit fresh human review starts a new action, never changes a failed request
+/// or marks it ACKNOWLEDGED. Original descendants remain blocked.
+class YardConflictReviews extends Table {
+  TextColumn get failedOperationId => text()();
+  TextColumn get replacementOperationId => text()();
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get trailerId => text()();
+  IntColumn get reviewedVersion => integer()();
+  TextColumn get reviewedProjectionJson => text()();
+  DateTimeColumn get reviewedAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {failedOperationId};
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(failed_operation_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
+    'FOREIGN KEY(replacement_operation_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
+    'CHECK(failed_operation_id<>replacement_operation_id AND reviewed_version>=0)',
+    'CHECK(json_valid(reviewed_projection_json))',
+  ];
+}
+
 @DriftDatabase(
   tables: [
     LocalSessionContexts,
@@ -368,6 +433,9 @@ class DriverUpdateCursors extends Table {
     RoadCaptures,
     CachedDriverUpdates,
     DriverUpdateCursors,
+    YardDrafts,
+    YardCaptures,
+    YardConflictReviews,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -383,7 +451,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -394,12 +462,13 @@ class AppDatabase extends _$AppDatabase {
         await _mediaIndexesAndImmutability();
         await _shiftIndexesAndImmutability();
         await _roadIndexesAndImmutability();
-        await customStatement('PRAGMA user_version=7');
+        await _yardIndexesAndImmutability();
+        await customStatement('PRAGMA user_version=8');
       });
     },
     onUpgrade: (migrator, from, to) async {
       // v1 was the empty scaffold. Its deployed schema remains an explicit upgrade source.
-      if (from < 1 || from > 6 || to != 7) {
+      if (from < 1 || from > 7 || to != 8) {
         throw StateError('No migration from schema $from to $to is defined.');
       }
       // Whole upgrade and version marker commit together. TableMigration alone
@@ -407,86 +476,96 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA foreign_keys=OFF');
       try {
         await transaction(() async {
-          if (from == 1) {
-            await migrator.createTable(localSessionContexts);
-            await migrator.createTable(cachedTrips);
-            await migrator.createTable(cachedStops);
-            await migrator.createTable(cachedTrailers);
-          }
-          if (from <= 2) {
-            await migrator.createTable(localCommands);
-            await migrator.createTable(localSyncIssues);
-            await _queueIndexesAndImmutability();
-          }
-          if (from >= 3 && from < 5) {
-            // Preserve all queue rows and dependent tables. Native SQLite opens with
-            // FK enforcement off during the migration; beforeOpen restores it.
-            await customStatement(
-              'DROP TRIGGER IF EXISTS local_command_intent_immutable',
-            );
-            await migrator.alterTable(
-              TableMigration(
-                localCommands,
-                newColumns: [localCommands.aggregateType],
-              ),
-            );
-            await _queueIndexesAndImmutability();
-          }
-          if (from <= 3) {
-            await migrator.createTable(localMedia);
-            await customStatement(
-              'CREATE UNIQUE INDEX local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
-            );
-            await migrator.createTable(commandMediaDependencies);
-            await migrator.createTable(materializedRequests);
-            await _mediaIndexesAndImmutability(createParentIndex: false);
-          } else {
-            await customStatement(
-              'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
-            );
-          }
-          if (from < 5) {
-            await migrator.createTable(commandResults);
-            await migrator.createTable(commandResultDependencies);
-            await migrator.createTable(inspectionDrafts);
-            await migrator.createTable(cameraCaptures);
-            await _shiftIndexesAndImmutability();
-          }
-          if (from < 6) {
-            await migrator.createTable(roadDrafts);
-            await migrator.createTable(roadCaptures);
-            await migrator.createTable(cachedDriverUpdates);
-            await migrator.createTable(driverUpdateCursors);
-            await _roadIndexesAndImmutability();
-          }
-          if (from >= 5) {
-            await customStatement(
-              'DROP TRIGGER IF EXISTS local_command_intent_immutable',
-            );
-            await migrator.alterTable(TableMigration(localCommands));
-            await _queueIndexesAndImmutability();
-            await customStatement(
-              'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
-            );
-            for (final operation in ['UPDATE', 'DELETE']) {
+          if (from < 7) {
+            if (from == 1) {
+              await migrator.createTable(localSessionContexts);
+              await migrator.createTable(cachedTrips);
+              await migrator.createTable(cachedStops);
+              await migrator.createTable(cachedTrailers);
+            }
+            if (from <= 2) {
+              await migrator.createTable(localCommands);
+              await migrator.createTable(localSyncIssues);
+              await _queueIndexesAndImmutability();
+            }
+            if (from >= 3 && from < 5) {
+              // Preserve all queue rows and dependent tables. Native SQLite opens with
+              // FK enforcement off during the migration; beforeOpen restores it.
               await customStatement(
-                'DROP TRIGGER IF EXISTS command_results_${operation.toLowerCase()}_immutable',
+                'DROP TRIGGER IF EXISTS local_command_intent_immutable',
+              );
+              await migrator.alterTable(
+                TableMigration(
+                  localCommands,
+                  newColumns: [localCommands.aggregateType],
+                ),
+              );
+              await _queueIndexesAndImmutability();
+            }
+            if (from <= 3) {
+              await migrator.createTable(localMedia);
+              await customStatement(
+                'CREATE UNIQUE INDEX local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
+              );
+              await migrator.createTable(commandMediaDependencies);
+              await migrator.createTable(materializedRequests);
+              await _mediaIndexesAndImmutability(createParentIndex: false);
+            } else {
+              await customStatement(
+                'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
               );
             }
-            await migrator.alterTable(TableMigration(commandResults));
-            for (final operation in ['UPDATE', 'DELETE']) {
-              await customStatement(
-                'CREATE TRIGGER command_results_${operation.toLowerCase()}_immutable BEFORE $operation ON command_results BEGIN SELECT RAISE(ABORT,\'Confirmed identity and dependencies are immutable\'); END',
-              );
+            if (from < 5) {
+              await migrator.createTable(commandResults);
+              await migrator.createTable(commandResultDependencies);
+              await migrator.createTable(inspectionDrafts);
+              await migrator.createTable(cameraCaptures);
+              await _shiftIndexesAndImmutability();
             }
+            if (from < 6) {
+              await migrator.createTable(roadDrafts);
+              await migrator.createTable(roadCaptures);
+              await migrator.createTable(cachedDriverUpdates);
+              await migrator.createTable(driverUpdateCursors);
+              await _roadIndexesAndImmutability();
+            }
+            if (from >= 5) {
+              await customStatement(
+                'DROP TRIGGER IF EXISTS local_command_intent_immutable',
+              );
+              await migrator.alterTable(TableMigration(localCommands));
+              await _queueIndexesAndImmutability();
+              await customStatement(
+                'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
+              );
+              for (final operation in ['UPDATE', 'DELETE']) {
+                await customStatement(
+                  'DROP TRIGGER IF EXISTS command_results_${operation.toLowerCase()}_immutable',
+                );
+              }
+              await migrator.alterTable(TableMigration(commandResults));
+              for (final operation in ['UPDATE', 'DELETE']) {
+                await customStatement(
+                  'CREATE TRIGGER command_results_${operation.toLowerCase()}_immutable BEFORE $operation ON command_results BEGIN SELECT RAISE(ABORT,\'Confirmed identity and dependencies are immutable\'); END',
+                );
+              }
+            }
+            await migrator.createTable(cachedYardContexts);
           }
-          await migrator.createTable(cachedYardContexts);
+          // v7 -> v8 adds metadata only. Commands/frozen requests are not rebuilt.
+          if (from >= 4) {
+            await migrator.addColumn(localMedia, localMedia.trailerId);
+          }
+          await migrator.createTable(yardDrafts);
+          await migrator.createTable(yardCaptures);
+          await migrator.createTable(yardConflictReviews);
+          await _yardIndexesAndImmutability();
           if ((await customSelect(
             'PRAGMA foreign_key_check',
           ).get()).isNotEmpty) {
             throw StateError('Migration cannot preserve foreign-key integrity');
           }
-          await customStatement('PRAGMA user_version=7');
+          await customStatement('PRAGMA user_version=8');
         });
       } finally {
         await customStatement('PRAGMA foreign_keys=ON');
@@ -494,6 +573,62 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys=ON'),
   );
+
+  Future<void> _yardIndexesAndImmutability() async {
+    await customStatement(
+      'CREATE INDEX yard_drafts_scope ON yard_drafts(user_id,tenant_id,trailer_id,site_id,updated_at)',
+    );
+    await customStatement(
+      "CREATE UNIQUE INDEX yard_camera_one_pending ON yard_captures(state) WHERE state='PENDING'",
+    );
+    await customStatement(
+      '''CREATE TRIGGER yard_draft_context_immutable BEFORE UPDATE OF id,user_id,tenant_id,trailer_id,site_id,request_json,created_at ON yard_drafts BEGIN SELECT RAISE(ABORT,'Yard draft context is immutable');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER yard_draft_queued_immutable BEFORE UPDATE ON yard_drafts WHEN OLD.command_id IS NOT NULL BEGIN SELECT RAISE(ABORT,'Queued Yard draft is immutable');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER yard_capture_context_immutable BEFORE UPDATE OF id,user_id,tenant_id,draft_id,created_at ON yard_captures BEGIN SELECT RAISE(ABORT,'Yard capture context is immutable');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER yard_capture_before_queue BEFORE INSERT ON yard_captures WHEN NOT EXISTS(SELECT 1 FROM yard_drafts d WHERE d.id=NEW.draft_id AND d.user_id=NEW.user_id AND d.tenant_id=NEW.tenant_id AND d.command_id IS NULL) BEGIN SELECT RAISE(ABORT,'Yard draft is unavailable or queued');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER yard_queue_after_capture BEFORE UPDATE OF command_id ON yard_drafts WHEN NEW.command_id IS NOT NULL AND EXISTS(SELECT 1 FROM yard_captures c WHERE c.draft_id=OLD.id AND c.state='PENDING') BEGIN SELECT RAISE(ABORT,'Camera result still pending');END''',
+    );
+    await customStatement(
+      '''CREATE TRIGGER yard_camera_exclusive BEFORE INSERT ON yard_captures WHEN NEW.state='PENDING' AND (EXISTS(SELECT 1 FROM camera_captures WHERE state='PENDING') OR EXISTS(SELECT 1 FROM road_captures WHERE state='PENDING')) BEGIN SELECT RAISE(ABORT,'A native capture is pending recovery in its original mode');END''',
+    );
+    for (final table in ['camera_captures', 'road_captures']) {
+      await customStatement(
+        "CREATE TRIGGER ${table}_yard_exclusive BEFORE INSERT ON $table WHEN NEW.state='PENDING' AND EXISTS(SELECT 1 FROM yard_captures WHERE state='PENDING') BEGIN SELECT RAISE(ABORT,'Yard camera is still active');END",
+      );
+    }
+    await customStatement(
+      '''CREATE TRIGGER local_media_trailer_identity BEFORE UPDATE OF trailer_id ON local_media BEGIN SELECT RAISE(ABORT,'Media Trailer identity is immutable');END''',
+    );
+    for (final operation in ['INSERT', 'UPDATE']) {
+      await customStatement(
+        "CREATE TRIGGER local_media_trailer_scope_${operation.toLowerCase()} BEFORE $operation ON local_media WHEN NEW.trailer_id IS NOT NULL AND (NEW.document_type<>'DAMAGE_PHOTO' OR NEW.trip_id IS NOT NULL OR length(NEW.trailer_id)<>36 OR NEW.trailer_id NOT GLOB '????????-????-????-????-????????????' OR NEW.trailer_id GLOB '*[^0-9a-f-]*') BEGIN SELECT RAISE(ABORT,'Invalid Trailer media scope');END",
+      );
+    }
+    for (final operation in ['UPDATE', 'DELETE']) {
+      await customStatement(
+        "CREATE TRIGGER yard_reviews_${operation.toLowerCase()}_immutable BEFORE $operation ON yard_conflict_reviews BEGIN SELECT RAISE(ABORT,'Conflict review is immutable');END",
+      );
+    }
+    await customStatement(
+      '''CREATE TRIGGER yard_review_requires_failed_command BEFORE INSERT ON yard_conflict_reviews WHEN NOT EXISTS(
+      SELECT 1 FROM local_commands failed JOIN local_commands replacement ON replacement.client_operation_id=NEW.replacement_operation_id
+      WHERE failed.client_operation_id=NEW.failed_operation_id AND failed.user_id=NEW.user_id AND failed.tenant_id=NEW.tenant_id
+      AND replacement.user_id=NEW.user_id AND replacement.tenant_id=NEW.tenant_id AND failed.aggregate_type='TRAILER' AND replacement.aggregate_type='TRAILER'
+      AND failed.aggregate_id=NEW.trailer_id AND replacement.aggregate_id=NEW.trailer_id
+      AND failed.command_type IN ('YARD_MOVE','LOCATION_CORRECTION','LOAD_STATE_CHANGE','OOS')
+      AND replacement.command_type IN ('YARD_MOVE','LOCATION_CORRECTION','LOAD_STATE_CHANGE','OOS')
+      AND failed.state IN ('CONFLICT','BLOCKED','PERMANENT_FAILURE') AND replacement.state='QUEUED' AND replacement.attempt_count=0)
+      BEGIN SELECT RAISE(ABORT,'Only an explicit new Yard action can review its failed physical chain');END''',
+    );
+  }
 
   Future<void> _roadIndexesAndImmutability() async {
     await customStatement(

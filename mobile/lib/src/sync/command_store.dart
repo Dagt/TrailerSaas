@@ -183,20 +183,25 @@ class CommandStore {
     final keys = {
       if (c.tripId != null) 'trip:${c.tripId}',
       ...intent.resources,
-      if (c.body['trailerId'] != null) 'trailer:${c.body['trailerId']}',
+      if (c.body['trailerId'] != null && intent.type != 'DISCREPANCY_REPORT')
+        'trailer:${c.body['trailerId']}',
       if (c.body['tractorId'] != null) 'tractor:${c.body['tractorId']}',
     };
     final deps = intent.dependencies.toSet();
+    final reviewed = await reviewedYardFailures(user, tenant);
     if (followResources) {
       for (final key in keys) {
         final previous = prior
             .where(
               (r) =>
                   r.state != CommandState.acknowledged.value &&
+                  !reviewed.contains(r.clientOperationId) &&
                   (jsonDecode(r.resourceKeysJson) as List).contains(key),
             )
             .lastOrNull;
-        if (previous != null) deps.add(previous.clientOperationId);
+        if (previous != null) {
+          deps.add(previous.clientOperationId);
+        }
       }
     }
     for (final dependency in deps) {
@@ -237,7 +242,9 @@ class CommandStore {
     OnlineCommandJournal legacy,
   ) async {
     final old = await legacy.read(user, tenant);
-    if (old == null) return;
+    if (old == null) {
+      return;
+    }
     await enqueue(user, tenant, CommandIntent(old));
     final row = await find(user, tenant, old.id);
     if (row == null ||
@@ -338,11 +345,22 @@ class CommandStore {
     }
   });
 
+  Future<Set<String>> reviewedYardFailures(String user, String tenant) async =>
+      (await (db.select(db.yardConflictReviews)..where(
+                (r) => r.userId.equals(user) & r.tenantId.equals(tenant),
+              ))
+              .get())
+          .map((r) => r.failedOperationId)
+          .toSet();
+
   /// Explicit review retries the SAME immutable operation, never changes payload
   /// or labels a rejected physical action as performed. Server must re-authorize.
   Future<void> retryReviewed(String user, String tenant, String id) =>
       db.transaction(() async {
         final c = await find(user, tenant, id);
+        if ((await reviewedYardFailures(user, tenant)).contains(id)) {
+          return;
+        }
         if (c == null ||
             !{
               CommandState.conflict.value,
@@ -352,7 +370,9 @@ class CommandStore {
             c.lastErrorCode == 'INVALID_DEPENDENCY') {
           return;
         }
-        if (c.nextRetryAt != null && now().isBefore(c.nextRetryAt!)) return;
+        if (c.nextRetryAt != null && now().isBefore(c.nextRetryAt!)) {
+          return;
+        }
         await result(c, CommandState.queued);
       });
 

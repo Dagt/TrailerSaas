@@ -98,7 +98,7 @@ void main() {
     expect(
       (await db.customSelect('PRAGMA user_version').getSingle())
           .data['user_version'],
-      7,
+      8,
     );
     await expectLater(
       db.customStatement('UPDATE local_commands SET trip_id=NULL'),

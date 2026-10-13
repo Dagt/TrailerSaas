@@ -64,14 +64,21 @@ class MediaStore {
     String mime,
     Stream<List<int>> bytes, {
     String? tripId,
+    String? trailerId,
     String? localId,
   }) async {
     final owner = session.snapshot;
     if (owner == null ||
         session.auth.uid != owner.firebaseUid ||
-        owner.driver == null ||
+        (trailerId == null
+            ? owner.driver == null
+            : type != 'DAMAGE_PHOTO' ||
+                  tripId != null ||
+                  !uuidPattern.hasMatch(trailerId)) ||
         !{SessionState.ready, SessionState.offline}.contains(session.state) ||
-        !owner.membership.capabilities.contains(capability(type)) ||
+        !owner.membership.capabilities.contains(
+          trailerId == null ? capability(type) : 'TRAILER_OOS_MARK',
+        ) ||
         tripId != null && !owner.trips.any((t) => t.id == tripId)) {
       throw const MediaFileProblem('AUTHORIZATION_REQUIRED');
     }
@@ -102,6 +109,7 @@ class MediaStore {
       mime,
       file,
       tripId: tripId,
+      trailerId: trailerId,
     );
     return id;
   }
@@ -114,8 +122,15 @@ class MediaStore {
     String mime,
     StoredMediaFile file, {
     String? tripId,
+    String? trailerId,
   }) async {
     validateType(type, mime);
+    if (trailerId != null &&
+        (type != 'DAMAGE_PHOTO' ||
+            tripId != null ||
+            !uuidPattern.hasMatch(trailerId))) {
+      throw const MediaFileProblem('INVALID_MEDIA_TYPE');
+    }
     final actual = await files.inspect(user, tenant, file.key);
     if (actual.size != file.size ||
         actual.sha256 != file.sha256 ||
@@ -127,7 +142,9 @@ class MediaStore {
     if (existing != null) {
       if (existing.checksumSha256 != file.sha256 ||
           existing.documentType != type ||
-          existing.contentType != mime) {
+          existing.contentType != mime ||
+          existing.trailerId != trailerId ||
+          existing.tripId != tripId) {
         throw const MediaFileProblem('DUPLICATE_CAPTURE');
       }
       return;
@@ -149,6 +166,7 @@ class MediaStore {
             capturedAt: now(),
             updatedAt: now(),
             tripId: Value(tripId),
+            trailerId: Value(trailerId),
           ),
         );
   }
@@ -299,7 +317,9 @@ class MediaStore {
           variables: [Variable(row.id)],
         )
         .get();
-    if (used.isNotEmpty) throw const MediaFileProblem('REQUEST_FROZEN');
+    if (used.isNotEmpty) {
+      throw const MediaFileProblem('REQUEST_FROZEN');
+    }
     if (row.serverDocumentId == null ||
         row.lastErrorCode != 'UPLOAD_NOT_COMPLETE') {
       throw const MediaFileProblem('RESULT_UNCERTAIN');
@@ -367,7 +387,9 @@ class MediaStore {
               variables: [Variable(row.id)],
             )
             .get();
-        if (pending.isNotEmpty) return false;
+        if (pending.isNotEmpty) {
+          return false;
+        }
         await (db.update(db.localMedia)..where(
               (r) =>
                   r.id.equals(row.id) &
@@ -377,7 +399,9 @@ class MediaStore {
             .write(const LocalMediaCompanion(fileState: Value('REMOVING')));
         return true;
       });
-      if (!eligible) continue;
+      if (!eligible) {
+        continue;
+      }
       await files.remove(user, tenant, row.fileKey);
       await (db.update(db.localMedia)..where(
             (r) =>

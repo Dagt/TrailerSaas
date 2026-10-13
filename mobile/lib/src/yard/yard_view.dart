@@ -12,6 +12,8 @@ import '../sync/sync_panel.dart';
 import 'yard_commands.dart';
 import 'yard_controller.dart';
 import 'yard_contracts.dart';
+import 'yard_actions_view.dart';
+import '../shift/camera_capture.dart';
 
 class YardHomePanel extends StatefulWidget {
   const YardHomePanel({
@@ -19,10 +21,12 @@ class YardHomePanel extends StatefulWidget {
     required this.session,
     required this.worker,
     this.scanner,
+    this.camera,
   });
   final SessionController session;
   final ReplayWorker worker;
   final QrScanner? scanner;
+  final InspectionCamera? camera;
   @override
   State<YardHomePanel> createState() => _YardHomePanelState();
 }
@@ -207,6 +211,12 @@ class _YardHomePanelState extends State<YardHomePanel> {
                     const Text(
                       'Recorded server projection; queued moves do not change this location.',
                     ),
+                    YardActionsPanel(
+                      controller: controller,
+                      session: widget.session,
+                      worker: widget.worker,
+                      camera: widget.camera,
+                    ),
                     FutureBuilder<String?>(
                       future: controller.plannedOrigin(),
                       builder: (context, origin) {
@@ -312,7 +322,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
             ),
             builder: (context, snapshot) {
               final moves = (snapshot.data ?? [])
-                  .where(YardMoveIntent.recognizes)
+                  .where(YardCommandIntent.recognizes)
                   .toList()
                   .reversed
                   .take(20);
@@ -323,18 +333,37 @@ class _YardHomePanelState extends State<YardHomePanel> {
                   ...moves.map((c) {
                     final body = jsonDecode(c.payloadJson) as Map;
                     final confirmed = c.state == 'ACKNOWLEDGED';
+                    final label = switch (c.commandType) {
+                      'LOCATION_CORRECTION' => 'Location Correction',
+                      'LOAD_STATE_CHANGE' => 'Load State Change',
+                      'OOS' => 'Out of Service',
+                      'DISCREPANCY_REPORT' => 'Discrepancy Report',
+                      _ => 'Yard Move',
+                    };
+                    final detail = switch (c.commandType) {
+                      'LOCATION_CORRECTION' =>
+                        'Recorded location correction to ${locationName(body['newLocationId'] as String)}\nReason: ${body['reason']}',
+                      'LOAD_STATE_CHANGE' =>
+                        'Load State: ${body['loadState']}\nReason: ${body['reason']}',
+                      'OOS' =>
+                        'Damage photos: ${(body['documentIds'] as List).length}\nComment: ${body['comment']}',
+                      'DISCREPANCY_REPORT' =>
+                        'Reported physical location: ${locationName(body['reportedLocationId'] as String)}\nReason: ${body['reason']}',
+                      _ =>
+                        '${locationName(body['fromLocationId'] as String)} → ${locationName(body['toLocationId'] as String)}',
+                    };
                     return ListTile(
                       key: ValueKey(c.clientOperationId),
                       title: Text(
                         confirmed
-                            ? 'Server confirmed Yard Move'
-                            : 'Local Yard Move · ${c.state}',
+                            ? 'Server confirmed $label'
+                            : 'Local $label · ${c.state}',
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${locationName(body['fromLocationId'] as String)} → ${locationName(body['toLocationId'] as String)}\nObserved: ${c.occurredAt.toLocal()}${c.lastErrorCode == null ? '' : '\n${c.lastErrorCode}: Original command retained. Refresh and review; no location correction applied.'}',
+                            '$detail\nObserved: ${c.occurredAt.toLocal()}${c.lastErrorCode == null ? '' : '\n${c.lastErrorCode}: Original command retained. Refresh and review; no automatic correction applied.'}',
                           ),
                           if (c.state == 'CONFLICT')
                             _YardConflictLocation(

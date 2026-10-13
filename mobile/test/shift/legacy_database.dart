@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:trailersaas_mobile/src/persistence/app_database.dart';
+
+import '../persistence/legacy_schema.dart';
+
 import 'package:trailersaas_mobile/src/sync/command_store.dart';
 
 /// Actual deployed v3/v4 queue DDL, not the current nullable v5 declaration.
@@ -58,7 +61,7 @@ class Version4Database extends AppDatabase {
       await m.createTable(cachedTrailers);
       await customStatement(legacyQueueSql);
       await m.createTable(localSyncIssues);
-      await m.createTable(localMedia);
+      await createPublishedV7Table(this, 'local_media');
       await customStatement(
         'CREATE UNIQUE INDEX local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
       );

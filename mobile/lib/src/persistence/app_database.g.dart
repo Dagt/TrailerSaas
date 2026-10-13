@@ -4239,6 +4239,17 @@ class $LocalMediaTable extends LocalMedia
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _trailerIdMeta = const VerificationMeta(
+    'trailerId',
+  );
+  @override
+  late final GeneratedColumn<String> trailerId = GeneratedColumn<String>(
+    'trailer_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _capturedAtMeta = const VerificationMeta(
     'capturedAt',
   );
@@ -4319,6 +4330,7 @@ class $LocalMediaTable extends LocalMedia
     lastErrorCode,
     reviewRequired,
     tripId,
+    trailerId,
     capturedAt,
     updatedAt,
     finalizedAt,
@@ -4495,6 +4507,12 @@ class $LocalMediaTable extends LocalMedia
         tripId.isAcceptableOrUnknown(data['trip_id']!, _tripIdMeta),
       );
     }
+    if (data.containsKey('trailer_id')) {
+      context.handle(
+        _trailerIdMeta,
+        trailerId.isAcceptableOrUnknown(data['trailer_id']!, _trailerIdMeta),
+      );
+    }
     if (data.containsKey('captured_at')) {
       context.handle(
         _capturedAtMeta,
@@ -4616,6 +4634,10 @@ class $LocalMediaTable extends LocalMedia
         DriftSqlType.string,
         data['${effectivePrefix}trip_id'],
       ),
+      trailerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trailer_id'],
+      ),
       capturedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}captured_at'],
@@ -4664,6 +4686,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
   final String? lastErrorCode;
   final bool reviewRequired;
   final String? tripId;
+  final String? trailerId;
   final DateTime capturedAt;
   final DateTime updatedAt;
   final DateTime? finalizedAt;
@@ -4688,6 +4711,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     this.lastErrorCode,
     required this.reviewRequired,
     this.tripId,
+    this.trailerId,
     required this.capturedAt,
     required this.updatedAt,
     this.finalizedAt,
@@ -4724,6 +4748,9 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     map['review_required'] = Variable<bool>(reviewRequired);
     if (!nullToAbsent || tripId != null) {
       map['trip_id'] = Variable<String>(tripId);
+    }
+    if (!nullToAbsent || trailerId != null) {
+      map['trailer_id'] = Variable<String>(trailerId);
     }
     map['captured_at'] = Variable<DateTime>(capturedAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -4765,6 +4792,9 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
       tripId: tripId == null && nullToAbsent
           ? const Value.absent()
           : Value(tripId),
+      trailerId: trailerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trailerId),
       capturedAt: Value(capturedAt),
       updatedAt: Value(updatedAt),
       finalizedAt: finalizedAt == null && nullToAbsent
@@ -4801,6 +4831,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
       lastErrorCode: serializer.fromJson<String?>(json['lastErrorCode']),
       reviewRequired: serializer.fromJson<bool>(json['reviewRequired']),
       tripId: serializer.fromJson<String?>(json['tripId']),
+      trailerId: serializer.fromJson<String?>(json['trailerId']),
       capturedAt: serializer.fromJson<DateTime>(json['capturedAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       finalizedAt: serializer.fromJson<DateTime?>(json['finalizedAt']),
@@ -4830,6 +4861,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
       'lastErrorCode': serializer.toJson<String?>(lastErrorCode),
       'reviewRequired': serializer.toJson<bool>(reviewRequired),
       'tripId': serializer.toJson<String?>(tripId),
+      'trailerId': serializer.toJson<String?>(trailerId),
       'capturedAt': serializer.toJson<DateTime>(capturedAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'finalizedAt': serializer.toJson<DateTime?>(finalizedAt),
@@ -4857,6 +4889,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     Value<String?> lastErrorCode = const Value.absent(),
     bool? reviewRequired,
     Value<String?> tripId = const Value.absent(),
+    Value<String?> trailerId = const Value.absent(),
     DateTime? capturedAt,
     DateTime? updatedAt,
     Value<DateTime?> finalizedAt = const Value.absent(),
@@ -4887,6 +4920,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
         : this.lastErrorCode,
     reviewRequired: reviewRequired ?? this.reviewRequired,
     tripId: tripId.present ? tripId.value : this.tripId,
+    trailerId: trailerId.present ? trailerId.value : this.trailerId,
     capturedAt: capturedAt ?? this.capturedAt,
     updatedAt: updatedAt ?? this.updatedAt,
     finalizedAt: finalizedAt.present ? finalizedAt.value : this.finalizedAt,
@@ -4935,6 +4969,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
           ? data.reviewRequired.value
           : this.reviewRequired,
       tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      trailerId: data.trailerId.present ? data.trailerId.value : this.trailerId,
       capturedAt: data.capturedAt.present
           ? data.capturedAt.value
           : this.capturedAt,
@@ -4970,6 +5005,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
           ..write('lastErrorCode: $lastErrorCode, ')
           ..write('reviewRequired: $reviewRequired, ')
           ..write('tripId: $tripId, ')
+          ..write('trailerId: $trailerId, ')
           ..write('capturedAt: $capturedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('finalizedAt: $finalizedAt, ')
@@ -4999,6 +5035,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
     lastErrorCode,
     reviewRequired,
     tripId,
+    trailerId,
     capturedAt,
     updatedAt,
     finalizedAt,
@@ -5027,6 +5064,7 @@ class LocalMediaData extends DataClass implements Insertable<LocalMediaData> {
           other.lastErrorCode == this.lastErrorCode &&
           other.reviewRequired == this.reviewRequired &&
           other.tripId == this.tripId &&
+          other.trailerId == this.trailerId &&
           other.capturedAt == this.capturedAt &&
           other.updatedAt == this.updatedAt &&
           other.finalizedAt == this.finalizedAt &&
@@ -5053,6 +5091,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
   final Value<String?> lastErrorCode;
   final Value<bool> reviewRequired;
   final Value<String?> tripId;
+  final Value<String?> trailerId;
   final Value<DateTime> capturedAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> finalizedAt;
@@ -5078,6 +5117,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     this.lastErrorCode = const Value.absent(),
     this.reviewRequired = const Value.absent(),
     this.tripId = const Value.absent(),
+    this.trailerId = const Value.absent(),
     this.capturedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.finalizedAt = const Value.absent(),
@@ -5104,6 +5144,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     this.lastErrorCode = const Value.absent(),
     this.reviewRequired = const Value.absent(),
     this.tripId = const Value.absent(),
+    this.trailerId = const Value.absent(),
     required DateTime capturedAt,
     required DateTime updatedAt,
     this.finalizedAt = const Value.absent(),
@@ -5141,6 +5182,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     Expression<String>? lastErrorCode,
     Expression<bool>? reviewRequired,
     Expression<String>? tripId,
+    Expression<String>? trailerId,
     Expression<DateTime>? capturedAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? finalizedAt,
@@ -5168,6 +5210,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
       if (lastErrorCode != null) 'last_error_code': lastErrorCode,
       if (reviewRequired != null) 'review_required': reviewRequired,
       if (tripId != null) 'trip_id': tripId,
+      if (trailerId != null) 'trailer_id': trailerId,
       if (capturedAt != null) 'captured_at': capturedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (finalizedAt != null) 'finalized_at': finalizedAt,
@@ -5196,6 +5239,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     Value<String?>? lastErrorCode,
     Value<bool>? reviewRequired,
     Value<String?>? tripId,
+    Value<String?>? trailerId,
     Value<DateTime>? capturedAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? finalizedAt,
@@ -5222,6 +5266,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
       lastErrorCode: lastErrorCode ?? this.lastErrorCode,
       reviewRequired: reviewRequired ?? this.reviewRequired,
       tripId: tripId ?? this.tripId,
+      trailerId: trailerId ?? this.trailerId,
       capturedAt: capturedAt ?? this.capturedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       finalizedAt: finalizedAt ?? this.finalizedAt,
@@ -5288,6 +5333,9 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
     if (tripId.present) {
       map['trip_id'] = Variable<String>(tripId.value);
     }
+    if (trailerId.present) {
+      map['trailer_id'] = Variable<String>(trailerId.value);
+    }
     if (capturedAt.present) {
       map['captured_at'] = Variable<DateTime>(capturedAt.value);
     }
@@ -5330,6 +5378,7 @@ class LocalMediaCompanion extends UpdateCompanion<LocalMediaData> {
           ..write('lastErrorCode: $lastErrorCode, ')
           ..write('reviewRequired: $reviewRequired, ')
           ..write('tripId: $tripId, ')
+          ..write('trailerId: $trailerId, ')
           ..write('capturedAt: $capturedAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('finalizedAt: $finalizedAt, ')
@@ -10599,6 +10648,1671 @@ class DriverUpdateCursorsCompanion extends UpdateCompanion<DriverUpdateCursor> {
   }
 }
 
+class $YardDraftsTable extends YardDrafts
+    with TableInfo<$YardDraftsTable, YardDraft> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $YardDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _trailerIdMeta = const VerificationMeta(
+    'trailerId',
+  );
+  @override
+  late final GeneratedColumn<String> trailerId = GeneratedColumn<String>(
+    'trailer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _siteIdMeta = const VerificationMeta('siteId');
+  @override
+  late final GeneratedColumn<String> siteId = GeneratedColumn<String>(
+    'site_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _requestJsonMeta = const VerificationMeta(
+    'requestJson',
+  );
+  @override
+  late final GeneratedColumn<String> requestJson = GeneratedColumn<String>(
+    'request_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _photosJsonMeta = const VerificationMeta(
+    'photosJson',
+  );
+  @override
+  late final GeneratedColumn<String> photosJson = GeneratedColumn<String>(
+    'photos_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _commentMeta = const VerificationMeta(
+    'comment',
+  );
+  @override
+  late final GeneratedColumn<String> comment = GeneratedColumn<String>(
+    'comment',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _commandIdMeta = const VerificationMeta(
+    'commandId',
+  );
+  @override
+  late final GeneratedColumn<String> commandId = GeneratedColumn<String>(
+    'command_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    tenantId,
+    trailerId,
+    siteId,
+    requestJson,
+    photosJson,
+    comment,
+    commandId,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'yard_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<YardDraft> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('trailer_id')) {
+      context.handle(
+        _trailerIdMeta,
+        trailerId.isAcceptableOrUnknown(data['trailer_id']!, _trailerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_trailerIdMeta);
+    }
+    if (data.containsKey('site_id')) {
+      context.handle(
+        _siteIdMeta,
+        siteId.isAcceptableOrUnknown(data['site_id']!, _siteIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_siteIdMeta);
+    }
+    if (data.containsKey('request_json')) {
+      context.handle(
+        _requestJsonMeta,
+        requestJson.isAcceptableOrUnknown(
+          data['request_json']!,
+          _requestJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_requestJsonMeta);
+    }
+    if (data.containsKey('photos_json')) {
+      context.handle(
+        _photosJsonMeta,
+        photosJson.isAcceptableOrUnknown(data['photos_json']!, _photosJsonMeta),
+      );
+    }
+    if (data.containsKey('comment')) {
+      context.handle(
+        _commentMeta,
+        comment.isAcceptableOrUnknown(data['comment']!, _commentMeta),
+      );
+    }
+    if (data.containsKey('command_id')) {
+      context.handle(
+        _commandIdMeta,
+        commandId.isAcceptableOrUnknown(data['command_id']!, _commandIdMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  YardDraft map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return YardDraft(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      trailerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trailer_id'],
+      )!,
+      siteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}site_id'],
+      )!,
+      requestJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}request_json'],
+      )!,
+      photosJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photos_json'],
+      )!,
+      comment: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}comment'],
+      )!,
+      commandId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}command_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $YardDraftsTable createAlias(String alias) {
+    return $YardDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class YardDraft extends DataClass implements Insertable<YardDraft> {
+  final String id;
+  final String userId;
+  final String tenantId;
+  final String trailerId;
+  final String siteId;
+  final String requestJson;
+  final String photosJson;
+  final String comment;
+  final String? commandId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const YardDraft({
+    required this.id,
+    required this.userId,
+    required this.tenantId,
+    required this.trailerId,
+    required this.siteId,
+    required this.requestJson,
+    required this.photosJson,
+    required this.comment,
+    this.commandId,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['trailer_id'] = Variable<String>(trailerId);
+    map['site_id'] = Variable<String>(siteId);
+    map['request_json'] = Variable<String>(requestJson);
+    map['photos_json'] = Variable<String>(photosJson);
+    map['comment'] = Variable<String>(comment);
+    if (!nullToAbsent || commandId != null) {
+      map['command_id'] = Variable<String>(commandId);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  YardDraftsCompanion toCompanion(bool nullToAbsent) {
+    return YardDraftsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      trailerId: Value(trailerId),
+      siteId: Value(siteId),
+      requestJson: Value(requestJson),
+      photosJson: Value(photosJson),
+      comment: Value(comment),
+      commandId: commandId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(commandId),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory YardDraft.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return YardDraft(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      trailerId: serializer.fromJson<String>(json['trailerId']),
+      siteId: serializer.fromJson<String>(json['siteId']),
+      requestJson: serializer.fromJson<String>(json['requestJson']),
+      photosJson: serializer.fromJson<String>(json['photosJson']),
+      comment: serializer.fromJson<String>(json['comment']),
+      commandId: serializer.fromJson<String?>(json['commandId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'trailerId': serializer.toJson<String>(trailerId),
+      'siteId': serializer.toJson<String>(siteId),
+      'requestJson': serializer.toJson<String>(requestJson),
+      'photosJson': serializer.toJson<String>(photosJson),
+      'comment': serializer.toJson<String>(comment),
+      'commandId': serializer.toJson<String?>(commandId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  YardDraft copyWith({
+    String? id,
+    String? userId,
+    String? tenantId,
+    String? trailerId,
+    String? siteId,
+    String? requestJson,
+    String? photosJson,
+    String? comment,
+    Value<String?> commandId = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => YardDraft(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    trailerId: trailerId ?? this.trailerId,
+    siteId: siteId ?? this.siteId,
+    requestJson: requestJson ?? this.requestJson,
+    photosJson: photosJson ?? this.photosJson,
+    comment: comment ?? this.comment,
+    commandId: commandId.present ? commandId.value : this.commandId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  YardDraft copyWithCompanion(YardDraftsCompanion data) {
+    return YardDraft(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      trailerId: data.trailerId.present ? data.trailerId.value : this.trailerId,
+      siteId: data.siteId.present ? data.siteId.value : this.siteId,
+      requestJson: data.requestJson.present
+          ? data.requestJson.value
+          : this.requestJson,
+      photosJson: data.photosJson.present
+          ? data.photosJson.value
+          : this.photosJson,
+      comment: data.comment.present ? data.comment.value : this.comment,
+      commandId: data.commandId.present ? data.commandId.value : this.commandId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('YardDraft(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('trailerId: $trailerId, ')
+          ..write('siteId: $siteId, ')
+          ..write('requestJson: $requestJson, ')
+          ..write('photosJson: $photosJson, ')
+          ..write('comment: $comment, ')
+          ..write('commandId: $commandId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    tenantId,
+    trailerId,
+    siteId,
+    requestJson,
+    photosJson,
+    comment,
+    commandId,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is YardDraft &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.trailerId == this.trailerId &&
+          other.siteId == this.siteId &&
+          other.requestJson == this.requestJson &&
+          other.photosJson == this.photosJson &&
+          other.comment == this.comment &&
+          other.commandId == this.commandId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class YardDraftsCompanion extends UpdateCompanion<YardDraft> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> trailerId;
+  final Value<String> siteId;
+  final Value<String> requestJson;
+  final Value<String> photosJson;
+  final Value<String> comment;
+  final Value<String?> commandId;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const YardDraftsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.trailerId = const Value.absent(),
+    this.siteId = const Value.absent(),
+    this.requestJson = const Value.absent(),
+    this.photosJson = const Value.absent(),
+    this.comment = const Value.absent(),
+    this.commandId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  YardDraftsCompanion.insert({
+    required String id,
+    required String userId,
+    required String tenantId,
+    required String trailerId,
+    required String siteId,
+    required String requestJson,
+    this.photosJson = const Value.absent(),
+    this.comment = const Value.absent(),
+    this.commandId = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       trailerId = Value(trailerId),
+       siteId = Value(siteId),
+       requestJson = Value(requestJson),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<YardDraft> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? trailerId,
+    Expression<String>? siteId,
+    Expression<String>? requestJson,
+    Expression<String>? photosJson,
+    Expression<String>? comment,
+    Expression<String>? commandId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (trailerId != null) 'trailer_id': trailerId,
+      if (siteId != null) 'site_id': siteId,
+      if (requestJson != null) 'request_json': requestJson,
+      if (photosJson != null) 'photos_json': photosJson,
+      if (comment != null) 'comment': comment,
+      if (commandId != null) 'command_id': commandId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  YardDraftsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? trailerId,
+    Value<String>? siteId,
+    Value<String>? requestJson,
+    Value<String>? photosJson,
+    Value<String>? comment,
+    Value<String?>? commandId,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return YardDraftsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      trailerId: trailerId ?? this.trailerId,
+      siteId: siteId ?? this.siteId,
+      requestJson: requestJson ?? this.requestJson,
+      photosJson: photosJson ?? this.photosJson,
+      comment: comment ?? this.comment,
+      commandId: commandId ?? this.commandId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (trailerId.present) {
+      map['trailer_id'] = Variable<String>(trailerId.value);
+    }
+    if (siteId.present) {
+      map['site_id'] = Variable<String>(siteId.value);
+    }
+    if (requestJson.present) {
+      map['request_json'] = Variable<String>(requestJson.value);
+    }
+    if (photosJson.present) {
+      map['photos_json'] = Variable<String>(photosJson.value);
+    }
+    if (comment.present) {
+      map['comment'] = Variable<String>(comment.value);
+    }
+    if (commandId.present) {
+      map['command_id'] = Variable<String>(commandId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('YardDraftsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('trailerId: $trailerId, ')
+          ..write('siteId: $siteId, ')
+          ..write('requestJson: $requestJson, ')
+          ..write('photosJson: $photosJson, ')
+          ..write('comment: $comment, ')
+          ..write('commandId: $commandId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $YardCapturesTable extends YardCaptures
+    with TableInfo<$YardCapturesTable, YardCapture> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $YardCapturesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _draftIdMeta = const VerificationMeta(
+    'draftId',
+  );
+  @override
+  late final GeneratedColumn<String> draftId = GeneratedColumn<String>(
+    'draft_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mediaIdMeta = const VerificationMeta(
+    'mediaId',
+  );
+  @override
+  late final GeneratedColumn<String> mediaId = GeneratedColumn<String>(
+    'media_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('PENDING'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    tenantId,
+    draftId,
+    mediaId,
+    state,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'yard_captures';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<YardCapture> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('draft_id')) {
+      context.handle(
+        _draftIdMeta,
+        draftId.isAcceptableOrUnknown(data['draft_id']!, _draftIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_draftIdMeta);
+    }
+    if (data.containsKey('media_id')) {
+      context.handle(
+        _mediaIdMeta,
+        mediaId.isAcceptableOrUnknown(data['media_id']!, _mediaIdMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  YardCapture map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return YardCapture(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      draftId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}draft_id'],
+      )!,
+      mediaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_id'],
+      ),
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $YardCapturesTable createAlias(String alias) {
+    return $YardCapturesTable(attachedDatabase, alias);
+  }
+}
+
+class YardCapture extends DataClass implements Insertable<YardCapture> {
+  final String id;
+  final String userId;
+  final String tenantId;
+  final String draftId;
+  final String? mediaId;
+  final String state;
+  final DateTime createdAt;
+  const YardCapture({
+    required this.id,
+    required this.userId,
+    required this.tenantId,
+    required this.draftId,
+    this.mediaId,
+    required this.state,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['draft_id'] = Variable<String>(draftId);
+    if (!nullToAbsent || mediaId != null) {
+      map['media_id'] = Variable<String>(mediaId);
+    }
+    map['state'] = Variable<String>(state);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  YardCapturesCompanion toCompanion(bool nullToAbsent) {
+    return YardCapturesCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      draftId: Value(draftId),
+      mediaId: mediaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mediaId),
+      state: Value(state),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory YardCapture.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return YardCapture(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      draftId: serializer.fromJson<String>(json['draftId']),
+      mediaId: serializer.fromJson<String?>(json['mediaId']),
+      state: serializer.fromJson<String>(json['state']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'draftId': serializer.toJson<String>(draftId),
+      'mediaId': serializer.toJson<String?>(mediaId),
+      'state': serializer.toJson<String>(state),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  YardCapture copyWith({
+    String? id,
+    String? userId,
+    String? tenantId,
+    String? draftId,
+    Value<String?> mediaId = const Value.absent(),
+    String? state,
+    DateTime? createdAt,
+  }) => YardCapture(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    draftId: draftId ?? this.draftId,
+    mediaId: mediaId.present ? mediaId.value : this.mediaId,
+    state: state ?? this.state,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  YardCapture copyWithCompanion(YardCapturesCompanion data) {
+    return YardCapture(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      draftId: data.draftId.present ? data.draftId.value : this.draftId,
+      mediaId: data.mediaId.present ? data.mediaId.value : this.mediaId,
+      state: data.state.present ? data.state.value : this.state,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('YardCapture(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('draftId: $draftId, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, userId, tenantId, draftId, mediaId, state, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is YardCapture &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.draftId == this.draftId &&
+          other.mediaId == this.mediaId &&
+          other.state == this.state &&
+          other.createdAt == this.createdAt);
+}
+
+class YardCapturesCompanion extends UpdateCompanion<YardCapture> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> draftId;
+  final Value<String?> mediaId;
+  final Value<String> state;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const YardCapturesCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.draftId = const Value.absent(),
+    this.mediaId = const Value.absent(),
+    this.state = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  YardCapturesCompanion.insert({
+    required String id,
+    required String userId,
+    required String tenantId,
+    required String draftId,
+    this.mediaId = const Value.absent(),
+    this.state = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       draftId = Value(draftId),
+       createdAt = Value(createdAt);
+  static Insertable<YardCapture> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? draftId,
+    Expression<String>? mediaId,
+    Expression<String>? state,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (draftId != null) 'draft_id': draftId,
+      if (mediaId != null) 'media_id': mediaId,
+      if (state != null) 'state': state,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  YardCapturesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? draftId,
+    Value<String?>? mediaId,
+    Value<String>? state,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return YardCapturesCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      draftId: draftId ?? this.draftId,
+      mediaId: mediaId ?? this.mediaId,
+      state: state ?? this.state,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (draftId.present) {
+      map['draft_id'] = Variable<String>(draftId.value);
+    }
+    if (mediaId.present) {
+      map['media_id'] = Variable<String>(mediaId.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('YardCapturesCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('draftId: $draftId, ')
+          ..write('mediaId: $mediaId, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $YardConflictReviewsTable extends YardConflictReviews
+    with TableInfo<$YardConflictReviewsTable, YardConflictReview> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $YardConflictReviewsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _failedOperationIdMeta = const VerificationMeta(
+    'failedOperationId',
+  );
+  @override
+  late final GeneratedColumn<String> failedOperationId =
+      GeneratedColumn<String>(
+        'failed_operation_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _replacementOperationIdMeta =
+      const VerificationMeta('replacementOperationId');
+  @override
+  late final GeneratedColumn<String> replacementOperationId =
+      GeneratedColumn<String>(
+        'replacement_operation_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tenantIdMeta = const VerificationMeta(
+    'tenantId',
+  );
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+    'tenant_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _trailerIdMeta = const VerificationMeta(
+    'trailerId',
+  );
+  @override
+  late final GeneratedColumn<String> trailerId = GeneratedColumn<String>(
+    'trailer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reviewedVersionMeta = const VerificationMeta(
+    'reviewedVersion',
+  );
+  @override
+  late final GeneratedColumn<int> reviewedVersion = GeneratedColumn<int>(
+    'reviewed_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reviewedProjectionJsonMeta =
+      const VerificationMeta('reviewedProjectionJson');
+  @override
+  late final GeneratedColumn<String> reviewedProjectionJson =
+      GeneratedColumn<String>(
+        'reviewed_projection_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _reviewedAtMeta = const VerificationMeta(
+    'reviewedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reviewedAt = GeneratedColumn<DateTime>(
+    'reviewed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    failedOperationId,
+    replacementOperationId,
+    userId,
+    tenantId,
+    trailerId,
+    reviewedVersion,
+    reviewedProjectionJson,
+    reviewedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'yard_conflict_reviews';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<YardConflictReview> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('failed_operation_id')) {
+      context.handle(
+        _failedOperationIdMeta,
+        failedOperationId.isAcceptableOrUnknown(
+          data['failed_operation_id']!,
+          _failedOperationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_failedOperationIdMeta);
+    }
+    if (data.containsKey('replacement_operation_id')) {
+      context.handle(
+        _replacementOperationIdMeta,
+        replacementOperationId.isAcceptableOrUnknown(
+          data['replacement_operation_id']!,
+          _replacementOperationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_replacementOperationIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(
+        _tenantIdMeta,
+        tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('trailer_id')) {
+      context.handle(
+        _trailerIdMeta,
+        trailerId.isAcceptableOrUnknown(data['trailer_id']!, _trailerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_trailerIdMeta);
+    }
+    if (data.containsKey('reviewed_version')) {
+      context.handle(
+        _reviewedVersionMeta,
+        reviewedVersion.isAcceptableOrUnknown(
+          data['reviewed_version']!,
+          _reviewedVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_reviewedVersionMeta);
+    }
+    if (data.containsKey('reviewed_projection_json')) {
+      context.handle(
+        _reviewedProjectionJsonMeta,
+        reviewedProjectionJson.isAcceptableOrUnknown(
+          data['reviewed_projection_json']!,
+          _reviewedProjectionJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_reviewedProjectionJsonMeta);
+    }
+    if (data.containsKey('reviewed_at')) {
+      context.handle(
+        _reviewedAtMeta,
+        reviewedAt.isAcceptableOrUnknown(data['reviewed_at']!, _reviewedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reviewedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {failedOperationId};
+  @override
+  YardConflictReview map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return YardConflictReview(
+      failedOperationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}failed_operation_id'],
+      )!,
+      replacementOperationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}replacement_operation_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      tenantId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tenant_id'],
+      )!,
+      trailerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trailer_id'],
+      )!,
+      reviewedVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reviewed_version'],
+      )!,
+      reviewedProjectionJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reviewed_projection_json'],
+      )!,
+      reviewedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}reviewed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $YardConflictReviewsTable createAlias(String alias) {
+    return $YardConflictReviewsTable(attachedDatabase, alias);
+  }
+}
+
+class YardConflictReview extends DataClass
+    implements Insertable<YardConflictReview> {
+  final String failedOperationId;
+  final String replacementOperationId;
+  final String userId;
+  final String tenantId;
+  final String trailerId;
+  final int reviewedVersion;
+  final String reviewedProjectionJson;
+  final DateTime reviewedAt;
+  const YardConflictReview({
+    required this.failedOperationId,
+    required this.replacementOperationId,
+    required this.userId,
+    required this.tenantId,
+    required this.trailerId,
+    required this.reviewedVersion,
+    required this.reviewedProjectionJson,
+    required this.reviewedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['failed_operation_id'] = Variable<String>(failedOperationId);
+    map['replacement_operation_id'] = Variable<String>(replacementOperationId);
+    map['user_id'] = Variable<String>(userId);
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['trailer_id'] = Variable<String>(trailerId);
+    map['reviewed_version'] = Variable<int>(reviewedVersion);
+    map['reviewed_projection_json'] = Variable<String>(reviewedProjectionJson);
+    map['reviewed_at'] = Variable<DateTime>(reviewedAt);
+    return map;
+  }
+
+  YardConflictReviewsCompanion toCompanion(bool nullToAbsent) {
+    return YardConflictReviewsCompanion(
+      failedOperationId: Value(failedOperationId),
+      replacementOperationId: Value(replacementOperationId),
+      userId: Value(userId),
+      tenantId: Value(tenantId),
+      trailerId: Value(trailerId),
+      reviewedVersion: Value(reviewedVersion),
+      reviewedProjectionJson: Value(reviewedProjectionJson),
+      reviewedAt: Value(reviewedAt),
+    );
+  }
+
+  factory YardConflictReview.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return YardConflictReview(
+      failedOperationId: serializer.fromJson<String>(json['failedOperationId']),
+      replacementOperationId: serializer.fromJson<String>(
+        json['replacementOperationId'],
+      ),
+      userId: serializer.fromJson<String>(json['userId']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      trailerId: serializer.fromJson<String>(json['trailerId']),
+      reviewedVersion: serializer.fromJson<int>(json['reviewedVersion']),
+      reviewedProjectionJson: serializer.fromJson<String>(
+        json['reviewedProjectionJson'],
+      ),
+      reviewedAt: serializer.fromJson<DateTime>(json['reviewedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'failedOperationId': serializer.toJson<String>(failedOperationId),
+      'replacementOperationId': serializer.toJson<String>(
+        replacementOperationId,
+      ),
+      'userId': serializer.toJson<String>(userId),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'trailerId': serializer.toJson<String>(trailerId),
+      'reviewedVersion': serializer.toJson<int>(reviewedVersion),
+      'reviewedProjectionJson': serializer.toJson<String>(
+        reviewedProjectionJson,
+      ),
+      'reviewedAt': serializer.toJson<DateTime>(reviewedAt),
+    };
+  }
+
+  YardConflictReview copyWith({
+    String? failedOperationId,
+    String? replacementOperationId,
+    String? userId,
+    String? tenantId,
+    String? trailerId,
+    int? reviewedVersion,
+    String? reviewedProjectionJson,
+    DateTime? reviewedAt,
+  }) => YardConflictReview(
+    failedOperationId: failedOperationId ?? this.failedOperationId,
+    replacementOperationId:
+        replacementOperationId ?? this.replacementOperationId,
+    userId: userId ?? this.userId,
+    tenantId: tenantId ?? this.tenantId,
+    trailerId: trailerId ?? this.trailerId,
+    reviewedVersion: reviewedVersion ?? this.reviewedVersion,
+    reviewedProjectionJson:
+        reviewedProjectionJson ?? this.reviewedProjectionJson,
+    reviewedAt: reviewedAt ?? this.reviewedAt,
+  );
+  YardConflictReview copyWithCompanion(YardConflictReviewsCompanion data) {
+    return YardConflictReview(
+      failedOperationId: data.failedOperationId.present
+          ? data.failedOperationId.value
+          : this.failedOperationId,
+      replacementOperationId: data.replacementOperationId.present
+          ? data.replacementOperationId.value
+          : this.replacementOperationId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      trailerId: data.trailerId.present ? data.trailerId.value : this.trailerId,
+      reviewedVersion: data.reviewedVersion.present
+          ? data.reviewedVersion.value
+          : this.reviewedVersion,
+      reviewedProjectionJson: data.reviewedProjectionJson.present
+          ? data.reviewedProjectionJson.value
+          : this.reviewedProjectionJson,
+      reviewedAt: data.reviewedAt.present
+          ? data.reviewedAt.value
+          : this.reviewedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('YardConflictReview(')
+          ..write('failedOperationId: $failedOperationId, ')
+          ..write('replacementOperationId: $replacementOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('trailerId: $trailerId, ')
+          ..write('reviewedVersion: $reviewedVersion, ')
+          ..write('reviewedProjectionJson: $reviewedProjectionJson, ')
+          ..write('reviewedAt: $reviewedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    failedOperationId,
+    replacementOperationId,
+    userId,
+    tenantId,
+    trailerId,
+    reviewedVersion,
+    reviewedProjectionJson,
+    reviewedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is YardConflictReview &&
+          other.failedOperationId == this.failedOperationId &&
+          other.replacementOperationId == this.replacementOperationId &&
+          other.userId == this.userId &&
+          other.tenantId == this.tenantId &&
+          other.trailerId == this.trailerId &&
+          other.reviewedVersion == this.reviewedVersion &&
+          other.reviewedProjectionJson == this.reviewedProjectionJson &&
+          other.reviewedAt == this.reviewedAt);
+}
+
+class YardConflictReviewsCompanion extends UpdateCompanion<YardConflictReview> {
+  final Value<String> failedOperationId;
+  final Value<String> replacementOperationId;
+  final Value<String> userId;
+  final Value<String> tenantId;
+  final Value<String> trailerId;
+  final Value<int> reviewedVersion;
+  final Value<String> reviewedProjectionJson;
+  final Value<DateTime> reviewedAt;
+  final Value<int> rowid;
+  const YardConflictReviewsCompanion({
+    this.failedOperationId = const Value.absent(),
+    this.replacementOperationId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.trailerId = const Value.absent(),
+    this.reviewedVersion = const Value.absent(),
+    this.reviewedProjectionJson = const Value.absent(),
+    this.reviewedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  YardConflictReviewsCompanion.insert({
+    required String failedOperationId,
+    required String replacementOperationId,
+    required String userId,
+    required String tenantId,
+    required String trailerId,
+    required int reviewedVersion,
+    required String reviewedProjectionJson,
+    required DateTime reviewedAt,
+    this.rowid = const Value.absent(),
+  }) : failedOperationId = Value(failedOperationId),
+       replacementOperationId = Value(replacementOperationId),
+       userId = Value(userId),
+       tenantId = Value(tenantId),
+       trailerId = Value(trailerId),
+       reviewedVersion = Value(reviewedVersion),
+       reviewedProjectionJson = Value(reviewedProjectionJson),
+       reviewedAt = Value(reviewedAt);
+  static Insertable<YardConflictReview> custom({
+    Expression<String>? failedOperationId,
+    Expression<String>? replacementOperationId,
+    Expression<String>? userId,
+    Expression<String>? tenantId,
+    Expression<String>? trailerId,
+    Expression<int>? reviewedVersion,
+    Expression<String>? reviewedProjectionJson,
+    Expression<DateTime>? reviewedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (failedOperationId != null) 'failed_operation_id': failedOperationId,
+      if (replacementOperationId != null)
+        'replacement_operation_id': replacementOperationId,
+      if (userId != null) 'user_id': userId,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (trailerId != null) 'trailer_id': trailerId,
+      if (reviewedVersion != null) 'reviewed_version': reviewedVersion,
+      if (reviewedProjectionJson != null)
+        'reviewed_projection_json': reviewedProjectionJson,
+      if (reviewedAt != null) 'reviewed_at': reviewedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  YardConflictReviewsCompanion copyWith({
+    Value<String>? failedOperationId,
+    Value<String>? replacementOperationId,
+    Value<String>? userId,
+    Value<String>? tenantId,
+    Value<String>? trailerId,
+    Value<int>? reviewedVersion,
+    Value<String>? reviewedProjectionJson,
+    Value<DateTime>? reviewedAt,
+    Value<int>? rowid,
+  }) {
+    return YardConflictReviewsCompanion(
+      failedOperationId: failedOperationId ?? this.failedOperationId,
+      replacementOperationId:
+          replacementOperationId ?? this.replacementOperationId,
+      userId: userId ?? this.userId,
+      tenantId: tenantId ?? this.tenantId,
+      trailerId: trailerId ?? this.trailerId,
+      reviewedVersion: reviewedVersion ?? this.reviewedVersion,
+      reviewedProjectionJson:
+          reviewedProjectionJson ?? this.reviewedProjectionJson,
+      reviewedAt: reviewedAt ?? this.reviewedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (failedOperationId.present) {
+      map['failed_operation_id'] = Variable<String>(failedOperationId.value);
+    }
+    if (replacementOperationId.present) {
+      map['replacement_operation_id'] = Variable<String>(
+        replacementOperationId.value,
+      );
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (trailerId.present) {
+      map['trailer_id'] = Variable<String>(trailerId.value);
+    }
+    if (reviewedVersion.present) {
+      map['reviewed_version'] = Variable<int>(reviewedVersion.value);
+    }
+    if (reviewedProjectionJson.present) {
+      map['reviewed_projection_json'] = Variable<String>(
+        reviewedProjectionJson.value,
+      );
+    }
+    if (reviewedAt.present) {
+      map['reviewed_at'] = Variable<DateTime>(reviewedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('YardConflictReviewsCompanion(')
+          ..write('failedOperationId: $failedOperationId, ')
+          ..write('replacementOperationId: $replacementOperationId, ')
+          ..write('userId: $userId, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('trailerId: $trailerId, ')
+          ..write('reviewedVersion: $reviewedVersion, ')
+          ..write('reviewedProjectionJson: $reviewedProjectionJson, ')
+          ..write('reviewedAt: $reviewedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   late final $LocalSessionContextsTable localSessionContexts =
@@ -10630,6 +12344,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CachedDriverUpdatesTable(this);
   late final $DriverUpdateCursorsTable driverUpdateCursors =
       $DriverUpdateCursorsTable(this);
+  late final $YardDraftsTable yardDrafts = $YardDraftsTable(this);
+  late final $YardCapturesTable yardCaptures = $YardCapturesTable(this);
+  late final $YardConflictReviewsTable yardConflictReviews =
+      $YardConflictReviewsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -10653,5 +12371,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     roadCaptures,
     cachedDriverUpdates,
     driverUpdateCursors,
+    yardDrafts,
+    yardCaptures,
+    yardConflictReviews,
   ];
 }
