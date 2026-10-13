@@ -18,6 +18,9 @@ class EvidenceCommandIntent extends CommandIntent {
     super.resources,
   }) : super(command);
   final EvidenceCommandKind kind;
+  @override
+  String? get aggregate =>
+      kind == EvidenceCommandKind.fuel ? command.tripId : super.aggregate;
   static String path(
     EvidenceCommandKind kind,
     String tenant,

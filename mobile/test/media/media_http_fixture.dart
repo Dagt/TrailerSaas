@@ -81,6 +81,8 @@ class MediaHttpFixture {
   final driverUpdates = <Map<String, dynamic>>[];
   final roadFailureStatuses = <int>[];
   bool repeatUpdatesCursor = false;
+  int? updatesStatus;
+  String? driverIdentityOverride;
   Completer<void>? updatesEntered, updatesRelease;
   Map<String, dynamic> roadWork() => {
     ...work(roadTrip),
@@ -248,7 +250,7 @@ class MediaHttpFixture {
           });
         } else if (path.endsWith('/driver/me')) {
           await reply(r, {
-            'id': user,
+            'id': driverIdentityOverride ?? user,
             'name': 'Driver',
             'active': true,
             if (shiftWorkflows)
@@ -285,6 +287,10 @@ class MediaHttpFixture {
               },
           });
         } else if (roadWorkflows && path.endsWith('/driver/me/updates')) {
+          if (updatesStatus != null) {
+            await reply(r, {'code': 'CAPABILITY_DENIED'}, updatesStatus!);
+            return;
+          }
           final limit = int.parse(r.uri.queryParameters['limit'] ?? '200');
           final offset =
               int.tryParse(r.uri.queryParameters['cursor'] ?? '0') ?? 0;

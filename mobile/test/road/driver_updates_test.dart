@@ -87,7 +87,10 @@ void main() {
       f.driverUpdates.add({'id': 'invalid', 'payload': {}});
       await expectLater(store.refresh(), throwsA(isA<FormatException>()));
       expect(await f.db.select(f.db.cachedDriverUpdates).get(), hasLength(1));
-      expect(await f.db.select(f.db.driverUpdateCursors).get(), isEmpty);
+      expect(
+        (await f.db.select(f.db.driverUpdateCursors).getSingle()).cursor,
+        isNull,
+      );
     },
   );
   test(
@@ -128,5 +131,51 @@ void main() {
     expect(await store.watch(other, tenant).first, isEmpty);
     expect(await f.db.select(f.db.cachedDriverUpdates).get(), isEmpty);
     expect(await f.db.select(f.db.driverUpdateCursors).get(), isEmpty);
+  });
+  test('403 durably hides downloaded instructions until authorized refresh even after restart', () async {
+    f.driverUpdates.add(update('TRIP_REROUTED', 'Old authorized instruction'));
+    await store.refresh();
+    f.updatesStatus = 403;
+    await expectLater(
+      store.refresh(),
+      throwsA(isA<ApiProblem>().having((e) => e.status, 'status', 403)),
+    );
+    expect(await store.watch(user, tenant).first, isEmpty);
+    expect(
+      (await f.db.select(f.db.driverUpdateCursors).getSingle()).accessBlocked,
+      isTrue,
+    );
+    await f.restart();
+    store = DriverUpdatesStore(f.db, f.session);
+    expect(await store.watch(user, tenant).first, isEmpty);
+    f.updatesStatus = null;
+    await store.refresh();
+    expect(await store.watch(user, tenant).first, hasLength(1));
+    expect(
+      (await f.db.select(f.db.driverUpdateCursors).getSingle()).accessBlocked,
+      isFalse,
+    );
+  });
+  test('a changed own Driver profile cannot reuse another Driver cursor or instruction cache', () async {
+    f.driverUpdates.addAll(
+      List.generate(205, (i) => update('TRIP_REROUTED', 'Old Driver $i')),
+    );
+    await store.refresh();
+    expect(
+      (await f.db.select(f.db.driverUpdateCursors).getSingle()).cursor,
+      '200',
+    );
+    f.driverIdentityOverride = '99999999-9999-4999-8999-999999999999';
+    f.driverUpdates.clear();
+    f.driverUpdates.add(update('TRIP_REROUTED', 'Current Driver instruction'));
+    await f.session.refresh();
+    expect(await store.watch(user, tenant).first, isEmpty);
+    await store.refresh();
+    expect(
+      (await store.watch(user, tenant).first).single.projectionJson,
+      contains('Current Driver instruction'),
+    );
+    expect(await f.db.select(f.db.driverUpdateCursors).get(), hasLength(2));
+    expect(await f.db.select(f.db.cachedDriverUpdates).get(), hasLength(206));
   });
 }

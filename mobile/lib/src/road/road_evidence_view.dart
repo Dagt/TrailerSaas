@@ -54,6 +54,19 @@ class RoadEvidenceActions extends StatelessWidget {
               worker: worker,
               tripId: trip['id'] as String,
               stopId: active?['id'] as String?,
+              fuelAvailable:
+                  {'AT_STOP', 'IN_TRANSIT'}.contains(trip['status']) ||
+                  (snapshot.data ?? <LocalCommand>[]).any(
+                    (c) =>
+                        c.tripId == trip['id'] &&
+                        c.commandType == 'departures' &&
+                        {
+                          'QUEUED',
+                          'SENDING',
+                          'RETRYABLE_FAILURE',
+                          'BLOCKED',
+                        }.contains(c.state),
+                  ),
             ),
             for (final stop in stops)
               if (stop['stopType'] == 'DELIVERY' &&
@@ -93,12 +106,14 @@ class RoadEvidencePanel extends StatefulWidget {
     this.deliveryAvailable = false,
     this.camera,
     this.auxiliaryActions = true,
+    this.fuelAvailable,
   });
   final ReplayWorker worker;
   final String? tripId, stopId;
   final bool deliveryAvailable;
   final InspectionCamera? camera;
   final bool auxiliaryActions;
+  final bool? fuelAvailable;
   @override
   State<RoadEvidencePanel> createState() => _PanelState();
 }
@@ -174,7 +189,14 @@ class _PanelState extends State<RoadEvidencePanel> {
               child: const Text('Entrega sin receptor disponible'),
             ),
           ],
-          if (widget.auxiliaryActions && caps.contains('FUEL_EVENT_CREATE'))
+          if (widget.auxiliaryActions &&
+              caps.contains('FUEL_EVENT_CREATE') &&
+              (widget.fuelAvailable ??
+                  s.trips.any(
+                    (t) =>
+                        t.id == widget.tripId &&
+                        {'AT_STOP', 'IN_TRANSIT'}.contains(t.status),
+                  )))
             OutlinedButton(
               onPressed: working ? null : () => open('FUEL'),
               child: const Text('Registrar combustible'),
@@ -280,10 +302,12 @@ class _FormState extends State<RoadEvidenceForm> {
           () => message = 'Guardado en este dispositivo. Pendiente de confirmación del servidor.',
         );
       }
-    } catch (_) {
+    } catch (error) {
       if (mounted && widget.store.current(draft)) {
         setState(
-          () => message = 'No se pudo completar la acción. Revisa campos y archivos; el borrador se conserva.',
+          () => message = error is FormatException && error.message == 'El Tractor cambió. Conserva el recibo y revisa con operaciones.'
+              ? error.message
+              : 'No se pudo completar la acción. Revisa campos y archivos; el borrador se conserva.',
         );
       }
     } finally {
@@ -364,7 +388,7 @@ class _FormState extends State<RoadEvidenceForm> {
             if (draft.purpose == 'FUEL') ...[
               Text('Trip seleccionado: ${draft.tripId}'),
               Text(
-                'Tractor asignado: ${widget.store.session.snapshot!.driver?.shiftContext?.tractors.where((t) => widget.store.session.snapshot!.trips.any((trip) => trip.id == draft.tripId && trip.data['currentTractorId'] == t.id)).firstOrNull?.number ?? 'revisa el Tractor en el detalle de Trip'}',
+                'Tractor del registro: ${widget.store.session.snapshot!.driver?.shiftContext?.tractors.where((t) => t.id == draft.tractorId).firstOrNull?.number ?? draft.tractorId}',
               ),
               const Text(
                 'Trip y Tractor: asignación descargada; se validarán nuevamente al sincronizar.',

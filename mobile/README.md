@@ -1,14 +1,14 @@
 # TrailerSaaS Mobile
 
-## Current implementation — Issue #54
+## Media foundation — Issue #54 (extended by #43/#45 below)
 
 Drift v4 now persists private media and namespaced command dependencies alongside
 the #46 command queue. The shared foreground/reconnect worker initializes Documents,
 streams a direct R2 PUT without Firebase headers, confirms finalization with a stable
 UUID and freezes dependent HTTP requests before sending. Road's sync panel shows
-local/uploading/finalized/review states even without assigned Trips. Future #43/#45
-commands remain blocked: no Shift, inspection, POD/Fuel/exception or camera flow is
-implemented here. See [media queue, recovery and security](../docs/mobile/issue-54-media-queue.md).
+local/uploading/finalized/review states even without assigned Trips. The #43/#45
+sections below describe the implemented Shift, inspection, POD/Fuel/exception and
+camera consumers. See [media queue, recovery and security](../docs/mobile/issue-54-media-queue.md).
 
 Use the same locked SDK and dependencies; crypto 3.0.7 was already locked transitively
 and is now direct for streaming SHA-256. Files stay in application-support storage,

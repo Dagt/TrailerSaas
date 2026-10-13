@@ -270,6 +270,7 @@ class RoadDrafts extends Table {
   TextColumn get userId => text()();
   TextColumn get tenantId => text()();
   TextColumn get tripId => text()();
+  TextColumn get tractorId => text().nullable()();
   TextColumn get stopId => text().nullable()();
   TextColumn get purpose => text()();
   TextColumn get inputsJson => text().withDefault(const Constant('{}'))();
@@ -282,6 +283,7 @@ class RoadDrafts extends Table {
   List<String> get customConstraints => [
     'UNIQUE(id,user_id,tenant_id)',
     "CHECK (purpose IN ('SIGNED_BOL','NO_RECEIVER_AVAILABLE','FUEL','PROBLEM'))",
+    "CHECK (purpose<>'FUEL' OR tractor_id IS NOT NULL)",
     'FOREIGN KEY(command_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
   ];
 }
@@ -311,6 +313,7 @@ class RoadCaptures extends Table {
 class CachedDriverUpdates extends Table {
   TextColumn get userId => text()();
   TextColumn get tenantId => text()();
+  TextColumn get driverId => text()();
   TextColumn get id => text()();
   TextColumn get tripId => text()();
   TextColumn get updateType => text()();
@@ -318,15 +321,18 @@ class CachedDriverUpdates extends Table {
   IntColumn get sequence => integer()();
   DateTimeColumn get downloadedAt => dateTime()();
   @override
-  Set<Column> get primaryKey => {userId, tenantId, id};
+  Set<Column> get primaryKey => {userId, tenantId, driverId, id};
 }
 
 class DriverUpdateCursors extends Table {
   TextColumn get userId => text()();
   TextColumn get tenantId => text()();
+  TextColumn get driverId => text()();
   TextColumn get cursor => text().nullable()();
+  BoolColumn get accessBlocked =>
+      boolean().withDefault(const Constant(false))();
   @override
-  Set<Column> get primaryKey => {userId, tenantId};
+  Set<Column> get primaryKey => {userId, tenantId, driverId};
 }
 
 @DriftDatabase(
@@ -459,7 +465,7 @@ class AppDatabase extends _$AppDatabase {
       'CREATE UNIQUE INDEX road_camera_one_pending ON road_captures(state) WHERE state=\'PENDING\'',
     );
     await customStatement(
-      '''CREATE TRIGGER road_draft_context_immutable BEFORE UPDATE OF id,user_id,tenant_id,trip_id,stop_id,purpose ON road_drafts BEGIN SELECT RAISE(ABORT,'Draft context is immutable');END''',
+      '''CREATE TRIGGER road_draft_context_immutable BEFORE UPDATE OF id,user_id,tenant_id,trip_id,tractor_id,stop_id,purpose ON road_drafts BEGIN SELECT RAISE(ABORT,'Draft context is immutable');END''',
     );
     await customStatement(
       '''CREATE TRIGGER road_draft_queued_immutable BEFORE UPDATE ON road_drafts WHEN OLD.command_id IS NOT NULL BEGIN SELECT RAISE(ABORT,'Queued draft is immutable');END''',
@@ -480,7 +486,7 @@ class AppDatabase extends _$AppDatabase {
       '''CREATE TRIGGER inspection_camera_exclusive BEFORE INSERT ON camera_captures WHEN NEW.state='PENDING' AND EXISTS(SELECT 1 FROM road_captures WHERE state='PENDING') BEGIN SELECT RAISE(ABORT,'Camera still active');END''',
     );
     await customStatement(
-      'CREATE INDEX driver_updates_scope_order ON cached_driver_updates(user_id,tenant_id,sequence)',
+      'CREATE INDEX driver_updates_scope_order ON cached_driver_updates(user_id,tenant_id,driver_id,sequence)',
     );
   }
 

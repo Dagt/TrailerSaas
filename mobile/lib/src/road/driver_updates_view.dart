@@ -24,6 +24,7 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
   void initState() {
     super.initState();
     session.addListener(changed);
+    widget.store.addListener(storedChanged);
     network = session.network.changes.listen((s) {
       if (s == ConnectivityStatus.available) unawaited(refresh());
     });
@@ -32,13 +33,19 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
 
   void changed() {
     final s = session.snapshot,
-        next = s == null ? null : '${s.userId}|${s.membership.tenantId}';
+        next = s == null
+            ? null
+            : '${s.userId}|${s.membership.tenantId}|${s.driver?.id}';
     final online = session.state == SessionState.ready;
     final fetch = online && (next != scope || !ready);
     if (next != scope) message = null;
     scope = next;
     ready = online;
     if (fetch) unawaited(refresh());
+    if (mounted) setState(() {});
+  }
+
+  void storedChanged() {
     if (mounted) setState(() {});
   }
 
@@ -66,6 +73,7 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
   @override
   void dispose() {
     session.removeListener(changed);
+    widget.store.removeListener(storedChanged);
     unawaited(network?.cancel());
     super.dispose();
   }
@@ -100,7 +108,8 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
           label: const Text('Actualizar instrucciones'),
         ),
         if (busy) const LinearProgressIndicator(),
-        if (message != null) Text(message!),
+        if (message != null || widget.store.message != null)
+          Text(message ?? widget.store.message!),
         StreamBuilder<List<CachedDriverUpdate>>(
           key: ValueKey(scope),
           stream: widget.store.watch(s.userId, s.membership.tenantId),

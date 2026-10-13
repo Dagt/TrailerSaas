@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../media/media_dependencies.dart';
+import '../media/media_file_store.dart';
 import '../persistence/app_database.dart';
 import '../session/contracts.dart';
 import '../session/session_controller.dart';
@@ -71,6 +72,11 @@ class RoadEvidenceStore {
       throw const FormatException('Se requiere un Stop de entrega.');
     }
     final id = operationUuid();
+    final tractor = work.data['currentTractorId'];
+    if (purpose == 'FUEL' &&
+        (tractor is! String || !uuidPattern.hasMatch(tractor))) {
+      throw const FormatException('Se requiere un Tractor asignado.');
+    }
     await db
         .into(db.roadDrafts)
         .insert(
@@ -79,6 +85,7 @@ class RoadEvidenceStore {
             userId: s.userId,
             tenantId: s.membership.tenantId,
             tripId: trip,
+            tractorId: Value(tractor as String?),
             stopId: Value(stop),
             purpose: purpose,
             updatedAt: replay.shifts.store.now(),
@@ -362,9 +369,14 @@ class RoadEvidenceStore {
             'comment': (inputs['comment'] as String? ?? '').trim(),
           });
         case EvidenceCommandKind.fuel:
+          if (fresh.tractorId != work.data['currentTractorId']) {
+            throw const FormatException(
+              'El Tractor cambió. Conserva el recibo y revisa con operaciones.',
+            );
+          }
           body.addAll({
             'tripId': fresh.tripId,
-            'tractorId': work.data['currentTractorId'],
+            'tractorId': fresh.tractorId,
             'odometer': inputs['odometer'],
             'receiptDocumentId': photos['receipt'],
           });

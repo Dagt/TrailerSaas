@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:trailersaas_mobile/src/road/road_evidence_store.dart';
 import 'package:trailersaas_mobile/src/road/road_evidence_replay.dart';
 import 'package:trailersaas_mobile/src/session/session_controller.dart';
+import 'package:trailersaas_mobile/src/session/contracts.dart';
 import 'package:trailersaas_mobile/src/platform/connectivity.dart';
 
 import '../media/media_http_fixture.dart';
@@ -299,4 +300,36 @@ void main() {
       );
     },
   );
+  test('a saved Fuel receipt cannot silently become an event for a newly assigned Tractor', () async {
+    var draft = await store.create('FUEL', MediaHttpFixture.roadTrip);
+    await store.take(draft, 'receipt');
+    await store.save(draft, {'odometer': 123});
+    draft = (await store.find(user, tenant, draft.id))!;
+    final original = draft.tractorId;
+    final s = f.session.snapshot!;
+    f.session.snapshot = SessionSnapshot(
+      s.firebaseUid,
+      s.userId,
+      s.membership,
+      s.driver,
+      s.refreshedAt,
+      [
+        WorkTrip({
+          ...s.trips.single.data,
+          'currentTractorId': '88888888-8888-4888-8888-888888888888',
+        }),
+      ],
+    );
+    await expectLater(store.queue(draft), throwsA(isA<FormatException>()));
+    expect((await store.find(user, tenant, draft.id))!.tractorId, original);
+    expect(await f.worker.store.list(user, tenant), isEmpty);
+    await f.media.verify((await f.media.list(user, tenant)).single);
+    await expectLater(
+      f.db.customStatement('UPDATE road_drafts SET tractor_id=? WHERE id=?', [
+        '88888888-8888-4888-8888-888888888888',
+        draft.id,
+      ]),
+      throwsA(isA<Exception>()),
+    );
+  });
 }

@@ -8049,6 +8049,17 @@ class $RoadDraftsTable extends RoadDrafts
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _tractorIdMeta = const VerificationMeta(
+    'tractorId',
+  );
+  @override
+  late final GeneratedColumn<String> tractorId = GeneratedColumn<String>(
+    'tractor_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _stopIdMeta = const VerificationMeta('stopId');
   @override
   late final GeneratedColumn<String> stopId = GeneratedColumn<String>(
@@ -8121,6 +8132,7 @@ class $RoadDraftsTable extends RoadDrafts
     userId,
     tenantId,
     tripId,
+    tractorId,
     stopId,
     purpose,
     inputsJson,
@@ -8168,6 +8180,12 @@ class $RoadDraftsTable extends RoadDrafts
       );
     } else if (isInserting) {
       context.missing(_tripIdMeta);
+    }
+    if (data.containsKey('tractor_id')) {
+      context.handle(
+        _tractorIdMeta,
+        tractorId.isAcceptableOrUnknown(data['tractor_id']!, _tractorIdMeta),
+      );
     }
     if (data.containsKey('stop_id')) {
       context.handle(
@@ -8234,6 +8252,10 @@ class $RoadDraftsTable extends RoadDrafts
         DriftSqlType.string,
         data['${effectivePrefix}trip_id'],
       )!,
+      tractorId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tractor_id'],
+      ),
       stopId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}stop_id'],
@@ -8272,6 +8294,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
   final String userId;
   final String tenantId;
   final String tripId;
+  final String? tractorId;
   final String? stopId;
   final String purpose;
   final String inputsJson;
@@ -8283,6 +8306,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
     required this.userId,
     required this.tenantId,
     required this.tripId,
+    this.tractorId,
     this.stopId,
     required this.purpose,
     required this.inputsJson,
@@ -8297,6 +8321,9 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
     map['user_id'] = Variable<String>(userId);
     map['tenant_id'] = Variable<String>(tenantId);
     map['trip_id'] = Variable<String>(tripId);
+    if (!nullToAbsent || tractorId != null) {
+      map['tractor_id'] = Variable<String>(tractorId);
+    }
     if (!nullToAbsent || stopId != null) {
       map['stop_id'] = Variable<String>(stopId);
     }
@@ -8316,6 +8343,9 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
       userId: Value(userId),
       tenantId: Value(tenantId),
       tripId: Value(tripId),
+      tractorId: tractorId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tractorId),
       stopId: stopId == null && nullToAbsent
           ? const Value.absent()
           : Value(stopId),
@@ -8339,6 +8369,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
       userId: serializer.fromJson<String>(json['userId']),
       tenantId: serializer.fromJson<String>(json['tenantId']),
       tripId: serializer.fromJson<String>(json['tripId']),
+      tractorId: serializer.fromJson<String?>(json['tractorId']),
       stopId: serializer.fromJson<String?>(json['stopId']),
       purpose: serializer.fromJson<String>(json['purpose']),
       inputsJson: serializer.fromJson<String>(json['inputsJson']),
@@ -8355,6 +8386,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
       'userId': serializer.toJson<String>(userId),
       'tenantId': serializer.toJson<String>(tenantId),
       'tripId': serializer.toJson<String>(tripId),
+      'tractorId': serializer.toJson<String?>(tractorId),
       'stopId': serializer.toJson<String?>(stopId),
       'purpose': serializer.toJson<String>(purpose),
       'inputsJson': serializer.toJson<String>(inputsJson),
@@ -8369,6 +8401,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
     String? userId,
     String? tenantId,
     String? tripId,
+    Value<String?> tractorId = const Value.absent(),
     Value<String?> stopId = const Value.absent(),
     String? purpose,
     String? inputsJson,
@@ -8380,6 +8413,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
     userId: userId ?? this.userId,
     tenantId: tenantId ?? this.tenantId,
     tripId: tripId ?? this.tripId,
+    tractorId: tractorId.present ? tractorId.value : this.tractorId,
     stopId: stopId.present ? stopId.value : this.stopId,
     purpose: purpose ?? this.purpose,
     inputsJson: inputsJson ?? this.inputsJson,
@@ -8393,6 +8427,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
       userId: data.userId.present ? data.userId.value : this.userId,
       tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
       tripId: data.tripId.present ? data.tripId.value : this.tripId,
+      tractorId: data.tractorId.present ? data.tractorId.value : this.tractorId,
       stopId: data.stopId.present ? data.stopId.value : this.stopId,
       purpose: data.purpose.present ? data.purpose.value : this.purpose,
       inputsJson: data.inputsJson.present
@@ -8411,6 +8446,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
           ..write('userId: $userId, ')
           ..write('tenantId: $tenantId, ')
           ..write('tripId: $tripId, ')
+          ..write('tractorId: $tractorId, ')
           ..write('stopId: $stopId, ')
           ..write('purpose: $purpose, ')
           ..write('inputsJson: $inputsJson, ')
@@ -8427,6 +8463,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
     userId,
     tenantId,
     tripId,
+    tractorId,
     stopId,
     purpose,
     inputsJson,
@@ -8442,6 +8479,7 @@ class RoadDraft extends DataClass implements Insertable<RoadDraft> {
           other.userId == this.userId &&
           other.tenantId == this.tenantId &&
           other.tripId == this.tripId &&
+          other.tractorId == this.tractorId &&
           other.stopId == this.stopId &&
           other.purpose == this.purpose &&
           other.inputsJson == this.inputsJson &&
@@ -8455,6 +8493,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
   final Value<String> userId;
   final Value<String> tenantId;
   final Value<String> tripId;
+  final Value<String?> tractorId;
   final Value<String?> stopId;
   final Value<String> purpose;
   final Value<String> inputsJson;
@@ -8467,6 +8506,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
     this.userId = const Value.absent(),
     this.tenantId = const Value.absent(),
     this.tripId = const Value.absent(),
+    this.tractorId = const Value.absent(),
     this.stopId = const Value.absent(),
     this.purpose = const Value.absent(),
     this.inputsJson = const Value.absent(),
@@ -8480,6 +8520,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
     required String userId,
     required String tenantId,
     required String tripId,
+    this.tractorId = const Value.absent(),
     this.stopId = const Value.absent(),
     required String purpose,
     this.inputsJson = const Value.absent(),
@@ -8498,6 +8539,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
     Expression<String>? userId,
     Expression<String>? tenantId,
     Expression<String>? tripId,
+    Expression<String>? tractorId,
     Expression<String>? stopId,
     Expression<String>? purpose,
     Expression<String>? inputsJson,
@@ -8511,6 +8553,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
       if (userId != null) 'user_id': userId,
       if (tenantId != null) 'tenant_id': tenantId,
       if (tripId != null) 'trip_id': tripId,
+      if (tractorId != null) 'tractor_id': tractorId,
       if (stopId != null) 'stop_id': stopId,
       if (purpose != null) 'purpose': purpose,
       if (inputsJson != null) 'inputs_json': inputsJson,
@@ -8526,6 +8569,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
     Value<String>? userId,
     Value<String>? tenantId,
     Value<String>? tripId,
+    Value<String?>? tractorId,
     Value<String?>? stopId,
     Value<String>? purpose,
     Value<String>? inputsJson,
@@ -8539,6 +8583,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
       userId: userId ?? this.userId,
       tenantId: tenantId ?? this.tenantId,
       tripId: tripId ?? this.tripId,
+      tractorId: tractorId ?? this.tractorId,
       stopId: stopId ?? this.stopId,
       purpose: purpose ?? this.purpose,
       inputsJson: inputsJson ?? this.inputsJson,
@@ -8563,6 +8608,9 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
     }
     if (tripId.present) {
       map['trip_id'] = Variable<String>(tripId.value);
+    }
+    if (tractorId.present) {
+      map['tractor_id'] = Variable<String>(tractorId.value);
     }
     if (stopId.present) {
       map['stop_id'] = Variable<String>(stopId.value);
@@ -8595,6 +8643,7 @@ class RoadDraftsCompanion extends UpdateCompanion<RoadDraft> {
           ..write('userId: $userId, ')
           ..write('tenantId: $tenantId, ')
           ..write('tripId: $tripId, ')
+          ..write('tractorId: $tractorId, ')
           ..write('stopId: $stopId, ')
           ..write('purpose: $purpose, ')
           ..write('inputsJson: $inputsJson, ')
@@ -9191,6 +9240,17 @@ class $CachedDriverUpdatesTable extends CachedDriverUpdates
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _driverIdMeta = const VerificationMeta(
+    'driverId',
+  );
+  @override
+  late final GeneratedColumn<String> driverId = GeneratedColumn<String>(
+    'driver_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -9257,6 +9317,7 @@ class $CachedDriverUpdatesTable extends CachedDriverUpdates
   List<GeneratedColumn> get $columns => [
     userId,
     tenantId,
+    driverId,
     id,
     tripId,
     updateType,
@@ -9291,6 +9352,14 @@ class $CachedDriverUpdatesTable extends CachedDriverUpdates
       );
     } else if (isInserting) {
       context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('driver_id')) {
+      context.handle(
+        _driverIdMeta,
+        driverId.isAcceptableOrUnknown(data['driver_id']!, _driverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_driverIdMeta);
     }
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
@@ -9347,7 +9416,7 @@ class $CachedDriverUpdatesTable extends CachedDriverUpdates
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {userId, tenantId, id};
+  Set<GeneratedColumn> get $primaryKey => {userId, tenantId, driverId, id};
   @override
   CachedDriverUpdate map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -9359,6 +9428,10 @@ class $CachedDriverUpdatesTable extends CachedDriverUpdates
       tenantId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}tenant_id'],
+      )!,
+      driverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}driver_id'],
       )!,
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -9397,6 +9470,7 @@ class CachedDriverUpdate extends DataClass
     implements Insertable<CachedDriverUpdate> {
   final String userId;
   final String tenantId;
+  final String driverId;
   final String id;
   final String tripId;
   final String updateType;
@@ -9406,6 +9480,7 @@ class CachedDriverUpdate extends DataClass
   const CachedDriverUpdate({
     required this.userId,
     required this.tenantId,
+    required this.driverId,
     required this.id,
     required this.tripId,
     required this.updateType,
@@ -9418,6 +9493,7 @@ class CachedDriverUpdate extends DataClass
     final map = <String, Expression>{};
     map['user_id'] = Variable<String>(userId);
     map['tenant_id'] = Variable<String>(tenantId);
+    map['driver_id'] = Variable<String>(driverId);
     map['id'] = Variable<String>(id);
     map['trip_id'] = Variable<String>(tripId);
     map['update_type'] = Variable<String>(updateType);
@@ -9431,6 +9507,7 @@ class CachedDriverUpdate extends DataClass
     return CachedDriverUpdatesCompanion(
       userId: Value(userId),
       tenantId: Value(tenantId),
+      driverId: Value(driverId),
       id: Value(id),
       tripId: Value(tripId),
       updateType: Value(updateType),
@@ -9448,6 +9525,7 @@ class CachedDriverUpdate extends DataClass
     return CachedDriverUpdate(
       userId: serializer.fromJson<String>(json['userId']),
       tenantId: serializer.fromJson<String>(json['tenantId']),
+      driverId: serializer.fromJson<String>(json['driverId']),
       id: serializer.fromJson<String>(json['id']),
       tripId: serializer.fromJson<String>(json['tripId']),
       updateType: serializer.fromJson<String>(json['updateType']),
@@ -9462,6 +9540,7 @@ class CachedDriverUpdate extends DataClass
     return <String, dynamic>{
       'userId': serializer.toJson<String>(userId),
       'tenantId': serializer.toJson<String>(tenantId),
+      'driverId': serializer.toJson<String>(driverId),
       'id': serializer.toJson<String>(id),
       'tripId': serializer.toJson<String>(tripId),
       'updateType': serializer.toJson<String>(updateType),
@@ -9474,6 +9553,7 @@ class CachedDriverUpdate extends DataClass
   CachedDriverUpdate copyWith({
     String? userId,
     String? tenantId,
+    String? driverId,
     String? id,
     String? tripId,
     String? updateType,
@@ -9483,6 +9563,7 @@ class CachedDriverUpdate extends DataClass
   }) => CachedDriverUpdate(
     userId: userId ?? this.userId,
     tenantId: tenantId ?? this.tenantId,
+    driverId: driverId ?? this.driverId,
     id: id ?? this.id,
     tripId: tripId ?? this.tripId,
     updateType: updateType ?? this.updateType,
@@ -9494,6 +9575,7 @@ class CachedDriverUpdate extends DataClass
     return CachedDriverUpdate(
       userId: data.userId.present ? data.userId.value : this.userId,
       tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      driverId: data.driverId.present ? data.driverId.value : this.driverId,
       id: data.id.present ? data.id.value : this.id,
       tripId: data.tripId.present ? data.tripId.value : this.tripId,
       updateType: data.updateType.present
@@ -9514,6 +9596,7 @@ class CachedDriverUpdate extends DataClass
     return (StringBuffer('CachedDriverUpdate(')
           ..write('userId: $userId, ')
           ..write('tenantId: $tenantId, ')
+          ..write('driverId: $driverId, ')
           ..write('id: $id, ')
           ..write('tripId: $tripId, ')
           ..write('updateType: $updateType, ')
@@ -9528,6 +9611,7 @@ class CachedDriverUpdate extends DataClass
   int get hashCode => Object.hash(
     userId,
     tenantId,
+    driverId,
     id,
     tripId,
     updateType,
@@ -9541,6 +9625,7 @@ class CachedDriverUpdate extends DataClass
       (other is CachedDriverUpdate &&
           other.userId == this.userId &&
           other.tenantId == this.tenantId &&
+          other.driverId == this.driverId &&
           other.id == this.id &&
           other.tripId == this.tripId &&
           other.updateType == this.updateType &&
@@ -9552,6 +9637,7 @@ class CachedDriverUpdate extends DataClass
 class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
   final Value<String> userId;
   final Value<String> tenantId;
+  final Value<String> driverId;
   final Value<String> id;
   final Value<String> tripId;
   final Value<String> updateType;
@@ -9562,6 +9648,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
   const CachedDriverUpdatesCompanion({
     this.userId = const Value.absent(),
     this.tenantId = const Value.absent(),
+    this.driverId = const Value.absent(),
     this.id = const Value.absent(),
     this.tripId = const Value.absent(),
     this.updateType = const Value.absent(),
@@ -9573,6 +9660,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
   CachedDriverUpdatesCompanion.insert({
     required String userId,
     required String tenantId,
+    required String driverId,
     required String id,
     required String tripId,
     required String updateType,
@@ -9582,6 +9670,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
     this.rowid = const Value.absent(),
   }) : userId = Value(userId),
        tenantId = Value(tenantId),
+       driverId = Value(driverId),
        id = Value(id),
        tripId = Value(tripId),
        updateType = Value(updateType),
@@ -9591,6 +9680,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
   static Insertable<CachedDriverUpdate> custom({
     Expression<String>? userId,
     Expression<String>? tenantId,
+    Expression<String>? driverId,
     Expression<String>? id,
     Expression<String>? tripId,
     Expression<String>? updateType,
@@ -9602,6 +9692,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
     return RawValuesInsertable({
       if (userId != null) 'user_id': userId,
       if (tenantId != null) 'tenant_id': tenantId,
+      if (driverId != null) 'driver_id': driverId,
       if (id != null) 'id': id,
       if (tripId != null) 'trip_id': tripId,
       if (updateType != null) 'update_type': updateType,
@@ -9615,6 +9706,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
   CachedDriverUpdatesCompanion copyWith({
     Value<String>? userId,
     Value<String>? tenantId,
+    Value<String>? driverId,
     Value<String>? id,
     Value<String>? tripId,
     Value<String>? updateType,
@@ -9626,6 +9718,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
     return CachedDriverUpdatesCompanion(
       userId: userId ?? this.userId,
       tenantId: tenantId ?? this.tenantId,
+      driverId: driverId ?? this.driverId,
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       updateType: updateType ?? this.updateType,
@@ -9644,6 +9737,9 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
     }
     if (tenantId.present) {
       map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (driverId.present) {
+      map['driver_id'] = Variable<String>(driverId.value);
     }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
@@ -9674,6 +9770,7 @@ class CachedDriverUpdatesCompanion extends UpdateCompanion<CachedDriverUpdate> {
     return (StringBuffer('CachedDriverUpdatesCompanion(')
           ..write('userId: $userId, ')
           ..write('tenantId: $tenantId, ')
+          ..write('driverId: $driverId, ')
           ..write('id: $id, ')
           ..write('tripId: $tripId, ')
           ..write('updateType: $updateType, ')
@@ -9712,6 +9809,17 @@ class $DriverUpdateCursorsTable extends DriverUpdateCursors
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _driverIdMeta = const VerificationMeta(
+    'driverId',
+  );
+  @override
+  late final GeneratedColumn<String> driverId = GeneratedColumn<String>(
+    'driver_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _cursorMeta = const VerificationMeta('cursor');
   @override
   late final GeneratedColumn<String> cursor = GeneratedColumn<String>(
@@ -9721,8 +9829,29 @@ class $DriverUpdateCursorsTable extends DriverUpdateCursors
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _accessBlockedMeta = const VerificationMeta(
+    'accessBlocked',
+  );
   @override
-  List<GeneratedColumn> get $columns => [userId, tenantId, cursor];
+  late final GeneratedColumn<bool> accessBlocked = GeneratedColumn<bool>(
+    'access_blocked',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("access_blocked" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    tenantId,
+    driverId,
+    cursor,
+    accessBlocked,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -9751,17 +9880,34 @@ class $DriverUpdateCursorsTable extends DriverUpdateCursors
     } else if (isInserting) {
       context.missing(_tenantIdMeta);
     }
+    if (data.containsKey('driver_id')) {
+      context.handle(
+        _driverIdMeta,
+        driverId.isAcceptableOrUnknown(data['driver_id']!, _driverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_driverIdMeta);
+    }
     if (data.containsKey('cursor')) {
       context.handle(
         _cursorMeta,
         cursor.isAcceptableOrUnknown(data['cursor']!, _cursorMeta),
       );
     }
+    if (data.containsKey('access_blocked')) {
+      context.handle(
+        _accessBlockedMeta,
+        accessBlocked.isAcceptableOrUnknown(
+          data['access_blocked']!,
+          _accessBlockedMeta,
+        ),
+      );
+    }
     return context;
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {userId, tenantId};
+  Set<GeneratedColumn> get $primaryKey => {userId, tenantId, driverId};
   @override
   DriverUpdateCursor map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -9774,10 +9920,18 @@ class $DriverUpdateCursorsTable extends DriverUpdateCursors
         DriftSqlType.string,
         data['${effectivePrefix}tenant_id'],
       )!,
+      driverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}driver_id'],
+      )!,
       cursor: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}cursor'],
       ),
+      accessBlocked: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}access_blocked'],
+      )!,
     );
   }
 
@@ -9791,20 +9945,26 @@ class DriverUpdateCursor extends DataClass
     implements Insertable<DriverUpdateCursor> {
   final String userId;
   final String tenantId;
+  final String driverId;
   final String? cursor;
+  final bool accessBlocked;
   const DriverUpdateCursor({
     required this.userId,
     required this.tenantId,
+    required this.driverId,
     this.cursor,
+    required this.accessBlocked,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['user_id'] = Variable<String>(userId);
     map['tenant_id'] = Variable<String>(tenantId);
+    map['driver_id'] = Variable<String>(driverId);
     if (!nullToAbsent || cursor != null) {
       map['cursor'] = Variable<String>(cursor);
     }
+    map['access_blocked'] = Variable<bool>(accessBlocked);
     return map;
   }
 
@@ -9812,9 +9972,11 @@ class DriverUpdateCursor extends DataClass
     return DriverUpdateCursorsCompanion(
       userId: Value(userId),
       tenantId: Value(tenantId),
+      driverId: Value(driverId),
       cursor: cursor == null && nullToAbsent
           ? const Value.absent()
           : Value(cursor),
+      accessBlocked: Value(accessBlocked),
     );
   }
 
@@ -9826,7 +9988,9 @@ class DriverUpdateCursor extends DataClass
     return DriverUpdateCursor(
       userId: serializer.fromJson<String>(json['userId']),
       tenantId: serializer.fromJson<String>(json['tenantId']),
+      driverId: serializer.fromJson<String>(json['driverId']),
       cursor: serializer.fromJson<String?>(json['cursor']),
+      accessBlocked: serializer.fromJson<bool>(json['accessBlocked']),
     );
   }
   @override
@@ -9835,24 +9999,34 @@ class DriverUpdateCursor extends DataClass
     return <String, dynamic>{
       'userId': serializer.toJson<String>(userId),
       'tenantId': serializer.toJson<String>(tenantId),
+      'driverId': serializer.toJson<String>(driverId),
       'cursor': serializer.toJson<String?>(cursor),
+      'accessBlocked': serializer.toJson<bool>(accessBlocked),
     };
   }
 
   DriverUpdateCursor copyWith({
     String? userId,
     String? tenantId,
+    String? driverId,
     Value<String?> cursor = const Value.absent(),
+    bool? accessBlocked,
   }) => DriverUpdateCursor(
     userId: userId ?? this.userId,
     tenantId: tenantId ?? this.tenantId,
+    driverId: driverId ?? this.driverId,
     cursor: cursor.present ? cursor.value : this.cursor,
+    accessBlocked: accessBlocked ?? this.accessBlocked,
   );
   DriverUpdateCursor copyWithCompanion(DriverUpdateCursorsCompanion data) {
     return DriverUpdateCursor(
       userId: data.userId.present ? data.userId.value : this.userId,
       tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      driverId: data.driverId.present ? data.driverId.value : this.driverId,
       cursor: data.cursor.present ? data.cursor.value : this.cursor,
+      accessBlocked: data.accessBlocked.present
+          ? data.accessBlocked.value
+          : this.accessBlocked,
     );
   }
 
@@ -9861,50 +10035,66 @@ class DriverUpdateCursor extends DataClass
     return (StringBuffer('DriverUpdateCursor(')
           ..write('userId: $userId, ')
           ..write('tenantId: $tenantId, ')
-          ..write('cursor: $cursor')
+          ..write('driverId: $driverId, ')
+          ..write('cursor: $cursor, ')
+          ..write('accessBlocked: $accessBlocked')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(userId, tenantId, cursor);
+  int get hashCode =>
+      Object.hash(userId, tenantId, driverId, cursor, accessBlocked);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is DriverUpdateCursor &&
           other.userId == this.userId &&
           other.tenantId == this.tenantId &&
-          other.cursor == this.cursor);
+          other.driverId == this.driverId &&
+          other.cursor == this.cursor &&
+          other.accessBlocked == this.accessBlocked);
 }
 
 class DriverUpdateCursorsCompanion extends UpdateCompanion<DriverUpdateCursor> {
   final Value<String> userId;
   final Value<String> tenantId;
+  final Value<String> driverId;
   final Value<String?> cursor;
+  final Value<bool> accessBlocked;
   final Value<int> rowid;
   const DriverUpdateCursorsCompanion({
     this.userId = const Value.absent(),
     this.tenantId = const Value.absent(),
+    this.driverId = const Value.absent(),
     this.cursor = const Value.absent(),
+    this.accessBlocked = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DriverUpdateCursorsCompanion.insert({
     required String userId,
     required String tenantId,
+    required String driverId,
     this.cursor = const Value.absent(),
+    this.accessBlocked = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : userId = Value(userId),
-       tenantId = Value(tenantId);
+       tenantId = Value(tenantId),
+       driverId = Value(driverId);
   static Insertable<DriverUpdateCursor> custom({
     Expression<String>? userId,
     Expression<String>? tenantId,
+    Expression<String>? driverId,
     Expression<String>? cursor,
+    Expression<bool>? accessBlocked,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (userId != null) 'user_id': userId,
       if (tenantId != null) 'tenant_id': tenantId,
+      if (driverId != null) 'driver_id': driverId,
       if (cursor != null) 'cursor': cursor,
+      if (accessBlocked != null) 'access_blocked': accessBlocked,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -9912,13 +10102,17 @@ class DriverUpdateCursorsCompanion extends UpdateCompanion<DriverUpdateCursor> {
   DriverUpdateCursorsCompanion copyWith({
     Value<String>? userId,
     Value<String>? tenantId,
+    Value<String>? driverId,
     Value<String?>? cursor,
+    Value<bool>? accessBlocked,
     Value<int>? rowid,
   }) {
     return DriverUpdateCursorsCompanion(
       userId: userId ?? this.userId,
       tenantId: tenantId ?? this.tenantId,
+      driverId: driverId ?? this.driverId,
       cursor: cursor ?? this.cursor,
+      accessBlocked: accessBlocked ?? this.accessBlocked,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -9932,8 +10126,14 @@ class DriverUpdateCursorsCompanion extends UpdateCompanion<DriverUpdateCursor> {
     if (tenantId.present) {
       map['tenant_id'] = Variable<String>(tenantId.value);
     }
+    if (driverId.present) {
+      map['driver_id'] = Variable<String>(driverId.value);
+    }
     if (cursor.present) {
       map['cursor'] = Variable<String>(cursor.value);
+    }
+    if (accessBlocked.present) {
+      map['access_blocked'] = Variable<bool>(accessBlocked.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -9946,7 +10146,9 @@ class DriverUpdateCursorsCompanion extends UpdateCompanion<DriverUpdateCursor> {
     return (StringBuffer('DriverUpdateCursorsCompanion(')
           ..write('userId: $userId, ')
           ..write('tenantId: $tenantId, ')
+          ..write('driverId: $driverId, ')
           ..write('cursor: $cursor, ')
+          ..write('accessBlocked: $accessBlocked, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();

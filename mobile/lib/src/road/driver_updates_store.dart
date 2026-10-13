@@ -1,6 +1,9 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
+
+import '../session/api_client.dart';
 
 import '../persistence/app_database.dart';
 import '../session/contracts.dart';
@@ -8,11 +11,19 @@ import '../session/session_controller.dart';
 import '../media/media_file_store.dart';
 
 /// Targeted server instructions survive removal of a Trip from current assigned work.
-class DriverUpdatesStore {
+class DriverUpdatesStore extends ChangeNotifier {
   DriverUpdatesStore(this.db, this.session);
   final AppDatabase db;
   final SessionController session;
   bool _closed = false;
+  final _errors = <String, String>{};
+  String? get message {
+    final s = session.snapshot;
+    return s == null
+        ? null
+        : _errors['${s.userId}|${s.membership.tenantId}|${s.driver?.id}'];
+  }
+
   static final _lanes = Expando<Future<void>>();
   bool current(SessionSnapshot s) =>
       !_closed &&
@@ -20,35 +31,86 @@ class DriverUpdatesStore {
       session.auth.uid == s.firebaseUid &&
       session.snapshot?.userId == s.userId &&
       session.snapshot?.membership.tenantId == s.membership.tenantId &&
+      session.snapshot?.driver?.id == s.driver?.id &&
       session.snapshot?.driver != null &&
       session.snapshot!.membership.road;
-  Stream<List<CachedDriverUpdate>> watch(String user, String tenant) =>
-      (db.select(db.cachedDriverUpdates)
-            ..where((r) => r.userId.equals(user) & r.tenantId.equals(tenant))
-            ..orderBy([(r) => OrderingTerm.desc(r.sequence)])
-            ..limit(200))
-          .watch();
+  Stream<List<CachedDriverUpdate>> watch(String user, String tenant) {
+    final driver = session.snapshot?.driver?.id;
+    if (driver == null) return Stream.value([]);
+    return db
+        .customSelect(
+          '''SELECT u.* FROM cached_driver_updates u WHERE u.user_id=? AND u.tenant_id=? AND u.driver_id=?
+      AND NOT EXISTS(SELECT 1 FROM driver_update_cursors c WHERE c.user_id=u.user_id AND c.tenant_id=u.tenant_id AND c.driver_id=u.driver_id AND c.access_blocked)
+      ORDER BY u.sequence DESC LIMIT 200''',
+          variables: [Variable(user), Variable(tenant), Variable(driver)],
+          readsFrom: {db.cachedDriverUpdates, db.driverUpdateCursors},
+        )
+        .watch()
+        .map(
+          (rows) =>
+              rows.map((r) => db.cachedDriverUpdates.map(r.data)).toList(),
+        );
+  }
+
   Future<void> refresh() {
     final owner = session.snapshot;
     if (owner == null || !current(owner)) return Future.value();
-    final future = (_lanes[db] ?? Future.value())
-        .catchError((Object _) {})
-        .then((_) => _refresh(owner));
+    final future = (_lanes[db] ?? Future.value()).catchError((Object _) {}).then((
+      _,
+    ) async {
+      try {
+        await _refresh(owner);
+        if (current(owner)) {
+          _errors.remove(
+            '${owner.userId}|${owner.membership.tenantId}|${owner.driver?.id}',
+          );
+          notifyListeners();
+        }
+      } catch (error, stack) {
+        if (current(owner)) {
+          if (error is ApiProblem && {401, 403}.contains(error.status)) {
+            await db
+                .into(db.driverUpdateCursors)
+                .insertOnConflictUpdate(
+                  DriverUpdateCursorsCompanion.insert(
+                    userId: owner.userId,
+                    tenantId: owner.membership.tenantId,
+                    driverId: owner.driver!.id,
+                    accessBlocked: const Value(true),
+                  ),
+                );
+            await session.rejectOperationalContext(error);
+          }
+          if (current(owner)) {
+            _errors['${owner.userId}|${owner.membership.tenantId}|${owner.driver?.id}'] = 'No se pudieron actualizar las instrucciones. Conservamos las descargadas; reintenta.';
+            notifyListeners();
+          }
+        }
+        Error.throwWithStackTrace(error, stack);
+      }
+    });
     _lanes[db] = future.catchError((Object _) {});
     return future;
   }
 
   Future<void> shutdown() async {
+    if (_closed) return;
     _closed = true;
     await _lanes[db]?.catchError((Object _) {});
+    super.dispose();
   }
 
   Future<void> _refresh(SessionSnapshot owner) async {
     if (!current(owner)) return;
-    final user = owner.userId, tenant = owner.membership.tenantId;
+    final user = owner.userId,
+        tenant = owner.membership.tenantId,
+        driver = owner.driver!.id;
     var cursor =
         (await (db.select(db.driverUpdateCursors)..where(
-                  (r) => r.userId.equals(user) & r.tenantId.equals(tenant),
+                  (r) =>
+                      r.userId.equals(user) &
+                      r.tenantId.equals(tenant) &
+                      r.driverId.equals(driver),
                 ))
                 .getSingleOrNull())
             ?.cursor;
@@ -119,8 +181,12 @@ class DriverUpdatesStore {
         var sequence =
             (await db
                     .customSelect(
-                      'SELECT coalesce(max(sequence),0) n FROM cached_driver_updates WHERE user_id=? AND tenant_id=?',
-                      variables: [Variable(user), Variable(tenant)],
+                      'SELECT coalesce(max(sequence),0) n FROM cached_driver_updates WHERE user_id=? AND tenant_id=? AND driver_id=?',
+                      variables: [
+                        Variable(user),
+                        Variable(tenant),
+                        Variable(driver),
+                      ],
                     )
                     .getSingle())
                 .read<int>('n');
@@ -130,6 +196,7 @@ class DriverUpdatesStore {
                     (r) =>
                         r.userId.equals(user) &
                         r.tenantId.equals(tenant) &
+                        r.driverId.equals(driver) &
                         r.id.equals(item['id'] as String),
                   ))
                   .getSingleOrNull();
@@ -147,6 +214,7 @@ class DriverUpdatesStore {
                 CachedDriverUpdatesCompanion.insert(
                   userId: user,
                   tenantId: tenant,
+                  driverId: driver,
                   id: item['id'] as String,
                   tripId: item['tripId'] as String,
                   updateType: item['updateType'] as String,
@@ -158,14 +226,16 @@ class DriverUpdatesStore {
         }
         // nextCursor is a continuation, not a watermark. Keep the last server-issued
         // non-null anchor and reread/deduplicate its tail after reaching the end.
-        if (next is String) {
+        {
           await db
               .into(db.driverUpdateCursors)
               .insertOnConflictUpdate(
                 DriverUpdateCursorsCompanion.insert(
                   userId: user,
                   tenantId: tenant,
-                  cursor: Value(next),
+                  driverId: driver,
+                  cursor: Value(next is String ? next : cursor),
+                  accessBlocked: const Value(false),
                 ),
               );
         }
