@@ -1,5 +1,5 @@
 /**
- * Yard operations and checks module boundary reserved for later implementation issues.
+ * Authorized Yard context and physical Trailer moves. Yard Check remains a separate workflow.
  */
 @org.springframework.modulith.ApplicationModule
 package com.trailersaas.yard;
