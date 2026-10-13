@@ -137,6 +137,11 @@ conservatively pinned for offline recovery; no new automatic deletion is enabled
 
 ## Driver Updates and cursor continuity
 
+The UI consumes the actual targeted TRAILER_EXPECTATION_CHANGED/decision and
+TRIP_ASSIGNMENT_CHANGED/currentAssignment payloads, distinguishing authorized or
+rejected substitutions and removed assignment. It never interprets a planned
+Trailer as physical coupling; current work and QR/Hook remain authoritative.
+
 The existing targeted GET is fetched initially, manually, after ready/reconnect and
 foreground. Each pass is bounded to ten pages of 200. Only backend-issued cursors
 are persisted. Because nextCursor is a page continuation, not an end watermark,

@@ -78,13 +78,18 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
     super.dispose();
   }
 
-  static String label(String type) => switch (type) {
+  static String label(String type, Map payload) => switch (type) {
     'TRIP_REROUTED' => 'Cambio de destino / instrucciones',
     'TRIP_CANCELLATION_STARTED' =>
       'Cancelación activa: sigue la resolución indicada',
     'TRIP_CANCELLED' || 'TRIP_CANCELLATION_FINISHED' => 'Trip cancelado',
     'TRAILER_SUBSTITUTION_AUTHORIZED' => 'Sustitución de Trailer autorizada',
     'TRAILER_SUBSTITUTION_REJECTED' => 'Sustitución rechazada',
+    'TRAILER_EXPECTATION_CHANGED' => switch (payload['decision']) {
+      'AUTHORIZE' => 'Sustitución de Trailer autorizada',
+      'REJECT' => 'Sustitución rechazada',
+      _ => 'Cambio de Trailer esperado',
+    },
     _ => 'Cambio de asignación / Trip actualizado',
   };
   @override
@@ -130,11 +135,25 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
                       final item = jsonDecode(row.projectionJson) as Map,
                           payload = item['payload'] as Map;
                       return ExpansionTile(
-                        title: Text(label(row.updateType)),
+                        title: Text(label(row.updateType, payload)),
                         subtitle: Text(
                           'Descargado: ${row.downloadedAt.toLocal()}',
                         ),
                         children: [
+                          if (payload['currentAssignment'] == false)
+                            const ListTile(
+                              title: Text('Asignación retirada'),
+                              subtitle: Text(
+                                'Consulta tu trabajo actual y contacta a operaciones. Esta instrucción no autoriza continuar el Trip.',
+                              ),
+                            ),
+                          if (row.updateType == 'TRAILER_EXPECTATION_CHANGED')
+                            const ListTile(
+                              title: Text('Plan de Trailer y autorización'),
+                              subtitle: Text(
+                                'Consulta el plan actual y confirma el QR antes del Hook. Un cambio de plan no es un acoplamiento físico.',
+                              ),
+                            ),
                           if (payload['instructions'] is String)
                             ListTile(
                               title: const Text('Qué debes hacer'),

@@ -19,6 +19,83 @@ import '../shift/camera_capture_test.dart' show ControlledCamera;
 
 void main() {
   testWidgets(
+    'actual targeted substitution and removed assignment payloads explain the authorized next step',
+    (tester) async {
+      late MediaHttpFixture f;
+      late DriverUpdatesStore store;
+      await real(tester, () async {
+        f = MediaHttpFixture()..roadWorkflows = true;
+        await f.start();
+        for (final payload in [
+          {
+            'decision': 'AUTHORIZE',
+            'currentAssignment': true,
+            'changedResource': 'TRAILER',
+          },
+          {
+            'decision': 'REJECT',
+            'currentAssignment': true,
+            'changedResource': 'TRAILER',
+          },
+          {'currentAssignment': false, 'changedResource': 'DRIVER'},
+        ]) {
+          f.driverUpdates.add({
+            'id': operationUuid(),
+            'tripId': MediaHttpFixture.roadTrip,
+            'updateType': payload['changedResource'] == 'TRAILER'
+                ? 'TRAILER_EXPECTATION_CHANGED'
+                : 'TRIP_ASSIGNMENT_CHANGED',
+            'occurredAt': f.now.toIso8601String(),
+            'payload': {
+              'tripId': MediaHttpFixture.roadTrip,
+              'tripVersion': 1,
+              ...payload,
+            },
+          });
+        }
+        store = DriverUpdatesStore(f.db, f.session);
+        await store.refresh();
+        f.noTrips = true;
+        await f.session.refresh();
+      });
+      await mount(
+        tester,
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DriverUpdatesPanel(store: store),
+            ),
+          ),
+        ),
+      );
+      await real(tester, () async {
+        await store.watch(user, tenant).first;
+        await store.refresh();
+      });
+      await tester.pump();
+      expect(find.text('Sustitución de Trailer autorizada'), findsOneWidget);
+      expect(find.text('Sustitución rechazada'), findsOneWidget);
+      await tester.tap(find.text('Sustitución de Trailer autorizada'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('no es un acoplamiento físico'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cambio de asignación / Trip actualizado'));
+      await tester.pumpAndSettle();
+      expect(find.text('Asignación retirada'), findsOneWidget);
+      expect(
+        find.textContaining('no autoriza continuar el Trip'),
+        findsOneWidget,
+      );
+      await mount(tester, const SizedBox.shrink());
+      await real(tester, () async {
+        await store.shutdown();
+        await f.close();
+      });
+    },
+  );
+  testWidgets(
     'No Receiver form captures two private images and honestly saves offline intent',
     (tester) async {
       late MediaHttpFixture f;
