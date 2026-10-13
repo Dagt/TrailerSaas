@@ -751,6 +751,7 @@ class ReplayWorker extends ChangeNotifier {
           'tractorOperationalNumber': detail['tractorOperationalNumber'],
           'departurePrerequisitesSatisfied':
               detail['departurePrerequisitesSatisfied'],
+          'arrivalAssistance': detail['arrivalAssistance'],
         },
       });
     } on ApiProblem catch (e) {

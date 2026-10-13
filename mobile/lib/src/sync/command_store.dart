@@ -85,11 +85,14 @@ class CommandIntent {
       _ => <String>{},
     };
     if (required.any((k) => command.body[k] == null) ||
-        (type == 'arrivals' && command.body['source'] != 'MANUAL')) {
+        (type == 'arrivals' &&
+            !{
+              'MANUAL',
+              'GEOFENCE_CONFIRMED',
+            }.contains(command.body['source']))) {
       throw const FormatException('Unsupported command payload');
     }
-    // Geofence/coordinates capture remains #47. Preserve legacy manual coordinates
-    // only as typed, bounded evidence, never authority.
+    // Only confirmed Arrival evidence is durable; never raw observation history.
     final coordinates = command.body['coordinates'];
     if (coordinates != null &&
         (coordinates is! Map ||
@@ -97,6 +100,23 @@ class CommandIntent {
               {'latitude', 'longitude', 'accuracyM'}.contains,
             ))) {
       throw const FormatException('Invalid coordinates');
+    }
+    if (type == 'arrivals' &&
+        command.body['source'] == 'GEOFENCE_CONFIRMED' &&
+        coordinates == null) {
+      throw const FormatException('Confirmed location evidence required');
+    }
+    if (coordinates is Map) {
+      for (final field in ['latitude', 'longitude', 'accuracyM']) {
+        final value = coordinates[field];
+        if (value is! num ||
+            !value.isFinite ||
+            (field == 'latitude' && value.abs() > 90) ||
+            (field == 'longitude' && value.abs() > 180) ||
+            (field == 'accuracyM' && value < 0)) {
+          throw const FormatException('Invalid coordinate evidence');
+        }
+      }
     }
   }
 }
