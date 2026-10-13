@@ -1025,7 +1025,7 @@ separately from ordered-index eligibility diagnostics, without exact cost assert
 
 ## Driver execution (#44)
 
-[Execution boundary](../docs/mobile/issue-44-road-execution.md) documents V18 immutable Stop events, the shared V16 ledger, own assigned Trip detail and five typed internal execution commands. Production first departure fails closed until #43 validates duty/inspection; tests substitute only the prerequisite seam. Delivery is blocked pending finalized POD. No capability catalog, physical Hook/Drop contract or historical migration changes.
+[Execution boundary](../docs/mobile/issue-44-road-execution.md) documents V18 immutable Stop events, the shared V16 ledger, own assigned Trip detail and five typed execution commands. Production first departure now uses the real #43 duty/inspection policy. Ordinary completion rejects Delivery; #45 supplies the separate finalized-POD transaction below. No capability catalog, physical Hook/Drop contract or historical migration changes.
 ## Private documents (#52)
 
 Enable `R2_ENABLED=true` only with that environment's private R2 bucket and all
@@ -1041,7 +1041,7 @@ after verification. A reusable upload grant cannot rewrite finalized bytes.
 
 See [document contracts/security matrix](../docs/api/documents.md) and
 [implementation traceability](../docs/api/issue-52-document-storage.md).
-No evidence approval, mobile media queue, cleanup worker or retention is enabled.
+No evidence image approval, server cleanup worker or remote retention is enabled. Mobile media transport is implemented by #54 and consumed by #43/#45.
 
 ## Shift / inspection implementation (#43)
 

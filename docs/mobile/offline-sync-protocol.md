@@ -276,8 +276,8 @@ Implementation note: #54 realizes this model in Drift v4 with a private streamin
 file store and media phases inside the existing #46 ReplayWorker. Finalization is
 confirmed from #52, while #53 and the future owning workflows retain evidence
 authority. See [implemented states, retry, fencing, materialization and cleanup](issue-54-media-queue.md).
-Future #43/#45 command contracts are prepared but are not replayed in production
-before their endpoints exist. A locally uploaded file is never business completion.
+The implemented #43/#45 adapters now consume these contracts in the same production
+replay lane. Unimplemented endpoints remain blocked. A locally uploaded file is never business completion.
 
 Suggested local structure:
 
