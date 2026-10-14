@@ -1,5 +1,24 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Issue #55 — durable PostgreSQL jobs
+
+V25 adds `outbox_jobs`, strict versioned registered payloads, transaction-joining
+`DurableJobPublisher`, committed SKIP LOCKED claims, fenced leases/recovery and
+bounded retry/DEAD processing. Runtime Tenant RLS remains mandatory; NULL-Tenant
+jobs are denied and the deployment explicitly configures the service Tenant list.
+The worker is disabled by default; configure `TRAILERSAAS_JOBS_ENABLED` and
+`TRAILERSAAS_JOBS_TENANTS` deliberately. Defaults: 5s poll, 4 slots/batch, 30s
+handler timeout, 2m lease, 5 attempts (hard limit 20), 30s initial exponential
+backoff capped at 30m with bounded jitter. All other properties are under
+`trailersaas.jobs` in application.yml. No broker or new scheduling dependency.
+
+Handlers own current resource/Customer-scope validation and idempotency. External
+effects remain at-least-once. HTTP Actuator stays health-only; technical metrics
+use the existing registry and optional secured-local Actuator JMX, described in
+the [implementation and operations guide](../docs/backend/issue-55-postgresql-outbox-worker.md).
+V24 synchronous TRAILER_MISSING persistence is unchanged. #56/#57 handlers,
+notification delivery, global maintenance and retention are not implemented.
+
 ## Issue #50 — Yard Check snapshot and reconciliation
 
 Start/list/detail, scan, completion, cancellation and two explicit reconciliation

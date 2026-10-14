@@ -103,7 +103,9 @@ These streams may overlap according to each Issue's explicit dependencies.
 #53 is merged/complete via [PR #100](https://github.com/Dagt/TrailerSaas/pull/100).
 #43/#45/#49 consume its synchronous policies and still own their respective
 operational workflows. #54 is complete via PR #101; #43 is complete via PR #102; #45 is the current bounded Road implementation;
-#55 jobs remain pending.
+#55 implements the PostgreSQL outbox/worker foundation on its bounded review branch;
+see [architecture and acceptance](../backend/issue-55-postgresql-outbox-worker.md).
+#56 delivery and #57 operational detection remain unimplemented.
 
 ## Wave 4 — Mobile synchronization foundation
 

@@ -88,3 +88,11 @@ Items requiring later review before U.S. production:
 - document/evidence retention obligations.
 
 No legal conclusion is encoded in this document.
+
+## Implementation evidence — durable work
+
+#55 implements ADR-022/amendment Q with transaction-joining PostgreSQL outbox,
+Tenant-pinned least-privilege claims, bounded retries/fenced recovery and technical
+metrics. See [#55 architecture, security and acceptance](../backend/issue-55-postgresql-outbox-worker.md)
+for NFR-001/002/031/060/062/070–073 evidence and operational limitations.
+Notification/stale-detection/retention handlers remain separate #56/#57 work.
