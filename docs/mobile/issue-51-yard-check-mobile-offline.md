@@ -57,8 +57,8 @@ remain separate; no physical Android/iOS QA is claimed by injected/Linux tests.
 
 Implemented checkpoints A–G are published on `issue-51-yard-check-mobile-offline`.
 Focused SQLite snapshot/replay, widget, lifecycle, concurrency and reconciliation
-suites have passed locally. Full final-source validation and final-HEAD CI are the
-remaining H/I gates; a Draft PR is not release approval. The PR description will
+suites and all full local suites have passed. Final-HEAD CI is the remaining I
+gate; a Draft PR is not release approval. The PR description will
 record the exact final SHA, completed Actions run and real counts.
 
 
@@ -175,20 +175,21 @@ issues are deferred. NO MERGE.
 
 PR: [#108 — Yard Check mobile scan and offline replay](https://github.com/Dagt/TrailerSaas/pull/108).
 Verified base: `9446576d6d9a26a1f8f4f11005ba90a360ed0f95`.
-Final Flutter source checkpoint: `e2b96d189e2afe5d9309fc5c1644c7972c6f2709`.
+Final Flutter source checkpoint: `23cf2e725f3619823f51508349d4cb31e58f0ee5`.
 The PR description records the exact final published HEAD and direct final Actions
 run/job logs, their counts and readiness. Documentation-only publication does not
 change this source checkpoint. Ready is permitted only after all four jobs complete
 successfully on that final HEAD. This source record does not claim a pending job
 passed and is not a physical-device release certification.
 
-Local final-source Mobile: **528 passed**, no failed/skipped tests. Flutter 3.47.6 /
+Local final-source Mobile: **531 passed**, no failed/skipped tests. Flutter 3.47.6 /
 Dart 3.13.5 locked dependencies, Drift generation/source equality, full formatting,
 fatal-info analysis and real file-backed SQLite tests passed. Web **244 passed**
 plus npm ci/typecheck/lint/build; OpenAPI **39 passed**, zero failures/skipped, plus
 accepted-contract validation. Java 25 Maven clean verify with PostgreSQL 18.6
-Testcontainers is running at publication; its completion and final-HEAD CI remain
-required gates, not inferred success. Backend/API/V24 source is unchanged from the
+Testcontainers finished with **2,251 tests, zero failures/errors/skipped** and
+BUILD SUCCESS. Final-HEAD CI remains a required gate, not inferred success.
+Backend/API/V24 source is unchanged from the
 verified base. Earlier failed local OpenAPI invocation lacked copied native config
 files in the helper workspace; copying the complete project reproduced all 39
 unchanged historical contracts successfully, without changing tests or workflows.
@@ -204,3 +205,12 @@ historical Start ACK projection regression and a false completeness marker on an
 empty first page. Regression tests cover these boundaries
 without disabling or removing previous tests. Malformed HTTP success never ACKs;
 original failed/uncertain commands and evidence remain retained.
+
+Final repeated-scan audit: durable capture returns before awaiting network ACK,
+so another QR can be recorded while the prior response is held. The existing worker
+and owner-scoped subscriptions provide actual ACK/conflict state. Session refresh
+can temporarily fence queue reads; the controller re-reads durable state on ready/
+offline recovery so a server conflict is not mislabeled pending. Known offline
+unexpected Trailers display their verified owner-scoped cached number; unknown QR
+remains unresolved. Local unobserved/observed expected counts, automatic sync,
+unresolved identity and explicit conflict review are displayed separately.
