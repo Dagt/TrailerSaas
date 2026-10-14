@@ -40,6 +40,11 @@ class Version6Database extends AppDatabase {
           'yard_drafts',
           'yard_captures',
           'yard_conflict_reviews',
+          'cached_yard_checks',
+          'cached_yard_check_items',
+          'yard_check_observations',
+          'yard_check_reviews',
+          'yard_check_directories',
         }.contains(t.actualTableName),
       )) {
         await createPublishedV7Table(this, table.actualTableName);
@@ -96,7 +101,7 @@ void main() {
     expect(
       (await upgraded.customSelect('PRAGMA user_version').getSingle())
           .data['user_version'],
-      8,
+      9,
     );
     expect(
       (await upgraded.customSelect('SELECT * FROM local_commands').getSingle())

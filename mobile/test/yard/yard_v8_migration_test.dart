@@ -7,21 +7,21 @@ import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:trailersaas_mobile/src/persistence/app_database.dart';
 
 void main() {
-  test('fresh v8 creates narrow Yard metadata and preserves one command/media graph', () async {
+  test('fresh v9 creates narrow Yard metadata and preserves one command/media graph', () async {
     final db = AppDatabase(NativeDatabase.memory());
     expect(
       (await db.customSelect('PRAGMA user_version').getSingle())
           .data
           .values
           .single,
-      8,
+      9,
     );
     final tables = await db
         .customSelect(
           "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
         )
         .get();
-    expect(tables.length, 21);
+    expect(tables.length, 26);
     expect(
       tables.map((r) => r.data['name']),
       containsAll([
@@ -36,7 +36,7 @@ void main() {
     expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
     await db.close();
   });
-  test('actual published v7 upgrade retains exact ACK result and frozen request without rebuilding commands', () async {
+  test('actual published v7 upgrade retains exact ACK result and frozen request with narrow command enum evolution', () async {
     final raw = sqlite.sqlite3.openInMemory();
     raw.execute(File('test/persistence/schema_v7.sql').readAsStringSync());
     const operation = '11111111-1111-4111-8111-111111111111',
@@ -70,18 +70,13 @@ void main() {
       "INSERT INTO command_results(client_operation_id,user_id,tenant_id,result_kind,server_id,projection_json,confirmed_at) VALUES(?,?,?,'TRAILER',?,'{\"version\":13}',1)",
       [operation, 'user-A', 'A', trailer],
     );
-    final original = raw
-        .select(
-          "SELECT sql FROM sqlite_master WHERE type='table' AND name='local_commands'",
-        )
-        .single['sql'];
     final db = AppDatabase(NativeDatabase.opened(raw));
     expect(
       (await db.customSelect('PRAGMA user_version').getSingle())
           .data
           .values
           .single,
-      8,
+      9,
     );
     expect(
       (await db.select(db.localCommands).getSingle()).payloadJson,
@@ -102,7 +97,7 @@ void main() {
               )
               .getSingle())
           .data['sql'],
-      original,
+      allOf(contains("YARD_CHECK"), contains("TRAILER")),
     );
     expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
     await expectLater(

@@ -112,7 +112,7 @@ test('#49 SQLite preserves a single operation graph and native camera reuses exi
   assert.ok(replay.includes("source.state != 'ACKNOWLEDGED'"));
   assert.ok(replay.includes('Invalid physical predecessor'));
   const db = read('mobile/lib/src/persistence/app_database.dart');
-  assert.match(db, /schemaVersion\s*=>\s*8/);
+  assert.match(db, /schemaVersion\s*=>\s*9/);
   assert.ok(!/gps|breadcrumb|coordinate_history/i.test(db));
 });
 test('#49 one shared iOS camera purpose explains QR inspection and damage without background permissions', () => {
