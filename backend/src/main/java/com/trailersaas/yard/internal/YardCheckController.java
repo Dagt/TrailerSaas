@@ -13,6 +13,7 @@ class YardCheckController {
   private final YardCheckReconciliationService reconciliations;
   YardCheckController(YardCheckService service,YardCheckReconciliationService reconciliations){this.service=service;this.reconciliations=reconciliations;}
   @PostMapping
+  @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
   YardCheckDtos.Detail start(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenantId,@RequestHeader(name="Idempotency-Key",required=false)String key,@RequestBody Map<String,Object> body,@RequestParam Map<String,String> query) {
     if(!query.isEmpty())throw YardFailure.invalid();return service.start(actor,tenantId,key,body);
   }

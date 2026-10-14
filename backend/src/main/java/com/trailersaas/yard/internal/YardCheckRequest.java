@@ -24,7 +24,10 @@ final class YardCheckRequest {
     s=s.strip();if(s.isBlank()||s.length()>4000) throw YardFailure.invalid();return s;
   }
   record Start(UUID siteId,UUID locationId) {
-    static Start parse(Map<String,Object> b) { fields(b,"siteId","locationId");return new Start(uuid(b.get("siteId")),optional(b.get("locationId"))); }
+    static Start parse(Map<String,Object> b) {
+      if(b==null||!b.containsKey("siteId")||!Set.of("siteId","locationId").containsAll(b.keySet()))throw YardFailure.invalid();
+      return new Start(uuid(b.get("siteId")),optional(b.get("locationId")));
+    }
   }
   record Scan(UUID checkId,UUID trailerId,UUID observedLocationId,Instant scannedAt) {
     static Scan parse(UUID id,Map<String,Object> b) {fields(b,"trailerId","observedLocationId","scannedAt");return new Scan(id,uuid(b.get("trailerId")),uuid(b.get("observedLocationId")),time(b.get("scannedAt")));}

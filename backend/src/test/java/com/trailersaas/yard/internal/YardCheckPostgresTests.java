@@ -38,6 +38,10 @@ class YardCheckPostgresTests extends YardCheckFixture {
     assertThat(JsonPath.<Integer>read(r.body(),"$.check.expectedCount")).isZero();
     assertThat(JsonPath.<Boolean>read(r.body(),"$.snapshotComplete")).isTrue();
   }
+  @Test void optionalLocationMayBeOmittedButUnknownStartFieldsReject() throws Exception {
+    check(command("/yard-checks",UUID.randomUUID().toString(),Map.of("siteId",site.toString())));
+    problem(command("/yard-checks",UUID.randomUUID().toString(),Map.of("siteId",site.toString(),"actor",user.toString())),400,"VALIDATION_FAILED");
+  }
   @Test void locationSpecificCheckExcludesOtherDock() throws Exception {
     var id=f.trailer(tenant,"Dock-"+UUID.randomUUID(),customer);f.db.execute("update trailers set location_state='AT_LOCATION',current_location_id=? where id=?",b,id);
     var r=command("/yard-checks",UUID.randomUUID().toString(),startBody(a));check(r);
@@ -85,5 +89,22 @@ class YardCheckPostgresTests extends YardCheckFixture {
     ids.addAll(JsonPath.<List<String>>read(second.body(),"$.items[*].id"));
     assertThat(ids).hasSize(206);assertThat(JsonPath.<Object>read(second.body(),"$.nextCursor")).isNull();
     assertThat(JsonPath.<Boolean>read(second.body(),"$.snapshotComplete")).isFalse();
+  }
+  @Test void oneStatementSnapshotSeesCommittedInventoryWhileAnAtomicMovementIsInFlight() throws Exception {
+    var extra=f.trailer(tenant,"Concurrent-"+UUID.randomUUID(),customer);f.db.execute("update trailers set location_state='AT_LOCATION',current_location_id=? where id=?",b,extra);
+    try(var c=flyway.getConfiguration().getDataSource().getConnection()){
+      c.setAutoCommit(false);
+      try(var q=c.prepareStatement("update trailers set current_location_id=case when id=? then ?::uuid else ?::uuid end,version=version+1 where id in (?,?)")){
+        q.setObject(1,trailer);q.setObject(2,b);q.setObject(3,a);q.setObject(4,trailer);q.setObject(5,extra);assertThat(q.executeUpdate()).isEqualTo(2);
+      }
+      var result=start();check(result);
+      var originals=JsonPath.<List<Map<String,Object>>>read(result.body(),"$.items");
+      assertThat(originals).hasSize(2);
+      assertThat(originals.stream().filter(i->i.get("trailerId").equals(trailer.toString())).findFirst().orElseThrow().get("expectedLocationId")).isEqualTo(a.toString());
+      assertThat(originals.stream().filter(i->i.get("trailerId").equals(extra.toString())).findFirst().orElseThrow().get("expectedLocationId")).isEqualTo(b.toString());
+      c.commit();
+      assertThat(f.db.value("select current_location_id from trailers where id=?",trailer)).isEqualTo(b);
+      assertThat(f.db.value("select current_location_id from trailers where id=?",extra)).isEqualTo(a);
+    }
   }
 }

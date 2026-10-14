@@ -15,7 +15,7 @@ abstract class YardCheckFixture extends YardPostgresFixture {
   }
   Map<String,Object> startBody(UUID location) {var r=new LinkedHashMap<String,Object>();r.put("siteId",site.toString());r.put("locationId",location==null?null:location.toString());return r;}
   HttpResponse<String> start() throws Exception {return command("/yard-checks",UUID.randomUUID().toString(),startBody(null));}
-  UUID check(HttpResponse<String> r) {assertThat(r.statusCode()).as(r.body()).isEqualTo(200);return UUID.fromString(JsonPath.read(r.body(),"$.check.id"));}
+  UUID check(HttpResponse<String> r) {assertThat(r.statusCode()).as(r.body()).isEqualTo(201);return UUID.fromString(JsonPath.read(r.body(),"$.check.id"));}
   Map<String,Object> scanBody(UUID asset,UUID location) {return new LinkedHashMap<>(Map.of("trailerId",asset.toString(),"observedLocationId",location.toString(),"scannedAt",Instant.now().toString()));}
   HttpResponse<String> scan(UUID id,String key,Map<String,Object> body) throws Exception {return command("/yard-checks/"+id+"/scans",key,body);}
 }
