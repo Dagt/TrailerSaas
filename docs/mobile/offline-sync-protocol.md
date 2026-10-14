@@ -462,13 +462,12 @@ A delta-feed endpoint can be added later if measured performance/scale requires 
 
 # 20. Yard Check offline protocol
 
-Issue #50 implements the Backend contract only; Flutter capture/cache/replay for
-Yard Checks remains #51. Start is an online server command (201) with immutable
+Issue #50 implements the Backend contract; #51 implements Flutter capture/cache/replay. Start is an online server command (201) with immutable
 inventory; GET detail has bounded UUID item pages (max 200), counts and Check
 version. Cursor pages require expectedVersion; restart a changed-version download.
 snapshotComplete=true applies only to a first page containing the entire selected
 set. Otherwise consume all pages and validate unique expected/total counts before
-marking a future local cache complete. expectedOnly=true retrieves frozen expected
+marking the Drift v9 local cache complete. expectedOnly=true retrieves frozen expected
 membership. A historical replay receipt is not current authority.
 
 Scans require original scannedAt >= server startedAt, active observed context and
@@ -653,3 +652,24 @@ User/Tenant namespace; current account permission never transfers. Missing bytes
 denials, upload retries and partial sets retain draft/evidence for explicit review.
 Network 408/429 Retry-After/5xx, 401 refresh, 403/404/409, lost ACK and two workers
 retain the original same-key frozen request. Only a real server receipt is success.
+
+
+## #51 implemented Yard Check replay
+
+YARD_CHECK_START is durable but new capture requires online server creation;
+YARD_CHECK_SCAN preserves private unresolved QR input until existing trusted
+resolution and own Tenant authorization can materialize the real three-field
+scan request. The one ReplayWorker resource lane orders Check observations, uses
+original UUIDs/times/frozen requests, and requires typed receipts before ACK.
+Unknown QR is UNRESOLVED_QR, never fabricated MATCHED/UNEXPECTED. Public tokens
+remain private; no token directory or second worker/queue is added.
+
+YARD_CHECK_COMPLETE/CANCEL require all unreviewed scans acknowledged and an online
+fresh authoritative full review. First materialization revalidates the exact
+review; changed state requires human review, never guessed/incremented versions.
+Frozen uncertain terminal retries keep the same request/key. Only rejected failed
+observations may be explicitly reviewed with reason and fresh state; uncertain
+sending/retryable scans cannot be discarded. Physical reconciliation uses separate
+capability/current version and the existing #50 endpoints. Off Duty has a local
+known-open Check capture/replay guard and an unknown/stale-cache warning; Backend
+open-Check enforcement is not claimed. See [#51 evidence](issue-51-yard-check-mobile-offline.md).

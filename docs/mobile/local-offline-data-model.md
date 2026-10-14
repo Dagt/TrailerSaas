@@ -87,13 +87,13 @@ Only relevant/scanned/assigned assets:
 
 ### cached_yard_checks
 
-This remains a future #51 cache, not a new implemented Drift table in #50. The
+Implemented in #51 as owner-scoped Drift v9 caches and observation metadata. The
 #50 Backend supplies bounded version-fenced snapshots; downloaded completeness
 requires every page, unique-ID count validation and authorized Check identity/
 scope. A partial page or historic receipt must not set snapshot downloaded=true.
 Pending result is NULL; ALREADY_SCANNED is a scan outcome, not a stored result.
 Terminal findings stay immutable; reconciliationId is separate audit association.
-No SQLite schema/command/media queue or Drift version changes are part of #50.
+No SQLite changes were part of #50; #51 adds the narrow incremental v9 metadata migration.
 
 - Yard Check ID;
 - server version;
@@ -221,3 +221,24 @@ earlier v1–v6 migrations retain their historical constraints and data. Fresh s
 has 21 tables; all upgrades, FK checks, namespace and ledger guards are tested.
 Read caches may be cleared on logout; pending commands/drafts/private bytes are
 retained in their original owner namespace. There is no GPS/history store.
+
+
+## #51 deployed schema: Drift v9
+
+Five owner-scoped metadata tables complement the one original operation graph:
+cached_yard_checks (server origin/version/summary/completeness/access),
+cached_yard_check_items (immutable original facts + latest authorized server row),
+yard_check_observations (original private QR token, binding, ISO scannedAt, local
+result and existing command reference), yard_check_reviews (immutable explicit
+failed-operation review) and yard_check_directories (freshness/access metadata).
+Composite User/Tenant/Check and command FKs enforce ownership. New Check metadata
+is retained, including on logout; it is not evicted under the older general read
+cache retention suggestion above. QR public tokens are private observation inputs,
+not Firebase/access credentials. Unknown tokens never invent Trailer identity.
+
+v8→v9 evolves only the closed aggregate/result enum constraints and creates these
+five stores/guards transactionally. No second queue exists; local_commands,
+materialized_requests, command_results, dependencies and sync issues remain the
+sole replay graph. Frozen v8 and v1–v7 regression fixtures prove preserved rows,
+ACK/request bytes, media/Yard metadata, FKs and migration rollback/reopen. Fresh v9
+has 26 tables. See [#51 architecture and acceptance](issue-51-yard-check-mobile-offline.md).

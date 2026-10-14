@@ -91,7 +91,7 @@ ledger. Consecutive offline moves wait for the first verified ACK to resolve the
 second version; source/UUID/frozen request remain immutable. Parent conflicts
 block descendants while independent Trailers continue. QR/confirmation routes
 close on owner changes; explicit denial cannot restore cached Yard permission.
-Correction/OOS UI is implemented in #49; Yard Checks remain #50–#51. Physical Android/iOS camera,
+Correction/OOS UI is implemented in #49; #50 Backend and #51 mobile Yard Checks are implemented. Physical Android/iOS camera,
 permission/lifecycle/process and release QA remains #65.
 
 See [contracts, acceptance, offline recovery and tests](../docs/mobile/issue-48-yard-move.md).
@@ -370,12 +370,32 @@ push and survive reassignment away. Native permissions/process-death behavior ne
 Android/iOS device QA; CI covers controlled camera + real files/SQLite/HTTP/widgets.
 Use locked dependencies, Drift generation/diff, format, fatal-info analyze and all
 tests as before. See docs/mobile/issue-45-pod-fuel-exceptions.md.
-# Issue #50 Backend handoff (mobile remains #51)
+# Issue #50 Backend handoff (completed by #51 mobile)
 
 The Yard Check Backend now generates immutable expected snapshots and provides
 bounded version-fenced pages, scans, terminal commands and explicit reconciliation.
-This issue makes no Flutter/Drift/queue/dependency/native changes. Future #51 must
+The Backend issue made no Flutter/Drift/queue/native changes. #51 now implements the requirement to
 download the full authorized server snapshot before offline use, retain its ID/
 version/scope/counts, replay original scan UUIDs/times and wait for every scan ACK
 before completion. A partial page or historical receipt is not current authority.
 See [the Backend contract and handoff](../docs/mobile/issue-50-yard-check-backend.md).
+
+
+## #51 Yard Check mobile and Drift v9
+
+YardChecksPanel/YardCheckController provide real Start/Resume/scan/progress/review/
+Complete/Cancel/reconciliation on existing APIs. CheckStore validates the entire
+paginated version-fenced inventory before atomic offline readiness. CheckIntent/
+CheckReplay extend the existing CommandStore/ReplayWorker. Unknown QR observations
+remain private and durable until trusted online identity resolution; requests and
+UUIDs freeze before submission. No fabricated IDs/inventory/ACKs, second camera
+plugin, queue, worker or automatic physical reconciliation exists.
+
+Drift v9 incrementally adds five cache/observation/review tables; 26 total. Original
+facts/times/ownership are guarded; real file-backed v8 migration, rollback/reopen,
+two connections/workers and older upgrade regressions preserve existing data.
+Typed server receipts distinguish local pending from accepted results. Off Duty
+has the documented local Check guard and unknown/stale warning; Backend guard is
+not implied. Read [#51 acceptance/test/security record](../docs/mobile/issue-51-yard-check-mobile-offline.md).
+Native physical Android/iOS QA remains #65. Keep the PR Draft until all four
+final-HEAD CI jobs pass; NO MERGE.
