@@ -10,15 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-class YardCheckPostgresTests extends YardPostgresFixture {
-  HttpResponse<String> command(String path,String key,Map<String,Object> body) throws Exception {
-    var r=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/tenants/"+tenant+path)).header("Authorization","Bearer yard").header("Content-Type","application/json");
-    if(key!=null)r.header("Idempotency-Key",key);
-    return HttpClient.newHttpClient().send(r.POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body))).build(),HttpResponse.BodyHandlers.ofString());
-  }
-  Map<String,Object> startBody(UUID location) {var r=new LinkedHashMap<String,Object>();r.put("siteId",site.toString());r.put("locationId",location==null?null:location.toString());return r;}
-  HttpResponse<String> start() throws Exception {return command("/yard-checks",UUID.randomUUID().toString(),startBody(null));}
-  UUID check(HttpResponse<String> r) {assertThat(r.statusCode()).as(r.body()).isEqualTo(200);return UUID.fromString(JsonPath.read(r.body(),"$.check.id"));}
+class YardCheckPostgresTests extends YardCheckFixture {
   @Test void startsRealSnapshotWithoutPhysicalMutation() throws Exception {
     var r=start();check(r);assertThat(JsonPath.<Integer>read(r.body(),"$.check.expectedCount")).isEqualTo(1);
     assertThat(JsonPath.<String>read(r.body(),"$.items[0].expectedLocationId")).isEqualTo(a.toString());

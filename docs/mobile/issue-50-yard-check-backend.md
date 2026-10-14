@@ -40,9 +40,10 @@ authenticated completion actor/server timestamp. Scan scannedAt remains the
 original nonfuture observation time; starting/terminal timestamps are server-owned.
 
 FR-103/BR-181 require a real persisted Administration alert on confirmed missing.
-No Alert persistence currently exists. Severity and concrete recipient policy are
-not defined (OQ-059); a focused question is pending while independent snapshot,
-scan and lifecycle work proceeds. No notification worker/push (#55/#56), generic
+The owner explicitly authorized provisional WARNING / OPEN persistence, exactly
+one TRAILER_MISSING alert per confirmed reconciliation, with Trailer/check/item/
+movement/actor context and no individual recipients. OQ-059 stays open for final
+severity/recipient/notification policies. No notification worker/push (#55/#56), generic
 Audit (#61), destructive retention (OQ-057), or mobile #51 is introduced.
 
 ## Future #51 handoff
@@ -58,3 +59,10 @@ authorized state, never silent correction or replacement of an existing command.
 Baseline merged CI: Backend 2,148; Mobile 467; Web 244; OpenAPI 31. New validation
 and actual PR/CI evidence will be recorded as checkpoints finish. No #50 suite
 has yet been declared approved. Physical Android/iOS QA remains release #65.
+
+B: 24 PostgreSQL 18.6 tests pass (0 failures/errors/skipped), including 206-item
+pagination, frozen original facts, empty/location-specific inventory, OOS
+inventory, foreign/inactive context, closed queries and fresh-authority replay.
+V24 adds Check/items, append-only reconciliation and the minimal authorized Alert
+foundation; original migration checksums remain unchanged. Historical strict
+catalog/latest-version tests are expanded for V24, never relaxed.
