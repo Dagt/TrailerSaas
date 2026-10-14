@@ -8,6 +8,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.assertj.core.api.Assertions.*;
 
 class RetryPolicyTests {
+    @Test void submillisecondConfigurationCannotBecomeAZeroPostgresqlLease() {
+        assertThatIllegalArgumentException().isThrownBy(()->new JobsProperties(false,List.of(UUID.randomUUID()),
+                Duration.ofSeconds(5),4,4,Duration.ofNanos(1),Duration.ofNanos(2),5,Duration.ofSeconds(30),Duration.ofMinutes(30)));
+    }
     @Test void exponentialBackoffUsesControllableTimeAndCapsAfterJitter() {
         var policy=new RetryPolicy(Duration.ofSeconds(30),Duration.ofMinutes(30),()->0.5);
         var clock=Clock.fixed(Instant.parse("2026-10-14T18:00:00Z"),ZoneOffset.UTC);

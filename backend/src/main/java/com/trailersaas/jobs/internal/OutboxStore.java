@@ -38,7 +38,7 @@ class OutboxStore {
     }
     record Batch(List<JobClaim> claims, int recovered, int exhausted) {}
     Batch claim(UUID tenant, int limit, Duration lease) {
-        if (limit<1 || limit>100 || lease.isNegative() || lease.isZero()) throw new IllegalArgumentException("Invalid claim bounds");
+        if (limit<1 || limit>100 || lease.compareTo(Duration.ofMillis(1))<0) throw new IllegalArgumentException("Invalid claim bounds");
         return workerTransaction(tenant, () -> {
             requireTenant(tenant);
             int dead=jdbc.update("""

@@ -120,6 +120,12 @@ in-process code. Downstream clients must enforce their own shorter timeouts.
 Shutdown stops new polling and interrupts handlers; committed leases survive.
 Disabled configuration blocks both scheduler and explicit internal polling.
 
+The precision audit reproduced a positive nanosecond lease becoming a zero
+millisecond PostgreSQL interval. Configuration now rejects handler timeouts below
+1 ms (lease must be at least twice that), and the claim primitive independently
+rejects submillisecond leases. A deterministic policy regression covers this
+fail-fast boundary; a bad configuration cannot enter an always-failing poll loop.
+
 ## Monitoring and technical operations
 
 Micrometer registers low-cardinality `jobs.stored{status}` gauges, oldest eligible
