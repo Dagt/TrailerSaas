@@ -29,6 +29,7 @@ class YardCheckController extends ChangeNotifier {
   List<YardCheckObservation> observations = [];
   List<LocalCommand> commands = [];
   List<CommandResult> receipts = [];
+  Map<String, String> cachedTrailerNumbers = {};
   Set<String> reviewed = {};
   String? message, lastOperation;
   bool busy = false, foreground = true;
@@ -84,6 +85,7 @@ class YardCheckController extends ChangeNotifier {
       observations = [];
       commands = [];
       receipts = [];
+      cachedTrailerNumbers = {};
       reviewed = {};
       message = null;
       busy = false;
@@ -111,6 +113,13 @@ class YardCheckController extends ChangeNotifier {
       generation++;
       cancelScanner();
       busy = false;
+    }
+    // Queue notifications may arrive while the same-owner session is refreshing.
+    // Re-read durable state once it is usable instead of retaining a stale pending label.
+    if (owner != null &&
+        next != null &&
+        {SessionState.ready, SessionState.offline}.contains(session.state)) {
+      unawaited(loadLocal());
     }
     notify();
   }
@@ -169,10 +178,26 @@ class YardCheckController extends ChangeNotifier {
                     r.resultKind.equals('YARD_CHECK'),
               ))
               .get());
+      final trailers =
+          await (cache.db.select(cache.db.cachedTrailers)..where(
+                (r) =>
+                    r.userId.equals(o.userId) &
+                    r.tenantId.equals(o.membership.tenantId),
+              ))
+              .get();
+      final names = <String, String>{};
+      for (final row in trailers) {
+        final data = checkMap(jsonDecode(row.projectionJson));
+        if (data['yardProjection'] == true &&
+            data['operationalNumber'] is String) {
+          names[row.id] = data['operationalNumber'] as String;
+        }
+      }
       if (!current(o, g) || ticket != _localReadSequence) return;
       checks = data;
       commands = rows;
       receipts = saved;
+      cachedTrailerNumbers = names;
       selected = next;
       items = i;
       observations = obs;
@@ -307,35 +332,45 @@ class YardCheckController extends ChangeNotifier {
     await cache.download(session, o, result.serverId, () => current(o, g));
     if (current(o, g)) message = 'Snapshot complete — available offline';
   });
-  Future<void> scan(String location) => action((o, g) async {
-    final id = selected?.id;
-    if (id == null ||
-        selected?.snapshotDownloaded != true ||
-        selected!.status != 'IN_PROGRESS' ||
-        selected!.accessBlocked) {
-      throw StateError('Download a complete active Check first.');
-    }
-    final text = await scanner.scan();
-    if (!current(o, g) || selected?.id != id || text == null) return;
-    final token = trailerPublicToken(text);
-    if (token == null) {
-      throw StateError(
-        'This QR is not a valid Trailer QR. No observation was saved.',
+  Future<void> scan(String location) async {
+    final originalOwner = session.snapshot, epoch = generation;
+    var captured = false;
+    await action((o, g) async {
+      final id = selected?.id;
+      if (id == null ||
+          selected?.snapshotDownloaded != true ||
+          selected!.status != 'IN_PROGRESS' ||
+          selected!.accessBlocked) {
+        throw StateError('Download a complete active Check first.');
+      }
+      final text = await scanner.scan();
+      if (!current(o, g) || selected?.id != id || text == null) return;
+      final token = trailerPublicToken(text);
+      if (token == null) {
+        throw StateError(
+          'This QR is not a valid Trailer QR. No observation was saved.',
+        );
+      }
+      lastOperation = await replay.scan(
+        o,
+        id,
+        token,
+        location,
+        worker.store.now(),
+        () => current(o, g) && selected?.id == id,
       );
+      if (!current(o, g)) return;
+      message = 'Locally observed — waiting to sync';
+      captured = true;
+      notify();
+    });
+    // Return to the scanner after durable capture, without waiting for network ACK.
+    // The one existing worker and its subscriptions display actual receipt progress.
+    if (captured && originalOwner != null && current(originalOwner, epoch)) {
+      unawaited(worker.sync());
     }
-    lastOperation = await replay.scan(
-      o,
-      id,
-      token,
-      location,
-      worker.store.now(),
-      () => current(o, g) && selected?.id == id,
-    );
-    if (!current(o, g)) return;
-    message = 'Locally observed — waiting to sync';
-    notify();
-    await worker.sync();
-  });
+  }
+
   Future<CheckSnapshot?> reviewState() => Future<CheckSnapshot?>.sync(() async {
     final o = session.snapshot, id = selected?.id, g = generation;
     if (o == null ||

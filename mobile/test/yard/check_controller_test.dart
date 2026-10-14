@@ -37,6 +37,7 @@ void main() {
     () async {
       expect(f.mobile.session.snapshot!.driver, isNull);
       await c.scan(yardId);
+      await f.worker.sync();
       expect(
         (await f.worker.store.list(checkUser, 'A')).single.state,
         'ACKNOWLEDGED',
@@ -47,6 +48,38 @@ void main() {
         ),
         isEmpty,
       );
+    },
+  );
+  test(
+    'scanner can durably capture next QR while the first server ACK is held',
+    () async {
+      final entered = Completer<void>(), release = Completer<void>();
+      var held = false;
+      f.custom = (r) async {
+        final receipt = await f.handle(r);
+        if (r.method == 'POST' && !held) {
+          held = true;
+          entered.complete();
+          await release.future;
+        }
+        return receipt;
+      };
+      try {
+        await c.scan(yardId).timeout(const Duration(seconds: 2));
+        await entered.future.timeout(const Duration(seconds: 2));
+        scanner.value = 'BBBBBBBBBBBBBBBBBBBBBB';
+        await c.scan(yardId).timeout(const Duration(seconds: 2));
+        expect(
+          await f.cache.observations(f.mobile.session.snapshot!, checkId),
+          hasLength(2),
+        );
+        expect(c.busy, false);
+        release.complete();
+        await f.worker.sync();
+        expect(f.summary['scannedCount'], 1);
+      } finally {
+        if (!release.isCompleted) release.complete();
+      }
     },
   );
   for (final boundary in [

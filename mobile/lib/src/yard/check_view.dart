@@ -250,6 +250,21 @@ class _YardChecksPanelState extends State<YardChecksPanel>
       final capturedExpected = c.items
           .where((i) => i.expected && unique.contains(i.trailerId))
           .length;
+      final locallyRemaining = c.items
+          .where(
+            (i) =>
+                i.expected &&
+                !CheckItem(checkMap(jsonDecode(i.serverJson))).found &&
+                !unique.contains(i.trailerId),
+          )
+          .length;
+      final conflicts = pending
+          .where(
+            (r) =>
+                {'CONFLICT', 'BLOCKED', 'PERMANENT_FAILURE'}.contains(r.state),
+          )
+          .length;
+      final syncing = pending.length - conflicts;
       return Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -322,7 +337,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                   'Matched ${confirmed.count('matchedCount')} · unexpected ${confirmed.count('unexpectedCount')} · location mismatches ${confirmed.count('mismatchCount')} · missing ${confirmed.count('missingCount')}',
                 ),
                 Text(
-                  'Locally observed expected $capturedExpected · pending synchronization ${pending.length} · unresolved QR $unresolved',
+                  'Local unobserved expected $locallyRemaining · locally observed expected $capturedExpected · pending synchronization $syncing · unresolved QR $unresolved · conflicts requiring review $conflicts',
                 ),
                 if (!matchingSite)
                   const Text(
@@ -391,8 +406,12 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                                 (o.resolvedTrailerId ?? o.identifiedTrailerId),
                           )
                           .firstOrNull;
+                      final identified =
+                          o.resolvedTrailerId ?? o.identifiedTrailerId;
                       final number = item == null
-                          ? 'Unresolved Trailer QR'
+                          ? identified == null
+                                ? 'Unresolved Trailer QR'
+                                : '${c.cachedTrailerNumbers[identified] ?? identified} (cached identity)'
                           : (jsonDecode(
                               item.originalJson,
                             ) as Map)['recordedSnapshot']['operationalNumber'];
@@ -400,6 +419,8 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                         title: Text(
                           '$number · ${accepted
                               ? 'Server ACK · $outcome'
+                              : cmd?.state == 'CONFLICT' && cmd?.lastHttpStatus != null
+                              ? 'SERVER_CONFLICT'
                               : c.reviewed.contains(o.operationId)
                               ? 'Historical failed observation reviewed'
                               : o.localResult == 'UNRESOLVED_QR'

@@ -63,6 +63,59 @@ void main() {
   }
 
   testWidgets(
+    'server conflict is distinct from local pending and never reports a scan ACK',
+    (tester) async {
+      await start(tester);
+      f.custom = (r) async => r.method == 'POST'
+          ? f.mobile.response({'code': 'RESOURCE_CONFLICT'}, 409)
+          : f.handle(r);
+      await tester.tap(find.byKey(const Key('check-observed-location')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yard A').last);
+      await settle(tester);
+      await tester.tap(find.byKey(const Key('check-scan')));
+      await settle(tester);
+      expect(find.textContaining('SERVER_CONFLICT'), findsOneWidget);
+      expect(
+        find.textContaining('conflicts requiring review 1'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Server ACK'), findsNothing);
+      await finish(tester);
+    },
+  );
+  testWidgets(
+    'known offline unexpected Trailer displays verified cached identity rather than unresolved QR',
+    (tester) async {
+      await start(tester);
+      await tester.runAsync(
+        () => f.mobile.cache.rememberIdentifiedTrailer(
+          f.mobile.session.snapshot!,
+          qrToken,
+          {...yardTrailer(id: secondTrailerId), 'yardProjection': true},
+          () => true,
+        ),
+      );
+      f.mobile.network.status = ConnectivityStatus.unavailable;
+      await tester.tap(find.byKey(const Key('check-observed-location')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yard A').last);
+      await settle(tester);
+      await tester.tap(find.byKey(const Key('check-scan')));
+      await settle(tester);
+      expect(
+        find.textContaining(
+          'T115 (cached identity) · LOCAL_PENDING · UNEXPECTED',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Unresolved Trailer QR'), findsNothing);
+      expect(f.mobile.requests.where((r) => r.method == 'POST'), isEmpty);
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
     'real cached progress, native scan port and explicit server result remain usable for Yard-only',
     (tester) async {
       await start(tester);
