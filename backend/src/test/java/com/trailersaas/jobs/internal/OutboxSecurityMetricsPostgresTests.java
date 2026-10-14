@@ -14,6 +14,23 @@ import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(OutputCaptureExtension.class)
 class OutboxSecurityMetricsPostgresTests extends JobsFixture {
+    @Test void processingGaugeIncludesCommittedClaimsWhileHandlerIsStillRunning() throws Exception {
+        var id=enqueue("blocked",5);
+        handler.entered=new CountDownLatch(1); handler.release=new CountDownLatch(1);
+        var cfg=new JobsProperties(true,List.of(tenant),Duration.ofSeconds(5),4,4,Duration.ofSeconds(5),
+                Duration.ofSeconds(20),5,Duration.ofSeconds(1),Duration.ofSeconds(2));
+        var metrics=new SimpleMeterRegistry(); var worker=worker(cfg,metrics);
+        try(var pool=Executors.newSingleThreadExecutor()) {
+            var poll=pool.submit(worker::pollOnce);
+            try {
+                assertThat(handler.entered.await(3,TimeUnit.SECONDS)).isTrue();
+                assertThat(status(id)).isEqualTo("PROCESSING");
+                assertThat(metrics.get("jobs.stored").tag("status","processing").gauge().value()).isEqualTo(1);
+            } finally { handler.release.countDown(); poll.get(5,TimeUnit.SECONDS); }
+        }
+        assertThat(metrics.get("jobs.stored").tag("status","processing").gauge().value()).isZero();
+        assertThat(metrics.get("jobs.stored").tag("status","succeeded").gauge().value()).isEqualTo(1);
+    }
     @Test void handlerExceptionsCannotLeakTokensSignedUrlsOrStacksToStoredErrorsOrStructuredLogs(CapturedOutput output) throws Exception {
         var id=enqueue("secret",1); worker().pollOnce();
         assertThat(status(id)).isEqualTo("DEAD");

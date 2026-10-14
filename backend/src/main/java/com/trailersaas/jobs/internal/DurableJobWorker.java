@@ -44,6 +44,7 @@ class DurableJobWorker {
             slots.release(capacity-batch.claims().size());
             for (int i=0;i<batch.recovered();i++) metrics.count("lease.recoveries");
             for (int i=0;i<batch.exhausted();i++) { metrics.count("dead"); metrics.count("lease.exhausted"); }
+            refreshMetrics(tenant);
             var running=new LinkedHashMap<JobClaim,Future<JobFailure>>();
             for (var claim : batch.claims()) {
                 try {
@@ -87,8 +88,7 @@ class DurableJobWorker {
             }
         } catch (RuntimeException unavailable) { infrastructureFailure("poll_failed"); }
         finally {
-            try { metrics.refresh(tenant,store.statistics(tenant)); }
-            catch (RuntimeException unavailable) { infrastructureFailure("metrics_refresh_failed"); }
+            refreshMetrics(tenant);
             metrics.duration("poll.duration",started);
             polling.set(false);
         }
@@ -107,6 +107,10 @@ class DurableJobWorker {
     private void infrastructureFailure(String reason) {
         metrics.count("infrastructure.failures");
         LOG.atWarn().addKeyValue("event",reason).log("Durable worker database operation unavailable; leases remain recoverable");
+    }
+    private void refreshMetrics(UUID tenant) {
+        try { metrics.refresh(tenant,store.statistics(tenant)); }
+        catch (RuntimeException unavailable) { infrastructureFailure("metrics_refresh_failed"); }
     }
     @PreDestroy void stop() {
         if (!handlers.isShutdown()) {

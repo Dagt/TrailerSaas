@@ -7,6 +7,10 @@ These are baseline evidence, not final #55 results. V24 is the latest migration;
 #55 adds V25 without rewriting historical SQL. ADR-022, ADR-013, ADR-015 and
 schema amendment Q govern this implementation.
 
+[PR #109](https://github.com/Dagt/TrailerSaas/pull/109) records the final published
+HEAD, full-suite counts and direct final Actions job logs. It remains Draft until
+the exact-HEAD gates finish successfully and must remain unmerged.
+
 ## Acceptance matrix / implementation checkpoints
 
 | Checkpoint | Required evidence |
@@ -134,7 +138,11 @@ success/retry/dead/stale/recovery/exhaustion/handler-failure/infrastructure/stop
 counters. The only dimension values are closed statuses and safe error codes;
 Tenant/User/Trailer/job IDs and raw errors are never labels. Queue gauges cache
 the last authorized per-Tenant sample and aggregate only configured scope; they
-are refreshed per poll, not by unscoped scrape-time queries. Disabled workers do
+are refreshed after claim commit before handlers start and again after outcomes,
+not by unscoped scrape-time queries. This makes PROCESSING visible while a handler
+is blocked, rather than sampling only the already-settled state at poll end.
+A PostgreSQL/latch regression reproduced the earlier zero-during-processing gauge
+and verifies PROCESSING -> SUCCEEDED samples. Disabled workers do
 not imply a globally empty database. Logs include job ID, Tenant ID, attempt,
 outcome and bounded error code, without raw exceptions, credentials or signed URLs.
 
