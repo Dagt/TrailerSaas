@@ -1031,7 +1031,7 @@ class TripOperationalPostgresTests extends PostgresIntegrationTest {
   @Test
   void exactV15ColumnsGrantsRlsAndNoFutureTables() throws Exception {
     flyway.validate();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("24");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("25");
     var columns =
         Map.of(
             "trip_operational_events",
@@ -1102,9 +1102,10 @@ class TripOperationalPostgresTests extends PostgresIntegrationTest {
         .isEqualTo(false);
     for (var table :
         List.of(
-            "outbox_jobs",
             "audit_events"))
       assertThat(f.db.value("SELECT to_regclass(?)", table)).isNull();
+    assertThat(f.db.value("SELECT to_regclass('outbox_jobs')::text")).isEqualTo("outbox_jobs");
+    assertThat(f.db.value("SELECT count(*) FROM outbox_jobs WHERE tenant_id=?",tenant)).isEqualTo(0L);
     assertThat(f.db.value("SELECT to_regclass('trip_stop_events')::text")).isEqualTo("trip_stop_events");
     assertThat(f.db.value("SELECT count(*) FROM trip_stop_events WHERE tenant_id=?",tenant)).isEqualTo(0L);
     assertThat(f.db.value("SELECT count(*) FROM trailer_couplings WHERE tenant_id=?",tenant)).isEqualTo(0L);

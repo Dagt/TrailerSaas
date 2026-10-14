@@ -308,20 +308,21 @@ class TenantRlsPostgresTests extends PostgresIntegrationTest {
     }
 
     @Test
-    void policiesTargetOnlyRuntimeWithSelectOnlyBootstrapAndNoForce() {
+    void policiesTargetOnlyRuntimeAndForceOnlyTheNewOutbox() {
         tx(() -> {
-            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(52);
+            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(53);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='ALL' AND with_check IS NOT NULL"))
-                    .isEqualTo(44);
+                    .isEqualTo(45);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='SELECT' AND with_check IS NULL"))
                     .isEqualTo(7);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND roles::text='{"
-                    + RUNTIME_USERNAME + "}'")).isEqualTo(52);
+                    + RUNTIME_USERNAME + "}'")).isEqualTo(53);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relrowsecurity"))
-                    .isEqualTo(45);
+                    .isEqualTo(46);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relforcerowsecurity"))
-                    .isZero();
-            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(47);
+                    .isEqualTo(1);
+            assertThat(number("SELECT count(*) FROM pg_class WHERE relname='outbox_jobs' AND relforcerowsecurity")).isEqualTo(1);
+            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(48);
             return null;
         });
     }
