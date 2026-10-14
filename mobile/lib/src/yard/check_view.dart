@@ -33,6 +33,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
   bool reviewing = false;
   DialogRoute<bool>? reviewRoute;
   NavigatorState? reviewNavigator;
+  bool Function()? reviewCurrent;
   @override
   void initState() {
     super.initState();
@@ -42,7 +43,28 @@ class _YardChecksPanelState extends State<YardChecksPanel>
       widget.worker,
       widget.scanner ?? NativeQrScanner(context),
     );
+    controller.addListener(fenceReview);
     controller.start();
+  }
+
+  void removeReview() {
+    final route = reviewRoute;
+    final navigator = reviewNavigator;
+    reviewRoute = null;
+    reviewNavigator = null;
+    reviewCurrent = null;
+    if (route == null) return;
+    // Context changes can be notified during build/disposal. Remove only our route
+    // after that frame, without popping a newly active account's navigation.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (navigator?.mounted == true && route.isActive) {
+        navigator!.removeRoute(route);
+      }
+    });
+  }
+
+  void fenceReview() {
+    if (reviewCurrent?.call() == false) removeReview();
   }
 
   @override
@@ -59,6 +81,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
     super.didUpdateWidget(old);
     if (old.site?.id != widget.site?.id) {
       controller.invalidateScope();
+      removeReview();
       startLocation = null;
       observedLocation = null;
     }
@@ -67,9 +90,9 @@ class _YardChecksPanelState extends State<YardChecksPanel>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    controller.removeListener(fenceReview);
+    removeReview();
     controller.dispose();
-    final route = reviewRoute;
-    if (route != null && route.isActive) reviewNavigator?.removeRoute(route);
     super.dispose();
   }
 
@@ -78,33 +101,37 @@ class _YardChecksPanelState extends State<YardChecksPanel>
     String detail, {
     bool reason = false,
   }) async {
+    if (!mounted || !controller.foreground || reviewRoute != null) return null;
     final version = controller.selected?.serverVersion;
     final owner = controller.key(widget.session.snapshot),
         id = controller.selected?.id,
         g = controller.generation;
     final text = TextEditingController();
     final navigator = Navigator.of(context);
-    final route = DialogRoute<bool>(
+    bool valid() =>
+        mounted &&
+        owner != null &&
+        owner == controller.key(widget.session.snapshot) &&
+        id == controller.selected?.id &&
+        g == controller.generation &&
+        version == controller.selected?.serverVersion &&
+        controller.foreground;
+    late final DialogRoute<bool> route;
+    route = DialogRoute<bool>(
       context: context,
       builder: (context) => ListenableBuilder(
         listenable: controller,
         builder: (context, _) {
-          final valid =
-              mounted &&
-              owner == controller.key(widget.session.snapshot) &&
-              id == controller.selected?.id &&
-              g == controller.generation &&
-              version == controller.selected?.serverVersion &&
-              controller.foreground;
+          final current = valid();
           return AlertDialog(
-            title: Text(valid ? title : 'Check context changed'),
+            title: Text(current ? title : 'Check context changed'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  valid ? detail : 'Close this review and refresh the current authorized Check.',
+                  current ? detail : 'Close this review and refresh the current authorized Check.',
                 ),
-                if (reason && valid)
+                if (reason && current)
                   TextField(
                     controller: text,
                     maxLength: 4000,
@@ -116,12 +143,20 @@ class _YardChecksPanelState extends State<YardChecksPanel>
             ),
             actions: [
               TextButton(
-                onPressed: () => navigator.pop(false),
+                onPressed: () {
+                  if (navigator.mounted && route.isCurrent) {
+                    navigator.pop(false);
+                  }
+                },
                 child: const Text('Not Yet'),
               ),
-              if (valid)
+              if (current)
                 FilledButton(
-                  onPressed: () => navigator.pop(true),
+                  onPressed: () {
+                    if (navigator.mounted && route.isCurrent) {
+                      navigator.pop(true);
+                    }
+                  },
                   child: const Text('Confirm'),
                 ),
             ],
@@ -131,15 +166,12 @@ class _YardChecksPanelState extends State<YardChecksPanel>
     );
     reviewRoute = route;
     reviewNavigator = navigator;
+    reviewCurrent = valid;
     try {
       final yes = await navigator.push<bool>(route);
-      if (yes != true ||
-          !mounted ||
-          owner != controller.key(widget.session.snapshot) ||
-          id != controller.selected?.id ||
-          g != controller.generation ||
-          version != controller.selected?.serverVersion ||
-          !controller.foreground) {
+      // popped resolves while TextField is still mounted in the exit animation.
+      await route.completed;
+      if (yes != true || !valid()) {
         return null;
       }
       if (reason && text.text.trim().isEmpty) {
@@ -149,8 +181,12 @@ class _YardChecksPanelState extends State<YardChecksPanel>
       }
       return reason ? text.text.trim() : '';
     } finally {
-      reviewRoute = null;
-      reviewNavigator = null;
+      await route.completed;
+      if (identical(reviewRoute, route)) {
+        reviewRoute = null;
+        reviewNavigator = null;
+        reviewCurrent = null;
+      }
       text.dispose();
     }
   }
@@ -159,7 +195,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
     if (reviewing) return;
     setState(() => reviewing = true);
     try {
-      final state = await controller.reviewState();
+      final state = await controller.reviewState(cancelling: cancel);
       if (state == null || !mounted) return;
       final s = state.check;
       final reason = await confirm(
@@ -172,7 +208,9 @@ class _YardChecksPanelState extends State<YardChecksPanel>
       }
     } catch (_) {
       if (mounted) {
-        controller.message = 'Connect, synchronize and review all Check observations before completing or cancelling.';
+        controller.message = cancel
+            ? 'Connect and settle pending work or explicitly review failed observations before cancelling. Partial evidence will remain in history.'
+            : 'Completion requires a valid server ACK for every captured observation. Reviewed failures remain unsynchronized; review does not acknowledge a scan.';
         controller.notify();
       }
     } finally {
@@ -224,19 +262,11 @@ class _YardChecksPanelState extends State<YardChecksPanel>
           widget.site?.id == s?.siteId &&
           widget.site?.nextLocationCursor == null;
       final pending = c.commands
-          .where(
-            (r) =>
-                r.aggregateId == s?.id &&
-                r.state != 'ACKNOWLEDGED' &&
-                !c.reviewed.contains(r.clientOperationId),
-          )
+          .where((r) => r.aggregateId == s?.id && r.state != 'ACKNOWLEDGED')
           .toList();
       final unresolved = c.observations
           .where(
-            (o) =>
-                o.resolvedTrailerId == null &&
-                o.identifiedTrailerId == null &&
-                !c.reviewed.contains(o.operationId),
+            (o) => o.resolvedTrailerId == null && o.identifiedTrailerId == null,
           )
           .length;
       final confirmed = s == null
@@ -444,7 +474,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                                     : () async {
                                         final reason = await confirm(
                                           'Review failed observation',
-                                          'Retain this failed operation and evidence, without claiming a scan ACK or changing any location. Exclude it from completion only after checking the fresh authorized inventory.',
+                                          'Retain this failed operation and evidence without claiming a scan ACK or changing any location. Completion remains blocked until every observation has a valid ACK. An explicit cancellation can retain reviewed failures.',
                                           reason: true,
                                         );
                                         if (reason != null) {
