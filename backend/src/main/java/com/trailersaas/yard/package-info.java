@@ -1,5 +1,5 @@
 /**
- * Authorized Yard context and physical Trailer moves. Yard Check remains a separate workflow.
+ * Authorized Yard context, physical actions and snapshot-based Yard Checks.
  */
 @org.springframework.modulith.ApplicationModule
 package com.trailersaas.yard;

@@ -370,3 +370,12 @@ push and survive reassignment away. Native permissions/process-death behavior ne
 Android/iOS device QA; CI covers controlled camera + real files/SQLite/HTTP/widgets.
 Use locked dependencies, Drift generation/diff, format, fatal-info analyze and all
 tests as before. See docs/mobile/issue-45-pod-fuel-exceptions.md.
+# Issue #50 Backend handoff (mobile remains #51)
+
+The Yard Check Backend now generates immutable expected snapshots and provides
+bounded version-fenced pages, scans, terminal commands and explicit reconciliation.
+This issue makes no Flutter/Drift/queue/dependency/native changes. Future #51 must
+download the full authorized server snapshot before offline use, retain its ID/
+version/scope/counts, replay original scan UUIDs/times and wait for every scan ACK
+before completion. A partial page or historical receipt is not current authority.
+See [the Backend contract and handoff](../docs/mobile/issue-50-yard-check-backend.md).

@@ -87,6 +87,14 @@ Only relevant/scanned/assigned assets:
 
 ### cached_yard_checks
 
+This remains a future #51 cache, not a new implemented Drift table in #50. The
+#50 Backend supplies bounded version-fenced snapshots; downloaded completeness
+requires every page, unique-ID count validation and authorized Check identity/
+scope. A partial page or historic receipt must not set snapshot downloaded=true.
+Pending result is NULL; ALREADY_SCANNED is a scan outcome, not a stored result.
+Terminal findings stay immutable; reconciliationId is separate audit association.
+No SQLite schema/command/media queue or Drift version changes are part of #50.
+
 - Yard Check ID;
 - server version;
 - Site/location;

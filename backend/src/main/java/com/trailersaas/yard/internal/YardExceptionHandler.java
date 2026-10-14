@@ -9,7 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes={YardController.class,YardMoveController.class,YardActionController.class,YardReportController.class,YardOosController.class})
+@RestControllerAdvice(assignableTypes={YardController.class,YardMoveController.class,YardActionController.class,YardReportController.class,YardOosController.class,YardCheckController.class})
 @Order(10)
 class YardExceptionHandler {
   @ExceptionHandler(YardFailure.class)

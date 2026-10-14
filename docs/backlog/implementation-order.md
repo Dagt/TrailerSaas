@@ -125,8 +125,8 @@ Validate full online and offline sequences on real devices.
 ## Wave 6 — Yard
 
 - #48 Yard Move — merged via PR #105 (baseline `82a48132b9153aaa6445ac890040e219f82a24f3`)
-- #49 discrepancy/OOS — implemented in [PR #106](https://github.com/Dagt/TrailerSaas/pull/106); final CI/readiness record in PR, external review pending; no merge
-- #50 Yard Check backend
+- #49 discrepancy/OOS — merged via [PR #106](https://github.com/Dagt/TrailerSaas/pull/106), baseline `7d2a9d7a1cbaea002f8a051e03658348554c307d`
+- #50 Yard Check backend — [PR #107](https://github.com/Dagt/TrailerSaas/pull/107); exact-head CI/readiness and acceptance evidence in PR; no merge
 - #51 Yard Check mobile/offline
 
 Validate snapshot behavior and physical-state conflicts carefully.

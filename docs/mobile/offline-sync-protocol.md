@@ -462,6 +462,23 @@ A delta-feed endpoint can be added later if measured performance/scale requires 
 
 # 20. Yard Check offline protocol
 
+Issue #50 implements the Backend contract only; Flutter capture/cache/replay for
+Yard Checks remains #51. Start is an online server command (201) with immutable
+inventory; GET detail has bounded UUID item pages (max 200), counts and Check
+version. Cursor pages require expectedVersion; restart a changed-version download.
+snapshotComplete=true applies only to a first page containing the entire selected
+set. Otherwise consume all pages and validate unique expected/total counts before
+marking a future local cache complete. expectedOnly=true retrieves frozen expected
+membership. A historical replay receipt is not current authority.
+
+Scans require original scannedAt >= server startedAt, active observed context and
+stable UUID; ALREADY_SCANNED preserves the first observation. Completion uses exact
+expectedVersion and server completedAt, and must follow all scan ACKs. Cancellation
+retains partial findings. Reconciliation is a separate authorized physical command,
+never inferred from pending/MISSING status. Do not convert conflicting scans or
+findings into automatic location corrections. Existing CommandStore/ReplayWorker/
+ledger identity rules remain unchanged; no second queue/worker is introduced here.
+
 A Yard Check must be created by the server before it can become a trustworthy offline reconciliation session.
 
 Before going offline, the app stores:
