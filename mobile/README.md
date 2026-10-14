@@ -394,7 +394,14 @@ plugin, queue, worker or automatic physical reconciliation exists.
 Drift v9 incrementally adds five cache/observation/review tables; 26 total. Original
 facts/times/ownership are guarded; real file-backed v8 migration, rollback/reopen,
 two connections/workers and older upgrade regressions preserve existing data.
-Typed server receipts distinguish local pending from accepted results. Off Duty
+Typed server receipts distinguish local pending from accepted results.
+Completion requires a valid durable ACK for every captured observation, including
+reviewed conflicts/blocked/permanent failures. Cancellation independently permits
+reviewed definitive failures as retained partial evidence, without MISSING or a
+fabricated ACK. PR #108 F1/F2 retain Drift v9, frozen UUID/requests and review history.
+Reason dialogs wait for route.completed before disposing their controllers and
+fence/removal on context changes prevents confirmations during exit animations.
+Off Duty
 has the documented local Check guard and unknown/stale warning; Backend guard is
 not implied. Read [#51 acceptance/test/security record](../docs/mobile/issue-51-yard-check-mobile-offline.md).
 Native physical Android/iOS QA remains #65. Keep the PR Draft until all four

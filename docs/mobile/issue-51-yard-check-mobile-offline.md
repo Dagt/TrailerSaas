@@ -15,7 +15,7 @@ Baseline CI: Backend 2,251 / Mobile 467 / Web 244 / OpenAPI 39.
 | C full snapshot | All real detail pages, UUID/count/scope/version validation and atomic cache commit | 0/1/200/201/206; repeated IDs/cursors, stale pages, late owner callback, rollback |
 | D QR observations | NativeQrScanner and owner-scoped verified cached bindings; unknown token durable unresolved intent | No fabricated Trailer/ACK/classification; original token/time/UUID, duplicate/fenced camera |
 | E replay | Typed Check adapter in the one existing ReplayWorker; same backoff/claims/results/issues | Resolve online through trusted QR + own Tenant Yard read, frozen payload, retries/auth/conflicts/two workers |
-| F terminal | Explicit online authoritative Review & Complete/Cancel after resolved scan ACKs | Actual fresh version, reviewed state fencing, immutable retry, no local terminal/MISSING fabrication |
+| F terminal | Completion requires a typed durable ACK for every captured observation; Cancellation may retain explicitly reviewed definitive failures | Fresh version/review fencing, immutable retry, no local terminal/MISSING fabrication |
 | F reconciliation | Existing #50 endpoints and current Trailer version/correction capability | Human reason/confirm, actual event/Alert receipt, immutable finding, no scan-induced physical effect |
 | F Off Duty | Actual Shift capture and replay entry points, not only Yard Home | Known unfinished Check blocks, unknown/stale warns honestly, old Road/Post-Trip conditions retained |
 | G security | Namespace and generation fences, private token only, current typed ACK validation | Account/Tenant/mode/dispose/reconnect races, late receipt, malformed response, no starvation |
@@ -126,21 +126,63 @@ HTTP 200 alone never confirms a scan or physical action.
 
 ## Terminal review, findings and physical authority
 
-Review & Complete/Cancel is an online workflow, after every unreviewed scan has a
-validated ACK. Unresolved, uncertain, blocked or conflicted observations prevent
-terminal review. Current authorized full state is shown for explicit confirmation;
+Review & Complete is an online workflow after every captured observation has a
+validated durable scan ACK. A conflict review is never an ACK: CONFLICT, BLOCKED
+and PERMANENT_FAILURE scans continue blocking completion even after review.
+ACK eligibility validates the owner-scoped frozen request and typed durable receipt;
+an ACKNOWLEDGED label without a valid receipt is insufficient. Current authorized
+full state is shown for explicit confirmation;
 materialization fetches it again and requires the exact reviewed state/version.
 No version arithmetic or silent refresh-under-the-same-key occurs. If the state
 changed, REVIEW_REQUIRED retains the failed intention and requires new human
-review. Once frozen, an uncertain retry keeps original version/body/key. Cancellation
-requires a nonblank reason and retains all partial evidence. Neither terminal intent
+review. Once frozen, an uncertain retry keeps original version/body/key. Completion
+eligibility is checked before returning even an already-frozen request, covering
+recovery from the earlier client version. Capture checks and dependency collection
+share a SQLite transaction; a pending terminal intention fences new observations.
+Cancellation is separate: it requires a nonblank reason, a fresh authorized review
+and settled work, but may retain explicitly reviewed definitive failed observations
+without ACK. It never derives MISSING and retains all partial evidence. Neither terminal intent
 nor local scan makes MISSING/COMPLETED/CANCELLED authoritative before server ACK.
 
 Failed Check operations may be explicitly reviewed against fresh authorized state
 with a reason; only rejected/conflicted/blocked operations qualify. They remain
 historical failures, never fake ACKs. Uncertain SENDING/retryable work cannot be
 excluded. The original observation/request is retained, and reviewed failed resource
-lanes can be released without rewriting immutable dependencies.
+lanes can be released without rewriting immutable dependencies. Releasing a lane
+does not release Completion's requirement that every observation be acknowledged.
+Reviewed failures remain in pending/conflict/unresolved progress and their original
+request, timestamp and review history are preserved.
+
+## PR #108 external audit amendments (F1/F2)
+
+The audited HEAD was `b7cf89795f81188dd13e31846158386356c27d32`.
+Recoverable corrective commits: F1
+`81341e6c6b80d89613fd38b70f5b449772a70d7e`; F2
+`34e7304a3fe4b57840fcb281853cacee322d5da3` (final Flutter source).
+F1 removed the reviewed-failure bypass for Completion at review, capture and replay,
+including legacy frozen requests; Cancellation retains its explicitly reviewed
+partial-evidence policy. No server ACK, physical location or inventory result is
+invented by review. Drift remains v9 and Backend/API/Flyway V24 are unchanged.
+
+F2 keeps each reason controller alive until `DialogRoute.completed`, revalidates
+the captured context after the exit animation, and removes only its owned route
+after the frame on User/Tenant/Site/foreground/disposal invalidation. A route pop
+cannot navigate another account's route. Paused Flutter frames finish route removal
+on resume; the invalidated generation prevents any late confirmation. The baseline
+reason-cancellation widget regression reproduced exactly
+`A TextEditingController was used after being disposed` before the correction.
+
+Additional regressions: 13 file-backed Completion/ACK integrity tests (all three
+reviewed failed scan states, new/legacy frozen completion, independent cancellation,
+uncertain cancellation, absent/malformed receipt and pending terminal scan fencing)
+and 11 widget tests (Confirm/Not Yet cancellation and reasoned reconciliation,
+User/Tenant/background/Site/disposal during exit, open-route suspend/resume and
+unmount during Not Yet). Existing 531 Mobile tests are retained. Final local and
+exact-HEAD Actions results are recorded in the PR acceptance matrix and direct job
+links at [PR #108](https://github.com/Dagt/TrailerSaas/pull/108); the PR's final
+published HEAD and direct logs supersede the historical validation counts below.
+Draft remains mandatory until every new final-HEAD job finishes successfully.
+Physical Android/iOS QA remains #65; these amendments make no device-QA claim.
 
 Completed MISSING/mismatch findings expose separately authorized reconciliation
 only with TRAILER_LOCATION_CORRECT, actual current Trailer projection/version,
@@ -175,14 +217,14 @@ issues are deferred. NO MERGE.
 
 PR: [#108 — Yard Check mobile scan and offline replay](https://github.com/Dagt/TrailerSaas/pull/108).
 Verified base: `9446576d6d9a26a1f8f4f11005ba90a360ed0f95`.
-Final Flutter source checkpoint: `23cf2e725f3619823f51508349d4cb31e58f0ee5`.
+Prior Flutter source checkpoint, superseded by F1/F2 above: `23cf2e725f3619823f51508349d4cb31e58f0ee5`.
 The PR description records the exact final published HEAD and direct final Actions
 run/job logs, their counts and readiness. Documentation-only publication does not
 change this source checkpoint. Ready is permitted only after all four jobs complete
 successfully on that final HEAD. This source record does not claim a pending job
 passed and is not a physical-device release certification.
 
-Local final-source Mobile: **531 passed**, no failed/skipped tests. Flutter 3.47.6 /
+Prior published-source local Mobile: **531 passed**, no failed/skipped tests. Flutter 3.47.6 /
 Dart 3.13.5 locked dependencies, Drift generation/source equality, full formatting,
 fatal-info analysis and real file-backed SQLite tests passed. Web **244 passed**
 plus npm ci/typecheck/lint/build; OpenAPI **39 passed**, zero failures/skipped, plus

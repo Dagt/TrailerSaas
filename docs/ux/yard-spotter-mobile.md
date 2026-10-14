@@ -596,11 +596,17 @@ pending synchronization, not a Trailer name or successful classification. Local
 match/mismatch/unexpected labels remain LOCAL_PENDING until typed server ACK.
 Expected/original location facts remain separate from live Trailer projection.
 
-Not Yet sends no command. Complete/Cancel require synchronized observations and
-online review; only ACK changes displayed authoritative terminal/MISSING state.
+Not Yet sends no command. Completion requires a valid durable ACK for every
+captured observation, including reviewed failed scans. Conflict review retains
+history and never counts as synchronization. Cancellation separately permits
+explicitly reviewed definitive failures, retains partial evidence and never makes
+MISSING findings; uncertain work still blocks it. Both require online review;
+only ACK changes displayed authoritative terminal/MISSING state.
 MISSING/mismatch reconciliation is separately authorized, reasoned and confirmed,
 with actual server event/alert history displayed after ACK. Check history is never
 automatic physical correction. Late camera/review callbacks are fenced by owner,
-Check, lifecycle and disposal. Shift Off Duty blocks known unfinished associated
+Check, lifecycle and disposal. Reason controllers survive the full dialog exit
+animation, and context invalidation removes the owned review route before a late
+confirmation can execute. Shift Off Duty blocks known unfinished associated
 Checks at capture/replay and warns about unknown/stale offline state; it retains
 existing Driver/Post-Trip work requirements. Physical QA remains #65.

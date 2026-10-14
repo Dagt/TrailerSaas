@@ -664,8 +664,14 @@ original UUIDs/times/frozen requests, and requires typed receipts before ACK.
 Unknown QR is UNRESOLVED_QR, never fabricated MATCHED/UNEXPECTED. Public tokens
 remain private; no token directory or second worker/queue is added.
 
-YARD_CHECK_COMPLETE/CANCEL require all unreviewed scans acknowledged and an online
-fresh authoritative full review. First materialization revalidates the exact
+YARD_CHECK_COMPLETE requires every captured observation to have a valid typed,
+durable scan receipt. Reviewed CONFLICT/BLOCKED/PERMANENT_FAILURE scans still block
+Completion; a review is not an ACK. Eligibility is checked at review, transactional
+capture/dependency collection and replay, including previously frozen requests.
+YARD_CHECK_CANCEL instead permits explicitly reviewed definitive failures to remain
+partial historical evidence, requires reason and never generates MISSING. Queued,
+sending or retryable/uncertain scans block cancellation, even with an earlier review.
+Both require an online fresh authoritative full review. First materialization revalidates the exact
 review; changed state requires human review, never guessed/incremented versions.
 Frozen uncertain terminal retries keep the same request/key. Only rejected failed
 observations may be explicitly reviewed with reason and fresh state; uncertain

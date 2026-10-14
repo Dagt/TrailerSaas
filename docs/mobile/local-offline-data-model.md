@@ -231,6 +231,11 @@ cached_yard_check_items (immutable original facts + latest authorized server row
 yard_check_observations (original private QR token, binding, ISO scannedAt, local
 result and existing command reference), yard_check_reviews (immutable explicit
 failed-operation review) and yard_check_directories (freshness/access metadata).
+Review rows retain historical failed evidence; they never create command_results
+or satisfy Completion scan dependencies. Every captured observation must retain a
+valid typed ACK and frozen request before Completion. Cancellation may separately
+retain explicitly reviewed definitive failures without claiming an ACK. No schema
+change is required by the PR #108 F1/F2 corrections; deployed Drift remains v9.
 Composite User/Tenant/Check and command FKs enforce ownership. New Check metadata
 is retained, including on logout; it is not evicted under the older general read
 cache retention suggestion above. QR public tokens are private observation inputs,
