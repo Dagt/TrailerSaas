@@ -144,4 +144,19 @@ class YardCheckService {
     authorize(actor,tenant);return result;
   }
   static void inProgress(Summary c) {if(!c.status().equals("IN_PROGRESS"))throw new YardFailure(409,"INVALID_STATE_TRANSITION","The Yard Check is terminal.");}
+  Summary finish(AuthenticatedUserPrincipal actor,UUID tenant,UUID id,String key,Map<String,Object> body,boolean cancel) {
+    authorize(actor,tenant);var r=YardCheckRequest.Terminal.parse(id,cancel,body);var op=YardCheckRequest.uuid(key);
+    var result=ledger.execute(tenant,actor.userId(),op,cancel?"YARD_CHECK_CANCEL":"YARD_CHECK_COMPLETE",helpers.hash(r),"YARD_CHECK",Summary::id,Summary.class,()->{
+      lockCheck(tenant,id,true);var current=summary(tenant,id);inProgress(current);
+      if(current.version()!=r.expectedVersion())throw stale();
+      helpers.lockSite(tenant,current.siteId());authorize(actor,tenant);
+      if(cancel)jdbc.update("update yard_checks set status='CANCELLED',cancelled_at=clock_timestamp(),cancelled_by_user_id=?,cancellation_reason=?,version=version+1,updated_at=clock_timestamp() where tenant_id=? and id=?",actor.userId(),r.reason(),tenant,id);
+      else {
+        jdbc.update("update yard_check_items set result='MISSING' where tenant_id=? and yard_check_id=? and expected and not found and result is null",tenant,id);
+        jdbc.update("update yard_checks set status='COMPLETED',completed_at=clock_timestamp(),completed_by_user_id=?,version=version+1,updated_at=clock_timestamp() where tenant_id=? and id=?",actor.userId(),tenant,id);
+      }
+      return summary(tenant,id);
+    });
+    authorize(actor,tenant);return result;
+  }
 }

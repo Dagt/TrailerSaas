@@ -33,6 +33,14 @@ class YardCheckController {
     if(!query.isEmpty())throw YardFailure.invalid();return service.scan(actor,tenantId,yardCheckId,key,body);
   }
   static UUID id(Map<String,String> q,String key){return q.containsKey(key)?YardCheckRequest.uuid(q.get(key)):null;}
+  @PostMapping("/{yardCheckId}/completion")
+  YardCheckDtos.Summary complete(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenantId,@PathVariable UUID yardCheckId,@RequestHeader(name="Idempotency-Key",required=false)String key,@RequestBody Map<String,Object> body,@RequestParam Map<String,String> query) {
+    if(!query.isEmpty())throw YardFailure.invalid();return service.finish(actor,tenantId,yardCheckId,key,body,false);
+  }
+  @PostMapping("/{yardCheckId}/cancellation")
+  YardCheckDtos.Summary cancel(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenantId,@PathVariable UUID yardCheckId,@RequestHeader(name="Idempotency-Key",required=false)String key,@RequestBody Map<String,Object> body,@RequestParam Map<String,String> query) {
+    if(!query.isEmpty())throw YardFailure.invalid();return service.finish(actor,tenantId,yardCheckId,key,body,true);
+  }
   static Instant at(Map<String,String> q,String key){return q.containsKey(key)?YardCheckRequest.time(q.get(key)):null;}
   static int limit(Map<String,String> q,int fallback,int max) {try {int n=q.containsKey("limit")?Integer.parseInt(q.get("limit")):fallback;if(n<1||n>max)throw YardFailure.invalid();return n;}catch(NumberFormatException e){throw YardFailure.invalid();}}
 }

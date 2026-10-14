@@ -29,4 +29,10 @@ final class YardCheckRequest {
   record Scan(UUID checkId,UUID trailerId,UUID observedLocationId,Instant scannedAt) {
     static Scan parse(UUID id,Map<String,Object> b) {fields(b,"trailerId","observedLocationId","scannedAt");return new Scan(id,uuid(b.get("trailerId")),uuid(b.get("observedLocationId")),time(b.get("scannedAt")));}
   }
+  record Terminal(UUID checkId,long expectedVersion,String reason) {
+    static Terminal parse(UUID id,boolean cancel,Map<String,Object> b) {
+      fields(b,cancel?new String[]{"expectedVersion","reason"}:new String[]{"expectedVersion"});
+      return new Terminal(id,version(b.get("expectedVersion")),cancel?YardCheckRequest.reason(b.get("reason")):null);
+    }
+  }
 }

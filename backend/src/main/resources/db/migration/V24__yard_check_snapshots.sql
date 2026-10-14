@@ -22,8 +22,8 @@ CREATE TABLE yard_checks (
   FOREIGN KEY(tenant_id,client_operation_id) REFERENCES processed_client_operations(tenant_id,client_operation_id),
   CHECK(created_at=started_at AND updated_at>=started_at),
   CHECK((status='IN_PROGRESS' AND completed_at IS NULL AND completed_by_user_id IS NULL AND cancelled_at IS NULL AND cancelled_by_user_id IS NULL AND cancellation_reason IS NULL)
-    OR (status='COMPLETED' AND completed_at>=started_at AND completed_by_user_id IS NOT NULL AND cancelled_at IS NULL AND cancelled_by_user_id IS NULL AND cancellation_reason IS NULL)
-    OR (status='CANCELLED' AND cancelled_at>=started_at AND cancelled_by_user_id IS NOT NULL AND completed_at IS NULL AND completed_by_user_id IS NULL AND cancellation_reason ~ '[^[:space:]]' AND length(cancellation_reason)<=4000))
+    OR (status='COMPLETED' AND completed_at IS NOT NULL AND completed_at>=started_at AND completed_by_user_id IS NOT NULL AND cancelled_at IS NULL AND cancelled_by_user_id IS NULL AND cancellation_reason IS NULL)
+    OR (status='CANCELLED' AND cancelled_at IS NOT NULL AND cancelled_at>=started_at AND cancelled_by_user_id IS NOT NULL AND completed_at IS NULL AND completed_by_user_id IS NULL AND cancellation_reason IS NOT NULL AND cancellation_reason ~ '[^[:space:]]' AND length(cancellation_reason)<=4000))
 );
 CREATE INDEX yard_checks_list ON yard_checks(tenant_id,site_id,status,id);
 
@@ -51,7 +51,7 @@ CREATE TABLE yard_check_items (
   FOREIGN KEY(tenant_id,client_operation_id) REFERENCES processed_client_operations(tenant_id,client_operation_id),
   CHECK((expected AND expected_location_id IS NOT NULL) OR (NOT expected AND expected_location_id IS NULL)),
   CHECK((expected AND NOT found AND (result IS NULL OR result='MISSING') AND observed_location_id IS NULL AND scanned_at IS NULL AND scanned_by_user_id IS NULL AND recorded_at IS NULL AND client_operation_id IS NULL)
-    OR (found AND observed_location_id IS NOT NULL AND scanned_at IS NOT NULL AND scanned_by_user_id IS NOT NULL AND recorded_at>=scanned_at AND client_operation_id IS NOT NULL
+    OR (found AND result IS NOT NULL AND observed_location_id IS NOT NULL AND scanned_at IS NOT NULL AND scanned_by_user_id IS NOT NULL AND recorded_at IS NOT NULL AND recorded_at>=scanned_at AND client_operation_id IS NOT NULL
       AND ((expected AND result='MATCHED' AND observed_location_id=expected_location_id)
         OR (expected AND result='LOCATION_MISMATCH' AND observed_location_id<>expected_location_id)
         OR (NOT expected AND result='UNEXPECTED'))))
@@ -140,6 +140,16 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION guard_yard_check_item() FROM PUBLIC;
 CREATE TRIGGER yard_check_item_history BEFORE INSERT OR UPDATE OR DELETE ON yard_check_items FOR EACH ROW EXECUTE FUNCTION guard_yard_check_item();
+
+CREATE FUNCTION guard_yard_missing_completion() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN
+  IF NEW.result='MISSING' AND NOT EXISTS(SELECT 1 FROM public.yard_checks WHERE tenant_id=NEW.tenant_id AND id=NEW.yard_check_id AND status='COMPLETED') THEN
+    RAISE EXCEPTION 'Missing is a completed Check finding' USING ERRCODE='23514'; END IF;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION guard_yard_missing_completion() FROM PUBLIC;
+CREATE CONSTRAINT TRIGGER yard_missing_completion AFTER INSERT OR UPDATE ON yard_check_items
+  DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION guard_yard_missing_completion();
 
 CREATE TRIGGER yard_reconciliation_immutable BEFORE UPDATE OR DELETE ON yard_check_reconciliations FOR EACH ROW EXECUTE FUNCTION guard_yard_history();
 CREATE TRIGGER alerts_history BEFORE UPDATE OR DELETE ON alerts FOR EACH ROW EXECUTE FUNCTION guard_yard_history();
