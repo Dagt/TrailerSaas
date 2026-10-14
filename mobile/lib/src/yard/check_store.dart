@@ -137,6 +137,13 @@ class CheckStore {
           });
           if (!current()) throw StateError('Check owner changed');
           final page = CheckDetail(raw);
+          if (cursor == null &&
+              page.nextCursor == null &&
+              raw['snapshotComplete'] != true) {
+            throw const FormatException(
+              'First page does not confirm a complete selected inventory',
+            );
+          }
           first ??= page.check;
           if (page.check.id != id ||
               page.check.origin != first.origin ||

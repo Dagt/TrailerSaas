@@ -21,6 +21,14 @@ void main() {
     });
   }
 
+  test('an empty HTTP page without the server first-page completeness marker is not offline readiness', () async {
+    await open(0);
+    f.custom = (r) async => r.url.path.endsWith('/$checkId')
+        ? f.mobile.response({...f.page(), 'snapshotComplete': false})
+        : f.handle(r);
+    await expectLater(f.snapshot(), throwsFormatException);
+    expect(await f.cache.find(f.mobile.session.snapshot!, checkId), isNull);
+  });
   test('directory denial blocks previously downloaded Check without deleting evidence', () async {
     await open(1);
     await f.snapshot();
