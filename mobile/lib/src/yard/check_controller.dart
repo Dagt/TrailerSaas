@@ -56,7 +56,18 @@ class YardCheckController extends ChangeNotifier {
       foreground &&
       selected?.status == 'IN_PROGRESS' &&
       selected?.snapshotDownloaded == true &&
-      selected?.accessBlocked == false;
+      selected?.accessBlocked == false &&
+      !commands.any(
+        (c) =>
+            c.aggregateId == selected?.id &&
+            {
+              'YARD_CHECK_COMPLETE',
+              'YARD_CHECK_CANCEL',
+            }.contains(c.commandType) &&
+            c.state != 'ACKNOWLEDGED' &&
+            !({'CONFLICT', 'BLOCKED', 'PERMANENT_FAILURE'}.contains(c.state) &&
+                reviewed.contains(c.clientOperationId)),
+      );
   bool get canCorrect =>
       session.snapshot?.membership.capabilities.contains(
         'TRAILER_LOCATION_CORRECT',
@@ -371,15 +382,17 @@ class YardCheckController extends ChangeNotifier {
     }
   }
 
-  Future<CheckSnapshot?> reviewState() => Future<CheckSnapshot?>.sync(() async {
+  Future<CheckSnapshot?> reviewState({
+    bool cancelling = false,
+  }) => Future<CheckSnapshot?>.sync(() async {
     final o = session.snapshot, id = selected?.id, g = generation;
     if (o == null ||
         id == null ||
         !current(o, g) ||
-        !await replay.settled(o, id) ||
+        !await replay.settled(o, id, allowReviewedFailures: cancelling) ||
         await session.network.currentStatus() != ConnectivityStatus.available) {
       throw StateError(
-        'Synchronize and explicitly review all pending or conflicted observations before completing or cancelling.',
+        'Completion requires a valid ACK for every captured observation. Cancellation requires pending work to settle or failed observations to be explicitly reviewed.',
       );
     }
     final snapshot = await cache.download(session, o, id, () => current(o, g));
@@ -397,30 +410,36 @@ class YardCheckController extends ChangeNotifier {
     String? reason,
   }) => action((o, g) async {
     final id = selected?.id;
-    if (id != reviewedState.check.id || !await replay.settled(o, id!)) {
+    if (id != reviewedState.check.id ||
+        !await replay.settled(o, id!, allowReviewedFailures: reason != null)) {
       throw StateError('Check context changed. Review again.');
     }
-    final scans = (await worker.store.list(o.userId, o.membership.tenantId))
-        .where(
-          (r) =>
-              r.aggregateId == id &&
-              r.commandType == 'YARD_CHECK_SCAN' &&
-              r.state == 'ACKNOWLEDGED',
-        )
-        .map((r) => r.clientOperationId)
-        .toList();
-    await replay.capture(
-      o,
-      reason == null ? 'YARD_CHECK_COMPLETE' : 'YARD_CHECK_CANCEL',
-      '${cache.root(o)}/$id/${reason == null ? 'completion' : 'cancellation'}',
-      {
-        'review': reviewedState.review,
-        if (reason != null) 'reason': reason.trim(),
-        '_capturedAt': worker.store.now().toUtc().toIso8601String(),
-      },
-      dependencies: scans,
-      current: () => current(o, g) && selected?.id == id,
-    );
+    await cache.db.transaction(() async {
+      if (!await replay.settled(o, id, allowReviewedFailures: reason != null)) {
+        throw StateError('Check observations changed. Review again.');
+      }
+      final scans = (await worker.store.list(o.userId, o.membership.tenantId))
+          .where(
+            (r) =>
+                r.aggregateId == id &&
+                r.commandType == 'YARD_CHECK_SCAN' &&
+                r.state == 'ACKNOWLEDGED',
+          )
+          .map((r) => r.clientOperationId)
+          .toList();
+      await replay.capture(
+        o,
+        reason == null ? 'YARD_CHECK_COMPLETE' : 'YARD_CHECK_CANCEL',
+        '${cache.root(o)}/$id/${reason == null ? 'completion' : 'cancellation'}',
+        {
+          'review': reviewedState.review,
+          if (reason != null) 'reason': reason.trim(),
+          '_capturedAt': worker.store.now().toUtc().toIso8601String(),
+        },
+        dependencies: scans,
+        current: () => current(o, g) && selected?.id == id,
+      );
+    });
     message =
         'Terminal intention saved — only the server can confirm its state';
     notify();

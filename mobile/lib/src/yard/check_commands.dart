@@ -206,6 +206,25 @@ class CheckReplay {
           )
           .firstOrNull;
       if (duplicate != null) return duplicate.operationId;
+      final reviewed = await commands.reviewedYardFailures(
+        o.userId,
+        o.membership.tenantId,
+      );
+      if ((await commands.list(o.userId, o.membership.tenantId)).any(
+        (c) =>
+            c.aggregateId == id &&
+            {
+              'YARD_CHECK_COMPLETE',
+              'YARD_CHECK_CANCEL',
+            }.contains(c.commandType) &&
+            c.state != 'ACKNOWLEDGED' &&
+            !({'CONFLICT', 'BLOCKED', 'PERMANENT_FAILURE'}.contains(c.state) &&
+                reviewed.contains(c.clientOperationId)),
+      )) {
+        throw StateError(
+          'A terminal intention is pending. Resolve it before capturing another observation.',
+        );
+      }
       final operation = await capture(
         o,
         'YARD_CHECK_SCAN',
@@ -256,25 +275,99 @@ class CheckReplay {
         : 'LOCATION_MISMATCH';
   }
 
-  Future<bool> settled(SessionSnapshot o, String id) async {
+  Future<bool> settled(
+    SessionSnapshot o,
+    String id, {
+    bool allowReviewedFailures = false,
+    String? excludingOperationId,
+  }) => db.transaction(() async {
     final reviewed = await commands.reviewedYardFailures(
       o.userId,
       o.membership.tenantId,
     );
-    return !(await commands.list(o.userId, o.membership.tenantId)).any(
+    final rows = (await commands.list(o.userId, o.membership.tenantId))
+        .where((c) => c.aggregateType == 'YARD_CHECK' && c.aggregateId == id)
+        .toList();
+    bool explicitlyReviewed(LocalCommand c) =>
+        (allowReviewedFailures || c.commandType != 'YARD_CHECK_SCAN') &&
+        {'CONFLICT', 'BLOCKED', 'PERMANENT_FAILURE'}.contains(c.state) &&
+        reviewed.contains(c.clientOperationId);
+    if (rows.any(
       (c) =>
-          c.aggregateType == 'YARD_CHECK' &&
-          c.aggregateId == id &&
+          c.clientOperationId != excludingOperationId &&
           c.state != 'ACKNOWLEDGED' &&
-          !reviewed.contains(c.clientOperationId),
-    );
-  }
+          !explicitlyReviewed(c),
+    )) {
+      return false;
+    }
+
+    // A review releases a failed resource lane, but it is never a scan receipt.
+    // Cancellation may retain explicitly reviewed failures; Completion may not.
+    for (final observation in await cache.observations(o, id)) {
+      final c = rows
+          .where((c) => c.clientOperationId == observation.operationId)
+          .firstOrNull;
+      if (c == null || c.commandType != 'YARD_CHECK_SCAN') return false;
+      if (explicitlyReviewed(c)) continue;
+      if (c.state != 'ACKNOWLEDGED') return false;
+      final request =
+          await (db.select(db.materializedRequests)..where(
+                (r) =>
+                    r.clientOperationId.equals(c.clientOperationId) &
+                    r.userId.equals(o.userId) &
+                    r.tenantId.equals(o.membership.tenantId),
+              ))
+              .getSingleOrNull();
+      final receipt =
+          await (db.select(db.commandResults)..where(
+                (r) =>
+                    r.clientOperationId.equals(c.clientOperationId) &
+                    r.userId.equals(o.userId) &
+                    r.tenantId.equals(o.membership.tenantId),
+              ))
+              .getSingleOrNull();
+      if (request == null ||
+          receipt == null ||
+          request.httpMethod != 'POST' ||
+          request.endpointPath != c.endpointPath ||
+          receipt.resultKind != 'YARD_CHECK' ||
+          receipt.serverId != id) {
+        return false;
+      }
+      try {
+        validate(
+          c,
+          checkMap(jsonDecode(receipt.projectionJson)),
+          checkMap(jsonDecode(request.payloadJson)),
+        );
+      } on FormatException {
+        return false;
+      } on TypeError {
+        return false;
+      }
+    }
+    return true;
+  });
 
   Future<Map<String, dynamic>> materialize(
     LocalCommand c,
     SessionSnapshot o,
     bool Function() current,
   ) async {
+    if ((c.commandType == 'YARD_CHECK_COMPLETE' ||
+            c.commandType == 'YARD_CHECK_CANCEL') &&
+        !await settled(
+          o,
+          c.aggregateId!,
+          allowReviewedFailures: c.commandType == 'YARD_CHECK_CANCEL',
+          excludingOperationId: c.clientOperationId,
+        )) {
+      throw const ApiProblem(
+        409,
+        'RESOURCE_CONFLICT',
+        'Completion requires every captured observation to have a valid server ACK. Cancellation requires pending work to settle or failed observations to be explicitly reviewed.',
+      );
+    }
     final frozen =
         await (db.select(db.materializedRequests)..where(
               (r) =>
@@ -353,24 +446,6 @@ class CheckReplay {
         );
       case 'YARD_CHECK_COMPLETE':
       case 'YARD_CHECK_CANCEL':
-        // The current command is SENDING; every other unreviewed command must be ACKed.
-        final reviewed = await commands.reviewedYardFailures(
-          c.userId,
-          c.tenantId,
-        );
-        if ((await commands.list(c.userId, c.tenantId)).any(
-          (r) =>
-              r.aggregateId == c.aggregateId &&
-              r.clientOperationId != c.clientOperationId &&
-              r.state != 'ACKNOWLEDGED' &&
-              !reviewed.contains(r.clientOperationId),
-        )) {
-          throw const ApiProblem(
-            409,
-            'RESOURCE_CONFLICT',
-            'Synchronize or review all Check observations first.',
-          );
-        }
         final fresh = await cache.download(session, o, c.aggregateId!, current);
         if (fresh.check.status != 'IN_PROGRESS' ||
             fresh.review != intent['review']) {
