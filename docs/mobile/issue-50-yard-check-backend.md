@@ -201,7 +201,7 @@ separate current audit association, not a changed observation/snapshot version.
 
 [PR #107](https://github.com/Dagt/TrailerSaas/pull/107) exists as Draft while final
 checks complete. A–F are published; G publishes actual OpenAPI/documentation and
-audit corrections. Checkpoint H will record the final review handoff. The PR
+audit corrections. Checkpoint H records the actual publication and review gates below. The PR
 description/checks carry the exact final publication SHA, run ID and completed
 counts on that SHA, avoiding a document containing its own commit hash.
 
@@ -227,3 +227,27 @@ is claimed, which remains #65. OQ-059 definitive policies and OQ-057 retention a
 open; no legal/retention conclusion or recipient/delivery implementation is invented.
 No auto-reconciliation, reservation, overlapping-Check prohibition or Alert resolution.
 Original #40/#48/#49 flows and machines are retained. **NO MERGE; no issue #51 work.**
+
+## H — Actual publication and final review gates
+
+The single [PR #107](https://github.com/Dagt/TrailerSaas/pull/107) targets main from
+`issue-50-yard-check-backend`. Its verified base is the approved PR #106 merge,
+`7d2a9d7a1cbaea002f8a051e03658348554c307d`. The complete implementation/local
+regression source is G, `a352e69d53a64ca49366e269c8a53bf35ffba1a2`; H changes
+only this publication record. A–G are preserved recoverable commits.
+
+The initial [G CI run 38491820427](https://github.com/Dagt/TrailerSaas/actions/runs/38491820427)
+started successfully; this reference is not final approval and is superseded by
+the publication HEAD run. The PR [checks](https://github.com/Dagt/TrailerSaas/pull/107/checks)
+and description record the exact final H SHA, final run ID, all four completed
+job counts/results, actual Draft/Ready state and any subsequent correction.
+No in-progress or superseded run constitutes readiness. Draft removal requires
+full Backend clean verify plus Mobile/Web/OpenAPI success on that same final HEAD,
+zero failures/errors/skips, clean published branch, mergeability and no rejected
+reviews/unresolved threads. This avoids a self-referential commit hash or a false
+static CI/status claim in a file whose publication changes that hash.
+
+Required suite counts preserve the merged baseline: Backend 2,148 +103 new cases,
+Mobile 467, Web 244 and OpenAPI 31 +8 new cases. Completed logs, not these expected
+counts, establish approval. No #51/mobile implementation or native-device QA is
+claimed. OQ-059/retention/release #65 remain as documented above. **NO MERGE.**
