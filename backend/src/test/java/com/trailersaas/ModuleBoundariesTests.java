@@ -14,7 +14,7 @@ class ModuleBoundariesTests {
         assertThat(modules.stream().map(module -> module.getIdentifier().toString()))
                 .containsExactlyInAnyOrder("identity", "customers", "drivers", "tractors",
                         "trailers", "orders", "trips", "yard", "inspections", "documents",
-                        "notifications", "audit");
+                        "notifications", "audit", "jobs");
     }
 
     @Test

@@ -23,7 +23,7 @@ class TenantSettingsPostgresTests extends PostgresIntegrationTest {
         f.execute("INSERT INTO tenant_settings VALUES (?,72,NULL,now(),now(),0),(?,72,NULL,now(),now(),0)", a,b);
     }
     @Test void v9ExactSchemaFkChecksAndBackfillsPreexistingTenants() throws Exception {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("24"); flyway.validate();
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("25"); flyway.validate();
         try(var c = runtime.getConnection(); var q = c.createStatement(); var r = q.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_name='tenant_settings' ORDER BY ordinal_position")) {
             var columns = new java.util.ArrayList<String>(); while(r.next()) { columns.add(r.getString(1)); }
             assertThat(columns).containsExactly("tenant_id","stale_trailer_threshold_hours","default_timezone","created_at","updated_at","version");
