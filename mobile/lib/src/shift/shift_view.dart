@@ -201,6 +201,12 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                           : null,
                       child: const Text('Go On Duty'),
                     ),
+                  if (owner.membership.capabilities.contains(
+                    'YARD_CHECK_EXECUTE',
+                  ))
+                    const Text(
+                      'Yard Check: un Check asociado pendiente o incierto bloquea Off Duty. Actualiza Checks antes de cerrar; el caché offline no demuestra ausencia de trabajo abierto.',
+                    ),
                   if (reference != null) ...[
                     if (home.inspections.any(
                       (i) =>
