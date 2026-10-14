@@ -63,9 +63,9 @@ class OutboxSchemaPostgresTests extends PostgresIntegrationTest {
         "'aggregate_id', '00000000-0000-4000-8000-000000000001'",
         "'locked_by', '00000000-0000-4000-8000-000000000001'",
         "'locked_until', '2030-01-01T00:00:00Z'", "'processed_at', '2026-01-01T00:00:00Z'",
-        "'payload', '[]'", "'payload', '{}'", "'payload', '{\"schemaVersion\":0,\"data\":{}}'",
-        "'payload', '{\"schemaVersion\":1,\"data\":null}'",
-        "'payload', '{\"schemaVersion\":1,\"data\":{},\"secret\":1}'",
+        "'payload', '[]'::jsonb", "'payload', '{}'::jsonb", "'payload', '{\"schemaVersion\":0,\"data\":{}}'::jsonb",
+        "'payload', '{\"schemaVersion\":1,\"data\":null}'::jsonb",
+        "'payload', '{\"schemaVersion\":1,\"data\":{},\"secret\":1}'::jsonb",
         "'tenant_id', '00000000-0000-4000-8000-000000000001'"
     })
     void invalidRowsAreRejected(String override) {

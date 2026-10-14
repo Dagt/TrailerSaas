@@ -39,6 +39,26 @@ class OutboxPublisherPostgresTests extends JobsFixture {
         assertThat(db.value("SELECT count(*) FROM customers WHERE id=?",ids[0])).isEqualTo(0L);
         assertThat(db.value("SELECT count(*) FROM outbox_jobs WHERE id=?",ids[1])).isEqualTo(0L);
     }
+    @Test void anotherWorkerCannotClaimRequiredOutboxBeforeBusinessCommit() throws Exception {
+        var inserted=new java.util.concurrent.CountDownLatch(1);
+        var commit=new java.util.concurrent.CountDownLatch(1);
+        try(var pool=java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            var transaction=pool.submit(()->transactions.execute(tenant,()-> {
+                var c=createBusinessRecord();
+                var id=publisher.enqueue(tenant,TYPE,new JobAggregate("CUSTOMER",c),new Payload(c,"success"),Instant.now(),5);
+                inserted.countDown();
+                try { if (!commit.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("commit barrier timed out"); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new IllegalStateException(e); }
+                return id;
+            }));
+            try {
+                assertThat(inserted.await(3,java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                assertThat(store.claim(tenant,4,java.time.Duration.ofSeconds(5)).claims()).isEmpty();
+            } finally { commit.countDown(); }
+            var id=transaction.get(5,java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(store.claim(tenant,4,java.time.Duration.ofSeconds(5)).claims()).extracting(JobClaim::id).containsExactly(id);
+        }
+    }
     @Test void actualOutboxWriteFailureRollsBackBusinessEvenIfCallerCatchesIt() throws Exception {
         UUID[] business=new UUID[1];
         db.execute("REVOKE INSERT ON outbox_jobs FROM "+RUNTIME_USERNAME);
