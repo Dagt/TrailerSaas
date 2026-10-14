@@ -63,6 +63,13 @@ class CheckStore {
   }) async {
     final previous = await find(o, s.id);
     if (previous != null) {
+      if (s.version < previous.serverVersion) {
+        throw const ApiProblem(
+          409,
+          'STALE_VERSION',
+          'A newer authorized Check state is already cached.',
+        );
+      }
       if (CheckSummary(checkMap(jsonDecode(previous.summaryJson))).origin !=
           s.origin) {
         throw const FormatException('Server changed immutable Check origin');
@@ -226,6 +233,17 @@ class CheckStore {
           CheckItem(checkMap(jsonDecode(row.originalJson))).origin !=
               now.origin) {
         throw const FormatException('Original inventory changed');
+      }
+      final latest = CheckItem(checkMap(jsonDecode(row.serverJson)));
+      if ((latest.found && !now.found) ||
+          (latest.json['reconciliationId'] != null &&
+              latest.json['reconciliationId'] !=
+                  now.json['reconciliationId'])) {
+        throw const ApiProblem(
+          409,
+          'STALE_VERSION',
+          'An older read cannot remove confirmed Check history.',
+        );
       }
     }
     await summary(o, snapshot.check);

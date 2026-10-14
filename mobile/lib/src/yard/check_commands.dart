@@ -592,11 +592,23 @@ class CheckReplay {
             mode: InsertMode.insertOrIgnore,
           );
       if (c.commandType == 'YARD_CHECK_START') {
-        await cache.summary(
-          o,
-          CheckSummary(checkMap(response['check'])),
-          associate: true,
-        );
+        final historical = CheckSummary(checkMap(response['check']));
+        final previous = await cache.find(o, id);
+        if (previous == null) {
+          await cache.summary(o, historical, associate: true);
+        } else {
+          if (CheckSummary(checkMap(jsonDecode(previous.summaryJson))).origin !=
+              historical.origin) {
+            throw const FormatException('Historical start identity changed');
+          }
+          await (db.update(db.cachedYardChecks)..where(
+                (r) =>
+                    r.userId.equals(o.userId) &
+                    r.tenantId.equals(o.membership.tenantId) &
+                    r.id.equals(id),
+              ))
+              .write(const CachedYardChecksCompanion(associated: Value(true)));
+        }
       }
       await commands.result(c, CommandState.acknowledged, status: 200);
     });
