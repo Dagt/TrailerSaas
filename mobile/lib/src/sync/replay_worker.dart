@@ -17,6 +17,8 @@ import '../media/media_dependencies.dart';
 import '../shift/shift_commands.dart';
 import '../yard/yard_commands.dart';
 import '../yard/yard_contracts.dart';
+import '../yard/check_commands.dart';
+import '../yard/check_store.dart';
 
 /// Foreground/reconnect worker. A single serialized lane for this SQLite database
 /// prevents overlapping Trip/Trailer/Tractor sends, including independent chains.
@@ -113,6 +115,9 @@ class ReplayWorker extends ChangeNotifier {
       (session.snapshot?.driver != null ||
           session.snapshot!.membership.capabilities.contains(
             'YARD_MOVE_EXECUTE',
+          ) ||
+          session.snapshot!.membership.capabilities.contains(
+            'YARD_CHECK_EXECUTE',
           ));
 
   Future<void> sync() {
@@ -245,9 +250,19 @@ class ReplayWorker extends ChangeNotifier {
           await _scheduleMedia(owner);
           return;
         }
+        final isCheck = CheckIntent.recognizes(candidate);
         final isShift = ShiftCommandIntent.recognizes(candidate);
         final isYard = YardCommandIntent.recognizes(candidate);
-        if (isYard
+        if (isCheck
+            ? !owner.membership.capabilities.contains('YARD_CHECK_EXECUTE') ||
+                  ({
+                        'YARD_CHECK_MISSING',
+                        'YARD_CHECK_CORRECTION',
+                      }.contains(candidate.commandType) &&
+                      !owner.membership.capabilities.contains(
+                        'TRAILER_LOCATION_CORRECT',
+                      ))
+            : isYard
             ? !owner.membership.capabilities.contains('YARD_MOVE_EXECUTE') ||
                   !owner.membership.capabilities.contains(
                     YardCommandIntent.capabilityFor(candidate.commandType),
@@ -259,6 +274,16 @@ class ReplayWorker extends ChangeNotifier {
             code: 'CAPABILITY_DENIED',
             category: 'AUTHORIZATION',
           );
+          continue;
+        }
+        if (isCheck) {
+          if (await store.claim(candidate) && _current(owner)) {
+            await _send(
+              candidate,
+              owner,
+              jsonDecode(candidate.payloadJson) as Map<String, dynamic>,
+            );
+          }
           continue;
         }
         if (isYard) {
@@ -438,7 +463,10 @@ class ReplayWorker extends ChangeNotifier {
             jsonDecode(c.payloadJson) as Map<String, dynamic>,
           ),
         ).validate(c.tenantId);
-        if (shifts == null) {
+        if (c.commandType == 'off-duty' &&
+            await CheckStore(store).hasUnfinished(c.userId, c.tenantId)) {
+          code = 'YARD_CHECK_OPEN';
+        } else if (shifts == null) {
           code = 'FUTURE_WORKFLOW';
         } else if (c.commandType == 'pre-trip' && !await bindings.ready(c)) {
           code = 'EVIDENCE_PENDING';
@@ -459,6 +487,7 @@ class ReplayWorker extends ChangeNotifier {
           {
             'EVIDENCE_PENDING',
             'RESULT_PENDING',
+            'YARD_CHECK_OPEN',
             'FUTURE_WORKFLOW',
           }.contains(c.lastErrorCode)) {
         await store.result(c, CommandState.queued);
@@ -685,7 +714,17 @@ class ReplayWorker extends ChangeNotifier {
         frozenBody,
       );
       final kind = EvidenceCommandIntent.kindFor(c);
-      if (YardCommandIntent.recognizes(c)) {
+      if (CheckIntent.recognizes(c)) {
+        CheckIntent(
+          c.commandType,
+          OnlineCommand(
+            c.clientOperationId,
+            null,
+            c.endpointPath,
+            jsonDecode(c.payloadJson) as Map<String, dynamic>,
+          ),
+        ).validate(c.tenantId);
+      } else if (YardCommandIntent.recognizes(c)) {
         YardCommandIntent(c.commandType, command).validate(c.tenantId);
         if (c.commandType != 'DISCREPANCY_REPORT' &&
             command.body['expectedTrailerVersion'] is! int) {
@@ -711,6 +750,20 @@ class ReplayWorker extends ChangeNotifier {
       return;
     }
     try {
+      if (CheckIntent.recognizes(c)) {
+        frozenBody = await CheckReplay(
+          store,
+          session,
+        ).materialize(c, owner, () => _current(owner));
+        if (!_current(owner)) return;
+        CheckReplay.validateFrozen(c, frozenBody);
+        command = OnlineCommand(
+          c.clientOperationId,
+          null,
+          c.endpointPath,
+          frozenBody,
+        );
+      }
       Map<String, dynamic> response;
       try {
         response =
@@ -761,13 +814,21 @@ class ReplayWorker extends ChangeNotifier {
           frozenBody,
         );
       } else {
-        if (YardCommandIntent.recognizes(c)) {
+        if (CheckIntent.recognizes(c)) {
+          CheckReplay.validate(c, response, frozenBody);
+        } else if (YardCommandIntent.recognizes(c)) {
           YardReplay.validateResponse(c, response, frozenBody);
         } else {
           _validateResponse(c, response);
         }
       }
-      if (YardCommandIntent.recognizes(c)) {
+      String? checkId;
+      if (CheckIntent.recognizes(c)) {
+        checkId = await CheckReplay(
+          store,
+          session,
+        ).acknowledge(c, owner, response, frozenBody);
+      } else if (YardCommandIntent.recognizes(c)) {
         await YardReplay(store).acknowledge(c, response, frozenBody);
       } else {
         await store.result(c, CommandState.acknowledged, status: 200);
@@ -777,7 +838,12 @@ class ReplayWorker extends ChangeNotifier {
       }
       // Replayed responses are historical acknowledgments, never current projections.
       await session.refresh();
-      if (YardCommandIntent.recognizes(c)) {
+      if (checkId != null) {
+        if (_current(owner)) {
+          await CheckStore(store)
+              .download(session, owner, checkId, () => _current(owner));
+        }
+      } else if (YardCommandIntent.recognizes(c)) {
         await _refreshYardTrailer(c, owner);
       } else {
         await _refreshExecutionContext(c, owner);

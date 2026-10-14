@@ -90,7 +90,7 @@ closing the Trips/dispatch Web wave.
 #39 is merged/complete via [PR #93](https://github.com/Dagt/TrailerSaas/pull/93).
 #40 is merged/complete via [PR #94](https://github.com/Dagt/TrailerSaas/pull/94).
 #41 is merged/complete via [PR #95](https://github.com/Dagt/TrailerSaas/pull/95).
-The Trailer movement/read surface wave is complete. #42 is merged/complete via [PR #96](https://github.com/Dagt/TrailerSaas/pull/96). #44 is merged/complete via [PR #97](https://github.com/Dagt/TrailerSaas/pull/97); #43 is merged/complete via PR #102; #45 is merged via PR #103. #47 is merged/complete via [PR #104](https://github.com/Dagt/TrailerSaas/pull/104), baseline `798d987b242dab74c3e58ec81eee8a2c61f8d049` (2,019 Backend / 389 Mobile / 244 Web / 18 OpenAPI). #48 is the current bounded Yard Mode/Trailer Move slice, with A–F published and [PR #105](https://github.com/Dagt/TrailerSaas/pull/105) opened as Draft for final CI; its [acceptance and validation record](../mobile/issue-48-yard-move.md) tracks the G publication and external review gates. Physical Android/iOS QA remains for #65. No #49–#51 implementation or merge is authorized here.
+The Trailer movement/read surface wave is complete. #42 is merged/complete via [PR #96](https://github.com/Dagt/TrailerSaas/pull/96). #44 is merged/complete via [PR #97](https://github.com/Dagt/TrailerSaas/pull/97); #43 is merged/complete via PR #102; #45 is merged via PR #103. #47 is merged/complete via [PR #104](https://github.com/Dagt/TrailerSaas/pull/104), baseline `798d987b242dab74c3e58ec81eee8a2c61f8d049` (2,019 Backend / 389 Mobile / 244 Web / 18 OpenAPI). #48 is the current bounded Yard Mode/Trailer Move slice, with A–F published and [PR #105](https://github.com/Dagt/TrailerSaas/pull/105) opened as Draft for final CI; its [acceptance and validation record](../mobile/issue-48-yard-move.md) tracks the G publication and external review gates. Physical Android/iOS QA remains for #65. The historical #48 record is retained; the current authorized bounded slice is #51.
 
 ### Evidence/alerts support
 - #53 after #52
@@ -126,8 +126,8 @@ Validate full online and offline sequences on real devices.
 
 - #48 Yard Move — merged via PR #105 (baseline `82a48132b9153aaa6445ac890040e219f82a24f3`)
 - #49 discrepancy/OOS — merged via [PR #106](https://github.com/Dagt/TrailerSaas/pull/106), baseline `7d2a9d7a1cbaea002f8a051e03658348554c307d`
-- #50 Yard Check backend — [PR #107](https://github.com/Dagt/TrailerSaas/pull/107); exact-head CI/readiness and acceptance evidence in PR; no merge
-- #51 Yard Check mobile/offline
+- #50 Yard Check backend — merged via [PR #107](https://github.com/Dagt/TrailerSaas/pull/107), baseline `9446576d6d9a26a1f8f4f11005ba90a360ed0f95`
+- #51 Yard Check mobile/offline — current bounded implementation; [acceptance and final CI gates](../mobile/issue-51-yard-check-mobile-offline.md), no merge
 
 Validate snapshot behavior and physical-state conflicts carefully.
 

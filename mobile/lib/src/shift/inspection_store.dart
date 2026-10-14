@@ -9,6 +9,7 @@ import '../road/online_command_journal.dart';
 import '../sync/command_store.dart';
 import 'shift_commands.dart';
 import 'contracts.dart';
+import '../yard/check_store.dart';
 
 class InspectionStore {
   InspectionStore(this.replay);
@@ -257,6 +258,12 @@ class InspectionStore {
     final s = owner();
     if (!s.membership.capabilities.contains('SHIFT_END')) {
       throw const FormatException('Shift permission unavailable.');
+    }
+    if (await CheckStore(replay.store)
+        .hasUnfinished(s.userId, s.membership.tenantId)) {
+      throw StateError(
+        'Complete or cancel your unfinished Yard Check on the server before Off Duty. An uncertain start or revoked Check also requires review.',
+      );
     }
     final pending = (await replay.store.list(s.userId, s.membership.tenantId))
         .where((r) => r.state != 'ACKNOWLEDGED')

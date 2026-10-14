@@ -91,9 +91,10 @@ class LocalCommands extends Table {
   List<String> get customConstraints => [
     "CHECK (state IN ('QUEUED','SENDING','ACKNOWLEDGED','RETRYABLE_FAILURE','CONFLICT','BLOCKED','PERMANENT_FAILURE'))",
     'CHECK (attempt_count >= 0)',
-    "CHECK (aggregate_type IN ('TRIP','SHIFT','INSPECTION','TRAILER'))",
+    "CHECK (aggregate_type IN ('TRIP','SHIFT','INSPECTION','TRAILER','YARD_CHECK'))",
     "CHECK (aggregate_type <> 'TRIP' OR (trip_id IS NOT NULL AND aggregate_id IS NOT NULL))",
     "CHECK (aggregate_type <> 'TRAILER' OR (trip_id IS NULL AND aggregate_id IS NOT NULL))",
+    "CHECK (aggregate_type <> 'YARD_CHECK' OR (trip_id IS NULL AND (aggregate_id IS NOT NULL OR command_type='YARD_CHECK_START')))",
     'UNIQUE (user_id,tenant_id,queue_sequence)',
     "CHECK (http_method = 'POST')",
   ];
@@ -210,7 +211,7 @@ class CommandResults extends Table {
   @override
   List<String> get customConstraints => [
     'FOREIGN KEY(client_operation_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
-    "CHECK (result_kind IN ('SHIFT','INSPECTION','TRAILER'))",
+    "CHECK (result_kind IN ('SHIFT','INSPECTION','TRAILER','YARD_CHECK'))",
   ];
 }
 
@@ -413,6 +414,109 @@ class YardConflictReviews extends Table {
   ];
 }
 
+class CachedYardChecks extends Table {
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get id => text()();
+  TextColumn get siteId => text()();
+  TextColumn get locationId => text().nullable()();
+  TextColumn get startedAt => text()();
+  IntColumn get expectedCount => integer()();
+  TextColumn get status => text()();
+  IntColumn get serverVersion => integer()();
+  TextColumn get summaryJson => text()();
+  BoolColumn get snapshotDownloaded =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get associated => boolean().withDefault(const Constant(false))();
+  BoolColumn get accessBlocked =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get downloadedAt => dateTime().nullable()();
+  DateTimeColumn get refreshedAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {userId, tenantId, id};
+  @override
+  List<String> get customConstraints => [
+    "CHECK(status IN ('IN_PROGRESS','COMPLETED','CANCELLED'))",
+    'CHECK(expected_count>=0 AND server_version>=0)',
+    'CHECK(json_valid(summary_json))',
+    'CHECK(snapshot_downloaded=0 OR downloaded_at IS NOT NULL)',
+  ];
+}
+
+class CachedYardCheckItems extends Table {
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get checkId => text()();
+  TextColumn get id => text()();
+  TextColumn get trailerId => text()();
+  BoolColumn get expected => boolean()();
+  TextColumn get expectedLocationId => text().nullable()();
+  TextColumn get originalJson => text()();
+  TextColumn get serverJson => text()();
+  @override
+  Set<Column> get primaryKey => {userId, tenantId, checkId, id};
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(user_id,tenant_id,check_id) REFERENCES cached_yard_checks(user_id,tenant_id,id)',
+    'UNIQUE(user_id,tenant_id,check_id,trailer_id)',
+    'CHECK(json_valid(original_json) AND json_valid(server_json))',
+    'CHECK((expected=1 AND expected_location_id IS NOT NULL) OR (expected=0 AND expected_location_id IS NULL))',
+  ];
+}
+
+class YardCheckObservations extends Table {
+  TextColumn get operationId => text()();
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get checkId => text()();
+  TextColumn get publicToken => text()();
+  TextColumn get identifiedTrailerId => text().nullable()();
+  TextColumn get resolvedTrailerId => text().nullable()();
+  TextColumn get observedLocationId => text()();
+  TextColumn get scannedAt => text()();
+  TextColumn get localResult => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {operationId};
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(user_id,tenant_id,check_id) REFERENCES cached_yard_checks(user_id,tenant_id,id)',
+    'FOREIGN KEY(operation_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
+    'UNIQUE(user_id,tenant_id,check_id,public_token)',
+    "CHECK(local_result IN ('UNRESOLVED_QR','MATCHED','UNEXPECTED','LOCATION_MISMATCH'))",
+    'CHECK(length(public_token)=22)',
+  ];
+}
+
+class YardCheckReviews extends Table {
+  TextColumn get failedOperationId => text()();
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  TextColumn get checkId => text()();
+  TextColumn get reason => text()();
+  TextColumn get authorizedStateJson => text()();
+  DateTimeColumn get reviewedAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {failedOperationId};
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(user_id,tenant_id,check_id) REFERENCES cached_yard_checks(user_id,tenant_id,id)',
+    'FOREIGN KEY(failed_operation_id,user_id,tenant_id) REFERENCES local_commands(client_operation_id,user_id,tenant_id)',
+    'CHECK(length(trim(reason))>0 AND length(reason)<=4000 AND json_valid(authorized_state_json))',
+  ];
+}
+
+class YardCheckDirectories extends Table {
+  TextColumn get userId => text()();
+  TextColumn get tenantId => text()();
+  BoolColumn get complete => boolean().withDefault(const Constant(false))();
+  BoolColumn get accessBlocked =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get refreshedAt => dateTime()();
+  @override
+  Set<Column> get primaryKey => {userId, tenantId};
+}
+
 @DriftDatabase(
   tables: [
     LocalSessionContexts,
@@ -436,6 +540,11 @@ class YardConflictReviews extends Table {
     YardDrafts,
     YardCaptures,
     YardConflictReviews,
+    CachedYardChecks,
+    CachedYardCheckItems,
+    YardCheckObservations,
+    YardCheckReviews,
+    YardCheckDirectories,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -451,7 +560,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -463,12 +572,13 @@ class AppDatabase extends _$AppDatabase {
         await _shiftIndexesAndImmutability();
         await _roadIndexesAndImmutability();
         await _yardIndexesAndImmutability();
-        await customStatement('PRAGMA user_version=8');
+        await _checkIndexesAndImmutability();
+        await customStatement('PRAGMA user_version=9');
       });
     },
     onUpgrade: (migrator, from, to) async {
       // v1 was the empty scaffold. Its deployed schema remains an explicit upgrade source.
-      if (from < 1 || from > 7 || to != 8) {
+      if (from < 1 || from > 8 || to != 9) {
         throw StateError('No migration from schema $from to $to is defined.');
       }
       // Whole upgrade and version marker commit together. TableMigration alone
@@ -553,19 +663,50 @@ class AppDatabase extends _$AppDatabase {
             await migrator.createTable(cachedYardContexts);
           }
           // v7 -> v8 adds metadata only. Commands/frozen requests are not rebuilt.
-          if (from >= 4) {
+          if (from >= 4 && from < 8) {
             await migrator.addColumn(localMedia, localMedia.trailerId);
           }
-          await migrator.createTable(yardDrafts);
-          await migrator.createTable(yardCaptures);
-          await migrator.createTable(yardConflictReviews);
-          await _yardIndexesAndImmutability();
+          if (from < 8) {
+            await migrator.createTable(yardDrafts);
+            await migrator.createTable(yardCaptures);
+            await migrator.createTable(yardConflictReviews);
+            await _yardIndexesAndImmutability();
+          }
+          // v8's closed queue/result enums require narrow transactional rebuilds.
+          // Every row, child FK, frozen request and history remains in place.
+          if (from >= 7) {
+            await customStatement(
+              'DROP TRIGGER IF EXISTS local_command_intent_immutable',
+            );
+            await migrator.alterTable(TableMigration(localCommands));
+            await _queueIndexesAndImmutability();
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS local_commands_media_fk ON local_commands(client_operation_id,user_id,tenant_id)',
+            );
+            for (final op in ['UPDATE', 'DELETE']) {
+              await customStatement(
+                'DROP TRIGGER IF EXISTS command_results_${op.toLowerCase()}_immutable',
+              );
+            }
+            await migrator.alterTable(TableMigration(commandResults));
+            for (final op in ['UPDATE', 'DELETE']) {
+              await customStatement(
+                "CREATE TRIGGER command_results_${op.toLowerCase()}_immutable BEFORE $op ON command_results BEGIN SELECT RAISE(ABORT,'Confirmed identity and dependencies are immutable'); END",
+              );
+            }
+          }
+          await migrator.createTable(cachedYardChecks);
+          await migrator.createTable(cachedYardCheckItems);
+          await migrator.createTable(yardCheckObservations);
+          await migrator.createTable(yardCheckReviews);
+          await migrator.createTable(yardCheckDirectories);
+          await _checkIndexesAndImmutability();
           if ((await customSelect(
             'PRAGMA foreign_key_check',
           ).get()).isNotEmpty) {
             throw StateError('Migration cannot preserve foreign-key integrity');
           }
-          await customStatement('PRAGMA user_version=8');
+          await customStatement('PRAGMA user_version=9');
         });
       } finally {
         await customStatement('PRAGMA foreign_keys=ON');
@@ -573,6 +714,46 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys=ON'),
   );
+
+  Future<void> _checkIndexesAndImmutability() async {
+    await customStatement(
+      'CREATE INDEX yard_check_scope ON cached_yard_checks(user_id,tenant_id,status)',
+    );
+    await customStatement(
+      'CREATE INDEX yard_check_observation_scope ON yard_check_observations(user_id,tenant_id,check_id,created_at)',
+    );
+    await customStatement(
+      "CREATE TRIGGER yard_check_origin_immutable BEFORE UPDATE OF user_id,tenant_id,id,site_id,location_id,expected_count,started_at ON cached_yard_checks BEGIN SELECT RAISE(ABORT,'Check origin is immutable');END",
+    );
+    await customStatement(
+      "CREATE TRIGGER yard_check_item_origin_immutable BEFORE UPDATE OF user_id,tenant_id,check_id,id,trailer_id,expected,expected_location_id,original_json ON cached_yard_check_items BEGIN SELECT RAISE(ABORT,'Expected inventory is immutable');END",
+    );
+    await customStatement(
+      "CREATE TRIGGER yard_check_observation_origin_immutable BEFORE UPDATE OF operation_id,user_id,tenant_id,check_id,public_token,identified_trailer_id,observed_location_id,scanned_at,created_at ON yard_check_observations BEGIN SELECT RAISE(ABORT,'Observation origin is immutable');END",
+    );
+    await customStatement(
+      "CREATE TRIGGER yard_check_resolution_immutable BEFORE UPDATE OF resolved_trailer_id ON yard_check_observations WHEN OLD.resolved_trailer_id IS NOT NULL AND NEW.resolved_trailer_id IS NOT OLD.resolved_trailer_id BEGIN SELECT RAISE(ABORT,'Verified QR identity is immutable');END",
+    );
+    for (final table in [
+      'cached_yard_checks',
+      'cached_yard_check_items',
+      'yard_check_observations',
+      'yard_check_reviews',
+    ]) {
+      await customStatement(
+        "CREATE TRIGGER ${table}_history_retained BEFORE DELETE ON $table BEGIN SELECT RAISE(ABORT,'Check history and pending work are retained');END",
+      );
+    }
+    await customStatement(
+      "CREATE TRIGGER yard_check_review_immutable BEFORE UPDATE ON yard_check_reviews BEGIN SELECT RAISE(ABORT,'Check review is immutable');END",
+    );
+    await customStatement(
+      """CREATE TRIGGER yard_check_review_failed_only BEFORE INSERT ON yard_check_reviews WHEN NOT EXISTS(
+      SELECT 1 FROM local_commands c WHERE c.client_operation_id=NEW.failed_operation_id AND c.user_id=NEW.user_id AND c.tenant_id=NEW.tenant_id
+      AND c.aggregate_type='YARD_CHECK' AND c.aggregate_id=NEW.check_id AND c.state IN ('CONFLICT','BLOCKED','PERMANENT_FAILURE'))
+      BEGIN SELECT RAISE(ABORT,'Only an explicitly reviewed failed Check operation can be excluded');END""",
+    );
+  }
 
   Future<void> _yardIndexesAndImmutability() async {
     await customStatement(

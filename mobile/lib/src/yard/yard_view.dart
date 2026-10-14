@@ -10,6 +10,7 @@ import '../session/session_controller.dart';
 import '../sync/replay_worker.dart';
 import '../sync/sync_panel.dart';
 import 'yard_commands.dart';
+import 'check_view.dart';
 import 'yard_controller.dart';
 import 'yard_contracts.dart';
 import 'yard_actions_view.dart';
@@ -128,6 +129,12 @@ class _YardHomePanelState extends State<YardHomePanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Yard Mode', style: Theme.of(context).textTheme.titleLarge),
+          YardChecksPanel(
+            session: widget.session,
+            worker: widget.worker,
+            site: controller.selected,
+            scanner: widget.scanner,
+          ),
           TextButton.icon(
             key: const Key('yard-refresh'),
             onPressed: controller.loading || controller.busy

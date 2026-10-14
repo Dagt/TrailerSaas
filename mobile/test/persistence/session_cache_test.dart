@@ -19,7 +19,7 @@ void main() {
         DateTime.utc(2026, 10, 10),
         [WorkTrip(work('trip-$tenant'))],
       );
-  test('real SQLite v1 upgrades to twenty-one exact cache command media Shift and Yard tables', () async {
+  test('real SQLite v1 upgrades to twenty-six exact cache command media Shift and Yard tables', () async {
     final dir = await Directory.systemTemp.createTemp('mobile-v1-');
     addTearDown(() => dir.delete(recursive: true));
     final file = File('${dir.path}/v1.sqlite');
@@ -33,7 +33,7 @@ void main() {
     expect(
       (await upgraded.customSelect('PRAGMA user_version').getSingle())
           .read<int>('user_version'),
-      8,
+      9,
     );
     final tables =
         (await upgraded
@@ -65,6 +65,11 @@ void main() {
       'yard_drafts',
       'yard_captures',
       'yard_conflict_reviews',
+      'cached_yard_checks',
+      'cached_yard_check_items',
+      'yard_check_observations',
+      'yard_check_reviews',
+      'yard_check_directories',
     });
   });
   test('file reopen restores only matching Firebase User namespace', () async {
@@ -131,24 +136,28 @@ void main() {
       expect(await db.select(db.cachedTrailers).get().then((r) => r.length), 1);
     },
   );
-  test(
-    'stale generation cannot write any row and tokens have no storage column',
-    () async {
-      final db = AppDatabase(NativeDatabase.memory());
-      addTearDown(db.close);
-      final cache = SessionCache(db);
-      await cache.replace(snapshot('firebase-A', 'user-A', 'A'), () => false);
-      expect(await cache.restore('firebase-A'), isNull);
-      for (final table in db.allTables) {
-        expect(
-          table.$columns.map((c) => c.$name).join(','),
-          isNot(contains('token')),
-        );
-        expect(
-          table.$columns.map((c) => c.$name).join(','),
-          isNot(contains('password')),
-        );
-      }
-    },
-  );
+  test('stale generation cannot write any row and credentials have no storage column; only opaque public QR observation is allowed', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = SessionCache(db);
+    await cache.replace(snapshot('firebase-A', 'user-A', 'A'), () => false);
+    expect(await cache.restore('firebase-A'), isNull);
+    for (final table in db.allTables) {
+      expect(
+        table.$columns
+            .where(
+              (c) =>
+                  !(table.actualTableName == 'yard_check_observations' &&
+                      c.$name == 'public_token'),
+            )
+            .map((c) => c.$name)
+            .join(','),
+        isNot(contains('token')),
+      );
+      expect(
+        table.$columns.map((c) => c.$name).join(','),
+        isNot(contains('password')),
+      );
+    }
+  });
 }

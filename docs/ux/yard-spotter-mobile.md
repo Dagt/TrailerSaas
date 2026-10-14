@@ -583,3 +583,30 @@ does not permit rebasing. Old damaged evidence can be explicitly retained in a n
 reviewed draft without changing its file/hash/identity. Physical Android/iOS camera,
 permission/reduced access/background/restart/lost-data QA remains #65; injected
 camera/Linux widget tests are not physical-device QA.
+
+
+### #51 implemented mobile inventory
+
+Yard Home retains Move/Correction/OOS and adds Start, Resume, persistent progress,
+large Scan Trailer, findings and explicit Review & Complete/Cancel. Select a real
+authorized Site and optional Yard/Dock scope before online Start; only server ID
+and a fully downloaded snapshot enable offline inventory. Scanner returns directly
+to progress and the next scan. Offline unknown tokens display UNRESOLVED_QR and
+pending synchronization, not a Trailer name or successful classification. Local
+match/mismatch/unexpected labels remain LOCAL_PENDING until typed server ACK.
+Expected/original location facts remain separate from live Trailer projection.
+
+Not Yet sends no command. Completion requires a valid durable ACK for every
+captured observation, including reviewed failed scans. Conflict review retains
+history and never counts as synchronization. Cancellation separately permits
+explicitly reviewed definitive failures, retains partial evidence and never makes
+MISSING findings; uncertain work still blocks it. Both require online review;
+only ACK changes displayed authoritative terminal/MISSING state.
+MISSING/mismatch reconciliation is separately authorized, reasoned and confirmed,
+with actual server event/alert history displayed after ACK. Check history is never
+automatic physical correction. Late camera/review callbacks are fenced by owner,
+Check, lifecycle and disposal. Reason controllers survive the full dialog exit
+animation, and context invalidation removes the owned review route before a late
+confirmation can execute. Shift Off Duty blocks known unfinished associated
+Checks at capture/replay and warns about unknown/stale offline state; it retains
+existing Driver/Post-Trip work requirements. Physical QA remains #65.

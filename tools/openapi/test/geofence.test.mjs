@@ -82,6 +82,6 @@ test('#47 native privacy and the same Arrival lane remain intact after the #49 s
   assert.ok(adapter.includes('allowBackgroundLocationUpdates: false'));
   assert.ok(!adapter.includes('foregroundNotificationConfig:'));
   const schema = read('mobile/lib/src/persistence/app_database.dart');
-  assert.match(schema, /schemaVersion\s*=>\s*8/);
+  assert.match(schema, /schemaVersion\s*=>\s*9/);
   assert.ok(!/gps|breadcrumb|coordinate_history/i.test(schema));
 });

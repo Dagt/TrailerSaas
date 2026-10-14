@@ -190,6 +190,12 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
   );
 
   static String commandLabel(String type) => switch (type) {
+    'YARD_CHECK_START' => 'Start Yard Check',
+    'YARD_CHECK_SCAN' => 'Yard Check observation',
+    'YARD_CHECK_COMPLETE' => 'Complete Yard Check',
+    'YARD_CHECK_CANCEL' => 'Cancel Yard Check',
+    'YARD_CHECK_MISSING' => 'Explicit Missing reconciliation',
+    'YARD_CHECK_CORRECTION' => 'Explicit Check location correction',
     'on-duty' => 'Go On Duty',
     'off-duty' => 'Go Off Duty',
     'pre-trip' => 'Pre-Trip inspection',
