@@ -54,7 +54,7 @@ abstract class JobsFixture extends PostgresIntegrationTest {
                 .until(()->transactions.execute(claim.tenantId(),()->jdbc.queryForObject(
                         "SELECT locked_until<=clock_timestamp() FROM outbox_jobs WHERE id=?",Boolean.class,claim.id())));
     }
-    JobsProperties settings(List<UUID> tenants) { return new JobsProperties(false,tenants,Duration.ofSeconds(5),4,4,
+    JobsProperties settings(List<UUID> tenants) { return new JobsProperties(true,tenants,Duration.ofSeconds(5),4,4,
             Duration.ofSeconds(1),Duration.ofSeconds(5),5,Duration.ofSeconds(1),Duration.ofSeconds(2)); }
     DurableJobWorker worker() { return worker(settings(List.of(tenant)),new SimpleMeterRegistry()); }
     DurableJobWorker worker(JobsProperties settings, SimpleMeterRegistry metrics) {

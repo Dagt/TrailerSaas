@@ -29,7 +29,7 @@ class DurableJobWorker {
                 .addKeyValue("tenantCount",settings.tenants().size()).log("Durable worker configuration loaded");
     }
     void pollOnce() {
-        if (settings.tenants().isEmpty()) return;
+        if (!settings.enabled() || settings.tenants().isEmpty() || handlers.isShutdown()) return;
         if (!polling.compareAndSet(false,true)) { metrics.count("poll.overlap"); return; }
         long started=System.nanoTime();
         var tenant=settings.tenants().get(Math.floorMod(cursor.getAndIncrement(),settings.tenants().size()));
@@ -108,5 +108,10 @@ class DurableJobWorker {
         metrics.count("infrastructure.failures");
         LOG.atWarn().addKeyValue("event",reason).log("Durable worker database operation unavailable; leases remain recoverable");
     }
-    @PreDestroy void stop() { handlers.shutdownNow(); }
+    @PreDestroy void stop() {
+        if (!handlers.isShutdown()) {
+            handlers.shutdownNow(); metrics.count("worker.stops");
+            LOG.atInfo().addKeyValue("event","outbox_worker_stopped").log("Durable worker stopped; committed leases remain recoverable");
+        }
+    }
 }
