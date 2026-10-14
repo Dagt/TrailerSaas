@@ -175,14 +175,14 @@ issues are deferred. NO MERGE.
 
 PR: [#108 — Yard Check mobile scan and offline replay](https://github.com/Dagt/TrailerSaas/pull/108).
 Verified base: `9446576d6d9a26a1f8f4f11005ba90a360ed0f95`.
-Final Flutter source checkpoint: `a34db0568d1a8f62920e4530b2792f443410969d`.
+Final Flutter source checkpoint: `e2b96d189e2afe5d9309fc5c1644c7972c6f2709`.
 The PR description records the exact final published HEAD and direct final Actions
 run/job logs, their counts and readiness. Documentation-only publication does not
 change this source checkpoint. Ready is permitted only after all four jobs complete
 successfully on that final HEAD. This source record does not claim a pending job
 passed and is not a physical-device release certification.
 
-Local final-source Mobile: **527 passed**, no failed/skipped tests. Flutter 3.47.6 /
+Local final-source Mobile: **528 passed**, no failed/skipped tests. Flutter 3.47.6 /
 Dart 3.13.5 locked dependencies, Drift generation/source equality, full formatting,
 fatal-info analysis and real file-backed SQLite tests passed. Web **244 passed**
 plus npm ci/typecheck/lint/build; OpenAPI **39 passed**, zero failures/skipped, plus
@@ -200,6 +200,7 @@ Windows SQLite DLL policy is not substituted for Linux persistence evidence.
 The final audit found and fixed nullable owner-key equality after auth switch,
 late Site/scanner callbacks, terminal double-review, JSON field ordering in review,
 wrong-scope ACKs, older Check read regression, directory denial recovery, and
-historical Start ACK projection regression. Regression tests cover these boundaries
+historical Start ACK projection regression and a false completeness marker on an
+empty first page. Regression tests cover these boundaries
 without disabling or removing previous tests. Malformed HTTP success never ACKs;
 original failed/uncertain commands and evidence remain retained.
