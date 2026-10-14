@@ -21,6 +21,26 @@ void main() {
     });
   }
 
+  test('directory denial blocks previously downloaded Check without deleting evidence', () async {
+    await open(1);
+    await f.snapshot();
+    final owner = f.mobile.session.snapshot!;
+    f.custom = (r) async => r.url.path.endsWith('/yard-checks')
+        ? f.mobile.response({'code': 'CAPABILITY_DENIED'}, 403)
+        : f.handle(r);
+    await expectLater(
+      f.cache.directory(f.mobile.session, owner, () => true),
+      throwsA(isA<ApiProblem>()),
+    );
+    expect((await f.cache.find(owner, checkId))!.accessBlocked, true);
+    expect(await f.cache.items(owner, checkId), hasLength(1));
+    expect(
+      (await f.mobile.db.select(f.mobile.db.yardCheckDirectories).getSingle())
+          .accessBlocked,
+      true,
+    );
+  });
+
   for (final size in [0, 1, 200, 201, 206]) {
     test(
       'downloads every authoritative item for $size expected, then durably marks complete',

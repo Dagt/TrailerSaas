@@ -142,7 +142,8 @@ class CheckStore {
               page.check.origin != first.origin ||
               page.check.status != first.status ||
               page.check.version != first.version ||
-              jsonEncode(page.check.json) != jsonEncode(first.json)) {
+              jsonEncode(canonicalCheck(page.check.json)) !=
+                  jsonEncode(canonicalCheck(first.json))) {
             throw const ApiProblem(
               409,
               'STALE_VERSION',
@@ -316,10 +317,38 @@ class CheckStore {
     final result = <CheckSummary>[], seen = <String>{}, cursors = <String>{};
     String? cursor;
     do {
-      final raw = await session.api.get(root(o), {
-        'limit': '50',
-        'cursor': ?cursor,
-      });
+      Map<String, dynamic> raw;
+      try {
+        raw = await session.api.get(root(o), {
+          'limit': '50',
+          'cursor': ?cursor,
+        });
+      } on ApiProblem catch (e) {
+        if ({401, 403, 404}.contains(e.status) && current()) {
+          await db.transaction(() async {
+            if (!current()) throw StateError('Check owner changed');
+            await (db.update(db.cachedYardChecks)..where(
+                  (r) =>
+                      r.userId.equals(o.userId) &
+                      r.tenantId.equals(o.membership.tenantId),
+                ))
+                .write(
+                  const CachedYardChecksCompanion(accessBlocked: Value(true)),
+                );
+            await db
+                .into(db.yardCheckDirectories)
+                .insertOnConflictUpdate(
+                  YardCheckDirectoriesCompanion.insert(
+                    userId: o.userId,
+                    tenantId: o.membership.tenantId,
+                    accessBlocked: const Value(true),
+                    refreshedAt: commands.now(),
+                  ),
+                );
+          });
+        }
+        rethrow;
+      }
       if (!current()) throw StateError('Check owner changed');
       final rows = raw['items'];
       if (rows is! List || rows.length > 50) {

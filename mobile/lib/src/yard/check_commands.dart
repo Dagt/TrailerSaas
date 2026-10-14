@@ -576,6 +576,36 @@ class CheckReplay {
     Map<String, dynamic> body,
   ) async {
     final id = validate(c, response, body);
+    if (c.commandType == 'YARD_CHECK_SCAN' ||
+        c.commandType == 'YARD_CHECK_COMPLETE' ||
+        c.commandType == 'YARD_CHECK_CANCEL') {
+      final cached = await cache.find(o, id);
+      final summary = CheckSummary(
+        c.commandType == 'YARD_CHECK_SCAN'
+            ? checkMap(response['check'])
+            : response,
+      );
+      if (cached == null ||
+          summary.origin !=
+              CheckSummary(checkMap(jsonDecode(cached.summaryJson))).origin) {
+        throw const FormatException(
+          'ACK Check origin does not match authorized snapshot',
+        );
+      }
+      if (c.commandType == 'YARD_CHECK_SCAN') {
+        final item = CheckItem(checkMap(response['item']));
+        final prior = (await cache.items(
+          o,
+          id,
+        )).where((r) => r.trailerId == item.trailerId).firstOrNull;
+        if ((prior != null &&
+                CheckItem(checkMap(jsonDecode(prior.originalJson))).origin !=
+                    item.origin) ||
+            (prior == null && item.expected)) {
+          throw const FormatException('ACK expected inventory changed');
+        }
+      }
+    }
     await db.transaction(() async {
       await db
           .into(db.commandResults)

@@ -22,6 +22,65 @@ void main() {
     await f.close();
     await dir.delete(recursive: true);
   });
+  test('reordered JSON object fields preserve deterministic review and immutable expected facts', () async {
+    final item = checkItem(1), summary = checkSummary(1);
+    final reordered = {
+      for (final key in item.keys.toList().reversed) key: item[key],
+    };
+    reordered['recordedSnapshot'] = {
+      for (final key
+          in (item['recordedSnapshot'] as Map<String, dynamic>).keys
+              .toList()
+              .reversed)
+        key: (item['recordedSnapshot'] as Map)[key],
+    };
+    expect(CheckItem(item).origin, CheckItem(reordered).origin);
+    expect(
+      CheckSnapshot(CheckSummary(summary), [CheckItem(item)]).review,
+      CheckSnapshot(
+        CheckSummary({
+          for (final key in summary.keys.toList().reversed) key: summary[key],
+        }),
+        [CheckItem(reordered)],
+      ).review,
+    );
+  });
+  test(
+    'a successful scan response for changed Check scope cannot produce an ACK',
+    () async {
+      await f.snapshot();
+      final o = f.mobile.session.snapshot!;
+      await f.replay.scan(
+        o,
+        checkId,
+        qrToken,
+        yardId,
+        DateTime.now().toUtc(),
+        () => true,
+      );
+      f.custom = (r) async {
+        final result = await f.handle(r);
+        if (r.method == 'POST') {
+          final raw = jsonDecode(result.body) as Map<String, dynamic>;
+          raw['check'] = {
+            ...raw['check'] as Map<String, dynamic>,
+            'siteId': dockId,
+          };
+          return f.mobile.response(raw);
+        }
+        return result;
+      };
+      await f.worker.sync();
+      expect(
+        (await f.worker.store.list(checkUser, 'A')).single.state,
+        'RETRYABLE_FAILURE',
+      );
+      expect(
+        await f.mobile.db.select(f.mobile.db.commandResults).get(),
+        isEmpty,
+      );
+    },
+  );
   test('foreign or revoked QR remains a private failed observation and never submits fabricated identity', () async {
     await f.snapshot();
     final o = f.mobile.session.snapshot!;

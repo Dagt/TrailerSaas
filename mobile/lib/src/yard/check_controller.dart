@@ -33,6 +33,7 @@ class YardCheckController extends ChangeNotifier {
   String? message, lastOperation;
   bool busy = false, foreground = true;
   int generation = 0;
+  int _localReadSequence = 0;
   bool disposed = false;
   String? _ownerKey;
   StreamSubscription<List<LocalCommand>>? _queue;
@@ -120,6 +121,12 @@ class YardCheckController extends ChangeNotifier {
     }
   }
 
+  void invalidateScope() {
+    generation++;
+    cancelScanner();
+    busy = false;
+  }
+
   void suspend() {
     foreground = false;
     generation++;
@@ -138,6 +145,7 @@ class YardCheckController extends ChangeNotifier {
     final o = session.snapshot;
     if (o == null) return;
     final g = generation;
+    final ticket = ++_localReadSequence;
     try {
       final data = await cache.list(o),
           rows = await worker.store.list(o.userId, o.membership.tenantId);
@@ -161,7 +169,7 @@ class YardCheckController extends ChangeNotifier {
                     r.resultKind.equals('YARD_CHECK'),
               ))
               .get());
-      if (!current(o, g)) return;
+      if (!current(o, g) || ticket != _localReadSequence) return;
       checks = data;
       commands = rows;
       receipts = saved;
@@ -346,6 +354,7 @@ class YardCheckController extends ChangeNotifier {
         'The server Check is already terminal. Refresh its findings.',
       );
     }
+    await loadLocal();
     return snapshot;
   });
   Future<void> terminal(

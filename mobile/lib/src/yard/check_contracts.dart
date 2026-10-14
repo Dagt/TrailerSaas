@@ -2,6 +2,15 @@ import 'dart:convert';
 
 import 'yard_contracts.dart';
 
+Object? canonicalCheck(Object? value) {
+  if (value is Map<String, dynamic>) {
+    final keys = value.keys.toList()..sort();
+    return {for (final key in keys) key: canonicalCheck(value[key])};
+  }
+  if (value is List) return value.map(canonicalCheck).toList();
+  return value;
+}
+
 Map<String, dynamic> checkMap(Object? value) {
   if (value is! Map<String, dynamic>) {
     throw const FormatException('Invalid Yard Check response');
@@ -104,14 +113,16 @@ class CheckSummary {
   String get status => json['status'] as String;
   int get version => count('version');
   int count(String key) => json[key] as int;
-  String get origin => jsonEncode([
-    id,
-    siteId,
-    locationId,
-    json['startedAt'],
-    json['startedByUserId'],
-    count('expectedCount'),
-  ]);
+  String get origin => jsonEncode(
+    canonicalCheck([
+      id,
+      siteId,
+      locationId,
+      json['startedAt'],
+      json['startedByUserId'],
+      count('expectedCount'),
+    ]),
+  );
 }
 
 class CheckItem {
@@ -157,7 +168,8 @@ class CheckItem {
       'lastSeenAt',
       if (expected) ...{'locationName', 'locationType', 'siteName'},
     };
-    if (snapshot.length != facts.length || !snapshot.keys.every(facts.contains)) {
+    if (snapshot.length != facts.length ||
+        !snapshot.keys.every(facts.contains)) {
       throw const FormatException('Invalid snapshot facts');
     }
     if (snapshot['operationalNumber'] is! String ||
@@ -234,13 +246,15 @@ class CheckItem {
   bool get expected => json['expected'] as bool;
   bool get found => json['found'] as bool;
   String? get expectedLocationId => json['expectedLocationId'] as String?;
-  String get origin => jsonEncode([
-    id,
-    trailerId,
-    expected,
-    expectedLocationId,
-    json['recordedSnapshot'],
-  ]);
+  String get origin => jsonEncode(
+    canonicalCheck([
+      id,
+      trailerId,
+      expected,
+      expectedLocationId,
+      json['recordedSnapshot'],
+    ]),
+  );
 }
 
 class CheckDetail {
@@ -266,8 +280,10 @@ class CheckSnapshot {
   CheckSnapshot(this.check, this.items);
   final CheckSummary check;
   final List<CheckItem> items;
-  String get review => jsonEncode([
-    check.json,
-    [for (final i in items) i.json],
-  ]);
+  String get review => jsonEncode(
+    canonicalCheck([
+      check.json,
+      [for (final i in items) i.json],
+    ]),
+  );
 }

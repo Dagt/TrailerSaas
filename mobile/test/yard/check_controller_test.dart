@@ -28,7 +28,7 @@ void main() {
     await c.loadLocal();
   });
   tearDown(() async {
-    c.dispose();
+    if (!c.disposed) c.dispose();
     await f.close();
     await dir.delete(recursive: true);
   });
@@ -49,7 +49,13 @@ void main() {
       );
     },
   );
-  for (final boundary in ['background', 'account', 'disposed', 'mode']) {
+  for (final boundary in [
+    'background',
+    'account',
+    'disposed',
+    'mode',
+    'site',
+  ]) {
     test(
       'late native callback after $boundary creates no observation or HTTP mutation',
       () async {
@@ -58,6 +64,10 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 10));
         if (boundary == 'account') {
           f.mobile.auth.uid = 'firebase-B';
+        } else if (boundary == 'disposed') {
+          c.dispose();
+        } else if (boundary == 'site') {
+          c.invalidateScope();
         } else {
           c.suspend();
         }

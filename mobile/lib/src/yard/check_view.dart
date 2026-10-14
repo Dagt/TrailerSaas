@@ -30,6 +30,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
     with WidgetsBindingObserver {
   late final YardCheckController controller;
   String? startLocation, observedLocation;
+  bool reviewing = false;
   DialogRoute<bool>? reviewRoute;
   NavigatorState? reviewNavigator;
   @override
@@ -57,6 +58,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
   void didUpdateWidget(YardChecksPanel old) {
     super.didUpdateWidget(old);
     if (old.site?.id != widget.site?.id) {
+      controller.invalidateScope();
       startLocation = null;
       observedLocation = null;
     }
@@ -76,6 +78,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
     String detail, {
     bool reason = false,
   }) async {
+    final version = controller.selected?.serverVersion;
     final owner = controller.key(widget.session.snapshot),
         id = controller.selected?.id,
         g = controller.generation;
@@ -91,6 +94,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
               owner == controller.key(widget.session.snapshot) &&
               id == controller.selected?.id &&
               g == controller.generation &&
+              version == controller.selected?.serverVersion &&
               controller.foreground;
           return AlertDialog(
             title: Text(valid ? title : 'Check context changed'),
@@ -134,6 +138,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
           owner != controller.key(widget.session.snapshot) ||
           id != controller.selected?.id ||
           g != controller.generation ||
+          version != controller.selected?.serverVersion ||
           !controller.foreground) {
         return null;
       }
@@ -151,6 +156,8 @@ class _YardChecksPanelState extends State<YardChecksPanel>
   }
 
   Future<void> terminal(bool cancel) async {
+    if (reviewing) return;
+    setState(() => reviewing = true);
     try {
       final state = await controller.reviewState();
       if (state == null || !mounted) return;
@@ -168,10 +175,14 @@ class _YardChecksPanelState extends State<YardChecksPanel>
         controller.message = 'Connect, synchronize and review all Check observations before completing or cancelling.';
         controller.notify();
       }
+    } finally {
+      if (mounted) setState(() => reviewing = false);
     }
   }
 
   Future<void> reconcile(CheckItem item) async {
+    if (reviewing) return;
+    setState(() => reviewing = true);
     try {
       final trailer = await controller.currentTrailer(item.trailerId);
       if (!mounted) return;
@@ -187,6 +198,8 @@ class _YardChecksPanelState extends State<YardChecksPanel>
         controller.message = 'The current Trailer or correction permission could not be verified. No location was changed.';
         controller.notify();
       }
+    } finally {
+      if (mounted) setState(() => reviewing = false);
     }
   }
 

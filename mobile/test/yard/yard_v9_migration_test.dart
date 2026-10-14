@@ -18,8 +18,18 @@ void main() {
         media = '33333333-3333-4333-8333-333333333333',
         draft = '44444444-4444-4444-8444-444444444444';
     raw.execute(
-      "INSERT INTO local_commands(client_operation_id,user_id,tenant_id,command_type,endpoint_path,http_method,payload_json,trip_id,aggregate_type,aggregate_id,resource_keys_json,dependencies_json,state,occurred_at,created_at,queue_sequence) VALUES(?,'user-A','A','YARD_MOVE','tenants/A/yard-moves','POST','{}',NULL,'TRAILER',?,'[]','[]','RETRYABLE_FAILURE',1,1,1)",
-      [operation, trailer],
+      "INSERT INTO local_commands(client_operation_id,user_id,tenant_id,command_type,endpoint_path,http_method,payload_json,trip_id,aggregate_type,aggregate_id,resource_keys_json,dependencies_json,state,occurred_at,created_at,queue_sequence) VALUES(?,'user-A','A','YARD_MOVE','tenants/A/yard-moves','POST',?,NULL,'TRAILER',?,'[]','[]','RETRYABLE_FAILURE',1,1,1)",
+      [
+        operation,
+        jsonEncode({
+          'trailerId': trailer,
+          'fromLocationId': media,
+          'toLocationId': draft,
+          'observedAt': '1970-01-01T00:00:01Z',
+          'expectedTrailerVersion': 12,
+        }),
+        trailer,
+      ],
     );
     raw.execute(
       "INSERT INTO local_media(id,user_id,tenant_id,document_type,content_type,file_key,size_bytes,checksum_sha256,state,server_document_id,finalize_key,captured_at,updated_at,finalized_at,trailer_id) VALUES(?,'user-A','A','DAMAGE_PHOTO','image/jpeg',?,1,?,'FINALIZED',?,?,1,1,1,?)",

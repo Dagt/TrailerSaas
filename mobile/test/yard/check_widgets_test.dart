@@ -99,6 +99,21 @@ void main() {
     },
   );
   testWidgets(
+    'double tap Review opens one terminal modal and Not Yet retains inventory',
+    (tester) async {
+      await start(tester);
+      await tester.tap(find.byKey(const Key('check-complete')));
+      await tester.tap(find.byKey(const Key('check-complete')));
+      await settle(tester);
+      expect(find.text('Complete Yard Check'), findsOneWidget);
+      await tester.tap(find.text('Not Yet'));
+      await settle(tester);
+      expect(f.mobile.requests.where((r) => r.method == 'POST'), isEmpty);
+      expect(f.summary['status'], 'IN_PROGRESS');
+      await finish(tester);
+    },
+  );
+  testWidgets(
     'unknown offline QR is visibly unresolved, with pending evidence and no fake ACK',
     (tester) async {
       await start(tester);
