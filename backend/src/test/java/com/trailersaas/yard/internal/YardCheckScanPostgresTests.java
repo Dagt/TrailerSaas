@@ -74,4 +74,9 @@ class YardCheckScanPostgresTests extends YardCheckFixture {
     var id=check(start());assertThat(scan(id,UUID.randomUUID().toString(),scanBody(trailer,a)).statusCode()).isEqualTo(200);
     problem(get("/yard-checks/"+id+"?expectedVersion=0"),409,"STALE_VERSION");
   }
+  @Test void acceptedScanReplaysOriginalReceiptAfterCompletionWithoutAnotherObservation() throws Exception {
+    var id=check(start());var key=UUID.randomUUID().toString();var body=scanBody(trailer,a);var first=scan(id,key,body);assertThat(first.statusCode()).isEqualTo(200);
+    assertThat(command("/yard-checks/"+id+"/completion",UUID.randomUUID().toString(),Map.of("expectedVersion",1)).statusCode()).isEqualTo(200);
+    assertThat(scan(id,key,body).body()).isEqualTo(first.body());assertThat(f.db.value("select version from yard_checks where id=?",id)).isEqualTo(2L);
+  }
 }

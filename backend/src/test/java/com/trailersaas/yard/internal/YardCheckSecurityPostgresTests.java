@@ -112,4 +112,11 @@ class YardCheckSecurityPostgresTests extends YardCheckFixture {
       processing(op,"YARD_CHECK_SCAN");return jdbc.update("insert into yard_check_items(id,tenant_id,yard_check_id,site_id,trailer_id,expected,recorded_snapshot,found,result,observed_location_id,scanned_at,scanned_by_user_id,recorded_at,client_operation_id) values(?,?,?,?,?,false,'{}',true,'UNEXPECTED',?,clock_timestamp(),?,clock_timestamp(),?)",UUID.randomUUID(),tenant,id,site,asset,a,user,op);
     }));
   }
+  @ParameterizedTest @ValueSource(strings={"alerts","yard_check_reconciliations"}) void acceptedAssociationAndAlertAreAppendOnlyEvenForOwner(String table) throws Exception {
+    var id=completed();var item=item(id);var r=command("/yard-checks/"+id+"/items/"+item+"/mark-location-unknown",UUID.randomUUID().toString(),Map.of("expectedTrailerVersion",0,"reason","Confirmed missing"));assertThat(r.statusCode()).as(r.body()).isEqualTo(200);
+    try{f.db.execute("delete from "+table+" where tenant_id=?",tenant);fail("Owner cannot remove accepted history");}catch(SQLException e){assertThat(e.getSQLState()).isEqualTo("42501");}
+    state("42501",()->transactions.execute(tenant,()->jdbc.update("update "+table+" set client_operation_id=? where tenant_id=?",UUID.randomUUID(),tenant)));
+    // A historical succeeded ledger/event cannot justify another insert.
+    state("23514",()->transactions.execute(tenant,()->jdbc.update("insert into "+table+" select (jsonb_populate_record(null::"+table+",to_jsonb(x)-'id'||jsonb_build_object('id',?::uuid))).* from "+table+" x where tenant_id=?",UUID.randomUUID(),tenant)));
+  }
 }

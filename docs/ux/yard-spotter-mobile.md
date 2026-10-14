@@ -9,7 +9,8 @@
 
 Yard Home now supports explicit Location Correction, Load State Correction,
 Discrepancy Report and Report Damage / Mark OOS. The original Yard Move remains
-unchanged. Yard Check, Missing reconciliation and notifications remain #50/#51/#55.
+unchanged. #50 implements the Yard Check Backend; the Check mobile UI/offline
+flows below remain #51. Notification delivery remains #55/#56.
 No capability or role grant changes: YARD_SPOTTER is Tenant-scoped, has the two
 correction capabilities, and has no OOS grant; a currently authorized multi-role
 user may use OOS. Selecting Site, QR scan, a local draft or an upload grants no
@@ -43,7 +44,7 @@ partial downloads do not authorize an old context. Offline use requires an
 established session and downloaded context/scanned Trailer; replay re-authorizes.
 Consecutive moves depend on the previous same-Trailer ACK, never a guessed version;
 a parent conflict blocks descendants while other assets may sync. Correction and OOS reporting are implemented in #49;
-Yard Check and reconciliation remain #50–#51.
+Yard Check/reconciliation Backend is implemented by #50; its mobile UI remains #51.
 Physical camera/permission/lifecycle QA remains #65.
 
 The following sections describe the accepted broader Yard UX, beyond this slice.

@@ -92,6 +92,14 @@ this resolution; item N accepts consistency checks without reopening or redesign
 the shared-address model.
 
 ### OQ-059 — Tenant-level configurability
+
+For #50, the owner authorizes provisional persisted TRAILER_MISSING alerts with
+WARNING severity and initial OPEN status, exactly one per explicitly confirmed
+missing reconciliation, in its PostgreSQL transaction. No individual recipients,
+push/email/outbox/worker/escalation/automatic resolution. Trailer reference and
+minimal Check/item/movement/actor metadata identify the investigation context.
+This does **not** resolve OQ-059: definitive severities, recipients and notification
+policies remain open for later bounded implementation.
 For MVP, customer-specific POD rules are **not** required. Still decide which settings are tenant-configurable from day one:
 
 - stale-trailer threshold;

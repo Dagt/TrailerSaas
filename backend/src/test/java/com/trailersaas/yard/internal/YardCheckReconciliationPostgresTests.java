@@ -116,4 +116,26 @@ class YardCheckReconciliationPostgresTests extends YardCheckFixture {
     assertThat(f.db.value("select count(*) from alerts where tenant_id=?",tenant)).isEqualTo(1L);
     assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=?",trailer)).isEqualTo(1L);
   }
+  @Test void unknownPreservesRealLastDriverLoadServiceabilityAndOpenCoupling() throws Exception {
+    var driver=f.db.driver(tenant,user);var tractor=f.db.tractor(tenant,"Coupled-"+UUID.randomUUID());var hook=UUID.randomUUID();
+    f.db.execute("insert into trailer_movement_events(id,tenant_id,trailer_id,driver_id,tractor_id,event_type,actor_type,source_type,actor_user_id,occurred_at,recorded_at) values(?,?,?,?,?,'HOOKED','HUMAN_USER','USER_ACTION',?,now()-interval '1 hour',now())",hook,tenant,trailer,driver,tractor,user);
+    f.db.execute("insert into trailer_couplings(id,tenant_id,trailer_id,driver_id,tractor_id,hooked_at,hook_event_id,created_at) values(?,?,?,?,?,now()-interval '1 hour',?,now())",UUID.randomUUID(),tenant,trailer,driver,tractor,hook);
+    f.db.execute("update trailers set last_driver_id=?,load_state='LOADED',serviceability_state='OUT_OF_SERVICE' where id=?",driver,trailer);
+    var id=completed(false);var r=reconcile(id,item(id),UUID.randomUUID().toString(),true,reconcileBody(true,0));assertThat(r.statusCode()).as(r.body()).isEqualTo(200);
+    assertThat(f.db.value("select last_driver_id from trailers where id=?",trailer)).isEqualTo(driver);
+    assertThat(f.db.value("select load_state||'/'||serviceability_state from trailers where id=?",trailer)).isEqualTo("LOADED/OUT_OF_SERVICE");
+    assertThat(f.db.value("select count(*) from trailer_couplings where trailer_id=? and dropped_at is null",trailer)).isEqualTo(1L);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=? and event_type='DROPPED'",trailer)).isEqualTo(0L);
+  }
+  @Test void differentChecksCompetingForSameTrailerHaveOnePhysicalWinner() throws Exception {
+    var one=completed(false);var two=completed(false);var firstItem=item(one);var secondItem=item(two);
+    try(var workers=Executors.newFixedThreadPool(2)){
+      var gate=new CountDownLatch(1);var first=workers.submit(()->{gate.await();return reconcile(one,firstItem,UUID.randomUUID().toString(),true,reconcileBody(true,0));});
+      var second=workers.submit(()->{gate.await();return reconcile(two,secondItem,UUID.randomUUID().toString(),true,reconcileBody(true,0));});gate.countDown();
+      assertThat(List.of(first.get(30,TimeUnit.SECONDS).statusCode(),second.get(30,TimeUnit.SECONDS).statusCode())).containsExactlyInAnyOrder(200,409);
+    }
+    assertThat(f.db.value("select count(*) from alerts where tenant_id=?",tenant)).isEqualTo(1L);
+    assertThat(f.db.value("select count(*) from trailer_movement_events where trailer_id=?",trailer)).isEqualTo(1L);
+    assertThat(f.db.value("select count(*) from yard_check_items where tenant_id=? and result='MISSING'",tenant)).isEqualTo(2L);
+  }
 }

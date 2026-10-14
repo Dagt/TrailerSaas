@@ -2083,28 +2083,127 @@ paths:
     get:
       tags: [Yard]
       operationId: listYardChecks
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. Bounded UUID ordering, optional Site/status and inclusive startedAt from/to filters. Does not expose a Trailer directory or foreign data.
+      parameters:
+        - name: siteId
+          in: query
+          description: "Filter within current Tenant"
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          description: "Lifecycle filter"
+          schema: { type: string, enum: [IN_PROGRESS, COMPLETED, CANCELLED] }
+        - name: cursor
+          in: query
+          description: "Last Check id; not authority"
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          description: "Bounded page"
+          schema: { type: integer, minimum: 1, maximum: 50, default: 50 }
+        - name: from
+          in: query
+          description: "Inclusive nonfuture start time"
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: "Inclusive nonfuture start time"
+          schema: { type: string, format: date-time }
       responses:
         '200':
-          $ref: '#/components/responses/PagedResponse'
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardChecksPage' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
     post:
       tags: [Yard]
       operationId: startYardCheck
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. UUID Idempotency-Key uses the existing MobileOperationLedger. Same actor/key/body returns the original receipt after fresh authority; a changed actor/body/type returns IDEMPOTENCY_KEY_REUSED. Ledger and business effects commit or roll back together. Freezes active AT_LOCATION Trailer inventory at active YARD/DOCK locations using ONE INSERT SELECT statement MVCC view. Optional locationId limits that same Site; OOS/load/coupling are retained facts, not availability filters. Concurrent independent Checks are allowed. Pending expected result is null, never MISSING. Returns at most 200 items; snapshotComplete=false means incomplete download. No Trailer/event/alert mutation.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/StartYardCheckRequest'
+            schema: { $ref: '#/components/schemas/StartYardCheckRequest' }
       responses:
         '201':
-          description: Yard Check started
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardCheckDetail' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
-
+  /api/v1/tenants/{tenantId}/yard-checks/{yardCheckId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: yardCheckId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Yard]
+      operationId: getYardCheck
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. Check SHARE lock keeps counts/items consistent during this read. Full original expected inventory is retrievable by UUID item cursor; expectedVersion is REQUIRED with cursor and stale pages reject STALE_VERSION. Restart pagination after version change. Consume all pages and compare unique item counts; a final partial page alone is not snapshotComplete. expectedOnly=true excludes unexpected observations. ReconciliationId is separate audit association, never a rewritten finding.
+      parameters:
+        - name: cursor
+          in: query
+          description: "Item UUID position"
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          description: "Bounded item page"
+          schema: { type: integer, minimum: 1, maximum: 200, default: 200 }
+        - name: expectedOnly
+          in: query
+          description: "Retrieve only frozen expected membership"
+          schema: { type: boolean, default: false }
+        - name: expectedVersion
+          in: query
+          description: "Mandatory with cursor; exact current Check version"
+          schema: { type: integer, format: int64, minimum: 0 }
+      responses:
+        '200':
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardCheckDetail' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
   /api/v1/tenants/{tenantId}/yard-checks/{yardCheckId}/scans:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -2112,19 +2211,195 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
-      - $ref: '#/components/parameters/IdempotencyKey'
     post:
       tags: [Yard]
       operationId: scanYardCheckTrailer
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. UUID Idempotency-Key uses the existing MobileOperationLedger. Same actor/key/body returns the original receipt after fresh authority; a changed actor/body/type returns IDEMPOTENCY_KEY_REUSED. Ledger and business effects commit or roll back together. Requires IN_PROGRESS under Check UPDATE lock, active same-Tenant Trailer and valid active observed Location in Check Site (exact selected Location for location-specific scope). scannedAt is nonfuture and not before server startedAt. MATCHED/UNEXPECTED/LOCATION_MISMATCH classify against original expected location. A new-key duplicate returns ALREADY_SCANNED without replacing actor/time/location or incrementing version. ALREADY_SCANNED is not stored result. Never mutates Trailer or creates a physical event/alert.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/YardCheckScanRequest'
+            schema: { $ref: '#/components/schemas/YardCheckScanRequest' }
       responses:
         '200':
-          description: Scan result
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardCheckScanResult' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/tenants/{tenantId}/yard-checks/{yardCheckId}/completion:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: yardCheckId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Yard]
+      operationId: completeYardCheck
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. UUID Idempotency-Key uses the existing MobileOperationLedger. Same actor/key/body returns the original receipt after fresh authority; a changed actor/body/type returns IDEMPOTENCY_KEY_REUSED. Ledger and business effects commit or roll back together. Exact expectedVersion and IN_PROGRESS under Check lock; marks only unobserved expected rows MISSING, retains findings, freezes COMPLETED with authenticated actor and SERVER completedAt. No Trailer mutation, LOCATION_UNKNOWN or alert.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompleteYardCheckRequest' }
+      responses:
+        '200':
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardCheckSummary' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/tenants/{tenantId}/yard-checks/{yardCheckId}/cancellation:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: yardCheckId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Yard]
+      operationId: cancelYardCheck
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. UUID Idempotency-Key uses the existing MobileOperationLedger. Same actor/key/body returns the original receipt after fresh authority; a changed actor/body/type returns IDEMPOTENCY_KEY_REUSED. Ledger and business effects commit or roll back together. Exact expectedVersion, nonblank reason and IN_PROGRESS under Check lock; freezes CANCELLED with authenticated actor and server cancelledAt, preserving partial observations/null pending results and no reconciliation side effects.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancelYardCheckRequest' }
+      responses:
+        '200':
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardCheckSummary' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/tenants/{tenantId}/yard-checks/{yardCheckId}/items/{itemId}/mark-location-unknown:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: yardCheckId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: itemId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Yard]
+      operationId: reconcileMissingYardCheckTrailer
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. UUID Idempotency-Key uses the existing MobileOperationLedger. Same actor/key/body returns the original receipt after fresh authority; a changed actor/body/type returns IDEMPOTENCY_KEY_REUSED. Ledger and business effects commit or roll back together. Additionally requires fresh TRAILER_LOCATION_CORRECT, independently of Check permission. Eligible COMPLETED/MISSING item, exact expectedTrailerVersion, current AT_LOCATION at original expected location and explicit reason. Uses existing markLocationUnknown engine; preserves last-known/seen/Driver, coupling, load, designation and Orders. HUMAN_USER/USER_ACTION, server occurrence/record time, original UUID. Atomically commits LOCATION_MARKED_UNKNOWN, append-only reconciliation, exactly one persisted TRAILER_MISSING/WARNING/OPEN Administration alert and ledger. Alert metadata contains yardCheckId/itemId/movementEventId/actorUserId. No recipients, push, outbox, worker or automatic resolution. OQ-059 severity is provisional. One reconciliation per item; foreign IDs are safe RESOURCE_NOT_FOUND. Other conflicts include STALE_VERSION, RESOURCE_CONFLICT and INVALID_STATE_TRANSITION.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/YardCheckMarkUnknownRequest' }
+      responses:
+        '200':
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardCheckReconciliationResult' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/v1/tenants/{tenantId}/yard-checks/{yardCheckId}/items/{itemId}/location-correction:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: yardCheckId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: itemId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Yard]
+      operationId: reconcileYardCheckLocationMismatch
+      x-implementation-status: implemented-issue-50
+      description: >-
+        Requires fresh YARD_CHECK_EXECUTE, ACTIVE membership and ACTIVE Tenant. Tenant-wide Spotter scope only; Site selection and QR grant no authority. Same-Tenant normalized resources, closed JSON and no arbitrary query fields. UUID Idempotency-Key uses the existing MobileOperationLedger. Same actor/key/body returns the original receipt after fresh authority; a changed actor/body/type returns IDEMPOTENCY_KEY_REUSED. Ledger and business effects commit or roll back together. Additionally requires fresh TRAILER_LOCATION_CORRECT, independently of Check permission. Eligible COMPLETED/LOCATION_MISMATCH item, exact expectedTrailerVersion, nonblank reason and reviewed newLocationId equal to the original observed active same-Site Location. Uses existing correctLocation engine and HUMAN_USER/USER_ACTION. No rewritten finding or alert. Stale/current-context conflicts do not correct silently. One reconciliation per item; foreign IDs are safe RESOURCE_NOT_FOUND. Other conflicts include STALE_VERSION, RESOURCE_CONFLICT and INVALID_STATE_TRANSITION.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/YardCheckCorrectionRequest' }
+      responses:
+        '200':
+          description: Authorized command receipt or bounded read
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YardCheckReconciliationResult' }
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -5019,6 +5294,7 @@ components:
 
     StartYardCheckRequest:
       type: object
+      additionalProperties: false
       required: [siteId]
       properties:
         siteId: { type: string, format: uuid }
@@ -5026,11 +5302,156 @@ components:
 
     YardCheckScanRequest:
       type: object
-      required: [trailerId, scannedAt]
+      additionalProperties: false
+      required: [trailerId, observedLocationId, scannedAt]
       properties:
         trailerId: { type: string, format: uuid }
+        observedLocationId: { type: string, format: uuid }
+        scannedAt: { type: string, format: date-time, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]" }
+
+    CompleteYardCheckRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+
+    CancelYardCheckRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 1, maxLength: 4000, pattern: "\\S" }
+
+    YardCheckMarkUnknownRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedTrailerVersion, reason]
+      properties:
+        expectedTrailerVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 1, maxLength: 4000, pattern: "\\S" }
+
+    YardCheckCorrectionRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedTrailerVersion, newLocationId, reason]
+      properties:
+        expectedTrailerVersion: { type: integer, format: int64, minimum: 0 }
+        newLocationId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, maxLength: 4000, pattern: "\\S" }
+
+    YardCheckSummary:
+      type: object
+      additionalProperties: false
+      required: [id, siteId, locationId, status, version, startedByUserId, startedAt, completedByUserId, completedAt, cancelledByUserId, cancelledAt, cancellationReason, expectedCount, scannedCount, matchedCount, missingCount, unexpectedCount, mismatchCount, remainingCount, totalItemCount]
+      properties:
+        id: { type: string, format: uuid }
+        siteId: { type: string, format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        status: { type: string, enum: [IN_PROGRESS, COMPLETED, CANCELLED] }
+        version: { type: integer, format: int64, minimum: 0 }
+        startedByUserId: { type: string, format: uuid }
+        startedAt: { type: string, format: date-time }
+        completedByUserId: { type: [string, "null"], format: uuid }
+        completedAt: { type: [string, "null"], format: date-time }
+        cancelledByUserId: { type: [string, "null"], format: uuid }
+        cancelledAt: { type: [string, "null"], format: date-time }
+        cancellationReason: { type: [string, "null"] }
+        expectedCount: { type: integer, format: int64, minimum: 0 }
+        scannedCount: { type: integer, format: int64, minimum: 0 }
+        matchedCount: { type: integer, format: int64, minimum: 0 }
+        missingCount: { type: integer, format: int64, minimum: 0 }
+        unexpectedCount: { type: integer, format: int64, minimum: 0 }
+        mismatchCount: { type: integer, format: int64, minimum: 0 }
+        remainingCount: { type: integer, format: int64, minimum: 0 }
+        totalItemCount: { type: integer, format: int64, minimum: 0 }
+
+    YardCheckRecordedSnapshot:
+      type: object
+      additionalProperties: false
+      required: [operationalNumber, trailerVersion, locationState, currentLocationId, loadState, serviceabilityState, couplingState, lastKnownLocationId, lastSeenAt]
+      properties:
+        operationalNumber: { type: string }
+        trailerVersion: { type: integer, format: int64, minimum: 0 }
+        locationState: { type: string, enum: [AT_LOCATION, IN_TRANSIT, LOCATION_UNKNOWN] }
+        currentLocationId: { type: [string, "null"], format: uuid }
+        loadState: { type: string, enum: [EMPTY, LOADED, UNKNOWN] }
+        serviceabilityState: { type: string, enum: [IN_SERVICE, OUT_OF_SERVICE] }
+        couplingState: { type: string, enum: [COUPLED, UNCOUPLED] }
+        lastKnownLocationId: { type: [string, "null"], format: uuid }
+        lastSeenAt: { type: [string, "null"], format: date-time }
+        locationName: { type: string }
+        locationType: { type: string, enum: [YARD, DOCK] }
+        siteName: { type: string }
+
+    YardCheckItem:
+      type: object
+      additionalProperties: false
+      required: [id, trailerId, expected, expectedLocationId, recordedSnapshot, found, result, observedLocationId, scannedAt, scannedByUserId, recordedAt, clientOperationId, reconciliationId]
+      properties:
+        id: { type: string, format: uuid }
+        trailerId: { type: string, format: uuid }
+        expected: { type: boolean }
+        expectedLocationId: { type: [string, "null"], format: uuid }
+        recordedSnapshot: { $ref: '#/components/schemas/YardCheckRecordedSnapshot' }
+        found: { type: boolean }
+        result: { type: [string, "null"], enum: [MATCHED, MISSING, UNEXPECTED, LOCATION_MISMATCH, null] }
         observedLocationId: { type: [string, "null"], format: uuid }
-        scannedAt: { type: string, format: date-time }
+        scannedAt: { type: [string, "null"], format: date-time }
+        scannedByUserId: { type: [string, "null"], format: uuid }
+        recordedAt: { type: [string, "null"], format: date-time }
+        clientOperationId: { type: [string, "null"], format: uuid }
+        reconciliationId: { type: [string, "null"], format: uuid }
+
+    YardCheckDetail:
+      type: object
+      additionalProperties: false
+      required: [check, items, nextCursor, snapshotComplete]
+      properties:
+        check: { $ref: '#/components/schemas/YardCheckSummary' }
+        items: { type: array, maxItems: 200, items: { $ref: '#/components/schemas/YardCheckItem' } }
+        nextCursor: { type: [string, "null"], format: uuid }
+        snapshotComplete: { type: boolean, description: "True only when this first page contains the entire selected item set. Otherwise all pages and unique-count validation are required before future offline use." }
+
+    YardChecksPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/YardCheckSummary' } }
+        nextCursor: { type: [string, "null"], format: uuid }
+
+    YardCheckScanResult:
+      type: object
+      additionalProperties: false
+      required: [outcome, check, item]
+      properties:
+        outcome: { type: string, enum: [MATCHED, UNEXPECTED, LOCATION_MISMATCH, ALREADY_SCANNED] }
+        check: { $ref: '#/components/schemas/YardCheckSummary' }
+        item: { $ref: '#/components/schemas/YardCheckItem' }
+
+    YardCheckReconciliationResult:
+      type: object
+      additionalProperties: false
+      required: [reconciliationId, yardCheckId, itemId, trailer, movementEvent, alertId]
+      properties:
+        reconciliationId: { type: string, format: uuid }
+        yardCheckId: { type: string, format: uuid }
+        itemId: { type: string, format: uuid }
+        trailer: { $ref: '#/components/schemas/YardTrailer' }
+        movementEvent: { $ref: '#/components/schemas/YardCheckMovementEvent' }
+        alertId: { type: [string, "null"], format: uuid }
+
+    YardCheckMovementEvent:
+      type: object
+      additionalProperties: false
+      required: [id, eventType, occurredAt, recordedAt]
+      properties:
+        id: { type: string, format: uuid }
+        eventType: { type: string, enum: [LOCATION_MARKED_UNKNOWN, LOCATION_CORRECTED] }
+        occurredAt: { type: string, format: date-time }
+        recordedAt: { type: string, format: date-time }
 
     InitializeUploadRequest:
       type: object

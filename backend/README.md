@@ -1,5 +1,34 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Issue #50 — Yard Check snapshot and reconciliation
+
+Start/list/detail, scan, completion, cancellation and two explicit reconciliation
+commands are implemented under `/api/v1/tenants/{tenantId}/yard-checks`. Start
+returns 201, subsequent commands 200. All six POSTs use the existing UUID
+Idempotency-Key/ledger and closed JSON. Fresh YARD_CHECK_EXECUTE and ACTIVE Tenant/
+membership are required; reconciliation independently requires
+TRAILER_LOCATION_CORRECT. No Site assignment or new role grant is invented.
+
+V24 freezes active AT_LOCATION inventory in active YARD/DOCK scope with one
+INSERT SELECT MVCC view. OOS/load/coupling are preserved facts. Bounded reads
+(50 Checks, 200 items) expose counts, UUID cursors, Check version and explicit
+snapshot completeness; cursor pages require expectedVersion. Original facts and
+observations are immutable; completion marks only unobserved items MISSING and
+cancellation preserves partial results. Neither operation changes a Trailer.
+
+Separate confirmed missing/mismatch commands reuse the existing physical engine,
+exact Trailer version, human provenance and append-only Check/item/event context.
+Confirmed missing atomically persists one TRAILER_MISSING/WARNING/OPEN Alert,
+projection/event/reconciliation/ledger while preserving last-known/seen/Driver.
+The owner-approved provisional OQ-059 policy has no recipients or delivery worker.
+Runtime Tenant RLS, composite FKs and narrow current-transaction/lifecycle guards
+protect all four new tables. V1–V23 and #40/#48/#49 contracts remain intact.
+
+See [contracts](../docs/api/yard.md) and
+[architecture, acceptance and future #51 handoff](../docs/mobile/issue-50-yard-check-backend.md).
+No Flutter Yard Check/offline implementation, outbox, notification delivery,
+retention deletion or generic Audit is introduced by #50.
+
 ## Issue #49 — Yard discrepancy, load correction and evidenced OOS
 
 
