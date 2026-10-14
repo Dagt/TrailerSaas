@@ -345,13 +345,19 @@ class CommandStore {
     }
   });
 
-  Future<Set<String>> reviewedYardFailures(String user, String tenant) async =>
-      (await (db.select(db.yardConflictReviews)..where(
-                (r) => r.userId.equals(user) & r.tenantId.equals(tenant),
-              ))
-              .get())
-          .map((r) => r.failedOperationId)
-          .toSet();
+  Future<Set<String>> reviewedYardFailures(
+    String user,
+    String tenant,
+  ) async => {
+    ...(await (db.select(db.yardConflictReviews)
+              ..where((r) => r.userId.equals(user) & r.tenantId.equals(tenant)))
+            .get())
+        .map((r) => r.failedOperationId),
+    ...(await (db.select(db.yardCheckReviews)
+              ..where((r) => r.userId.equals(user) & r.tenantId.equals(tenant)))
+            .get())
+        .map((r) => r.failedOperationId),
+  };
 
   /// Explicit review retries the SAME immutable operation, never changes payload
   /// or labels a rejected physical action as performed. Server must re-authorize.
@@ -388,6 +394,8 @@ class CommandStore {
           'INVALID_STATE_TRANSITION',
           'STALE_VERSION',
           'RESOURCE_CONFLICT',
+          'REVIEW_REQUIRED',
+          'YARD_CHECK_OPEN',
           'IDEMPOTENCY_KEY_REUSED',
           'EVIDENCE_REQUIRED',
           'TRAILER_SUBSTITUTION_NOT_AUTHORIZED',
