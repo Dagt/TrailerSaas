@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { z } from 'zod'
 import { PageHeader, ErrorBanner, LoadingState, DetailList } from '../../shared/ui/components'
-import { useOrder, useOrderActions, useProgress } from './orderQueries'
+import { useOrder, useOrderActions, useProgress, useOrderSites, useOrderLocations } from './orderQueries'
 import { EditOrder, OrderCancellation, OrderCompletion, RerouteAction, TrailerSubstitutionDecision } from './OrderActions'
 import type { CustomerOrder, ProgressTrip, ProgressStop } from './orderContracts'
 
@@ -13,6 +13,7 @@ export function CustomerOrderDetail() {
 }
 function OrderDetail({id}:{id:string}) {
   const order=useOrder(id), actions=useOrderActions(), progress=useProgress(id)
+  const sites=useOrderSites(order.data?.requestedStops.some(stop=>!!stop.siteId&&!stop.siteSnapshot)??false)
   const [action,setAction]=useState<'edit'|'cancel'|'complete'|null>(null), [tripAction,setTripAction]=useState<{trip:ProgressTrip;stop?:ProgressStop}|null>(null)
   const close=()=>{setAction(null);setTripAction(null)}
   const reload=()=>{close();void order.refetch();void progress.refetch();void actions.refetch()}
@@ -28,7 +29,7 @@ function OrderDetail({id}:{id:string}) {
     <p>DELIVERED: required operational delivery and evidence satisfied. COMPLETED: administratively closed. CANCELLING: physical resolution remains pending.</p>
     <DetailList items={Object.entries({PO:row.poNumber,Shipment:row.shipmentNumber,BOL:row.bolReference,Created:row.createdAt,Updated:row.updatedAt,Delivered:row.deliveredAt,Completed:row.completedAt,Cancelled:row.cancelledAt})}/>
     <h2>Cargo</h2>{row.cargoLines.length?<ul>{row.cargoLines.map(c=><li key={c.id}>{c.description} · Quantity {c.quantity??'unspecified'} · Pallets {c.palletCount??'unspecified'} · Weight {c.weight??'unspecified'} {c.weightUnit}</li>)}</ul>:<p>No cargo details provided.</p>}
-    <h2>Requested itinerary</h2><ol>{row.requestedStops.map(s=><li key={s.id}>{s.stopType} · {s.siteSnapshot?.name??'Normalized authorized Site'} · {s.scheduledAt??'No appointment'} · {s.instructions??'No instructions'}</li>)}</ol>
+    <h2>Requested itinerary</h2>{sites.isError&&<ErrorBanner error={sites.error} retry={()=>void sites.refetch()}/>}<ol>{row.requestedStops.map(s=><li key={s.id}>{s.stopType} · {s.siteSnapshot?.name??sites.data?.items.find(site=>site.id===s.siteId)?.name??'Recorded Site label unavailable'}{s.siteId&&!s.siteSnapshot&&<> (current authorized Site label)</>} · {s.scheduledAt??'No appointment'} · {s.instructions??'No instructions'}{s.siteId&&s.locationId&&<RequestedLocation siteId={s.siteId} locationId={s.locationId}/>}</li>)}</ol>
     {fresh&&<div className="actions">
       {capabilities.includes('ORDER_EDIT')&&['OPEN','PLANNED'].includes(row.status)&&<button onClick={()=>setAction('edit')}>Edit before execution</button>}
       {capabilities.includes('ORDER_CANCEL')&&['OPEN','PLANNED','IN_PROGRESS','PARTIALLY_DELIVERED'].includes(row.status)&&<button onClick={()=>setAction('cancel')}>{['OPEN','PLANNED'].includes(row.status)?'Cancel Order':'Start active cancellation'}</button>}
@@ -49,6 +50,10 @@ function OrderDetail({id}:{id:string}) {
     {tripAction&&validTripAction&&coherent&&unique&&(tripAction.stop?<RerouteAction key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} stop={tripAction.stop} close={close} reload={reload}/>:<TrailerSubstitutionDecision key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} close={close} reload={reload}/>)}
     <Link to="/customer/orders">Return to Orders</Link>
   </section>
+}
+function RequestedLocation({siteId,locationId}:{siteId:string;locationId:string}) {
+  const query=useOrderLocations(siteId)
+  return <div><p>Requested Location (current authorized label): {query.data?.items.find(location=>location.id===locationId)?.name??'Unavailable'}</p>{query.isError&&<ErrorBanner error={query.error} retry={()=>void query.refetch()}/>}</div>
 }
 function OrderAction({action,order,requestEditable,close,reload}:{action:string;order:CustomerOrder;requestEditable:boolean;close():void;reload():void}) {
   if(action==='edit')return <EditOrder order={order} requestEditable={requestEditable} close={close} reload={reload}/>

@@ -51,7 +51,7 @@ Action hints require the capability for **all** Customers mapped to the Trip.
 The existing command independently locks and reauthorizes. Customer command
 receipts retain the existing DTO shape but redact Driver/Tractor and return empty
 Stop/assignment/operational-history arrays. Tenant-wide receipts remain unchanged.
-The portal refreshes its minimized projection after the validated ACK.
+The portal refreshes its minimized projection after the validated ACK. Normalized requested Site/Location names are resolved through existing Customer-filtered reads and identified as current labels; frozen snapshots remain separate. Creation review includes the selected planned Trailer number.
 
 ## Creation, cargo and destinations
 
@@ -199,7 +199,7 @@ and all V1–V27 checksum equality. Modulith remains covered by the existing sui
 Focused final security/migration run: 24 passed, zero failures/errors/skipped.
 Expanded history/Order regression: 74 passed, zero failures/errors/skipped (overlaps
 the 24; do not sum these as unique coverage). Earlier Customer HTTP 56 and RLS 17
-also passed. New Web workflow cases: 44; focused final run with shared HTTP: 55
+also passed. New Web workflow cases: 45; the final label/review run passed all 45. The prior 44-case run with shared HTTP: 55
 passed. Typecheck and lint passed. Earlier inherited Customer/Operations/HTTP
 regressions: 151 passed before the final five additions. OpenAPI: validation and
 59 tests passed, including eight new #59 contracts. Focused results do not replace
@@ -213,13 +213,13 @@ test caught an unquoted YAML `#59` truncating a description; the description was
 fixed rather than weakening the test. None of these failures is hidden as green.
 
 Final local validation uses a Git archive of the clean published candidate for
-Node/Flutter and the clean same-HEAD checkout for Java 25 `mvnw clean verify`.
+Node/Flutter/Java 25 `mvnw clean verify`. A Windows full attempt hit a native socket BindException during an existing Road test fixture; the affected test and full Backend are revalidated in Linux with the same PostgreSQL 18.6 runtime-role tests, without weakening assertions or changing host networking.
 Node 24 runs locked npm ci, Web typecheck/lint/full tests/build, OpenAPI validate/
 full tests and dependency-free CI policy tests. Flutter 3.47.6/Dart 3.13.5 runs
 locked pub get, reproducible Drift generation, format, fatal-info analysis and
 all tests; Drift remains v9 with no Mobile changes. Final counts, candidate SHA,
 commands and per-log SHA-256 are published in PR #113 and local evidence files.
-No earlier SHA's result is substituted for that execution.
+No earlier SHA's result is substituted for that execution. Git archives are created with core.autocrlf=false: an initial Windows export converted generated-source LF to CRLF; byte comparisons against the real Git blob proved that only export conversion differed. No Drift source/schema was changed.
 
 ## Release and deferred limitations
 

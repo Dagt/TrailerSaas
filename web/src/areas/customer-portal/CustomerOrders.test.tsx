@@ -173,12 +173,14 @@ it('reconciles a committed creation with lost ACK through reads without posting 
 })
 it('accepts normalized destination choices only through explicit Customer-filtered Site and Location reads',async()=>{
   const u=userEvent.setup(),f=orderFixture('/customer/orders/new');await creation();await u.type(await screen.findByLabelText('Order number (required)'),'NORMALIZED')
+  await u.selectOptions(screen.getByLabelText('Planned Trailer (optional)'),await screen.findByRole('option',{name:'T114'}))
   await u.click(screen.getByRole('button',{name:'Requested Stops'}));await u.selectOptions(screen.getByLabelText('stop-0 destination type'),'site')
   await u.selectOptions(screen.getByLabelText('Site'),await screen.findByRole('option',{name:'Authorized receiving'}))
-  await u.click(screen.getByRole('button',{name:'Review'}));expect(screen.getByText(/Authorized receiving/)).toBeInTheDocument()
+  await u.click(screen.getByRole('button',{name:'Review'}));expect(screen.getByText(/Authorized receiving/)).toBeInTheDocument();expect(screen.getByText(/Planned Trailer: T114/)).toBeInTheDocument()
   await u.click(screen.getByLabelText('I reviewed this Order and its requested itinerary.'));await u.click(screen.getByRole('button',{name:'Confirm and create Order'}));await screen.findByRole('heading',{name:'Order NORMALIZED'})
   const body=JSON.parse(String(f.fetcher.mock.calls.find(([,options])=>options?.method==='POST')?.[1]?.body))
   expect(body.requestedStops[0]).toMatchObject({siteId,locationId:null,siteSnapshot:null})
+  expect(body.plannedTrailerId).toBe(trailerId);await screen.findByText(/Authorized receiving.*current authorized Site label/)
   expect(f.requests.filter(r=>r.path.endsWith('/sites')||r.path.endsWith('/locations')).every(r=>r.query.get('customerId')===customerId)).toBe(true)
 })
 it('preserves pre-execution cancellation history and displays only the acknowledged terminal state',async()=>{
@@ -241,4 +243,11 @@ it('closes operational actions if a continuation page belongs to another Order v
   f.handlers.set(f.root+`/orders/${orderId}/progress`,async(_options,q)=>response({orderId,customerId,orderVersion:q?.get('cursor')?1:0,requestEditable:false,items:q?.get('cursor')?[]:[trip()],nextCursor:q?.get('cursor')?null:next,changes:[]}))
   await detail();await screen.findByRole('button',{name:'Decide alternate Trailer'});await u.click(screen.getByRole('button',{name:'Load more linked work'}))
   await screen.findByText(/Progress and Order versions need refreshing/);expect(screen.queryByRole('button',{name:'Decide alternate Trailer'})).not.toBeInTheDocument()
+})
+it('resolves normalized requested Site and Location labels only through authorized Customer reads',async()=>{
+  const f=orderFixture(`/customer/orders/${orderId}`),locationId='00000000-0000-4000-8000-000000000888'
+  f.state.orders[0]=order({requestedStops:[{...order().requestedStops[0]!,siteId,locationId,siteSnapshot:null}]})
+  f.handlers.set(f.root+`/sites/${siteId}/locations`,async()=>response({items:[{id:locationId,siteId,customerId,name:'Receiving Dock 4',active:true}]}))
+  await detail();await screen.findByText(/Authorized receiving.*current authorized Site label/);await screen.findByText(/Requested Location.*Receiving Dock 4/)
+  expect(f.requests.filter(r=>r.path.endsWith('/sites')||r.path.endsWith('/locations')).every(r=>r.query.get('customerId')===customerId)).toBe(true)
 })
