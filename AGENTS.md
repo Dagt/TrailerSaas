@@ -75,6 +75,11 @@ For every implementation Issue:
 
 Follow `docs/backlog/codex-workflow.md`. Keep one bounded Issue per branch/PR unless the Issue explicitly requires otherwise.
 
+Use Draft plus focused local tests during implementation. Follow
+`docs/development/ci-optimization.md`: publish a finished candidate before Ready,
+then require the complete current-HEAD Full CI gate. On failure return to Draft,
+correct with focused tests and validate the new final candidate. Never merge.
+
 ## Important
 
 If a requirement is ambiguous, stop and reference the corresponding open question rather than inventing behavior.

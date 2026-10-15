@@ -44,6 +44,14 @@ PR should contain:
 
 ## Required checks
 
+During implementation keep the PR Draft and run affected tests locally. See
+`../development/ci-optimization.md` for FAST/FULL policy. Finish code, focused
+tests, migrations, security and documentation before publishing a final candidate
+and marking Ready. Ready triggers complete CI; wait for all four suites and
+the fail-closed Full CI aggregate on the current integrable revision. If red,
+return to Draft before fixing and revalidate the final candidate. Do not repeatedly
+run full historical suites at checkpoints. No merge authorization is implied.
+
 Before merge:
 
 - project-specific CI green;
