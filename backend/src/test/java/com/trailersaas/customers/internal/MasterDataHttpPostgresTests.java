@@ -43,7 +43,7 @@ class MasterDataHttpPostgresTests extends PostgresIntegrationTest {
     void fixture() throws Exception {
         user = UUID.randomUUID(); tenant = UUID.randomUUID(); membership = UUID.randomUUID();
         sql("INSERT INTO users VALUES (?, ?, NULL, NULL, now(), now())", user, "fixture-" + user);
-        sql("INSERT INTO tenants VALUES (?, 'Tenant', 'CANDIDATE', now(), now())", tenant);
+        sql("INSERT INTO tenants VALUES (?, 'Tenant', 'ACTIVE', now(), now())", tenant);
         sql("INSERT INTO tenant_memberships VALUES (?, ?, ?, 'ACTIVE', now(), now())", membership, tenant, user);
         role("TENANT_ADMIN", null);
         when(verifier.verify(TOKEN)).thenReturn(new VerifiedFirebaseIdentity("fixture-" + user, null, null));
@@ -91,6 +91,7 @@ class MasterDataHttpPostgresTests extends PostgresIntegrationTest {
 
     @Test
     void sharedSiteCustomerScopeExcludesOtherAndNeutralLocations(CapturedOutput output) throws Exception {
+        sql("UPDATE tenants SET status='ACTIVE' WHERE id=?", tenant);
         var hood = create("/customers", "{\"name\":\"Hood\"}");
         var stanfast = create("/customers", "{\"name\":\"Stanfast\"}");
         var site = create("/sites", "{\"name\":\"710 Kimberly Dr\",\"timezone\":\"America/Chicago\"}");
@@ -229,6 +230,41 @@ class MasterDataHttpPostgresTests extends PostgresIntegrationTest {
         var c = create("/customers", "{\"name\":\"Customer\"}");
         problem(request("PATCH", "/customers/" + c.get("id"), "{\"name\":\"Missing version\"}"), 400, "VALIDATION_FAILED");
         problem(request("PATCH", "/customers/" + c.get("id"), "{\"expectedVersion\":0,\"status\":\"UNKNOWN\"}"), 400, "VALIDATION_FAILED");
+    }
+
+    @Test void inactiveTenantCannotServeCustomerScopedPortalReads() throws Exception {
+        var customer = create("/customers", "{\"name\":\"Own Customer\"}");
+        onlyRole("CUSTOMER_DISPATCHER", UUID.fromString(customer.get("id").toString()));
+        sql("UPDATE tenants SET status='DISABLED' WHERE id=?", tenant);
+        assertThat(get("/customers").statusCode()).isEqualTo(403);
+        assertThat(get("/customers/"+customer.get("id")).statusCode()).isEqualTo(403);
+    }
+
+    @Test void portalMembershipPublishesTenantStateAndCustomerRolesWithoutTenantCapabilities() throws Exception {
+        var c = create("/customers", "{\"name\":\"Portal Customer\"}"); onlyRole("CUSTOMER_DISPATCHER", UUID.fromString(c.get("id").toString()));
+        var me = request("GET", "/api/v1/me", null, TOKEN, true);
+        assertThat(me.statusCode()).isEqualTo(200);
+        assertThat(JsonPath.<String>read(me.body(), "$.memberships[0].tenantStatus")).isEqualTo("ACTIVE");
+        assertThat(JsonPath.<List<?>>read(me.body(), "$.memberships[0].capabilities")).isEmpty();
+        assertThat(JsonPath.<String>read(me.body(), "$.memberships[0].roles[0].customerId")).isEqualTo(c.get("id"));
+        assertThat(get("/customers/"+c.get("id")).statusCode()).isEqualTo(200);
+        sql("UPDATE tenants SET status='DISABLED' WHERE id=?", tenant);
+        var inactive = request("GET", "/api/v1/me", null, TOKEN, true);
+        assertThat(JsonPath.<String>read(inactive.body(), "$.memberships[0].tenantStatus")).isEqualTo("DISABLED");
+        problem(get("/customers/"+c.get("id")),403,"TENANT_ACCESS_DENIED");
+    }
+    @ParameterizedTest @ValueSource(strings={"/drivers","/tractors","/settings","/alerts","/dispatch/board"})
+    void customerRoleCannotOpenInternalDirectoriesOrAlerts(String path) throws Exception {
+        var c = create("/customers", "{\"name\":\"Portal Customer\"}"); onlyRole("CUSTOMER_DISPATCHER", UUID.fromString(c.get("id").toString()));
+        assertThat(get(path).statusCode()).as(path).isEqualTo(403);
+    }
+    @Test void knownForeignAndInventedCustomerHaveTheSameGenericDeniedDetail() throws Exception {
+        var a = create("/customers", "{\"name\":\"Assigned\"}");var b = create("/customers", "{\"name\":\"Secret other business\"}");
+        onlyRole("CUSTOMER_DISPATCHER", UUID.fromString(a.get("id").toString()));
+        var known=get("/customers/"+b.get("id"));var invented=get("/customers/"+UUID.randomUUID());
+        problem(known,403,"CUSTOMER_SCOPE_DENIED");problem(invented,403,"CUSTOMER_SCOPE_DENIED");
+        assertThat(JsonPath.<String>read(known.body(),"$.detail")).isEqualTo(JsonPath.read(invented.body(),"$.detail"));
+        assertThat(known.body()+invented.body()).doesNotContain("Secret other business","Assigned");
     }
 
     private void associate(Map<String, Object> c, Map<String, Object> s) throws Exception {

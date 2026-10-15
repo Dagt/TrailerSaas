@@ -47,10 +47,10 @@ class MembershipDirectory {
                     ? java.util.Arrays.stream(com.trailersaas.identity.Capability.values())
                         .filter(capability -> roles.get(row.membershipId()).stream().anyMatch(role ->
                             role.scopeType() == RoleScopeType.TENANT && RoleCapabilities.grants(role.roleCode(),capability)))
-                        .map(Enum::name).toList() : List.of())).toList();
+                        .map(Enum::name).toList() : List.of(), row.tenantStatus())).toList();
     }
 
     record MembershipSummary(UUID tenantId, String tenantName, MembershipStatus status, List<RoleSummary> roles,
-            List<String> capabilities) {}
+            List<String> capabilities, String tenantStatus) {}
     record RoleSummary(RoleCode roleCode, RoleScopeType scopeType, UUID customerId) {}
 }

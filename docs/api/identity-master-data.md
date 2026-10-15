@@ -712,3 +712,21 @@ are omitted. Scoped readers conservatively receive reason/tripId/tripStopId NULL
 and no location-change IDs; Customer-owned Location references outside scope are
 redacted from detail/list/timeline. Foreign/missing/out-of-scope Trailers are 404.
 Generic Audit remains #61; evidence remains #49/#52/#53, Customer Portal #58+.
+
+
+## Issue #58 implemented Customer shell boundary
+
+/me additionally returns each membership's current persisted tenantStatus. This
+optional additive v1 field is a navigation hint, not an access grant. Membership
+capabilities remain Tenant-only and may be empty for valid Customer roles.
+Customer-scoped Customer list/detail now explicitly require the actual Tenant
+ACTIVE in addition to fresh membership/capability/scope. Tenant-wide administrative
+bootstrap semantics are unchanged. No new route, capability, migration or Customer
+role grant is added. Inactive/unassigned Tenant context fails with generic 403
+TENANT_ACCESS_DENIED; foreign Customer IDs retain generic CUSTOMER_SCOPE_DENIED.
+
+The portal reads explicit assigned Customer IDs through the existing detail API,
+including for dual-role users, without downloading a Tenant-wide directory and
+filtering it. Each selected Customer is revalidated before its protected routes.
+Server authorization remains authoritative; /me roles only suggest navigation.
+See [portal architecture and evidence](../web/issue-58-customer-portal-shell.md).

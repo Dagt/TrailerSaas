@@ -37,11 +37,11 @@ class MembershipDirectoryTests {
         var customer = UUID.randomUUID();
         when(repository.forUser(userId)).thenReturn(List.of(
                 new MembershipDirectoryRow(tenant, "Tenant", membership, MembershipStatus.DISABLED,
-                        RoleCode.CUSTOMER_DISPATCHER, RoleScopeType.CUSTOMER, customer),
+                        RoleCode.CUSTOMER_DISPATCHER, RoleScopeType.CUSTOMER, customer, "ACTIVE"),
                 new MembershipDirectoryRow(tenant, "Tenant", membership, MembershipStatus.DISABLED,
-                        RoleCode.DRIVER, RoleScopeType.TENANT, null),
+                        RoleCode.DRIVER, RoleScopeType.TENANT, null, "ACTIVE"),
                 new MembershipDirectoryRow(UUID.randomUUID(), "Roleless", UUID.randomUUID(),
-                        MembershipStatus.SUSPENDED, null, null, null)));
+                        MembershipStatus.SUSPENDED, null, null, null, "ACTIVE")));
         var result = directory.forUser(user);
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().status()).isEqualTo(MembershipStatus.DISABLED);
@@ -56,7 +56,7 @@ class MembershipDirectoryTests {
     void directoryReadsAgainInsteadOfCachingMembershipsInPrincipal() {
         when(repository.forUser(userId)).thenReturn(List.of(), List.of(
                 new MembershipDirectoryRow(UUID.randomUUID(), "Added", UUID.randomUUID(),
-                        MembershipStatus.ACTIVE, null, null, null)));
+                        MembershipStatus.ACTIVE, null, null, null, "ACTIVE")));
         assertThat(directory.forUser(user)).isEmpty();
         assertThat(directory.forUser(user)).hasSize(1);
         verify(repository, times(2)).forUser(userId);

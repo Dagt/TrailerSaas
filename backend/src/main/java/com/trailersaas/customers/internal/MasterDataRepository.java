@@ -18,6 +18,11 @@ class MasterDataRepository {
                 .findFirst().orElseThrow(MasterDataFailure::missing);
     }
 
+    void requireActiveTenant(UUID tenant) {
+        if (((Number) em.createNativeQuery("select count(*) from tenants where id=:tenant and status='ACTIVE'")
+                .setParameter("tenant", tenant).getSingleResult()).longValue() != 1) { throw MasterDataFailure.tenantDenied(); }
+    }
+
     List<CustomerEntity> customers(UUID tenant, CustomerAccessScope scope) {
         var query = em.createQuery("select c from CustomerEntity c where c.tenantId=:tenant"
                 + (scope.tenantWide() ? "" : " and c.id in :customers") + " order by c.name, c.id", CustomerEntity.class)

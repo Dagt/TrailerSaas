@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 interface MembershipDirectoryRepository extends Repository<TenantMembershipEntity, UUID> {
     @Query("""
             select new com.trailersaas.identity.internal.MembershipDirectoryRow(
-                t.id, t.name, m.id, m.status, r.roleCode, r.scopeType, r.customerId)
+                t.id, t.name, m.id, m.status, r.roleCode, r.scopeType, r.customerId, t.status)
             from TenantMembershipEntity m
             join TenantEntity t on t.id = m.tenantId
             left join RoleAssignmentEntity r on r.tenantId = m.tenantId and r.membershipId = m.id

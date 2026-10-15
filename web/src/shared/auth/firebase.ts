@@ -11,9 +11,11 @@ export function createFirebaseAuth(configuration: ReturnType<typeof readWebEnvir
   let instance: Promise<{ current: import('firebase/auth').Auth; sdk: FirebaseSdk['sdk'] }> | undefined
   const auth = async () => {
     if (!configuration) throw new Error('Web sign-in configuration is unavailable.')
-    instance ??= loader().then(({ app, sdk }) => {
+    instance ??= loader().then(async ({ app, sdk }) => {
       const firebaseApp = app.getApps().find(existing => existing.name === 'trailersaas-web') ?? app.initializeApp(configuration, 'trailersaas-web')
-      return { current: sdk.getAuth(firebaseApp), sdk }
+      const current = sdk.getAuth(firebaseApp)
+      await sdk.setPersistence(current, sdk.inMemoryPersistence)
+      return { current, sdk }
     })
     return instance
   }
