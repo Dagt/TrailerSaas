@@ -48,3 +48,13 @@ YardCheckReconciliationPostgresTests 20 passed, zero failures/errors/skipped.
 The first Draft run #150 (38658689617) executed CI Policy successfully, skipped
 all four full suites and correctly left Full CI deferred/non-passing. No full
 suite was run on that checkpoint. This is observed GitHub evidence, not simulation.
+
+## Checkpoint D evidence
+
+Inbox/list/detail use fresh ALERT_VIEW plus related Trailer scope and ACTIVE
+Tenant, closed filters, bounded keyset pagination and minimized resource/context
+projections. SQL lifecycle preserves original V24 facts and requires a recovered
+AT_LOCATION projection before resolution; the Alert never repairs the Trailer.
+ALERT_ACKNOWLEDGE / ALERT_RESOLVE are separate, currently unassigned capabilities
+pending owner clarification, never inferred from ALERT_VIEW. Focused inbox/domain
+tests 17 plus exhaustive role mapping 6 passed (zero failures/errors/skipped).
