@@ -13,10 +13,12 @@ when those boundaries change. Do not run full suites after each checkpoint.
 
 Only once code, focused regressions, security, migrations and docs are complete,
 push a clean candidate and mark Ready. Official PR events opened/synchronize/
-reopened/ready_for_review/edited run the four independent full jobs when not
+reopened/ready_for_review run the four independent full jobs when not
 Draft. converted_to_draft invalidates the aggregate and cancels obsolete runs.
-edited includes base retargeting; it may also revalidate a Ready description edit.
-Finish PR-body edits before Ready to avoid unnecessary duplicate full runs.
+Description edits do not trigger CI. After changing/retargeting/updating the base,
+return to Draft, verify the new integrable revision and return Ready (or publish
+the required branch update, triggering synchronize). Required up-to-date branch
+protection must prevent reuse of an old base's checks. Recheck base/head after CI.
 Concurrency retains PR-ref grouping/cancellation. Checkout keeps GitHub's current
 test merge ref. Verify its parents and tree against latest head/base before review.
 On a full failure, return to Draft, preserve logs, fix with focused tests, publish

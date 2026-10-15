@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { assertFull, runFull, fullJobs, fullCondition } from './ci-policy.mjs'
 
-for (const action of ['opened', 'synchronize', 'reopened', 'ready_for_review', 'edited']) {
+for (const action of ['opened', 'synchronize', 'reopened', 'ready_for_review']) {
   test(`${action}: Draft never runs full; Ready runs full`, () => {
     assert.equal(runFull('pull_request', { action, pull_request: { draft: true } }), false)
     assert.equal(runFull('pull_request', { action, pull_request: { draft: false } }), true)
@@ -30,7 +30,8 @@ test('workflow preserves job names, conditions, test commands and current merge 
   for (const [id, name] of Object.entries({backend: 'Backend', mobile: 'Mobile', web: 'Web', openapi: 'OpenAPI'})) {
     assert.ok(yaml.includes(`  ${id}:\n    name: ${name}\n    if: ${fullCondition}`))
   }
-  for (const action of ['opened', 'synchronize', 'reopened', 'ready_for_review', 'converted_to_draft', 'edited']) assert.ok(yaml.includes(action))
+  for (const action of ['opened', 'synchronize', 'reopened', 'ready_for_review', 'converted_to_draft']) assert.ok(yaml.includes(action))
+  assert.ok(!yaml.includes('edited')) // PR-body evidence updates must not repeat the full suites.
   for (const command of ['clean verify', 'flutter pub get --enforce-lockfile', 'dart run build_runner build', 'flutter analyze --fatal-infos', 'flutter test --reporter expanded', 'npm run typecheck', 'npm run lint', 'npm run build', 'npm run validate', 'npm test']) assert.ok(yaml.includes(command))
   assert.ok(yaml.includes('cancel-in-progress: true'))
   assert.ok(yaml.includes('needs: [policy, backend, mobile, web, openapi]'))

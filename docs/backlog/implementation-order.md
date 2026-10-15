@@ -103,9 +103,13 @@ These streams may overlap according to each Issue's explicit dependencies.
 #53 is merged/complete via [PR #100](https://github.com/Dagt/TrailerSaas/pull/100).
 #43/#45/#49 consume its synchronous policies and still own their respective
 operational workflows. #54 is complete via PR #101; #43 is complete via PR #102; #45 is the current bounded Road implementation;
-#55 implements the PostgreSQL outbox/worker foundation on its bounded review branch;
+#55 is merged via PR #109 (`ec7c73f4ebac0f9dd8be52e2d24d9a5f67ccc4ef`);
 see [architecture and acceptance](../backend/issue-55-postgresql-outbox-worker.md).
-#56 delivery and #57 operational detection remain unimplemented.
+#56 implements Alerts/global devices/FCM and the expressly authorized Draft/Ready
+CI process on [PR #110](https://github.com/Dagt/TrailerSaas/pull/110); see
+[acceptance and policy limits](../backend/issue-56-alerts-fcm-delivery.md).
+#57 operational detection remains unimplemented. OQ-059 recipient policy and
+write-role grants are not inferred from read access.
 
 ## Wave 4 — Mobile synchronization foundation
 
@@ -129,7 +133,7 @@ Validate full online and offline sequences on real devices.
 - #48 Yard Move — merged via PR #105 (baseline `82a48132b9153aaa6445ac890040e219f82a24f3`)
 - #49 discrepancy/OOS — merged via [PR #106](https://github.com/Dagt/TrailerSaas/pull/106), baseline `7d2a9d7a1cbaea002f8a051e03658348554c307d`
 - #50 Yard Check backend — merged via [PR #107](https://github.com/Dagt/TrailerSaas/pull/107), baseline `9446576d6d9a26a1f8f4f11005ba90a360ed0f95`
-- #51 Yard Check mobile/offline — current bounded implementation; [acceptance and final CI gates](../mobile/issue-51-yard-check-mobile-offline.md), no merge
+- #51 Yard Check mobile/offline — merged via PR #108; [acceptance and final CI gates](../mobile/issue-51-yard-check-mobile-offline.md)
 
 Validate snapshot behavior and physical-state conflicts carefully.
 
