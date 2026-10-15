@@ -34,6 +34,7 @@ class StaleDetectorPostgresTests extends JobsFixture {
  @Autowired StaleDetectorTestAccess.Harness scans;
  @Autowired DeliveryTestConfiguration.Probe push;
  @Autowired TrailerMovementProjection movements;
+ @Autowired io.micrometer.core.instrument.MeterRegistry meters;
  @MockitoBean FirebaseTokenVerifier verifier;
  @Value("${local.server.port}")int port;
  UUID user,trailer,location;
@@ -54,7 +55,7 @@ class StaleDetectorPostgresTests extends JobsFixture {
   var f=new TrailerFixtures(flyway);var id=f.trailer(owner,"Stale-"+UUID.randomUUID(),designated);
   db.execute("update trailers set location_state='AT_LOCATION',current_location_id=?,last_known_location_id=?,last_seen_at=? where id=?",owner.equals(tenant)?location:f.location(owner),owner.equals(tenant)?location:null,java.sql.Timestamp.from(Instant.now().minus(age)),id);return id;
  }
- DurableJobWorker detectorWorker(UUID owner){return worker(settings(List.of(owner)),new io.micrometer.core.instrument.simple.SimpleMeterRegistry());}
+ DurableJobWorker detectorWorker(UUID owner){return worker(new JobsProperties(true,List.of(owner),Duration.ofSeconds(5),4,4,Duration.ofSeconds(5),Duration.ofSeconds(15),5,Duration.ofSeconds(1),Duration.ofSeconds(2)),new io.micrometer.core.instrument.simple.SimpleMeterRegistry());}
  void drain(UUID owner)throws Exception{
   var w=detectorWorker(owner);for(int i=0;i<40;i++){
    long pending=(Long)db.value("select count(*) from outbox_jobs where tenant_id=? and status in ('PENDING','PROCESSING')",owner);
@@ -124,5 +125,80 @@ class StaleDetectorPostgresTests extends JobsFixture {
   assertThat(db.value("select payload::text from outbox_jobs where tenant_id=? and job_type='ALERT_FCM'",tenant).toString()).doesNotContain("stale-private-test-token");
  }
  void executeClaim(JobClaim c){executeTyped(registry.decode(c.type(),c.payload()),c);}
+ @Test void failedTenantCannotBlockAnotherTenantAndRecoversThroughExistingRetry()throws Exception{
+  asset(other,customer(other),Duration.ofHours(80));assertThat(scans.schedule(tenant)).isTrue();assertThat(scans.schedule(other)).isTrue();
+  db.execute("delete from tenant_settings where tenant_id=?",tenant);detectorWorker(tenant).pollOnce();
+  assertThat(alerts()).isZero();drain(other);assertThat(db.value("select count(*) from alerts where tenant_id=?",other)).isEqualTo(1L);
+  db.execute("insert into tenant_settings values(?,72,null,now(),now(),0)",tenant);
+  var id=(UUID)db.value("select job_id from stale_trailer_scans where tenant_id=?",tenant);due(id);drain(tenant);assertThat(alerts()).isEqualTo(1L);
+ }
+ @Test void technicalMetricsReflectCommittedEffectsWithoutIdentifierLabels()throws Exception{
+  double before=meters.find("stale.detector.alerts.created").counter()==null?0:meters.get("stale.detector.alerts.created").counter().count();
+  scan();assertThat(meters.get("stale.detector.alerts.created").counter().count()).isEqualTo(before+1);
+  assertThat(meters.get("stale.detector.scan.duration").timer().count()).isPositive();
+  for(var meter:meters.getMeters())if(meter.getId().getName().startsWith("stale.detector."))assertThat(meter.getId().getTags()).isEmpty();
+ }
+ @Test void databaseUniqueIndexRejectsASecondUnresolvedStaleEvenWithValidLiveEvidence()throws Exception{
+  assertThat(scans.schedule(tenant)).isTrue();var c=store.claim(tenant,1,Duration.ofSeconds(15)).claims().getFirst();executeClaim(c);
+  // Retain the live claim and explicitly restore this technical test context to
+  // exercise the index rather than merely the normal handler's SELECT-before-write.
+  transactions.execute(tenant,()->jdbc.update("update stale_trailer_scans set in_progress=true where tenant_id=?",tenant));
+  assertThatThrownBy(()->store.fencedTransaction(c,()->jdbc.update("""
+   insert into alerts(id,tenant_id,alert_type,severity,status,related_entity_type,related_entity_id,message_data,created_at,
+    origin_actor_type,detector_job_id,detected_last_seen_at,detected_threshold_hours)
+   select ?,tenant_id,alert_type,severity,'OPEN',related_entity_type,related_entity_id,message_data,created_at,
+    origin_actor_type,detector_job_id,detected_last_seen_at,detected_threshold_hours from alerts where tenant_id=?
+   """,UUID.randomUUID(),tenant))).isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
+  assertThat(alerts()).isEqualTo(1L);
+ }
+ @Test void busyPhysicalProjectionRetriesWithoutSkippingTrailerThenUsesCommittedObservation()throws Exception{
+  assertThat(scans.schedule(tenant)).isTrue();var entered=new java.util.concurrent.CountDownLatch(1);var release=new java.util.concurrent.CountDownLatch(1);
+  try(var pool=java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()){
+   var move=pool.submit(()->transactions.execute(tenant,()->{var result=movements.depart(tenant,new TrailerMovementProjection.Departure(new TrailerMovementProjection.Target(trailer,0),context(Instant.now().minusSeconds(1))));entered.countDown();try{if(!release.await(10,java.util.concurrent.TimeUnit.SECONDS))throw new IllegalStateException("test deadline");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IllegalStateException(e);}return result;}));
+   assertThat(entered.await(5,java.util.concurrent.TimeUnit.SECONDS)).isTrue();try{detectorWorker(tenant).pollOnce();}finally{release.countDown();}move.get();
+  }
+  var id=(UUID)db.value("select job_id from stale_trailer_scans where tenant_id=?",tenant);assertThat(status(id)).isEqualTo("PENDING");assertThat(db.value("select cursor_id from stale_trailer_scans where tenant_id=?",tenant)).isNull();due(id);drain(tenant);assertThat(alerts()).isZero();
+ }
+ @Test void committedBatchSurvivesLostAckAndExpiredLeaseWithoutDuplicatingAlert()throws Exception{
+  assertThat(scans.schedule(tenant)).isTrue();var c=store.claim(tenant,1,Duration.ofSeconds(2)).claims().getFirst();executeClaim(c);
+  assertThat(alerts()).isEqualTo(1L);assertThat(status(c.id())).isEqualTo("PROCESSING");expired(c);drain(tenant);
+  assertThat(status(c.id())).isEqualTo("SUCCEEDED");assertThat(alerts()).isEqualTo(1L);assertThat(store.succeed(c)).isFalse();
+ }
+ @Test void failedContinuationWriteRollsBackAlertsAndCursorThenExistingWorkerRetries()throws Exception{
+  for(int i=0;i<3;i++)asset(tenant,customer,Duration.ofHours(80));assertThat(scans.schedule(tenant)).isTrue();var c=store.claim(tenant,1,Duration.ofSeconds(15)).claims().getFirst();
+  db.execute("revoke insert on outbox_jobs from "+RUNTIME_USERNAME);
+  try{assertThatThrownBy(()->executeClaim(c)).isInstanceOf(org.springframework.dao.DataAccessException.class);}
+  finally{db.execute("grant insert on outbox_jobs to "+RUNTIME_USERNAME);}
+  assertThat(alerts()).isZero();assertThat(db.value("select cursor_id from stale_trailer_scans where tenant_id=?",tenant)).isNull();
+  assertThat(store.fail(c,new JobFailure(JobFailure.Code.HANDLER_RETRYABLE,true),Duration.ofSeconds(1))).isEqualTo(OutboxStore.Outcome.RETRY);due(c.id());drain(tenant);assertThat(alerts()).isEqualTo(4L);
+ }
+ @Test void deadJobIsNotResurrectedAndNextAuthorizedScheduleResumesDurableCursor()throws Exception{
+  assertThat(scans.schedule(tenant)).isTrue();var c=store.claim(tenant,1,Duration.ofSeconds(15)).claims().getFirst();
+  assertThat(store.fail(c,new JobFailure(JobFailure.Code.HANDLER_PERMANENT,false),Duration.ofSeconds(1))).isEqualTo(OutboxStore.Outcome.DEAD);
+  transactions.execute(tenant,()->jdbc.update("update stale_trailer_scans set next_scan_at=clock_timestamp() where tenant_id=?",tenant));assertThat(scans.schedule(tenant)).isTrue();
+  assertThat(db.value("select job_id from stale_trailer_scans where tenant_id=?",tenant)).isNotEqualTo(c.id());drain(tenant);assertThat(alerts()).isEqualTo(1L);assertThat(status(c.id())).isEqualTo("DEAD");
+ }
+ @Test void recentRealMovementBetweenEnqueueAndClaimCannotCreateAnObsoleteOccurrence()throws Exception{
+  assertThat(scans.schedule(tenant)).isTrue();transactions.execute(tenant,()->movements.depart(tenant,new TrailerMovementProjection.Departure(new TrailerMovementProjection.Target(trailer,0),context(Instant.now().minusSeconds(1)))));
+  drain(tenant);assertThat(alerts()).isZero();
+ }
+ @Test void currentTenantDisabledAfterScheduleCannotCreateAlertsOrBorrowAnotherTenant()throws Exception{
+  assertThat(scans.schedule(tenant)).isTrue();db.execute("update tenants set status='DISABLED' where id=?",tenant);drain(tenant);assertThat(alerts()).isZero();
+  var foreign=db.tenant();assertThat(scans.schedule(foreign)).isFalse();
+  assertThat(transactions.execute(other,()->jdbc.queryForList("select * from stale_trailer_scans"))).isEmpty();
+  assertThat(transactions.execute(other,()->jdbc.queryForObject("select lock_stale_tenant(?,?)",Boolean.class,tenant,UUID.randomUUID()))).isFalse();
+  assertThat(jdbc.queryForObject("select has_table_privilege(current_user,'tenants','UPDATE')",Boolean.class)).isFalse();
+ }
+ @Test void acceptedMaximumThresholdDoesNotOverflowPostgresqlDateArithmetic()throws Exception{
+  db.execute("update tenant_settings set stale_trailer_threshold_hours=? where tenant_id=?",Integer.MAX_VALUE,tenant);db.execute("update trailers set last_seen_at='0001-01-01' where id=?",trailer);scan();assertThat(alerts()).isZero();
+ }
+ @Test void deactivationOrCorruptedObservationCannotSilentlyResolveExistingCondition()throws Exception{
+  scan();var id=alert();db.execute("update trailers set active=false,updated_at=clock_timestamp() where id=?",trailer);nextCycle();assertThat(db.value("select status from alerts where id=?",id)).isEqualTo("OPEN");
+  db.execute("update trailers set active=true,last_seen_at=clock_timestamp()+interval '1 day' where id=?",trailer);nextCycle();assertThat(db.value("select status from alerts where id=?",id)).isEqualTo("OPEN");
+ }
+ @Test void independentRuntimeWorkerCannotReadOrClaimAnotherTenantScan()throws Exception{
+  assertThat(scans.schedule(tenant)).isTrue();assertThat(store.claim(other,5,Duration.ofSeconds(15)).claims()).isEmpty();
+  assertThat(transactions.execute(other,()->jdbc.queryForList("select * from alerts"))).isEmpty();drain(tenant);assertThat(alerts()).isEqualTo(1L);
+ }
  <P>void executeTyped(JobRegistry.Decoded<P>d,JobClaim c){d.handler().execute(new JobExecution<>(c.id(),c.tenantId(),c.attempt(),c.aggregate(),d.payload(),new JobExecution.TenantWork(){public <T>T execute(java.util.function.Supplier<T> work){return store.fencedTransaction(c,work);}}));}
 }
