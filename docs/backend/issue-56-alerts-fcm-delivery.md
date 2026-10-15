@@ -1,0 +1,39 @@
+# Issue #56 — Alerts, global devices and FCM
+
+## Verified baseline / checkpoint A
+
+Base: `ec7c73f4ebac0f9dd8be52e2d24d9a5f67ccc4ef` (PR #109 merged;
+#24 and #55 closed; #56 open). Main CI #149 completed successfully. V25 is
+the latest migration; V1–V25 must remain unchanged. Branch:
+`issue-56-alerts-fcm-optimized-ci`.
+
+Accepted contracts: ADR-010/011/013/022, schema hardening B/O/Q,
+Alert state machine and alerts API. Existing V24 Missing Alert creation stays
+synchronous and atomic with reconciliation. Existing V25 worker/publisher are
+reused. Global User registrations must not acquire a Tenant column.
+
+## Acceptance matrix (implementation evidence will replace pending entries)
+
+| Boundary | Required evidence | State |
+|---|---|---|
+| Alerts lifecycle | Versioned acknowledge/resolve, preserved history, actual recovered Trailer | Pending |
+| Alert visibility | Fresh membership/capability/resource/Customer checks, bounded inbox | Pending |
+| V26 | Compatible V24/V25 upgrade, constraints, ownership/RLS, historical hashes | Pending |
+| Global devices | Immutable User binding, safe rotation/transfer, no cross-User reads | Pending |
+| Delivery | Registered V25 job, minimal references, fresh authorization, per-device receipts | Pending |
+| Mobile | Explicit permission, registration/refresh/logout, fenced callbacks | Pending |
+| Web | Inbox/detail/actions, capabilities, versions and Tenant fencing | Pending |
+| CI | Draft FAST, final Ready FULL, fail-closed full gate and final integrable SHA | Pending |
+
+OQ-059 remains open. No automatic recipients or notify-all rule is approved.
+Provide an internal validated recipient boundary; keep current Alerts in the
+inbox without implicitly subscribing any role. Write-capability role grants
+require clarification; ALERT_VIEW alone does not authorize mutation.
+
+## Repository protection audit
+
+Branch-protection GET returned `403 Resource not accessible by integration`.
+Rulesets GET returned `403 Upgrade to GitHub Pro or make this repository public`.
+The integration cannot configure/verify required checks. Keep main's full push
+validation; document exact owner configuration rather than claim protection.
+No merge, protection bypass or unrelated #57 implementation is authorized.
