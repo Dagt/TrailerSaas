@@ -43,4 +43,15 @@ class StaleSchemaPostgresTests extends PostgresIntegrationTest {
   assertThat(jdbc.queryForObject("select exists(select 1 from pg_proc, lateral aclexplode(proacl) acl where proname='lock_stale_tenant' and acl.grantee=0)",Boolean.class)).isFalse();
   assertThat(jdbc.queryForObject("select lock_stale_tenant(?,?)",Boolean.class,UUID.randomUUID(),UUID.randomUUID())).isFalse();
  }
+ @Test void compositeJobForeignKeyRejectsAVisibleOwnCursorReferencingAnotherTenant()throws Exception{
+  var db=new EquipmentFixtures(flyway);var a=db.tenant();var b=db.tenant();var job=UUID.randomUUID();
+  transactions.execute(b,()->jdbc.update("insert into outbox_jobs(id,tenant_id,job_type,aggregate_type,aggregate_id,payload,status,available_at,max_attempts) values(?,?,'STALE_SCAN','TENANT',?,'{\"schemaVersion\":1,\"data\":{}}','PENDING',clock_timestamp(),5)",job,b,b));
+  // This insert owns Tenant A and passes its RLS policy. The composite FK, not
+  // a foreign-row SELECT or caller-visible directory, must reject the reference.
+  assertThatThrownBy(()->transactions.execute(a,()->jdbc.update("insert into stale_trailer_scans(tenant_id,job_id) values(?,?)",a,job)))
+   .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+  assertThat(transactions.execute(a,()->jdbc.queryForObject("select count(*) from stale_trailer_scans",Long.class))).isZero();
+  assertThat(transactions.execute(a,()->jdbc.queryForObject("select count(*) from outbox_jobs",Long.class))).isZero();
+  assertThat(jdbc.queryForObject("select count(*) from stale_trailer_scans",Long.class)).isZero();
+ }
 }

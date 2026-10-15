@@ -258,9 +258,18 @@ Final focused checkpoint: 105 Backend tests passed, zero failures/errors/skipped
 `StaleConditionTests`, `TenantRlsPostgresTests`, `NotificationSchemaPostgresTests`,
 `AlertInboxPostgresTests`, `OutboxSchemaPostgresTests`, `TrailerSaasApplicationTests`).
 Separate Modulith validation: 2 passed; CI Policy: 12 passed. The new stale tests
-are 26 real worker/DB/API tests, 3 schema/security tests, 4 deterministic condition/
+are 26 real worker/DB/API tests, 4 schema/security tests, 4 deterministic condition/
 configuration tests and 1 actual historical upgrade test. A test setup initially
 used a 15s lease with the existing 3s expiry wait; changing that new fixture lease
 to 1s made the intended expiry test deterministic without weakening any timeout,
 assertion or production lease policy. The isolated regression and expanded suite
 both passed. No implementation tests were removed, disabled or skipped.
+
+
+Final security coverage refinement: an additional real runtime-role test inserts
+an own-Tenant cursor referencing a foreign-Tenant job. The row passes its own RLS
+policy but fails the composite FK with DataIntegrityViolationException; no cursor
+commits and the foreign job remains invisible. This is distinct from rejecting a
+foreign-Tenant row via RLS. The PR returned to Draft before publication and the
+new final candidate must receive its own complete Full CI; earlier checks do not
+approve the changed revision.
