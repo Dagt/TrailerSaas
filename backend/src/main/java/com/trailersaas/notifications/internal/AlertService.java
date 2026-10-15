@@ -14,9 +14,12 @@ class AlertService {
  final JdbcTemplate jdbc; final TenantAuthorization authorization; final TrailerAccessPolicy trailers;
  AlertService(JdbcTemplate jdbc,TenantAuthorization authorization,TrailerAccessPolicy trailers){this.jdbc=jdbc;this.authorization=authorization;this.trailers=trailers;}
  record Resource(UUID id,String operationalNumber,UUID designatedCustomerId,String locationState,UUID currentLocationId){}
+ record Detection(Instant detectedAt,Instant lastSeenAt,int thresholdHours,double elapsedHours,UUID jobId){}
+ record ResolutionEvidence(Instant lastSeenAt,int thresholdHours,UUID jobId){}
  record Alert(UUID id,UUID tenantId,String alertType,String severity,String status,long version,Instant createdAt,
   UUID acknowledgedBy,Instant acknowledgedAt,UUID resolvedBy,Instant resolvedAt,String resolutionReason,
-  String relatedEntityType,Resource relatedResource,Map<String,String> context,Map<String,Long> pushSummary){}
+  String relatedEntityType,Resource relatedResource,Map<String,String> context,Map<String,Long> pushSummary,
+  String originActorType,String resolutionActorType,Detection detection,ResolutionEvidence resolutionEvidence){}
  record Page(List<Alert> items,String nextCursor){}
  static final String SELECT="""
   SELECT a.*,t.operational_number,t.designated_customer_id,t.location_state,t.current_location_id
@@ -36,7 +39,7 @@ class AlertService {
   if(limit<1||limit>100)throw AlertFailure.invalid();
   var sql=new StringBuilder(SELECT);var args=new ArrayList<Object>();args.add(tenant);
   scope(sql,args,scope);scope(sql,args,resourceScope);
-  for(var entry:Map.of("status",Set.of("OPEN","ACKNOWLEDGED","RESOLVED"),"alertType",Set.of("TRAILER_MISSING"),"severity",Set.of("WARNING"),"relatedEntityType",Set.of("TRAILER")).entrySet()){
+  for(var entry:Map.of("status",Set.of("OPEN","ACKNOWLEDGED","RESOLVED"),"alertType",Set.of("TRAILER_MISSING","STALE_TRAILER"),"severity",Set.of("WARNING"),"relatedEntityType",Set.of("TRAILER")).entrySet()){
    var value=q.get(entry.getKey());if(value!=null){if(!entry.getValue().contains(value))throw AlertFailure.invalid();sql.append(" AND a.").append(switch(entry.getKey()){case "alertType"->"alert_type";case "relatedEntityType"->"related_entity_type";default->entry.getKey();}).append("=?");args.add(value);}
   }
   Instant from=time(q.get("from")),to=time(q.get("to"));if(from!=null&&to!=null&&from.isAfter(to))throw AlertFailure.invalid();
@@ -63,12 +66,21 @@ class AlertService {
   keys(body,resolve?Set.of("expectedVersion","reason"):Set.of("expectedVersion"));
   if(!(body.get("expectedVersion") instanceof Number n)||!Set.of(Integer.class,Long.class).contains(n.getClass())||n.longValue()<0)throw AlertFailure.invalid();
   String reason=null;if(resolve){if(!(body.get("reason") instanceof String s)||s.isBlank()||s.length()>4000)throw AlertFailure.invalid();reason=s.trim();}
+  // Consistent settings -> Trailer -> Alert order with the detector. The lock is
+  // taken before checking the version/state; no reverse physical/Alert lock cycle.
+  Integer hours=resolve&&"STALE_TRAILER".equals(before.alertType())?jdbc.queryForObject("select stale_trailer_threshold_hours from tenant_settings where tenant_id=? for share",Integer.class,tenant):null;
+  var physical=resolve?jdbc.queryForList("select active,location_state,current_location_id,last_seen_at,isfinite(last_seen_at) as finite from trailers where tenant_id=? and id=? for share",tenant,before.relatedResource().id()):List.<Map<String,Object>>of();
   var states=jdbc.queryForList("select status,version from alerts where tenant_id=? and id=? for update",tenant,id);if(states.isEmpty())throw AlertFailure.missing();
   var state=states.getFirst();if(((Number)state.get("version")).longValue()!=n.longValue())throw AlertFailure.stale();
   if(resolve?!Set.of("OPEN","ACKNOWLEDGED").contains(state.get("status")):!"OPEN".equals(state.get("status")))throw AlertFailure.state();
   if(resolve){
-   var recovered=jdbc.queryForList("select id from trailers where tenant_id=? and id=? and active and location_state='AT_LOCATION' and current_location_id is not null for share",tenant,before.relatedResource().id());
-   if(recovered.isEmpty())throw AlertFailure.state();
+   if(physical.isEmpty()||!Boolean.TRUE.equals(physical.getFirst().get("active")))throw AlertFailure.state();
+   var fact=physical.getFirst();
+   if(hours==null){if(!"AT_LOCATION".equals(fact.get("location_state"))||fact.get("current_location_id")==null)throw AlertFailure.state();}
+   else{
+    var seen=(java.sql.Timestamp)fact.get("last_seen_at");var at=jdbc.queryForObject("select clock_timestamp()",(r,n2)->r.getTimestamp(1).toInstant());
+    if(StaleCondition.evaluate(true,seen==null?null:seen.toInstant(),seen==null||Boolean.TRUE.equals(fact.get("finite")),at,hours)!=StaleCondition.Result.FRESH)throw AlertFailure.state();
+   }
    jdbc.update("update alerts set status='RESOLVED',resolved_by=?,resolved_at=clock_timestamp(),resolution_reason=?,version=version+1 where tenant_id=? and id=?",actor.userId(),reason,tenant,id);
   }else{
    jdbc.update("update alerts set status='ACKNOWLEDGED',acknowledged_by=?,acknowledged_at=clock_timestamp(),version=version+1 where tenant_id=? and id=?",actor.userId(),tenant,id);
@@ -95,7 +107,10 @@ class AlertService {
    """,(org.springframework.jdbc.core.RowCallbackHandler)rs->diagnostics.put(rs.getString(1),rs.getLong(2)),tenant,id);
   return new Alert(id,tenant,r.getString("alert_type"),r.getString("severity"),r.getString("status"),r.getLong("version"),r.getTimestamp("created_at").toInstant(),
    r.getObject("acknowledged_by",UUID.class),instant(r,"acknowledged_at"),r.getObject("resolved_by",UUID.class),instant(r,"resolved_at"),r.getString("resolution_reason"),r.getString("related_entity_type"),
-   new Resource(r.getObject("related_entity_id",UUID.class),r.getString("operational_number"),r.getObject("designated_customer_id",UUID.class),r.getString("location_state"),r.getObject("current_location_id",UUID.class)),Map.copyOf(context),Map.copyOf(diagnostics));
+   new Resource(r.getObject("related_entity_id",UUID.class),r.getString("operational_number"),r.getObject("designated_customer_id",UUID.class),r.getString("location_state"),r.getObject("current_location_id",UUID.class)),Map.copyOf(context),Map.copyOf(diagnostics),
+   r.getString("origin_actor_type"),r.getString("resolution_actor_type"),
+   r.getObject("detector_job_id")==null?null:new Detection(instant(r,"created_at"),instant(r,"detected_last_seen_at"),r.getInt("detected_threshold_hours"),java.time.Duration.between(instant(r,"detected_last_seen_at"),instant(r,"created_at")).toMillis()/3600000.0,r.getObject("detector_job_id",UUID.class)),
+   r.getObject("resolution_job_id")==null?null:new ResolutionEvidence(instant(r,"resolution_last_seen_at"),r.getInt("resolution_threshold_hours"),r.getObject("resolution_job_id",UUID.class)));
  }
  static Instant instant(ResultSet r,String field)throws SQLException{return r.getTimestamp(field)==null?null:r.getTimestamp(field).toInstant();}
 }

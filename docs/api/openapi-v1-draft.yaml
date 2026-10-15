@@ -2570,10 +2570,12 @@ paths:
         related Trailer/Customer scope on every request. Conservative approved
         readers are Tenant Admin and Transport Operations. Closed query fields;
         bounded keyset cursor is a position, never authority. Only implemented
-        TRAILER_MISSING/WARNING occurrences. Push acceptance is not phone delivery.
+        TRAILER_MISSING and STALE_TRAILER occurrences with provisional WARNING.
+        STALE origin/recovery may be SYSTEM; original detection evidence is immutable.
+        Push acceptance is not phone delivery. No production recipient policy is enabled.
       parameters:
         - { name: status, in: query, schema: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED] } }
-        - { name: alertType, in: query, schema: { type: string, enum: [TRAILER_MISSING] } }
+        - { name: alertType, in: query, schema: { type: string, enum: [TRAILER_MISSING, STALE_TRAILER] } }
         - { name: severity, in: query, schema: { type: string, enum: [WARNING] } }
         - { name: relatedEntityType, in: query, schema: { type: string, enum: [TRAILER] } }
         - { name: from, in: query, schema: { type: string, format: date-time } }
@@ -2646,7 +2648,11 @@ paths:
         Fresh ALERT_RESOLVE plus ALERT_VIEW, ACTIVE membership/Tenant and related
         Trailer/Customer scope. Write capability role grants remain unassigned pending
         approval, deny-by-default. OPEN or ACKNOWLEDGED to terminal RESOLVED requires
-        current active Trailer AT_LOCATION with normalized currentLocationId under lock.
+        the current type-specific condition to be recovered under lock. TRAILER_MISSING
+        requires an active Trailer AT_LOCATION with normalized currentLocationId.
+        STALE_TRAILER requires a valid nonfuture last_seen_at within the current Tenant
+        threshold; physical freshness may recover in transit. Scheduled stale recovery
+        is an internal SYSTEM operation with a live scoped durable job, not this human API.
         Never repairs Trailer location. expectedVersion plus nonblank reason required;
         409 STALE_VERSION or INVALID_STATE_TRANSITION leaves all facts unchanged.
         Original Alert facts and acknowledgement are immutable. Server actor/timestamp.
@@ -3143,11 +3149,11 @@ components:
     AlertOccurrence:
       type: object
       additionalProperties: false
-      required: [id, tenantId, alertType, severity, status, version, createdAt, acknowledgedBy, acknowledgedAt, resolvedBy, resolvedAt, resolutionReason, relatedEntityType, relatedResource, context, pushSummary]
+      required: [id, tenantId, alertType, severity, status, version, createdAt, acknowledgedBy, acknowledgedAt, resolvedBy, resolvedAt, resolutionReason, relatedEntityType, relatedResource, context, pushSummary, originActorType, resolutionActorType, detection, resolutionEvidence]
       properties:
         id: { type: string, format: uuid }
         tenantId: { type: string, format: uuid }
-        alertType: { type: string, const: TRAILER_MISSING }
+        alertType: { type: string, enum: [TRAILER_MISSING, STALE_TRAILER] }
         severity: { type: string, const: WARNING }
         status: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED] }
         version: { type: integer, format: int64, minimum: 0 }
@@ -3157,6 +3163,28 @@ components:
         resolvedBy: { type: [string, 'null'], format: uuid }
         resolvedAt: { type: [string, 'null'], format: date-time }
         resolutionReason: { type: [string, 'null'], maxLength: 4000 }
+        originActorType: { type: string, enum: [HUMAN_USER, SYSTEM] }
+        resolutionActorType: { type: [string, 'null'], enum: [HUMAN_USER, SYSTEM, null] }
+        detection:
+          description: Immutable authorized STALE evidence; null for TRAILER_MISSING. Elapsed time is calculated by the server at detection, not from browser clock.
+          type: [object, 'null']
+          additionalProperties: false
+          required: [detectedAt, lastSeenAt, thresholdHours, elapsedHours, jobId]
+          properties:
+            detectedAt: { type: string, format: date-time }
+            lastSeenAt: { type: string, format: date-time }
+            thresholdHours: { type: integer, minimum: 1, maximum: 2147483647 }
+            elapsedHours: { type: number, minimum: 0 }
+            jobId: { type: string, format: uuid }
+        resolutionEvidence:
+          description: Current physical observation and threshold used by SYSTEM stale recovery; null for human resolution. resolvedBy remains null for SYSTEM, never a fictitious User.
+          type: [object, 'null']
+          additionalProperties: false
+          required: [lastSeenAt, thresholdHours, jobId]
+          properties:
+            lastSeenAt: { type: string, format: date-time }
+            thresholdHours: { type: integer, minimum: 1, maximum: 2147483647 }
+            jobId: { type: string, format: uuid }
         relatedEntityType: { type: string, const: TRAILER }
         relatedResource:
           type: object

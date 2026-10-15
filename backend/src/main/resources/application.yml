@@ -65,6 +65,12 @@ logging:
     software.amazon.awssdk: OFF
 
 trailersaas:
+  stale-detector:
+    enabled: false
+    tenants: []
+    poll-interval: 30s
+    scan-interval: 1h
+    batch-size: 100
   notifications:
     fcm:
       enabled: ${FCM_ENABLED:false}

@@ -108,8 +108,11 @@ see [architecture and acceptance](../backend/issue-55-postgresql-outbox-worker.m
 #56 implements Alerts/global devices/FCM and the expressly authorized Draft/Ready
 CI process on [PR #110](https://github.com/Dagt/TrailerSaas/pull/110); see
 [acceptance and policy limits](../backend/issue-56-alerts-fcm-delivery.md).
-#57 operational detection remains unimplemented. OQ-059 recipient policy and
-write-role grants are not inferred from read access.
+#57 implements explicitly enabled per-Tenant durable stale detection, SYSTEM
+Alerts/recovery and API/Web integration on [PR #111](https://github.com/Dagt/TrailerSaas/pull/111);
+see [acceptance/configuration](../backend/issue-57-stale-trailer-detector.md).
+OQ-059 recipients/escalation and human write-role grants remain pending; zero
+automatic production recipients. #58/#61/retention remain deferred.
 
 ## Wave 4 — Mobile synchronization foundation
 
