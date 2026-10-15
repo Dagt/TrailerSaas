@@ -623,3 +623,13 @@ that a Trailer has no evidence. Manifest previews label omitted authorized
 Orders as a bounded preview, never as "No Orders allocated".
 Customer Portal remains #58+, Driver execution #44, Yard Move #48, Alerts #56,
 and generic Audit #61.
+
+
+## Issue #57 implementation note
+
+The existing AlertsWorkspace filters/displays STALE_TRAILER with affected Trailer
+link, original physical observation, applied threshold, elapsed hours **at detection**,
+detection time and SYSTEM origin/recovery. Acknowledgement history stays visible;
+SYSTEM resolution displays no invented User. Operations Dashboard links to this
+same authorized inbox. No parallel board, automatic recipients or promised push
+delivery. Effective capabilities govern write buttons; read access grants no writes.

@@ -1,5 +1,18 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Issue #57 — scheduled stale Trailer detection
+
+V27 adds scoped durable STALE_SCAN v1 batches using the existing #55 worker and
+current Tenant physical threshold (initial 72h). Disabled by default; explicit
+detector Tenants must be an enabled worker subset. Configuration under
+`trailersaas.stale-detector`: enabled/tenants/poll-interval/scan-interval/batch-size,
+defaults false/empty/30s/1h/100. No global Tenant discovery. Row locks, partial
+uniqueness and job fencing protect SYSTEM Alert creation/recovery. No physical
+projection/mobile operation is fabricated. Missing remains compatible; Stale may
+recover in transit. Existing Alerts API/Web show physical evidence and SYSTEM
+recovery; human write-role grants remain unassigned. **No automatic production
+recipients**. See [deployment, RLS, metrics, limits and tests](../docs/backend/issue-57-stale-trailer-detector.md).
+
 ## Issue #56 — Alerts, global devices and bounded FCM
 
 V26 extends existing Missing Alert occurrences with versioned acknowledgement and
@@ -36,8 +49,8 @@ effects remain at-least-once. HTTP Actuator stays health-only; technical metrics
 use the existing registry and optional secured-local Actuator JMX, described in
 the [implementation and operations guide](../docs/backend/issue-55-postgresql-outbox-worker.md).
 V24 synchronous TRAILER_MISSING persistence is unchanged. #56 adds the bounded
-notification handler described above; #57 detection, global maintenance and
-retention are not implemented.
+notification handler described above; #57 adds scoped stale detection. Global
+maintenance and retention are not implemented.
 
 ## Issue #50 — Yard Check snapshot and reconciliation
 

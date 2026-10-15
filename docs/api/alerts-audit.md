@@ -211,3 +211,19 @@ Worker diagnostics distinguish eligibility, no device, attempts, acceptance,
 retry/permanent/partial failure and DEAD. Accepted by FCM never means delivered
 or displayed. V24 Missing Alert persistence remains synchronous and unchanged.
 See [implementation/configuration](../backend/issue-56-alerts-fcm-delivery.md).
+
+
+## #57 implemented extension
+
+The same bounded Alerts routes now accept STALE_TRAILER alongside TRAILER_MISSING.
+Fresh Tenant/membership/Trailer/Customer scope remains unchanged. Stale carries
+immutable SYSTEM detection (lastSeenAt, thresholdHours, detectedAt, server
+elapsedHours at detection, jobId); Missing carries null detection. Actor types
+are explicit. SYSTEM recovery has nullable resolvedBy and separate
+resolutionEvidence (lastSeenAt, thresholdHours, jobId). It may occur in transit;
+Missing recovery still requires active AT_LOCATION. Terminal history is immutable.
+Human commands retain closed expectedVersion/reason bodies and separate unassigned
+ALERT_ACKNOWLEDGE/ALERT_RESOLVE; clients cannot submit detector actors/evidence.
+Internal SYSTEM recovery is separately guarded. No production recipients or
+escalation exist while OQ-059 is pending; inbox works independently of FCM.
+See [current-threshold semantics](../backend/issue-57-stale-trailer-detector.md).
