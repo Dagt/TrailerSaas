@@ -43,7 +43,7 @@ class StaleScanScheduler {
     var bound=jdbc.queryForList("select id from trailers where tenant_id=? order by id desc limit 1",UUID.class,tenant).stream().findFirst().orElse(null);
     jdbc.update("update stale_trailer_scans set scan_id=?,in_progress=true,cursor_id=null,upper_bound=?,started_at=clock_timestamp(),completed_at=null where tenant_id=?",scan,bound,tenant);
    }
-   var id=publisher.enqueue(tenant,StaleScanHandler.TYPE,new JobAggregate("TENANT",tenant),new StaleScanHandler.Payload(scan),Instant.now(),null);
+   var id=publisher.enqueue(tenant,StaleScanHandler.TYPE,new JobAggregate("TENANT",tenant),new StaleScanHandler.Payload(scan),jdbc.queryForObject("select clock_timestamp()",(r,n)->r.getTimestamp(1).toInstant()),null);
    jdbc.update("update stale_trailer_scans set job_id=?,next_scan_at=clock_timestamp()+(? * interval '1 millisecond') where tenant_id=?",id,settings.scanInterval().toMillis(),tenant);
    return new ScheduleResult(true,resume,dead);
   });

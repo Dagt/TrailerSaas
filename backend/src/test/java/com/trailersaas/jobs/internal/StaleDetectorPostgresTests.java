@@ -200,5 +200,47 @@ class StaleDetectorPostgresTests extends JobsFixture {
   assertThat(scans.schedule(tenant)).isTrue();assertThat(store.claim(other,5,Duration.ofSeconds(15)).claims()).isEmpty();
   assertThat(transactions.execute(other,()->jdbc.queryForList("select * from alerts"))).isEmpty();drain(tenant);assertThat(alerts()).isEqualTo(1L);
  }
+ @Test void malformedOrForeignScanJobsFailClosedWithoutSystemAlerts()throws Exception{
+  for(var payload:List.of("{\"schemaVersion\":2,\"data\":{\"scanId\":\""+UUID.randomUUID()+"\"}}","{\"schemaVersion\":1,\"data\":{\"scanId\":\""+UUID.randomUUID()+"\",\"trailerId\":\""+trailer+"\"}}")){
+   transactions.execute(tenant,()->jdbc.update("insert into outbox_jobs(id,tenant_id,job_type,aggregate_type,aggregate_id,payload,status,available_at,max_attempts) values(?,?,'STALE_SCAN','TENANT',?,?::jsonb,'PENDING',clock_timestamp(),5)",UUID.randomUUID(),tenant,tenant,payload));
+  }
+  transactions.execute(tenant,()->jdbc.update("insert into outbox_jobs(id,tenant_id,job_type,aggregate_type,aggregate_id,payload,status,available_at,max_attempts) values(?,?,'STALE_SCAN','TENANT',?,?::jsonb,'PENDING',clock_timestamp(),5)",UUID.randomUUID(),tenant,other,"{\"schemaVersion\":1,\"data\":{\"scanId\":\""+UUID.randomUUID()+"\"}}"));
+  drain(tenant);assertThat(alerts()).isZero();assertThat(db.value("select count(*) from outbox_jobs where tenant_id=? and status='DEAD'",tenant)).isEqualTo(3L);
+ }
+ HttpResponse<String> request(String method,String suffix,String body)throws Exception{
+  var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/tenants/"+tenant+suffix)).header("Authorization","Bearer stale").header("Content-Type","application/json").method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body));
+  return HttpClient.newHttpClient().send(request.build(),HttpResponse.BodyHandlers.ofString());
+ }
+ @Test void existingInboxExposesTypedSystemEvidenceWithoutGrantingHumanWrites()throws Exception{
+  scan();var id=alert();var page=request("GET","/alerts?alertType=STALE_TRAILER&limit=1",null);
+  assertThat(page.statusCode()).as(page.body()).isEqualTo(200);assertThat(com.jayway.jsonpath.JsonPath.<String>read(page.body(),"$.items[0].originActorType")).isEqualTo("SYSTEM");
+  assertThat(com.jayway.jsonpath.JsonPath.<Integer>read(page.body(),"$.items[0].detection.thresholdHours")).isEqualTo(72);
+  assertThat(page.body()).doesNotContain("clientOperationId","fcmToken","firebase_uid","message_data");
+  for(var action:List.of("acknowledgement","resolution"))assertThat(request("POST","/alerts/"+id+"/"+action,"{\"expectedVersion\":0,\"reason\":\"Not authorized\"}").statusCode()).isEqualTo(403);
+  transactions.execute(tenant,()->movements.depart(tenant,new TrailerMovementProjection.Departure(new TrailerMovementProjection.Target(trailer,0),context(Instant.now().minusSeconds(1)))));nextCycle();
+  var detail=request("GET","/alerts/"+id,null);assertThat(detail.statusCode()).as(detail.body()).isEqualTo(200);
+  assertThat(com.jayway.jsonpath.JsonPath.<String>read(detail.body(),"$.resolutionActorType")).isEqualTo("SYSTEM");assertThat(com.jayway.jsonpath.JsonPath.<Object>read(detail.body(),"$.resolvedBy")).isNull();
+  assertThat(com.jayway.jsonpath.JsonPath.<String>read(detail.body(),"$.relatedResource.locationState")).isEqualTo("IN_TRANSIT");
+ }
+ @Test void foreignAlertIsInvisibleAndRevokedMembershipCannotReadItsOwnHistory()throws Exception{
+  scan();var id=alert();var original=tenant;db.membership(other,user,"ACTIVE","TENANT_ADMIN");tenant=other;
+  assertThat(request("GET","/alerts/"+id,null).statusCode()).isEqualTo(404);var page=request("GET","/alerts?alertType=STALE_TRAILER",null);assertThat(page.statusCode()).isEqualTo(200);assertThat(com.jayway.jsonpath.JsonPath.<List<?>>read(page.body(),"$.items")).isEmpty();
+  tenant=original;db.execute("update tenant_memberships set status='DISABLED' where tenant_id=? and user_id=?",tenant,user);assertThat(request("GET","/alerts/"+id,null).statusCode()).isEqualTo(403);
+ }
+ @Test void sqlRejectsEvidenceRewritesMobileIdentityBorrowingAndTerminalResurrection()throws Exception{
+  scan();var id=alert();
+  for(var assignment:List.of("detected_threshold_hours=96","detected_last_seen_at=created_at","origin_actor_type='HUMAN_USER'","client_operation_id='"+UUID.randomUUID()+"'","detector_job_id='"+UUID.randomUUID()+"'"))
+   assertThatThrownBy(()->transactions.execute(tenant,()->jdbc.update("update alerts set "+assignment+",version=version+1 where tenant_id=? and id=?",tenant,id))).isInstanceOf(org.springframework.dao.DataAccessException.class);
+  transactions.execute(tenant,()->movements.depart(tenant,new TrailerMovementProjection.Departure(new TrailerMovementProjection.Target(trailer,0),context(Instant.now().minusSeconds(1)))));nextCycle();
+  assertThatThrownBy(()->transactions.execute(tenant,()->jdbc.update("update alerts set status='OPEN',version=version+1 where id=?",id))).isInstanceOf(org.springframework.dao.DataAccessException.class);
+ }
+ @Test void twoRecoveryWorkersResolveExactlyOnceAndOldClaimCannotOverwriteHistory()throws Exception{
+  scan();var id=alert();transactions.execute(tenant,()->movements.depart(tenant,new TrailerMovementProjection.Departure(new TrailerMovementProjection.Target(trailer,0),context(Instant.now().minusSeconds(1)))));
+  transactions.execute(tenant,()->jdbc.update("update stale_trailer_scans set next_scan_at=clock_timestamp() where tenant_id=?",tenant));assertThat(scans.schedule(tenant)).isTrue();
+  var old=store.claim(tenant,1,Duration.ofSeconds(1)).claims().getFirst();expired(old);
+  try(var pool=java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()){var a=pool.submit(detectorWorker(tenant)::pollOnce);var b=pool.submit(detectorWorker(tenant)::pollOnce);a.get();b.get();}
+  assertThat(db.value("select status from alerts where id=?",id)).isEqualTo("RESOLVED");assertThat(db.value("select version from alerts where id=?",id)).isEqualTo(1L);
+  assertThatThrownBy(()->executeClaim(old)).isInstanceOf(JobFailure.class);assertThat(store.succeed(old)).isFalse();
+ }
  <P>void executeTyped(JobRegistry.Decoded<P>d,JobClaim c){d.handler().execute(new JobExecution<>(c.id(),c.tenantId(),c.attempt(),c.aggregate(),d.payload(),new JobExecution.TenantWork(){public <T>T execute(java.util.function.Supplier<T> work){return store.fencedTransaction(c,work);}}));}
 }

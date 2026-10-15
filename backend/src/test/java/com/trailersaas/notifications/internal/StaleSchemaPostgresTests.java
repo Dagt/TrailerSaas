@@ -34,4 +34,13 @@ class StaleSchemaPostgresTests extends PostgresIntegrationTest {
    """,UUID.randomUUID(),tenant,trailer,UUID.randomUUID()))).isInstanceOf(org.springframework.dao.DataAccessException.class);
   assertThat(f.db.value("select count(*) from alerts where tenant_id=?",tenant)).isEqualTo(0L);
  }
+ @Test void allTwentySixHistoricalMigrationsAreByteStableAndLockFunctionIsClosed()throws Exception{
+  var hashes=new Properties();try(var stream=getClass().getResourceAsStream("/notifications/stale-historical-migrations.sha256")){hashes.load(stream);}assertThat(hashes).hasSize(26);
+  for(var name:hashes.stringPropertyNames())try(var stream=getClass().getResourceAsStream("/db/migration/"+name)){
+   var text=new String(stream.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8).replace("\r\n","\n");assertThat(HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(text.getBytes(java.nio.charset.StandardCharsets.UTF_8)))).as(name).isEqualTo(hashes.getProperty(name));
+  }
+  assertThat(jdbc.queryForObject("select has_table_privilege(current_user,'tenants','UPDATE')",Boolean.class)).isFalse();
+  assertThat(jdbc.queryForObject("select exists(select 1 from pg_proc, lateral aclexplode(proacl) acl where proname='lock_stale_tenant' and acl.grantee=0)",Boolean.class)).isFalse();
+  assertThat(jdbc.queryForObject("select lock_stale_tenant(?,?)",Boolean.class,UUID.randomUUID(),UUID.randomUUID())).isFalse();
+ }
 }

@@ -71,8 +71,8 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
     @Test
     void flywayMigratesAndValidatesUsingSeparateCredentials() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("26");
-        assertThat(flyway.info().current().getDescription()).isEqualTo("alerts recipients devices fcm");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("27");
+        assertThat(flyway.info().current().getDescription()).isEqualTo("stale trailer detection");
         try (var connection = flyway.getConfiguration().getDataSource().getConnection();
                 var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getUserName()).isEqualTo(POSTGRES.getUsername())
@@ -110,7 +110,7 @@ class TrailerSaasApplicationTests extends PostgresIntegrationTest {
             while (tables.next()) { names.add(tables.getString(1)); }
             assertThat(names).containsExactlyInAnyOrder("flyway_schema_history", "users",
                     "tenants", "tenant_memberships", "role_assignments", "customers", "physical_sites", "customer_sites", "operational_locations",
-                    "membership_invitations", "invitation_role_assignments", "drivers", "tractors", "trailers", "trailer_qr_identities", "tenant_settings", "orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders", "trips", "trip_stops", "trip_stop_orders", "trip_assignment_events", "trip_operational_events", "trip_driver_updates", "trailer_movement_events", "trailer_couplings", "processed_client_operations", "trip_stop_events", "documents", "document_links", "delivery_evidence", "shifts", "shift_corrections", "inspections", "fuel_events", "operational_exceptions", "operational_exception_documents", "order_fulfillment_events", "yard_discrepancy_reports", "trailer_oos_evidence", "yard_checks", "yard_check_items", "yard_check_reconciliations", "alerts", "outbox_jobs", "alert_recipients", "user_devices", "alert_deliveries");
+                    "membership_invitations", "invitation_role_assignments", "drivers", "tractors", "trailers", "trailer_qr_identities", "tenant_settings", "orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders", "trips", "trip_stops", "trip_stop_orders", "trip_assignment_events", "trip_operational_events", "trip_driver_updates", "trailer_movement_events", "trailer_couplings", "processed_client_operations", "trip_stop_events", "documents", "document_links", "delivery_evidence", "shifts", "shift_corrections", "inspections", "fuel_events", "operational_exceptions", "operational_exception_documents", "order_fulfillment_events", "yard_discrepancy_reports", "trailer_oos_evidence", "yard_checks", "yard_check_items", "yard_check_reconciliations", "alerts", "outbox_jobs", "alert_recipients", "user_devices", "alert_deliveries", "stale_trailer_scans");
         }
     }
 
