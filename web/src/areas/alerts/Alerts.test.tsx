@@ -121,3 +121,21 @@ it('navigating to another occurrence disposes a previous confirmation', async()=
   await u.click(await screen.findByRole('button',{name:'Acknowledge'}));await act(()=>f.router.navigate(`/admin/alerts/${nextId}`))
   await screen.findByRole('heading',{name:'Alert detail'});expect(screen.queryByRole('dialog')).not.toBeInTheDocument();expect(f.requests.filter(r=>r.method==='POST')).toHaveLength(0)
 })
+it('shows authorized stale physical evidence and keeps unapproved write actions absent',async()=>{
+ const f=fixture(`/operations/alerts/${alertId}`,['ALERT_VIEW']);Object.assign(f.records[0]!,{alertType:'STALE_TRAILER',originActorType:'SYSTEM',detection:{detectedAt:stamp,lastSeenAt:'2026-10-11T04:00:00Z',thresholdHours:72,elapsedHours:80,jobId:nextId}})
+ await screen.findByText('Last physical observation');expect(screen.getByText('80.0 hours')).toBeInTheDocument();expect(screen.getByText('72 hours')).toBeInTheDocument();expect(screen.getByText('SYSTEM')).toBeInTheDocument()
+ expect(screen.queryByRole('button',{name:'Acknowledge'})).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Resolve'})).not.toBeInTheDocument();expect(screen.getByRole('link',{name:'TR-100'})).toHaveAttribute('href',`/operations/trailers/${resourceId}`)
+})
+it('accepts authoritative SYSTEM stale recovery in transit without inventing a resolver User',async()=>{
+ const f=fixture(`/admin/alerts/${alertId}`,['ALERT_VIEW']);Object.assign(f.records[0]!,{alertType:'STALE_TRAILER',originActorType:'SYSTEM',status:'RESOLVED',resolvedAt:stamp,resolvedBy:null,resolutionActorType:'SYSTEM',resolutionReason:'Physical observation is fresh',detection:{detectedAt:stamp,lastSeenAt:'2026-10-11T04:00:00Z',thresholdHours:72,elapsedHours:80,jobId:nextId},resolutionEvidence:{lastSeenAt:stamp,thresholdHours:72,jobId:nextId}})
+ f.records[0]!.relatedResource.locationState='IN_TRANSIT';f.records[0]!.relatedResource.currentLocationId=null
+ await screen.findByText('RESOLVED');expect(screen.getByText('Physical observation is fresh')).toBeInTheDocument();expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+it('rejects stale occurrences with fabricated or absent detection evidence',async()=>{
+ const f=fixture(`/admin/alerts/${alertId}`,['ALERT_VIEW']);Object.assign(f.records[0]!,{alertType:'STALE_TRAILER',originActorType:'SYSTEM'})
+ await screen.findByRole('alert');expect(screen.queryByText('TR-100')).not.toBeInTheDocument()
+})
+it('filters existing inbox by STALE_TRAILER without another endpoint',async()=>{
+ const u=userEvent.setup(),f=fixture();await screen.findByRole('table',{name:'Operational Alerts'});await u.selectOptions(screen.getByLabelText('Alert type'),'STALE_TRAILER');await u.click(screen.getByRole('button',{name:'Apply filters'}))
+ await waitFor(()=>expect(f.requests.some(r=>r.path.includes('alertType=STALE_TRAILER'))).toBe(true))
+})

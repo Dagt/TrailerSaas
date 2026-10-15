@@ -9,16 +9,20 @@ import { useAdminTenant } from '../tenant-admin/tenant'
 import { OperationsTenant } from '../transport-operations/queries'
 
 const alertSchema = z.object({
-  id: z.uuid(), tenantId: z.uuid(), alertType: z.literal('TRAILER_MISSING'), severity: z.literal('WARNING'),
+  id: z.uuid(), tenantId: z.uuid(), alertType: z.enum(['TRAILER_MISSING', 'STALE_TRAILER']), severity: z.literal('WARNING'),
   status: z.enum(['OPEN', 'ACKNOWLEDGED', 'RESOLVED']), version: z.number().int().nonnegative(), createdAt: z.iso.datetime({ offset: true }),
   acknowledgedBy: z.uuid().nullable(), acknowledgedAt: z.iso.datetime({ offset: true }).nullable(), resolvedBy: z.uuid().nullable(), resolvedAt: z.iso.datetime({ offset: true }).nullable(), resolutionReason: z.string().nullable(),
   relatedEntityType: z.literal('TRAILER'),
   relatedResource: z.object({ id: z.uuid(), operationalNumber: z.string(), designatedCustomerId: z.uuid().nullable(), locationState: z.string(), currentLocationId: z.uuid().nullable() }).strict(),
   context: z.record(z.string(), z.string()), pushSummary: z.record(z.string(), z.number().int().nonnegative()),
+  originActorType: z.enum(['HUMAN_USER','SYSTEM']).optional(), resolutionActorType: z.enum(['HUMAN_USER','SYSTEM']).nullable().optional(),
+  detection: z.object({ detectedAt:z.iso.datetime({offset:true}),lastSeenAt:z.iso.datetime({offset:true}),thresholdHours:z.number().int().positive(),elapsedHours:z.number().nonnegative(),jobId:z.uuid() }).strict().nullable().optional(),
+  resolutionEvidence: z.object({ lastSeenAt:z.iso.datetime({offset:true}),thresholdHours:z.number().int().positive(),jobId:z.uuid() }).strict().nullable().optional(),
 }).strict().refine(a => (a.acknowledgedAt === null) === (a.acknowledgedBy === null) &&
   (a.status === 'OPEN' ? a.acknowledgedAt === null && a.resolvedAt === null && a.resolvedBy === null && a.resolutionReason === null :
     a.status === 'ACKNOWLEDGED' ? a.acknowledgedAt !== null && a.resolvedAt === null && a.resolvedBy === null && a.resolutionReason === null :
-      a.resolvedAt !== null && a.resolvedBy !== null && !!a.resolutionReason?.trim()), 'Invalid Alert lifecycle receipt')
+      a.resolvedAt !== null && (a.resolvedBy !== null || a.alertType==='STALE_TRAILER'&&a.resolutionActorType==='SYSTEM'&&a.resolutionEvidence!=null) && !!a.resolutionReason?.trim()), 'Invalid Alert lifecycle receipt')
+  .refine(a=>a.alertType!=='STALE_TRAILER'||a.originActorType==='SYSTEM'&&a.detection!=null&&a.detection.elapsedHours>=a.detection.thresholdHours,'Invalid stale detection evidence')
 export type Alert = z.infer<typeof alertSchema>
 const pageSchema = z.object({ items: z.array(alertSchema).max(100), nextCursor: z.string().max(512).nullable() }).strict()
 type Context = { tenantId: string; capabilities?: string[] }
@@ -75,15 +79,21 @@ function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin'
   if (alertId) {
     if (detail.isPending) return <LoadingState />
     if (detail.isError) return <ErrorBanner error={detail.error} retry={() => void detail.refetch()} />
-    const a = detail.data, recovered = a.relatedResource.locationState === 'AT_LOCATION' && a.relatedResource.currentLocationId !== null
+    const a = detail.data, recovered = a.alertType==='STALE_TRAILER'||a.relatedResource.locationState === 'AT_LOCATION' && a.relatedResource.currentLocationId !== null
     return <section><PageHeader title="Alert detail" description="The persisted Alert is authoritative. Push acceptance does not confirm phone delivery."><button onClick={reload}>Refresh Alert</button><Link to={`/${area}/alerts`}>Back to Alerts</Link></PageHeader>
       <StatusBadge>{a.status}</StatusBadge>
       <DetailList items={[
         ['Type', a.alertType], ['Severity', a.severity], ['Created', a.createdAt], ['Version', String(a.version)],
         ['Trailer', <Link to={`/${area}/trailers/${a.relatedResource.id}`}>{a.relatedResource.operationalNumber}</Link>], ['Recorded location state', a.relatedResource.locationState],
         ['Acknowledged', a.acknowledgedAt], ['Acknowledged by', a.acknowledgedBy], ['Resolved', a.resolvedAt], ['Resolved by', a.resolvedBy], ['Resolution reason', a.resolutionReason],
+        ['Origin',a.originActorType??'HUMAN_USER'], ['Resolution actor',a.resolutionActorType??null],
+        ...(a.detection ? [
+          ['Last physical observation',a.detection.lastSeenAt], ['Threshold at detection',String(a.detection.thresholdHours)+' hours'],
+          ['Elapsed at detection',a.detection.elapsedHours.toFixed(1)+' hours'], ['Detected',a.detection.detectedAt],
+        ] as [string,string][] : []),
       ]} />
       <p>Acknowledgement means attention, not physical recovery. Resolving an Alert never changes Trailer location.</p>
+      {a.alertType==='STALE_TRAILER'&&<p>Physical freshness uses observation time. Administrative edits and old offline receipt time do not count as new activity. Automatic resolution may also reflect a changed Tenant threshold.</p>}
       {Object.entries(a.pushSummary).map(([status, count]) => <p key={status}>Push transport: {status} · {count} recipient(s)</p>)}
       {a.status === 'OPEN' && owner.capabilities?.includes('ALERT_ACKNOWLEDGE') && <button onClick={() => { command.reset(); setAction({ kind: 'acknowledgement', alert: a }) }}>Acknowledge</button>}
       {a.status !== 'RESOLVED' && owner.capabilities?.includes('ALERT_RESOLVE') && <><button disabled={!recovered} onClick={() => { command.reset(); setAction({ kind: 'resolution', alert: a }); setReason('') }}>Resolve</button>{!recovered && <p>Record the Trailer's physical recovery through an authorized correction before resolving.</p>}</>}
@@ -97,7 +107,7 @@ function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin'
   const items = [...new Map(pages.data?.pages.flatMap(page => page.items).map(a => [a.id, a]) ?? []).values()]
   return <section><PageHeader title="Alerts" description="Operational conditions remain available even if push is missed."><button onClick={() => void pages.refetch()}>Refresh Alerts</button></PageHeader>
     <form onSubmit={e => { e.preventDefault(); setFilters(Object.fromEntries(Object.entries(draft).filter(([, v]) => v).map(([k, v]) => [k, k === 'from' || k === 'to' ? new Date(v).toISOString() : v]))) }}>
-      {Object.entries({ status: ['', 'OPEN', 'ACKNOWLEDGED', 'RESOLVED'], alertType: ['', 'TRAILER_MISSING'], severity: ['', 'WARNING'], relatedEntityType: ['', 'TRAILER'] }).map(([name, choices]) => <label key={name}>{({ status: 'Status', alertType: 'Alert type', severity: 'Severity', relatedEntityType: 'Related resource' })[name]}<select aria-label={({ status: 'Status', alertType: 'Alert type', severity: 'Severity', relatedEntityType: 'Related resource' })[name]} value={draft[name as keyof typeof draft]} onChange={e => setDraft({ ...draft, [name]: e.target.value })}>{choices.map(value => <option key={value} value={value}>{value || 'All'}</option>)}</select></label>)}
+      {Object.entries({ status: ['', 'OPEN', 'ACKNOWLEDGED', 'RESOLVED'], alertType: ['', 'TRAILER_MISSING', 'STALE_TRAILER'], severity: ['', 'WARNING'], relatedEntityType: ['', 'TRAILER'] }).map(([name, choices]) => <label key={name}>{({ status: 'Status', alertType: 'Alert type', severity: 'Severity', relatedEntityType: 'Related resource' })[name]}<select aria-label={({ status: 'Status', alertType: 'Alert type', severity: 'Severity', relatedEntityType: 'Related resource' })[name]} value={draft[name as keyof typeof draft]} onChange={e => setDraft({ ...draft, [name]: e.target.value })}>{choices.map(value => <option key={value} value={value}>{value || 'All'}</option>)}</select></label>)}
       <label>From<input type="datetime-local" value={draft.from} onChange={e => setDraft({ ...draft, from: e.target.value })} /></label><label>To<input type="datetime-local" value={draft.to} onChange={e => setDraft({ ...draft, to: e.target.value })} /></label><button>Apply filters</button>
     </form>
     {pages.isPending ? <LoadingState /> : pages.isError ? <ErrorBanner error={pages.error} retry={() => void pages.refetch()} /> : !items.length ? <EmptyState>No Alerts match these filters.</EmptyState> : <DataTable caption="Operational Alerts" headings={['Trailer', 'Type', 'Severity', 'Status', 'Created']}>
