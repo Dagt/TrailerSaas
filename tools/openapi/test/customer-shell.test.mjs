@@ -16,8 +16,8 @@ try {
 const root='/api/v1/tenants/{tenantId}/alerts', schemas=api.components.schemas;
 test('#58 adds Tenant status as a navigation hint without changing role or capability authority',()=>{
  const m=schemas.CurrentUserContext.properties.memberships.items;
- assert.equal(m.properties.tenantStatus.type,'string');assert.ok(m.properties.tenantStatus.description.includes('navigation hint'));
- assert.ok(!m.required.includes('tenantStatus'));assert.ok(m.properties.capabilities.description.includes('Tenant-scope'));
+ assert.equal(m.properties.tenantActive.type,'boolean');assert.ok(m.properties.tenantActive.description.includes('navigation hint'));
+ assert.ok(!m.required.includes('tenantActive'));assert.ok(m.properties.capabilities.description.includes('Tenant-scope'));
  assert.deepEqual(m.properties.roles.items.required,['roleCode','scopeType','customerId']);
 });
 test('#58 reuses scoped Customer reads without a parallel Customer portal API',()=>{

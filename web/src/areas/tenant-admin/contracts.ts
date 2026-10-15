@@ -1,5 +1,5 @@
 export interface Membership {
-  tenantStatus?: string
+  tenantActive?: boolean
   capabilities?: string[]
   tenantId: string; tenantName: string; status: 'ACTIVE' | 'SUSPENDED' | 'DISABLED'
   roles: { roleCode: string; scopeType: 'TENANT' | 'CUSTOMER'; customerId: string | null }[]

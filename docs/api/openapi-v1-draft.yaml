@@ -3820,9 +3820,9 @@ components:
             properties:
               tenantId: { type: string, format: uuid }
               tenantName: { type: string }
-              tenantStatus:
-                type: string
-                description: Current persisted Tenant status, navigation hint only. Customer Portal requires ACTIVE; every resource API still re-authorizes access. Additive field from issue 58, not a role or capability grant.
+              tenantActive:
+                type: boolean
+                description: Whether the current persisted Tenant is ACTIVE, navigation hint only. Every resource API still re-authorizes access. Additive field from issue 58; does not expose internal lifecycle vocabulary or grant roles/capabilities.
               capabilities:
                 type: array
                 description: Fresh Tenant-scope capability names for navigation only, empty for inactive memberships. Assignment and resource rules still require authorization on every endpoint. No client claims participate.

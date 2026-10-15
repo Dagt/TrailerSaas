@@ -244,13 +244,13 @@ class MasterDataHttpPostgresTests extends PostgresIntegrationTest {
         var c = create("/customers", "{\"name\":\"Portal Customer\"}"); onlyRole("CUSTOMER_DISPATCHER", UUID.fromString(c.get("id").toString()));
         var me = request("GET", "/api/v1/me", null, TOKEN, true);
         assertThat(me.statusCode()).isEqualTo(200);
-        assertThat(JsonPath.<String>read(me.body(), "$.memberships[0].tenantStatus")).isEqualTo("ACTIVE");
+        assertThat(JsonPath.<Boolean>read(me.body(), "$.memberships[0].tenantActive")).isTrue();
         assertThat(JsonPath.<List<?>>read(me.body(), "$.memberships[0].capabilities")).isEmpty();
         assertThat(JsonPath.<String>read(me.body(), "$.memberships[0].roles[0].customerId")).isEqualTo(c.get("id"));
         assertThat(get("/customers/"+c.get("id")).statusCode()).isEqualTo(200);
         sql("UPDATE tenants SET status='DISABLED' WHERE id=?", tenant);
         var inactive = request("GET", "/api/v1/me", null, TOKEN, true);
-        assertThat(JsonPath.<String>read(inactive.body(), "$.memberships[0].tenantStatus")).isEqualTo("DISABLED");
+        assertThat(JsonPath.<Boolean>read(inactive.body(), "$.memberships[0].tenantActive")).isFalse();
         problem(get("/customers/"+c.get("id")),403,"TENANT_ACCESS_DENIED");
     }
     @ParameterizedTest @ValueSource(strings={"/drivers","/tractors","/settings","/alerts","/dispatch/board"})

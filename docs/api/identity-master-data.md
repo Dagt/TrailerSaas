@@ -716,7 +716,7 @@ Generic Audit remains #61; evidence remains #49/#52/#53, Customer Portal #58+.
 
 ## Issue #58 implemented Customer shell boundary
 
-/me additionally returns each membership's current persisted tenantStatus. This
+/me additionally returns each membership's boolean tenantActive (true only for a current ACTIVE Tenant). This
 optional additive v1 field is a navigation hint, not an access grant. Membership
 capabilities remain Tenant-only and may be empty for valid Customer roles.
 Customer-scoped Customer list/detail now explicitly require the actual Tenant
