@@ -83,7 +83,16 @@ class MasterDataService {
 
     @Transactional(readOnly = true)
     Items<Site> sites(AuthenticatedUserPrincipal user, UUID tenant) {
+        return sites(user,tenant,null);
+    }
+    @Transactional(readOnly = true)
+    Items<Site> sites(AuthenticatedUserPrincipal user, UUID tenant, UUID customer) {
         var scope = authorization.resolveCustomerScope(user, tenant, SITE_VIEW);
+        if(customer!=null) {
+            authorization.requireCustomerCapability(user,tenant,customer,SITE_VIEW);
+            repository.requireActiveTenant(tenant);
+            scope=new CustomerAccessScope(false,Set.of(customer));
+        }
         return new Items<>(repository.sites(tenant, scope, null).stream().map(Site::of).toList());
     }
 
@@ -158,7 +167,16 @@ class MasterDataService {
 
     @Transactional(readOnly = true)
     Items<Location> locations(AuthenticatedUserPrincipal user, UUID tenant, UUID site) {
+        return locations(user,tenant,site,null);
+    }
+    @Transactional(readOnly = true)
+    Items<Location> locations(AuthenticatedUserPrincipal user, UUID tenant, UUID site, UUID customer) {
         var scope = authorization.resolveCustomerScope(user, tenant, SITE_VIEW);
+        if(customer!=null) {
+            authorization.requireCustomerCapability(user,tenant,customer,SITE_VIEW);
+            repository.requireActiveTenant(tenant);
+            scope=new CustomerAccessScope(false,Set.of(customer));
+        }
         visibleSite(tenant, site, scope);
         return new Items<>(repository.locations(tenant, site, scope).stream().map(Location::of).toList());
     }

@@ -21,18 +21,20 @@ class TripOperationalService implements TripCancellationResolutionPort {
   private final TripDestinationPolicy destinations;
   private final TripDriverUpdateSink updates;
   private final TripService reads;
+  private final CustomerActionAccess actions;
 
   TripOperationalService(
       TenantAuthorization auth,
       TripRepository repository,
       TripDestinationPolicy destinations,
       TripDriverUpdateSink updates,
-      TripService reads) {
+      TripService reads, CustomerActionAccess actions) {
     this.auth = auth;
     this.repository = repository;
     this.destinations = destinations;
     this.updates = updates;
     this.reads = reads;
+    this.actions=actions;
   }
 
   Detail reroute(
@@ -41,6 +43,7 @@ class TripOperationalService implements TripCancellationResolutionPort {
     var scope = auth.resolveCustomerScope(actor, tenant, Capability.TRIP_REROUTE);
     var trip = repository.resource(tenant, id, true);
     scoped(trip, scope);
+    if(!scope.tenantWide() && !actions.covers(actor,tenant,repository.mappedCustomers(tenant,id),Capability.TRIP_REROUTE)) throw TripFailure.missing();
     expected(trip, r.expectedVersion());
     if (!Set.of("IN_TRANSIT", "AT_STOP").contains(trip.status)) throw TripFailure.tripState();
     var customers = repository.stopCustomers(tenant, id, r.stopId());
@@ -81,7 +84,7 @@ class TripOperationalService implements TripCancellationResolutionPort {
     stop.instructions = r.instructions();
     stop.updatedAt = later(stop.updatedAt, at);
     flush();
-    return reads.detail(trip);
+    return reads.commandDetail(actor,trip,Capability.TRIP_REROUTE);
   }
 
   Detail cancel(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, Map<String, Object> input) {
@@ -91,6 +94,7 @@ class TripOperationalService implements TripCancellationResolutionPort {
     var trip = repository.resource(tenant, id, true);
     scoped(trip, scope);
     scoped(trip, cancelScope);
+    if(!scope.tenantWide() && !actions.covers(actor,tenant,repository.mappedCustomers(tenant,id),Capability.TRIP_REROUTE)) throw TripFailure.missing();
     expected(trip, r.expectedVersion());
     boolean before = Set.of("PLANNED", "ASSIGNED").contains(trip.status);
     if (!before && !Set.of("IN_TRANSIT", "AT_STOP").contains(trip.status))
@@ -131,7 +135,7 @@ class TripOperationalService implements TripCancellationResolutionPort {
     }
     updates.append(trip, trip.currentDriverId, type, at, payload);
     flush();
-    return reads.detail(trip);
+    return reads.commandDetail(actor,trip,Capability.TRIP_REROUTE);
   }
 
   @Override

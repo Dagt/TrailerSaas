@@ -43,4 +43,15 @@ class OrderController {
         OrderValidation.fields(parameters, java.util.Set.of(), "query");
         return service.get(actor, tenantId, orderId);
     }
+    @GetMapping("/customer-context")
+    Map<String,Object> customerContext(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenantId,
+            @RequestParam UUID customerId,@RequestParam Map<String,String> parameters) {
+        OrderValidation.fields(parameters,java.util.Set.of("customerId"),"query");
+        return Map.of("customerId",customerId,"capabilities",service.customerActions(actor,tenantId,customerId));
+    }
+    @GetMapping("/{orderId}/progress")
+    Progress progress(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,
+            @PathVariable UUID tenantId,@PathVariable UUID orderId,@RequestParam Map<String,String> parameters) {
+        return service.progress(actor,tenantId,orderId,parameters);
+    }
 }

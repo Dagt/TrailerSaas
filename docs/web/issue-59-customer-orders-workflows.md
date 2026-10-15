@@ -29,7 +29,7 @@ Confirmed gaps requiring bounded implementation:
 | Checkpoint | Evidence | State |
 |---|---|---|
 | A | Main/dependencies/contracts, actual API and gaps | Audited |
-| B–H | Queries, creation, bounded edits, cancellation, progress, reroute, substitution, completion | In progress |
+| B–H | Real scoped reads/commands, bounded request revision, Web workflows | Implemented; focused audit continues |
 | I | Runtime PostgreSQL RLS, Customer isolation, concurrency, lifecycle | Pending |
 | J | OpenAPI, documentation and regression matrix | Pending |
 | K | Full local suites on published candidate; remote CI status | Pending |
@@ -38,3 +38,18 @@ GitHub Actions Billing is explicitly unresolved by the owner. Keep Draft while
 blocked, run available full local suites once at the final candidate, record
 commands/SHA/logs/counts and never report remote Full CI green without execution.
 No workflow/protection/test bypass or merge exception is authorized.
+
+Focused evidence so far (not final full-suite evidence): Backend initial workflow,
+Order mutations, service and Modulith 69 passed; expanded PostgreSQL run 306/310
+passed and exposed four legacy Customer cases seeded with CANDIDATE Tenants.
+Operating fixtures now explicitly use ACTIVE, preserving the negative access
+tests; all four regressions plus 11 new workflow cases passed (15/15). Existing
+RLS inventory remains strict and includes V28's new append-only revision table.
+Web Customer workflows and inherited shell: 83 passed; no shell isolation case
+removed. Orders' former placeholder assertions now require explicit Customer
+queries, while #60 catalogs remain placeholders.
+
+V28 grants child DELETE only for unallocated requests, with a PostgreSQL guard
+against committed planning/fulfillment. Replacements preserve original/replacement
+facts, actor, server time and Order version in order_request_revisions under RLS.
+Reference-only PATCH behavior remains unchanged. No V1–V27 migration is edited.

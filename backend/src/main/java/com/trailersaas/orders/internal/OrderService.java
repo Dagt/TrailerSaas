@@ -21,14 +21,20 @@ class OrderService {
     private final OrderRepository repository;
     private final ManifestService manifests;
     private final com.trailersaas.orders.OrderPlanningDirectory planningDirectory;
-    OrderService(TenantAuthorization authorization, OrderAccessPolicy access, OrderDestinationPolicy destinations, OrderRepository repository, ManifestService manifests, com.trailersaas.orders.OrderPlanningDirectory planningDirectory) {
+    private final CustomerActionAccess actions;
+    private final com.trailersaas.orders.CustomerOrderProgress progress;
+    private final OrderRequestEditor requestEditor;
+    OrderService(TenantAuthorization authorization, OrderAccessPolicy access, OrderDestinationPolicy destinations, OrderRepository repository, ManifestService manifests, com.trailersaas.orders.OrderPlanningDirectory planningDirectory, CustomerActionAccess actions, com.trailersaas.orders.CustomerOrderProgress progress, OrderRequestEditor requestEditor) {
         this.authorization = authorization; this.access = access; this.destinations = destinations; this.repository = repository;
         this.manifests = manifests; this.planningDirectory = planningDirectory;
+        this.actions=actions; this.progress=progress;
+        this.requestEditor=requestEditor;
     }
 
     Detail create(AuthenticatedUserPrincipal actor, UUID tenant, Map<String, Object> input) {
         var request = OrderValidation.create(input);
         authorization.requireCustomerCapability(actor, tenant, request.customerId(), Capability.ORDER_CREATE);
+        if(!authorization.resolveCustomerScope(actor,tenant,Capability.ORDER_CREATE).tenantWide()) actions.capabilities(actor,tenant,request.customerId());
         if (request.plannedTrailerId() != null) {
             authorization.requireCustomerCapability(actor, tenant, request.customerId(), Capability.TRIP_ASSIGN_TRAILER);
             manifests.validateTrailer(actor, tenant, request.plannedTrailerId());
@@ -71,6 +77,7 @@ class OrderService {
     @Transactional(readOnly = true)
     Page list(AuthenticatedUserPrincipal actor, UUID tenant, Map<String, String> parameters) {
         var scope = access.readScope(actor, tenant);
+        if(!scope.tenantWide()) for(var customer:scope.customerIds()) actions.capabilities(actor,tenant,customer);
         var filters = OrderValidation.filters(parameters);
         if (filters.customerId() != null && !scope.tenantWide() && !scope.customerIds().contains(filters.customerId())) { throw OrderFailure.scope(); }
         var rows = filters.unplanned() == null ? repository.list(tenant, scope, filters) : repository.byPlanningIds(tenant, scope,
@@ -85,7 +92,25 @@ class OrderService {
     @Transactional(readOnly = true)
     Detail get(AuthenticatedUserPrincipal actor, UUID tenant, UUID id) {
         var scope = access.readScope(actor, tenant);
+        if(!scope.tenantWide()) for(var customer:scope.customerIds()) actions.capabilities(actor,tenant,customer);
         return detail(repository.resource(tenant, id, scope));
+    }
+    @Transactional(readOnly=true)
+    java.util.Set<Capability> customerActions(AuthenticatedUserPrincipal actor,UUID tenant,UUID customer) {
+        authorization.requireCustomerCapability(actor,tenant,customer,Capability.ORDER_CREATE);
+        return actions.capabilities(actor,tenant,customer);
+    }
+    @Transactional(readOnly=true)
+    Progress progress(AuthenticatedUserPrincipal actor,UUID tenant,UUID id,Map<String,String> parameters) {
+        OrderValidation.fields(parameters,java.util.Set.of("cursor","limit"),"query");
+        var scope=access.readScope(actor,tenant);
+        var order=repository.resource(tenant,id,scope);
+        UUID after=parameters.containsKey("cursor")?OrderValidation.uuid(parameters.get("cursor"),"cursor",false):null;
+        int limit=20;
+        try { if(parameters.containsKey("limit")) limit=Integer.parseInt(parameters.get("limit")); } catch(NumberFormatException e) { throw OrderFailure.invalid("limit"); }
+        if(limit<1||limit>50) throw OrderFailure.invalid("limit");
+        var page=progress.read(actor,tenant,id,order.customerId,after,limit);
+        return new Progress(order.id,order.customerId,order.version,requestEditor.editable(order),page.items(),page.nextCursor());
     }
     private Detail detail(OrderEntity order) {
         return Detail.of(order, repository.cargo(order.tenantId, order.id), repository.stops(order.tenantId, order.id));

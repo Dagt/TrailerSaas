@@ -27,7 +27,7 @@ class NotificationSchemaPostgresTests extends PostgresIntegrationTest {
  <T>T as(UUID actor,Supplier<T> work){return new TransactionTemplate(manager).execute(s->{context.establishBootstrapUser(new AuthenticatedUserPrincipal(actor,"fixture-"+actor,null,null));return work.get();});}
  UUID register(UUID actor,UUID id,String token){return as(actor,()->jdbc.queryForObject("select register_user_device(?,'ANDROID',?)",UUID.class,id,token));}
  @Test void migrationFreshAndHistoricalHashesAndLeastPrivilege() throws Exception {
-  flyway.validate();assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("27");
+  flyway.validate();assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("28");
   var hashes=new Properties();try(var s=getClass().getResourceAsStream("/notifications/historical-migrations.sha256")){hashes.load(s);}
   assertThat(hashes).hasSize(25);
   for(var name:hashes.stringPropertyNames())try(var s=getClass().getResourceAsStream("/db/migration/"+name)){

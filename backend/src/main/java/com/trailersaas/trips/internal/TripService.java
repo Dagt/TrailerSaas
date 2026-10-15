@@ -206,6 +206,15 @@ class TripService {
             .toList());
   }
 
+  Detail commandDetail(AuthenticatedUserPrincipal actor, TripEntity trip, Capability capability) {
+    if(auth.resolveCustomerScope(actor,trip.tenantId,capability).tenantWide()) return detail(trip);
+    var expected=trip.plannedInitialTrailerId;
+    if(expected!=null && trailers.visible(actor,trip.tenantId,expected)!=TrailerPlanningPolicy.Eligibility.ELIGIBLE) expected=null;
+    // A Customer command receipt is not permission to browse the complete shared Trip.
+    return new Detail(trip.id,trip.status,null,null,expected,trip.version,trip.createdAt,trip.updatedAt,
+        trip.startedAt,trip.completedAt,trip.cancelledAt,List.of(),List.of(),List.of());
+  }
+
   @Transactional(readOnly = true)
   Timeline timeline(AuthenticatedUserPrincipal actor, UUID tenant, UUID id) {
     auth.requireTenantCapability(actor, tenant, Capability.TRIP_VIEW_ALL);

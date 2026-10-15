@@ -39,6 +39,7 @@ class OrderMutationPostgresTests extends PostgresIntegrationTest {
     AuthenticatedUserPrincipal admin;
     @BeforeEach void seed() throws Exception {
         f = new OrderFixtures(flyway); tenant = f.db.tenant(); otherTenant = f.db.tenant(); customer = f.customer(tenant);
+        f.db.execute("UPDATE tenants SET status='ACTIVE' WHERE id=?",tenant);
         foreignCustomer = f.customer(tenant); user = actor("admin", "TENANT_ADMIN");
         membership = (UUID) f.db.value("SELECT id FROM tenant_memberships WHERE tenant_id=? AND user_id=?", tenant, user);
         admin = new AuthenticatedUserPrincipal(user, "fixture-" + user, null, null);

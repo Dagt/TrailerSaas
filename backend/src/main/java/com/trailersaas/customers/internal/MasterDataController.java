@@ -16,8 +16,9 @@ class MasterDataController {
     MasterDataController(MasterDataService service) { this.service = service; }
 
     @ModelAttribute
-    void rejectUnsupportedFilters(@RequestParam Map<String, String> parameters) {
-        if (!parameters.isEmpty()) { throw MasterDataFailure.invalid("query"); }
+    void rejectUnsupportedFilters(@RequestParam Map<String, String> parameters, jakarta.servlet.http.HttpServletRequest request) {
+        boolean choices="GET".equals(request.getMethod()) && (request.getRequestURI().endsWith("/sites") || request.getRequestURI().matches(".*/sites/[^/]+/locations"));
+        if (parameters.keySet().stream().anyMatch(k->!choices || !k.equals("customerId"))) { throw MasterDataFailure.invalid("query"); }
     }
 
     @PostMapping("/customers") @ResponseStatus(HttpStatus.CREATED)
@@ -45,8 +46,8 @@ class MasterDataController {
         return service.createSite(user, tenantId, request);
     }
     @GetMapping("/sites")
-    Items<Site> sites(@AuthenticationPrincipal AuthenticatedUserPrincipal user, @PathVariable UUID tenantId) {
-        return service.sites(user, tenantId);
+    Items<Site> sites(@AuthenticationPrincipal AuthenticatedUserPrincipal user, @PathVariable UUID tenantId,@RequestParam(required=false) UUID customerId) {
+        return service.sites(user, tenantId,customerId);
     }
     @GetMapping("/sites/{siteId}")
     Site site(@AuthenticationPrincipal AuthenticatedUserPrincipal user, @PathVariable UUID tenantId, @PathVariable UUID siteId) {
@@ -74,8 +75,8 @@ class MasterDataController {
     }
     @GetMapping("/sites/{siteId}/locations")
     Items<Location> locations(@AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @PathVariable UUID tenantId, @PathVariable UUID siteId) {
-        return service.locations(user, tenantId, siteId);
+            @PathVariable UUID tenantId, @PathVariable UUID siteId,@RequestParam(required=false) UUID customerId) {
+        return service.locations(user, tenantId, siteId,customerId);
     }
     @PatchMapping("/locations/{locationId}")
     Location updateLocation(@AuthenticationPrincipal AuthenticatedUserPrincipal user,
