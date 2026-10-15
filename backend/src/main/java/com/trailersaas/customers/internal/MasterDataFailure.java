@@ -12,6 +12,9 @@ final class MasterDataFailure extends RuntimeException {
     static MasterDataFailure invalid(String field) {
         return new MasterDataFailure("VALIDATION_FAILED", 400, "The request contains invalid fields.", field);
     }
+    static MasterDataFailure tenantDenied() {
+        return new MasterDataFailure("TENANT_ACCESS_DENIED", 403, "Access to the requested Tenant is denied.", null);
+    }
     static MasterDataFailure missing() {
         return new MasterDataFailure("RESOURCE_NOT_FOUND", 404, "The requested resource was not found.", null);
     }

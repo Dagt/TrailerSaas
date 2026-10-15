@@ -55,3 +55,23 @@ it('safely revalidates when Firebase token retrieval fails without sending a req
   expect(String(error)).not.toContain('synthetic-secret-firebase-token')
   expect(unauthorized).toHaveBeenCalledOnce(); expect(transport).not.toHaveBeenCalled()
 })
+
+it('ignores a cancelled late 401 instead of expiring the newly active owner', async () => {
+  let finish!: (response: Response) => void
+  const unauthorized = vi.fn(), controller = new AbortController()
+  const transport = vi.fn<typeof fetch>(() => new Promise(resolve => { finish = resolve }))
+  const client = createApiClient('https://api.example.test', async () => 'old-token', unauthorized, transport)
+  const result = client.request('/me', { signal: controller.signal }).catch(error => error)
+  await vi.waitFor(() => expect(transport).toHaveBeenCalledOnce())
+  controller.abort(); finish(new Response(null, { status: 401 }))
+  expect(await result).toMatchObject({ name: 'AbortError' }); expect(unauthorized).not.toHaveBeenCalled()
+})
+
+it.each([true,false])('cancellation fences a delayed token result (reject=%s) before HTTP or session expiry',async reject=>{
+  let finish!:(value:string)=>void,fail!:(error:Error)=>void
+  const unauthorized=vi.fn(),transport=vi.fn<typeof fetch>(),controller=new AbortController()
+  const client=createApiClient('https://api.example.test',()=>new Promise<string>((resolve,reject)=>{finish=resolve;fail=reject}),unauthorized,transport)
+  const result=client.request('/resource',{signal:controller.signal}).catch(error=>error)
+  controller.abort();if(reject)fail(new Error('old secret'));else finish('new-account-token')
+  expect(await result).toMatchObject({name:'AbortError'});expect(transport).not.toHaveBeenCalled();expect(unauthorized).not.toHaveBeenCalled()
+})

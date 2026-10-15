@@ -23,6 +23,7 @@ class MasterDataExceptionHandler {
         var body = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(failure.status), failure.detail);
         body.setTitle(switch (failure.status) {
             case 400 -> "Validation failed";
+            case 403 -> "Forbidden";
             case 404 -> "Resource not found";
             default -> "Conflict";
         });

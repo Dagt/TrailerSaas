@@ -1,5 +1,14 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Issue #58 — Customer portal read guardrails
+
+/me adds a minimized tenantActive boolean navigation hint without exposing internal
+Tenant lifecycle vocabulary or changing Tenant-scope capabilities. Customer-scoped
+Customer list/detail enforce actual Tenant ACTIVE plus existing fresh membership,
+capability and Customer authorization. Tenant-wide administrative bootstrap behavior
+is unchanged. No new endpoints/permissions/migration; see [portal contract and
+security evidence](../docs/web/issue-58-customer-portal-shell.md).
+
 ## Issue #57 — scheduled stale Trailer detection
 
 V27 adds scoped durable STALE_SCAN v1 batches using the existing #55 worker and

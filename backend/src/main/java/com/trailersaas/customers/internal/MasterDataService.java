@@ -41,12 +41,14 @@ class MasterDataService {
     @Transactional(readOnly = true)
     Items<Customer> customers(AuthenticatedUserPrincipal user, UUID tenant) {
         var scope = authorization.resolveCustomerScope(user, tenant, CUSTOMER_VIEW);
+        if (!scope.tenantWide()) { repository.requireActiveTenant(tenant); }
         return new Items<>(repository.customers(tenant, scope).stream().map(Customer::of).toList());
     }
 
     @Transactional(readOnly = true)
     Customer customer(AuthenticatedUserPrincipal user, UUID tenant, UUID id) {
         authorization.requireCustomerCapability(user, tenant, id, CUSTOMER_VIEW);
+        if (!authorization.resolveCustomerScope(user, tenant, CUSTOMER_VIEW).tenantWide()) { repository.requireActiveTenant(tenant); }
         return Customer.of(repository.resource(CustomerEntity.class, tenant, id));
     }
 

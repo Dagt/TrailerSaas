@@ -4,10 +4,12 @@ import type { FirebaseSdk } from './firebase'
 
 const sdk = vi.hoisted(() => ({
   getIdToken: vi.fn(async () => 'synthetic-secret-id-token'), authStateReady: vi.fn(async () => {}),
+  persistence: vi.fn(async () => {}),
   signIn: vi.fn(async () => {}), signOut: vi.fn(async () => {}), observe: vi.fn(), unsubscribe: vi.fn(), initialize: vi.fn(() => ({ name: 'test-app' })),
 }))
 const loader = async () => ({ app: { getApps: () => [], initializeApp: sdk.initialize }, sdk: {
   getAuth: () => ({ currentUser: { uid: 'user', getIdToken: sdk.getIdToken }, authStateReady: sdk.authStateReady }),
+  setPersistence: sdk.persistence, inMemoryPersistence: { type: 'NONE' },
   onAuthStateChanged: sdk.observe, signInWithEmailAndPassword: sdk.signIn, signOut: sdk.signOut,
 } }) as unknown as FirebaseSdk
 afterEach(() => vi.clearAllMocks())
@@ -29,4 +31,12 @@ it('uses official SDK sign-in, session observation, ID token retrieval and sign-
   expect(sdk.signIn).toHaveBeenCalledWith(expect.anything(), 'a@example.test', 'synthetic-password')
   await boundary.signOut(); expect(sdk.signOut).toHaveBeenCalledOnce()
   cleanup(); expect(sdk.unsubscribe).toHaveBeenCalledOnce()
+})
+
+it('selects official memory persistence before authentication without browser token storage', async () => {
+  const boundary = createFirebaseAuth({ apiKey: 'public-key', authDomain: 'auth.test', projectId: 'project', appId: 'app' }, loader)
+  await boundary.signIn('a@example.test', 'secret')
+  expect(sdk.persistence).toHaveBeenCalledWith(expect.anything(), { type: 'NONE' })
+  expect(sdk.persistence.mock.invocationCallOrder[0]).toBeLessThan(sdk.signIn.mock.invocationCallOrder[0]!)
+  expect(localStorage.length).toBe(0)
 })

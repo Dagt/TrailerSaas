@@ -17,10 +17,13 @@ export function createApiClient(baseUrl: string, getToken: () => Promise<string 
   unauthorized: () => void = () => {}, transport: typeof fetch = globalThis.fetch): ApiClient {
   return {
     async request<T>(path: string, options: { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
+      const active = () => { if (options.signal?.aborted) throw new DOMException('The request was cancelled.', 'AbortError') }
+      active()
       let token: string | null
       try { token = await getToken() } catch {
-        unauthorized(); throw new ApiProblem({ status: 401, code: 'AUTHENTICATION_REQUIRED' })
+        active(); unauthorized(); throw new ApiProblem({ status: 401, code: 'AUTHENTICATION_REQUIRED' })
       }
+      active()
       if (!token) { unauthorized(); throw new ApiProblem({ status: 401, code: 'AUTHENTICATION_REQUIRED' }) }
       const headers: Record<string, string> = { Accept: 'application/json', Authorization: `Bearer ${token}` }
       if (typeof globalThis.crypto?.randomUUID === 'function') headers['X-Request-Id'] = crypto.randomUUID()
@@ -35,16 +38,20 @@ export function createApiClient(baseUrl: string, getToken: () => Promise<string 
         if (options.signal?.aborted) throw error
         throw new ApiProblem({ status: 503 })
       }
+      active()
       if (!response.ok) {
         let body: Partial<Problem> = {}
         if (response.headers.get('Content-Type')?.includes('application/problem+json')) {
           try { body = await response.json() as Partial<Problem> } catch { /* Generic safe error. */ }
         }
+        active()
         if (response.status === 401) unauthorized()
         throw new ApiProblem({ status: response.status, code: body.code, detail: body.detail, traceId: body.traceId, errors: body.errors })
       }
       if (response.status === 204) return undefined as T
-      return response.json() as Promise<T>
+      const data = await response.json() as T
+      active()
+      return data
     },
   }
 }

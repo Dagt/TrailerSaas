@@ -185,3 +185,21 @@ dialog { max-height: calc(100dvh - 2rem); overflow-y: auto; }
   dialog h2, dialog .actions { display: none; }
   dialog::backdrop { display: none; }
 }
+
+/* Shared application Customer workspace; no separate design system. */
+.customer-workspace { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 2rem; }
+.customer-workspace > nav { display: flex; flex-direction: column; align-self: start; }
+.customer-workspace > nav a { padding: .7rem 1rem; border-radius: .45rem; text-decoration: none; }
+.customer-workspace > nav a[aria-current='page'] { background: #e5ebfd; color: #213ea0; }
+.customer-content { min-width: 0; }
+.customer-content > section { background: #fff; border: 1px solid var(--border); border-radius: .65rem; padding: 1.5rem; }
+.customer-scope { padding: 1rem; background: #e5ebfd; border-radius: .45rem; overflow-wrap: anywhere; }
+.customer-selector { display: block; max-width: 32rem; }
+.customer-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; margin-top: 1.5rem; }
+.customer-cards article { border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; }
+@media (max-width: 850px) {
+  .customer-workspace { grid-template-columns: minmax(0,1fr); gap: 1rem; }
+  .customer-workspace > nav { flex-direction: row; flex-wrap: wrap; }
+  .customer-cards { grid-template-columns: minmax(0,1fr); }
+  .customer-area .admin-topbar label { flex-direction: column; align-items: start; }
+}

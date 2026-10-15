@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router'
 import { AdminLayout, AdminHome } from '../areas/tenant-admin/AdminLayout'
 import { MasterList, MasterDetail, SettingsPage } from '../areas/tenant-admin/MasterDataPages'
 import { TransportOperationsArea } from '../areas/transport-operations/TransportOperationsArea'
+import { CustomerDashboard, CustomerSection } from '../areas/customer-portal/CustomerPages'
 import { CustomerPortalArea } from '../areas/customer-portal/CustomerPortalArea'
 import { AppShell } from './AppShell'
 import { Home } from './Home'
@@ -43,7 +44,11 @@ export const appRoutes: RouteObject[] = [
         { path: 'alerts', Component: OperationsAlerts },
         { path: 'alerts/:alertId', Component: OperationsAlerts },
       ] },
-      { path: 'customer', Component: CustomerPortalArea },
+      { path: 'customer', Component: CustomerPortalArea, children: [
+        { index: true, Component: CustomerDashboard },
+        ...['orders','trailers','deliveries','documents'].map(section => ({ path: section, element: <CustomerSection section={section} /> })),
+        { path: '*', Component: NotFound },
+      ] },
       { path: '*', Component: NotFound },
     ],
   },

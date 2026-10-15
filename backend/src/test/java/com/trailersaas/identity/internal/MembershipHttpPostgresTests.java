@@ -59,7 +59,7 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         fixtures.membership(tenant, user, "ACTIVE");
         var entries = memberships(me(user));
         assertThat(entries).containsExactly(Map.of("tenantId", tenant.toString(), "tenantName", "Active tenant",
-                "status", "ACTIVE", "roles", List.of(), "capabilities", List.of()));
+                "status", "ACTIVE", "roles", List.of(), "capabilities", List.of(), "tenantActive", false));
     }
 
     @Test
@@ -90,7 +90,7 @@ class MembershipHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(JsonPath.<List<String>>read(response.body(), "$.memberships[0].capabilities"))
                 .containsExactlyElementsOf(expected);
         assertThat(memberships(response).getFirst().keySet())
-                .containsExactlyInAnyOrder("tenantId", "tenantName", "status", "roles", "capabilities");
+                .containsExactlyInAnyOrder("tenantId", "tenantName", "status", "roles", "capabilities", "tenantActive");
         for (var role : JsonPath.<List<Map<String, Object>>>read(response.body(), "$.memberships[0].roles")) {
             assertThat(role.keySet()).containsExactlyInAnyOrder("roleCode", "scopeType", "customerId");
         }
