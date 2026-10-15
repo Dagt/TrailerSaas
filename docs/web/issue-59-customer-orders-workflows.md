@@ -219,7 +219,7 @@ full tests and dependency-free CI policy tests. Flutter 3.47.6/Dart 3.13.5 runs
 locked pub get, reproducible Drift generation, format, fatal-info analysis and
 all tests; Drift remains v9 with no Mobile changes. Final counts, candidate SHA,
 commands and per-log SHA-256 are published in PR #113 and local evidence files.
-No earlier SHA's result is substituted for that execution. Git archives are created with core.autocrlf=false: an initial Windows export converted generated-source LF to CRLF; byte comparisons against the real Git blob proved that only export conversion differed. No Drift source/schema was changed.
+The full attempt also exposed one historical Authorization inventory still expecting 52 tables. It now requires exactly 53 and explicitly verifies the new table's forced RLS and SELECT/INSERT-only runtime grants; no assertion is removed. No earlier SHA's result is substituted for that execution. Git archives are created with core.autocrlf=false: an initial Windows export converted generated-source LF to CRLF; byte comparisons against the real Git blob proved that only export conversion differed. No Drift source/schema was changed.
 
 ## Release and deferred limitations
 

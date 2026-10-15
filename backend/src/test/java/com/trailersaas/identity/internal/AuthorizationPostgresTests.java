@@ -176,7 +176,18 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
                 }
             }
             try (var rows = statement.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname='public'")) {
-                rows.next(); assertThat(rows.getInt(1)).isEqualTo(52);
+                rows.next(); assertThat(rows.getInt(1)).isEqualTo(53);
+            }
+            try (var rows = statement.executeQuery("""
+                    SELECT relrowsecurity, relforcerowsecurity,
+                      has_table_privilege(current_user,'order_request_revisions','SELECT'),
+                      has_table_privilege(current_user,'order_request_revisions','INSERT'),
+                      has_table_privilege(current_user,'order_request_revisions','UPDATE,DELETE')
+                    FROM pg_class WHERE oid='order_request_revisions'::regclass
+                    """)) {
+                assertThat(rows.next()).isTrue();
+                for (int column=1;column<=4;column++) assertThat(rows.getBoolean(column)).isTrue();
+                assertThat(rows.getBoolean(5)).isFalse();
             }
         }
     }
