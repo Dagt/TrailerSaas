@@ -63,6 +63,19 @@ class OrderRequestRevisionPostgresTests extends PostgresIntegrationTest {
         try(var c=runtime.getConnection()){c.setAutoCommit(false);setting(c,tenant);assertThatThrownBy(()->f.db.execute(c,"delete from order_stops where order_id=?",order)).isInstanceOfSatisfying(SQLException.class,e->assertThat(e.getSQLState()).isEqualTo("23514"));c.rollback();}
         assertThat(f.db.value("select count(*) from order_stops where order_id=?",order)).isEqualTo(1L);
     }
+    @Test void temporaryNamesCannotBypassCommittedChildGuard() throws Exception {
+        f.db.execute("update orders set status='PLANNED' where id=?",order);
+        try(var c=runtime.getConnection()) {
+            c.setAutoCommit(false);setting(c,tenant);
+            try {
+                f.db.execute(c,"create temporary table orders as select * from public.orders where id=?",order);
+                f.db.execute(c,"update pg_temp.orders set status='OPEN'");
+                assertThatThrownBy(()->f.db.execute(c,"delete from public.order_stops where order_id=?",order))
+                    .isInstanceOfSatisfying(SQLException.class,e->assertThat(e.getSQLState()).isEqualTo("23514"));
+            } finally {c.rollback();}
+        }
+        assertThat(f.db.value("select count(*) from public.order_stops where order_id=?",order)).isEqualTo(1L);
+    }
     @Test void requiredHistoryFailureRollsBackChildrenReferencesAndVersion() throws Exception {
         var before=f.db.value("select jsonb_agg(to_jsonb(s))::text from order_stops s where order_id=?",order);
         f.db.execute("create function issue59_fail_revision() returns trigger language plpgsql as $$ begin if NEW.order_id='"+order+"'::uuid then raise exception 'Controlled revision persistence failure'; end if; return NEW; end $$");
