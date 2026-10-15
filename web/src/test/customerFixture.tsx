@@ -17,13 +17,16 @@ export function customerFixture(path = '/customer', memberships = [dispatcher()]
     [customerB]: { ...stamps,id:customerB,name:'Stanfast',status:'ACTIVE' },
     [customerC]: { ...stamps,id:customerC,name:'Beta Customer',status:'ACTIVE' },
   }
-  const requests: {path:string; signal?:AbortSignal|null; method:string}[] = []
-  const handlers = new Map<string,(options?: RequestInit)=>Promise<Response>>()
+  const requests: {path:string; query:URLSearchParams; signal?:AbortSignal|null; method:string}[] = []
+  const handlers = new Map<string,(options?: RequestInit,query?:URLSearchParams)=>Promise<Response>>()
   const fetcher = vi.fn<typeof fetch>(async (input,options) => {
     const url = new URL(String(input)), path = url.pathname.replace('/api/v1','')
-    requests.push({ path,signal:options?.signal,method:options?.method??'GET' })
-    const handler = handlers.get(path); if (handler) return handler(options)
+    requests.push({ path,query:url.searchParams,signal:options?.signal,method:options?.method??'GET' })
+    const handler = handlers.get(path); if (handler) return handler(options,url.searchParams)
     if (path === '/me') return response(me)
+    if (/\/orders\/customer-context$/.test(path))return response({customerId:url.searchParams.get('customerId'),capabilities:['ORDER_CREATE','ORDER_EDIT','ORDER_CANCEL','ORDER_COMPLETE','TRIP_REROUTE','TRAILER_SUBSTITUTE_AUTHORIZE','TRIP_ASSIGN_TRAILER']})
+    if (/\/orders$/.test(path))return response({items:[],nextCursor:null})
+    if (/\/(sites|trailers)$/.test(path))return response({items:[]})
     const match = /^\/tenants\/([^/]+)\/customers\/([^/]+)$/.exec(path)
     if (match) {
       const m = me.memberships.find(m=>m.tenantId===match[1]&&m.status==='ACTIVE'&&m.tenantActive===true)
