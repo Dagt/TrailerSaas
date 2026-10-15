@@ -96,7 +96,7 @@ unique Tenant/Order/version, JSON-object/version constraints, forced Tenant RLS
 excluding identity bootstrap, runtime SELECT/INSERT only. No historical migration
 checksum is changed. DELETE is newly granted only on requested cargo/Stop children,
 with a SECURITY INVOKER trigger that locks the parent and rejects committed work.
-No UPDATE/DELETE grant on revision history, no generic ledger or Audit API. The child guard explicitly qualifies public tables, pins its search_path and revokes PUBLIC function execution; it remains SECURITY INVOKER.
+No UPDATE/DELETE grant on revision history, no generic ledger or Audit API. The child guard qualifies its migration-bound tables, pins its search_path and revokes PUBLIC function execution; it remains SECURITY INVOKER. Flyway resolves `${flyway:defaultSchema}` once at migration time (`public` in the application), so caller temporary names cannot redirect it and isolated upgrade schemas remain independent. See [official Flyway placeholders](https://documentation.red-gate.com/fd/flyway-placeholders-namespace-277579022.html).
 
 Specific human reference/content edits, cancellation/requested cancellation and
 administrative completion append before/after facts in V28 after the actual version
@@ -190,15 +190,15 @@ Effective role catalog, OQ-059 and Alerts policies remain unchanged.
 ## Tests and execution evidence
 
 New Backend classes: CustomerOrderWorkflowPostgresTests (16),
-OrderRequestRevisionPostgresTests (8), OrderRequestUpgradePostgresTests (1).
+OrderRequestRevisionPostgresTests (9), OrderRequestUpgradePostgresTests (1).
 PostgreSQL 18.6/Testcontainers, actual runtime role, two concurrent HTTP edits,
 forced-RLS/pooled context, cross-Tenant FK, append-only grants, committed-child
 SQL guard, induced history failure rollback, real V27→V28 physical movement/history
 and all V1–V27 checksum equality. Modulith remains covered by the existing suite.
 
-Focused final security/migration run: 25 passed, zero failures/errors/skipped.
+Focused final security/migration/RLS/Settings run: 46 passed, zero failures/errors/skipped.
 Expanded history/Order regression: 74 passed, zero failures/errors/skipped (overlaps
-the 25; do not sum these as unique coverage). Earlier Customer HTTP 56 and RLS 17
+the 46; do not sum these as unique coverage). Earlier Customer HTTP 56 and RLS 17
 also passed. New Web workflow cases: 45; the final label/review run passed all 45. The prior 44-case run with shared HTTP: 55
 passed. Typecheck and lint passed. Earlier inherited Customer/Operations/HTTP
 regressions: 151 passed before the final additions. OpenAPI: validation and
@@ -210,10 +210,10 @@ operating fixtures now explicitly ACTIVE, preserving all negative access asserti
 Historical-schema boot exposed the unnecessary new JPA entity validation; same-
 transaction native revision persistence preserves upgrade support. A new contract
 test caught an unquoted YAML `#59` truncating a description; the description was
-fixed rather than weakening the test. None of these failures is hidden as green. A further runtime-SQL regression reproduced temporary-table shadowing of the new guard: one test failed before correction, then all 25 focused PostgreSQL tests passed after pinning real public table references. This is defense for the runtime SQL boundary, not a demonstrated HTTP injection path. Only the new, unmerged V28 is corrected; V1–V27 remain intact. The earlier full candidate was superseded, not reported as approved.
+fixed rather than weakening the test. None of these failures is hidden as green. A further runtime-SQL regression reproduced temporary-table shadowing of the new guard: one test failed before correction, then all 25 focused PostgreSQL tests passed after pinning real public table references. This is defense for the runtime SQL boundary, not a demonstrated HTTP injection path. Only the new, unmerged V28 is corrected; V1–V27 remain intact. The earlier full candidate was superseded, not reported as approved. The subsequent full attempt caught the hardcoded-public schema collision in the unchanged Tenant Settings backfill regression. Binding V28 to Flyway's actual default schema fixes that error, with a new isolated-schema parent regression. All 46 focused tests (including RLS and the historical Settings case) then passed.
 
 Final local validation uses a Git archive of the clean published candidate for
-Node/Flutter/Java 25 `mvnw clean verify`. The Linux test harness forwards local Testcontainers ports over loopback to the same local Docker Desktop gateway, preserving the existing local-profile JDBC guard, actual PostgreSQL18.6 and non-BYPASSRLS role. It is temporary validation tooling outside the repository, not application infrastructure or a worker. A Windows full attempt hit a native socket BindException during an existing Road test fixture; the affected test and full Backend are revalidated in Linux with the same PostgreSQL 18.6 runtime-role tests, without weakening assertions or changing host networking.
+Node/Flutter/Java 25 `mvnw clean verify`. The Linux test harness forwards local Testcontainers ports over loopback to the actual local containers on the Docker bridge, preserving the existing local-profile JDBC guard, actual PostgreSQL18.6 and non-BYPASSRLS role. It is temporary validation tooling outside the repository, not application infrastructure or a worker. A Windows full attempt hit a native socket BindException during an existing Road test fixture; the affected test and full Backend are revalidated in Linux with the same PostgreSQL 18.6 runtime-role tests, without weakening assertions or changing host networking.
 Node 24 runs locked npm ci, Web typecheck/lint/full tests/build, OpenAPI validate/
 full tests and dependency-free CI policy tests. Flutter 3.47.6/Dart 3.13.5 runs
 locked pub get, reproducible Drift generation, format, fatal-info analysis and

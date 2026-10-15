@@ -19,19 +19,19 @@ CREATE POLICY order_request_revisions_tenant ON order_request_revisions TO "${ru
 GRANT SELECT,INSERT ON order_request_revisions TO "${runtimeRole}";
 -- Existing SELECT/INSERT remain; grant DELETE solely on these requested children.
 -- This guard also rejects direct runtime deletion after any planning/physical commitment.
-CREATE FUNCTION public.guard_unallocated_order_request_delete() RETURNS trigger
-LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public,pg_temp AS $$
+CREATE FUNCTION "${flyway:defaultSchema}".guard_unallocated_order_request_delete() RETURNS trigger
+LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,"${flyway:defaultSchema}",pg_temp AS $$
 DECLARE current_status varchar;
 BEGIN
-    SELECT status INTO current_status FROM public.orders WHERE tenant_id=OLD.tenant_id AND id=OLD.order_id FOR UPDATE;
+    SELECT status INTO current_status FROM "${flyway:defaultSchema}".orders WHERE tenant_id=OLD.tenant_id AND id=OLD.order_id FOR UPDATE;
     IF current_status IS DISTINCT FROM 'OPEN'
-        OR EXISTS(SELECT 1 FROM public.manifest_orders WHERE tenant_id=OLD.tenant_id AND order_id=OLD.order_id)
-        OR EXISTS(SELECT 1 FROM public.trip_stop_orders WHERE tenant_id=OLD.tenant_id AND order_id=OLD.order_id)
-        OR EXISTS(SELECT 1 FROM public.order_fulfillment_events WHERE tenant_id=OLD.tenant_id AND order_id=OLD.order_id)
+        OR EXISTS(SELECT 1 FROM "${flyway:defaultSchema}".manifest_orders WHERE tenant_id=OLD.tenant_id AND order_id=OLD.order_id)
+        OR EXISTS(SELECT 1 FROM "${flyway:defaultSchema}".trip_stop_orders WHERE tenant_id=OLD.tenant_id AND order_id=OLD.order_id)
+        OR EXISTS(SELECT 1 FROM "${flyway:defaultSchema}".order_fulfillment_events WHERE tenant_id=OLD.tenant_id AND order_id=OLD.order_id)
     THEN RAISE EXCEPTION 'Order request is committed' USING ERRCODE='23514'; END IF;
     RETURN OLD;
 END $$;
-REVOKE ALL ON FUNCTION public.guard_unallocated_order_request_delete() FROM PUBLIC;
-CREATE TRIGGER order_cargo_unallocated_delete BEFORE DELETE ON public.order_cargo_lines FOR EACH ROW EXECUTE FUNCTION public.guard_unallocated_order_request_delete();
-CREATE TRIGGER order_stops_unallocated_delete BEFORE DELETE ON public.order_stops FOR EACH ROW EXECUTE FUNCTION public.guard_unallocated_order_request_delete();
+REVOKE ALL ON FUNCTION "${flyway:defaultSchema}".guard_unallocated_order_request_delete() FROM PUBLIC;
+CREATE TRIGGER order_cargo_unallocated_delete BEFORE DELETE ON "${flyway:defaultSchema}".order_cargo_lines FOR EACH ROW EXECUTE FUNCTION "${flyway:defaultSchema}".guard_unallocated_order_request_delete();
+CREATE TRIGGER order_stops_unallocated_delete BEFORE DELETE ON "${flyway:defaultSchema}".order_stops FOR EACH ROW EXECUTE FUNCTION "${flyway:defaultSchema}".guard_unallocated_order_request_delete();
 GRANT DELETE ON order_cargo_lines,order_stops TO "${runtimeRole}";

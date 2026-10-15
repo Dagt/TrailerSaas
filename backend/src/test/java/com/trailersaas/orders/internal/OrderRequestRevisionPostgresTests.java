@@ -76,6 +76,30 @@ class OrderRequestRevisionPostgresTests extends PostgresIntegrationTest {
         }
         assertThat(f.db.value("select count(*) from public.order_stops where order_id=?",order)).isEqualTo(1L);
     }
+    @Test void isolatedSchemaGuardUsesItsOwnParentRatherThanThePublicOrder() throws Exception {
+        var schema="revision_"+UUID.randomUUID().toString().replace("-","");
+        var source=flyway.getConfiguration().getDataSource();
+        var isolated=Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema)
+            .placeholders(Map.of("runtimeRole",RUNTIME_USERNAME)).load();
+        try {
+            isolated.migrate();isolated.validate();
+            f.db.execute("grant usage on schema "+schema+" to "+RUNTIME_USERNAME);
+            for(var table:List.of("tenants","users","customers","orders")) {
+                var id=table.equals("tenants")?tenant:table.equals("users")?user:table.equals("customers")?customer:order;
+                f.db.execute("insert into "+schema+"."+table+" select * from public."+table+" where id=?",id);
+            }
+            f.db.execute("insert into "+schema+".order_stops select * from public.order_stops where order_id=?",order);
+            f.db.execute("update "+schema+".orders set status='PLANNED' where id=?",order);
+            try(var c=runtime.getConnection()) {
+                c.setAutoCommit(false);setting(c,tenant);
+                try {assertThatThrownBy(()->f.db.execute(c,"delete from "+schema+".order_stops where order_id=?",order))
+                    .isInstanceOfSatisfying(SQLException.class,e->assertThat(e.getSQLState()).isEqualTo("23514"));}
+                finally {c.rollback();}
+            }
+            assertThat(f.db.value("select count(*) from "+schema+".order_stops where order_id=?",order)).isEqualTo(1L);
+            assertThat(f.db.value("select status from public.orders where id=?",order)).isEqualTo("OPEN");
+        } finally {f.db.execute("drop schema if exists "+schema+" cascade");}
+    }
     @Test void requiredHistoryFailureRollsBackChildrenReferencesAndVersion() throws Exception {
         var before=f.db.value("select jsonb_agg(to_jsonb(s))::text from order_stops s where order_id=?",order);
         f.db.execute("create function issue59_fail_revision() returns trigger language plpgsql as $$ begin if NEW.order_id='"+order+"'::uuid then raise exception 'Controlled revision persistence failure'; end if; return NEW; end $$");
