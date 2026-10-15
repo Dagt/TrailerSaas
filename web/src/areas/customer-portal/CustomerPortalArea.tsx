@@ -51,7 +51,7 @@ function ContextPicker({ uid, me, memberships, readRevision, verifying, refresh 
     </header>
     {verifying ? <LoadingState /> : !memberships.length ? <EmptyState><h1>Customer access is not available</h1><p>Your account has no active Customer Dispatcher context. Refresh access after your administrator updates it.</p></EmptyState> : !current ?
       <EmptyState><h1>Select a Tenant</h1><p>Choose one of your Customer workspaces.</p></EmptyState> :
-      <CustomerPicker key={`${current.tenantId}:${readRevision}`} owner={{ uid, userId: me.userId, membership: current }} selected={customerId} select={changeCustomer} />}
+      <CustomerPicker key={`${current.tenantId}:${readRevision}`} owner={{ uid, userId: me.userId, tenantId: current.tenantId, membership: current }} selected={customerId} select={changeCustomer} />}
   </section>
 }
 function CustomerPicker({ owner, selected, select }: { owner: Omit<CustomerOwner,'customerId'>; selected: string; select(id: string): void }) {

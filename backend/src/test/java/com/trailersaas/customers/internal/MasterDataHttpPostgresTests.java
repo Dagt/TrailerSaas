@@ -267,6 +267,17 @@ class MasterDataHttpPostgresTests extends PostgresIntegrationTest {
         assertThat(known.body()+invented.body()).doesNotContain("Secret other business","Assigned");
     }
 
+    @Test void administrativeBootstrapAuthorityRemainsSeparateFromCustomerPortalAuthority() throws Exception {
+        var c=create("/customers", "{\"name\":\"Bootstrap Customer\"}");
+        sql("UPDATE tenants SET status='CANDIDATE_TEST_STATUS' WHERE id=?",tenant);
+        assertThat(get("/customers/"+c.get("id")).statusCode()).isEqualTo(200);
+        onlyRole("CUSTOMER_DISPATCHER", UUID.fromString(c.get("id").toString()));
+        problem(get("/customers/"+c.get("id")),403,"TENANT_ACCESS_DENIED");
+        var me=request("GET","/api/v1/me",null,TOKEN,true);
+        assertThat(JsonPath.<Boolean>read(me.body(),"$.memberships[0].tenantActive")).isFalse();
+        assertThat(me.body()).doesNotContain("CANDIDATE_TEST_STATUS");
+    }
+
     private void associate(Map<String, Object> c, Map<String, Object> s) throws Exception {
         create("/customers/" + c.get("id") + "/sites", "{\"siteId\":\"" + s.get("id") + "\"}");
     }

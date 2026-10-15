@@ -8,11 +8,11 @@ const customerSchema = z.object({ id: z.uuid(), name: z.string().min(1), status:
   version: z.number().int().nonnegative(), createdAt: z.iso.datetime({ offset: true }), updatedAt: z.iso.datetime({ offset: true }),
 }).strict()
 export type PortalCustomer = z.infer<typeof customerSchema>
-export type CustomerOwner = { uid: string; userId: string; membership: Membership; customerId: string }
+export type CustomerOwner = { uid: string; userId: string; tenantId: string; membership: Membership; customerId: string }
 export type CustomerContext = CustomerOwner & { customer: PortalCustomer }
 export const customerRoot = (uid: string) => ['customer', uid] as const
 export const customerKey = (owner: CustomerOwner, resource: string, filters: unknown = null) =>
-  [...customerRoot(owner.uid), owner.userId, owner.membership.tenantId, owner.customerId, resource, filters] as const
+  [...customerRoot(owner.uid), owner.userId, owner.tenantId, owner.customerId, resource, filters] as const
 export function assignedCustomers(m: Membership) {
   return [...new Set(m.roles.filter(r => r.roleCode === 'CUSTOMER_DISPATCHER' && r.scopeType === 'CUSTOMER' && z.uuid().safeParse(r.customerId).success).map(r => r.customerId!))].sort()
 }
@@ -20,14 +20,14 @@ export function portalMemberships(me: CurrentUser) {
   return me.memberships.filter(m => m.status === 'ACTIVE' && m.tenantActive === true && assignedCustomers(m).length > 0)
 }
 export function validateOwner(owner: CustomerOwner) {
-  if (!z.uuid().safeParse(owner.userId).success || !z.uuid().safeParse(owner.membership.tenantId).success || !owner.uid ||
+  if (!z.uuid().safeParse(owner.userId).success || !z.uuid().safeParse(owner.tenantId).success || owner.tenantId !== owner.membership.tenantId || !owner.uid ||
     owner.membership.status !== 'ACTIVE' || owner.membership.tenantActive !== true || !assignedCustomers(owner.membership).includes(owner.customerId)) {
     throw new ApiProblem({ status: 403, code: 'CUSTOMER_SCOPE_DENIED' })
   }
 }
 async function readCustomer(api: ApiClient, owner: CustomerOwner, signal: AbortSignal) {
   validateOwner(owner) // Reduces accidental requests; never replaces server authorization.
-  const row = customerSchema.parse(await api.request<unknown>(`/tenants/${owner.membership.tenantId}/customers/${owner.customerId}`, { signal }))
+  const row = customerSchema.parse(await api.request<unknown>(`/tenants/${owner.tenantId}/customers/${owner.customerId}`, { signal }))
   if (row.id !== owner.customerId) throw new ApiProblem({ status: 502, code: 'UNEXPECTED_RESPONSE' })
   return row
 }

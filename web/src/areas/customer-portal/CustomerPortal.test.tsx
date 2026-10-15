@@ -21,7 +21,7 @@ it('recognizes a Customer role with capabilities [] and verifies the sole contex
   expect(screen.queryByLabelText('Active Customer')).not.toBeInTheDocument()
   expect(f.requests.every(r=>r.path==='/me'||r.path===path())).toBe(true)
   expect(f.requests.every(r=>r.method==='GET')).toBe(true)
-  const key=customerKey({uid:'customer-user',userId:resourceId,membership:dispatcher(),customerId},'context')
+  const key=customerKey({uid:'customer-user',userId:resourceId,tenantId:tenantA,membership:dispatcher(),customerId},'context')
   expect(f.cache.getQueryData(key)).toMatchObject({id:customerId})
   expect(localStorage.length).toBe(0)
 })
@@ -57,7 +57,7 @@ it('switches Customers, clears old resources and returns to the dashboard',async
   const u=userEvent.setup(),f=customerFixture('/customer',[dispatcher([customerId,customerB])])
   expect(await screen.findByRole('heading',{name:'Select a Customer'})).toBeInTheDocument()
   await u.selectOptions(screen.getByLabelText('Active Customer'),customerId);await dashboard()
-  const old=customerKey({uid:'customer-user',userId:resourceId,membership:f.me.memberships[0]!,customerId},'context')
+  const old=customerKey({uid:'customer-user',userId:resourceId,tenantId:tenantA,membership:f.me.memberships[0]!,customerId},'context')
   await u.click(screen.getByRole('link',{name:'Orders'}));await screen.findByRole('heading',{name:'Orders'})
   await u.selectOptions(screen.getByLabelText('Active Customer'),customerB);await dashboard()
   expect(screen.getByText('Workspace for Stanfast in Alpha Logistics.')).toBeInTheDocument()
@@ -197,14 +197,14 @@ it('fences an unmounted portal download and releases its namespace',async()=>{
 })
 it('query-layer validation rejects manipulated IDs without treating the hint as an authorization grant',async()=>{
   const api={request:vi.fn()},membership=dispatcher()
-  const owner={uid:'owner',userId:resourceId,membership,customerId:customerB}
+  const owner={uid:'owner',userId:resourceId,tenantId:tenantA,membership,customerId:customerB}
   const options=customerQuery(api,owner)
   await expect(new QueryClient().fetchQuery(options)).rejects.toBeInstanceOf(ApiProblem)
   expect(api.request).not.toHaveBeenCalled()
 })
 it('does not claim a complete choice list from a partial malformed response',async()=>{
   const api={request:vi.fn().mockResolvedValueOnce({id:customerId}).mockResolvedValueOnce({id:customerB})}
-  await expect(customerChoices(api,{uid:'owner',userId:resourceId,membership:dispatcher([customerId,customerB])},new AbortController().signal)).rejects.toThrow()
+  await expect(customerChoices(api,{uid:'owner',userId:resourceId,tenantId:tenantA,membership:dispatcher([customerId,customerB])},new AbortController().signal)).rejects.toThrow()
 })
 
 it.each(['SUSPENDED','DISABLED','Tenant disabled'])('retires a previously open context after %s is observed',async state=>{
@@ -253,4 +253,10 @@ it('rejects a manipulated Customer option outside the server assignment set',asy
   await u.selectOptions(picker,customerC)
   expect(f.requests.some(r=>r.path===path(tenantA,customerC))).toBe(false)
   expect(screen.queryByRole('heading',{name:'Customer dashboard'})).not.toBeInTheDocument()
+})
+
+it('the canonical Tenant field cannot diverge from the actual membership context',async()=>{
+  const api={request:vi.fn()},owner={uid:'owner',userId:resourceId,tenantId:tenantB,membership:dispatcher(),customerId}
+  await expect(new QueryClient().fetchQuery(customerQuery(api,owner))).rejects.toBeInstanceOf(ApiProblem)
+  expect(api.request).not.toHaveBeenCalled()
 })
