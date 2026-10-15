@@ -37,3 +37,14 @@ Rulesets GET returned `403 Upgrade to GitHub Pro or make this repository public`
 The integration cannot configure/verify required checks. Keep main's full push
 validation; document exact owner configuration rather than claim protection.
 No merge, protection bypass or unrelated #57 implementation is authorized.
+
+## Checkpoint C evidence
+
+V26 adds lifecycle constraints, recipients, global devices, per-destination
+technical receipts and narrow controlled registry functions. It reuses V16's
+nullable device_id, adding only its User-safe FK. No historical SQL changed.
+Focused PostgreSQL 18.6: NotificationSchemaPostgresTests 10 and unchanged
+YardCheckReconciliationPostgresTests 20 passed, zero failures/errors/skipped.
+The first Draft run #150 (38658689617) executed CI Policy successfully, skipped
+all four full suites and correctly left Full CI deferred/non-passing. No full
+suite was run on that checkpoint. This is observed GitHub evidence, not simulation.
