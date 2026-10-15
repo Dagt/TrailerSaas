@@ -66,3 +66,15 @@ not rewrite/resolve an existing occurrence.
 
 Draft checkpoints use focused tests. Final Ready triggers complete CI only once
 the candidate is finished; failures return to Draft and revalidate a new candidate.
+
+## Checkpoint C evidence
+
+V27 adds only one technical cursor table, composite Tenant/job references, immutable
+system evidence and guarded system recovery. Existing V24 Missing trigger bodies
+are retained and invoked only for Missing. A partial unique index protects both
+OPEN and ACKNOWLEDGED stale occurrences. No historical SQL changes. Threshold
+comparison uses numeric elapsed seconds to support the existing full positive
+integer setting range without timestamp-subtraction overflow; nonfinite values
+are rejected conservatively. Initial focused PostgreSQL run: 41 tests passed
+(schema plus original Missing reconciliation/inbox); subsequent schema/module run:
+4 passed, zero failures/errors/skipped. These are focused, overlapping evidence.
