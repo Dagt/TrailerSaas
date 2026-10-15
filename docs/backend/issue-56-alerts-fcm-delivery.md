@@ -58,3 +58,19 @@ AT_LOCATION projection before resolution; the Alert never repairs the Trailer.
 ALERT_ACKNOWLEDGE / ALERT_RESOLVE are separate, currently unassigned capabilities
 pending owner clarification, never inferred from ALERT_VIEW. Focused inbox/domain
 tests 17 plus exhaustive role mapping 6 passed (zero failures/errors/skipped).
+
+## Checkpoints E/F evidence
+
+Global device HTTP tests: 11 passed; no Tenant requirement, stable proposed UUID,
+token rotation/transfer, retained logout history, strict fields and foreign-owner
+denial. API receipts exclude tokens and deviceName. Optional deviceId is identity
+of this User registration, not authentication or a mobile idempotency key.
+
+The registered ALERT_FCM v1 payload contains recipientId only; aggregate is the
+Alert reference. No production recipient policy is registered. Test-only compiled
+policy/provider exercise actual Yard reconciliation -> recipient/outbox -> existing
+worker -> per-device FCM acceptance diagnostics. Delivery/schema tests 26 passed,
+including two workers, rollback on real outbox INSERT failure, permission/policy
+revocation, mixed devices, malformed receipts, retry/DEAD and lost ACK fencing.
+An FCM acceptance is never labeled delivered. No real Firebase/APNs credentials
+or physical-device delivery was used in these tests.
