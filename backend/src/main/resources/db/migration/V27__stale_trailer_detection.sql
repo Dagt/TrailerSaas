@@ -81,6 +81,20 @@ $$;
 REVOKE ALL ON FUNCTION stale_job_is_current(uuid,uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION stale_job_is_current(uuid,uuid) TO "${runtimeRole}";
 
+-- SELECT FOR SHARE requires UPDATE privilege, which runtime must NOT gain on
+-- Tenant administration. This closed function only locks the current live job's
+-- own Tenant row; no directory, mutation or caller-selected foreign Tenant.
+CREATE FUNCTION lock_stale_tenant(tenant uuid,job uuid) RETURNS boolean LANGUAGE plpgsql
+ SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE state varchar;
+BEGIN
+ IF NOT public.stale_job_is_current(tenant,job) THEN RETURN false; END IF;
+ SELECT status INTO state FROM public.tenants WHERE id=tenant FOR SHARE;
+ RETURN state='ACTIVE';
+END $$;
+REVOKE ALL ON FUNCTION lock_stale_tenant(uuid,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION lock_stale_tenant(uuid,uuid) TO "${runtimeRole}";
+
 CREATE OR REPLACE FUNCTION guard_alert_lifecycle() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 DECLARE seen timestamptz; hours integer; evaluated timestamptz;
 BEGIN
@@ -88,7 +102,7 @@ BEGIN
  IF TG_OP='INSERT' THEN
   IF NEW.status<>'OPEN' OR NEW.version<>0 THEN RAISE EXCEPTION 'Invalid initial Alert' USING ERRCODE='23514'; END IF;
   IF NEW.alert_type='STALE_TRAILER' THEN
-   IF NOT public.stale_job_is_current(NEW.tenant_id,NEW.detector_job_id) THEN RAISE EXCEPTION 'Live scoped detector required' USING ERRCODE='23514'; END IF;
+   IF NOT public.lock_stale_tenant(NEW.tenant_id,NEW.detector_job_id) THEN RAISE EXCEPTION 'Live scoped detector required' USING ERRCODE='23514'; END IF;
    SELECT stale_trailer_threshold_hours INTO hours FROM public.tenant_settings WHERE tenant_id=NEW.tenant_id FOR SHARE;
    SELECT last_seen_at INTO seen FROM public.trailers WHERE tenant_id=NEW.tenant_id AND id=NEW.related_entity_id AND active FOR UPDATE;
    IF NOT FOUND OR seen IS NULL OR NOT isfinite(seen) OR hours IS NULL OR NEW.detected_last_seen_at IS DISTINCT FROM seen
@@ -122,7 +136,7 @@ BEGIN
    IF NOT FOUND OR seen IS NULL OR NOT isfinite(seen) OR hours IS NULL OR seen>evaluated OR extract(epoch from evaluated)-extract(epoch from seen)>=hours::numeric*3600
    THEN RAISE EXCEPTION 'Stale Trailer condition persists' USING ERRCODE='23514'; END IF;
    IF NEW.resolved_by IS NULL THEN
-    IF NOT public.stale_job_is_current(NEW.tenant_id,NEW.resolution_job_id)
+    IF NOT public.lock_stale_tenant(NEW.tenant_id,NEW.resolution_job_id)
     THEN RAISE EXCEPTION 'Live scoped detector required' USING ERRCODE='23514'; END IF;
     NEW.resolution_actor_type='SYSTEM';NEW.resolution_last_seen_at=seen;NEW.resolution_threshold_hours=hours;
    ELSE NEW.resolution_actor_type='HUMAN_USER'; END IF;

@@ -78,3 +78,27 @@ integer setting range without timestamp-subtraction overflow; nonfinite values
 are rejected conservatively. Initial focused PostgreSQL run: 41 tests passed
 (schema plus original Missing reconciliation/inbox); subsequent schema/module run:
 4 passed, zero failures/errors/skipped. These are focused, overlapping evidence.
+
+## Durable execution checkpoint D
+
+The existing worker's explicit deployment allowlist is exposed through a read-only
+public TenantJobScope port. Detector configuration must be an enabled subset;
+defaults remain disabled. Initial defaults are 30-second scheduler poll, one-hour
+cycle and 100 Trailers per job (limits 5s–1h poll, 1m–1d cycle, 1–500 batch).
+The scheduler visits one configured Tenant per poll, creates or resumes a durable
+chain, and does not enumerate Tenants. Continuations share a logical scan ID and
+commit cursor/next-job/Alerts together. Repeated batch ACKs are no-ops.
+
+Runtime deliberately lacks UPDATE on Tenant administration, so PostgreSQL
+SELECT FOR SHARE cannot be used directly on that table. V27's closed
+lock_stale_tenant function only locks the current live, scoped detector job's own
+Tenant. It returns a boolean, grants no mutation/directory capability, checks the
+current Tenant context and existing job/cursor binding, and exposes no foreign
+data. All ordinary queries still run with the runtime role and RLS. No broad
+Tenant UPDATE, BYPASSRLS or administrative connection was introduced.
+
+Focused detector/condition run: 13 passed, zero failures/errors/skipped. Includes
+actual worker claiming, concurrent schedulers/workers, paginated continuations,
+no physical/ledger mutation, current Tenant thresholds, in-transit recovery,
+repeated ACKNOWLEDGED occurrences and the real recipient/outbox/FCM handler through
+an explicit test-only compiled policy. Production has zero such policy beans.
