@@ -14,6 +14,8 @@ import '../road/driver_updates_view.dart';
 import '../yard/yard_view.dart';
 import '../platform/qr_scanner.dart';
 import '../shift/camera_capture.dart';
+import '../notifications/notifications_controller.dart';
+import '../notifications/notifications_panel.dart';
 
 class SessionView extends StatefulWidget {
   const SessionView({
@@ -24,6 +26,7 @@ class SessionView extends StatefulWidget {
     this.updates,
     this.yardScanner,
     this.yardCamera,
+    this.notifications,
   });
   final OnlineCommandJournal? journal;
   final SessionController session;
@@ -31,6 +34,7 @@ class SessionView extends StatefulWidget {
   final DriverUpdatesStore? updates;
   final QrScanner? yardScanner;
   final InspectionCamera? yardCamera;
+  final NotificationsController? notifications;
   @override
   State<SessionView> createState() => _SessionViewState();
 }
@@ -69,6 +73,8 @@ class _SessionViewState extends State<SessionView> {
                 shrinkWrap: true,
                 padding: const EdgeInsets.all(24),
                 children: [
+                  if (widget.notifications != null)
+                    NotificationsPanel(controller: widget.notifications!),
                   if (session.message != null)
                     Text(session.message!, semanticsLabel: session.message),
                   if (session.traceId != null)
@@ -160,6 +166,8 @@ class _SessionViewState extends State<SessionView> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              if (widget.notifications != null)
+                NotificationsPanel(controller: widget.notifications!),
               Text(
                 snapshot.membership.name,
                 style: Theme.of(context).textTheme.titleLarge,
@@ -226,6 +234,10 @@ class _SessionViewState extends State<SessionView> {
                         ],
                       ),
                   ],
+                )
+              else if (snapshot.membership.alerts && !road && !yard)
+                const Text(
+                  'Alerts workspace. Open notifications here; browse the complete inbox in the Web application.',
                 )
               else
                 Column(

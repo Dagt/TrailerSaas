@@ -7,6 +7,7 @@ import { AppShell } from './AppShell'
 import { Home } from './Home'
 import { NotFound } from './NotFound'
 import { LoadingState } from '../shared/ui/components'
+import { AdminAlerts, OperationsAlerts } from '../areas/alerts/AlertsWorkspace'
 
 export const appRoutes: RouteObject[] = [
   {
@@ -27,6 +28,8 @@ export const appRoutes: RouteObject[] = [
         { path: 'trailers', element: <MasterList kind="trailers" /> },
         { path: 'trailers/:trailerId', element: <MasterDetail kind="trailers" /> },
         { path: 'settings', Component: SettingsPage },
+        { path: 'alerts', Component: AdminAlerts },
+        { path: 'alerts/:alertId', Component: AdminAlerts },
       ] },
       { path: 'operations', Component: TransportOperationsArea, children: [
         { index: true, lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).Dashboard }) },
@@ -37,6 +40,8 @@ export const appRoutes: RouteObject[] = [
         { path: 'trips', lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).TripsList }) },
         { path: 'trips/new', lazy: async () => ({ Component: (await import('../areas/transport-operations/PlanTrip')).PlanTrip }) },
         { path: 'trips/:tripId', lazy: async () => ({ Component: (await import('../areas/transport-operations/TripDetailPage')).TripDetailPage }) },
+        { path: 'alerts', Component: OperationsAlerts },
+        { path: 'alerts/:alertId', Component: OperationsAlerts },
       ] },
       { path: 'customer', Component: CustomerPortalArea },
       { path: '*', Component: NotFound },

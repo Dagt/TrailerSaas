@@ -3,7 +3,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../shared/auth/context'
 import { operationsApi, type Filters } from './operationsApi'
 import type { Customer, Driver, Location, Site, Tractor, Trailer } from './contracts'
-export const OperationsTenant = createContext<{ tenantId: string; tenantName: string } | null>(null)
+export const OperationsTenant = createContext<{ tenantId: string; tenantName: string; capabilities?: string[] } | null>(null)
 export function useOperations() {
   const tenant = useContext(OperationsTenant)
   const { api } = useAuth()

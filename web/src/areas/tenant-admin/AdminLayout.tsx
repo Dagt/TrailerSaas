@@ -40,7 +40,7 @@ function AdminDirectory() {
       : !current ? <EmptyState><h1>Select a Tenant</h1><p>Choose the workspace you want to manage.</p></EmptyState>
         : <AdminTenant.Provider value={current}><div className="admin-workspace" key={current.tenantId}>
           <nav aria-label="Admin navigation">{['Customers', 'Locations', 'Drivers', 'Tractors', 'Trailers', 'Settings'].map(label =>
-            <NavLink key={label} to={`/admin/${label.toLowerCase()}`}>{label}</NavLink>)}</nav>
+            <NavLink key={label} to={`/admin/${label.toLowerCase()}`}>{label}</NavLink>)}{current.capabilities?.includes('ALERT_VIEW') && <NavLink to="/admin/alerts">Alerts</NavLink>}</nav>
           <div className="admin-content"><Outlet /></div>
         </div></AdminTenant.Provider>}
   </section>

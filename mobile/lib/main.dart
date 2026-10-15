@@ -10,6 +10,9 @@ import 'src/session/api_client.dart';
 import 'src/session/session_controller.dart';
 import 'src/persistence/session_cache.dart';
 import 'src/platform/network_connectivity.dart';
+import 'src/notifications/messaging_port.dart';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -69,6 +72,7 @@ class _BootstrapState extends State<_Bootstrap> {
           configuration: widget.configuration,
           database: _database,
           session: snapshot.data,
+          messaging: NativeMessaging(FirebaseMessaging.instance),
         );
       }
       return Directionality(

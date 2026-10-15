@@ -74,3 +74,20 @@ including two workers, rollback on real outbox INSERT failure, permission/policy
 revocation, mixed devices, malformed receipts, retry/DEAD and lost ACK fencing.
 An FCM acceptance is never labeled delivered. No real Firebase/APNs credentials
 or physical-device delivery was used in these tests.
+
+## Checkpoint G evidence
+
+Flutter adds an injectable Firebase Messaging/OS port, a private stable per-User
+registration ID (no token persisted), explicit permission UI and authenticated
+Alert-hint retrieval. Login, refresh, foreground, reconnect and logout reuse the
+existing session/API lifecycle; no second command queue, worker or Drift change.
+Drift remains v9. Account changes fence callbacks and never reuse a previous
+User's registration. Native permission/APNs configuration is committed; physical
+Android/iOS and real credentials remain release gate #65 work.
+
+Focused Mobile notification/session tests: 60 passed; fatal-info analysis passed.
+The widget regression uses a real asynchronous permission future outside the
+Flutter fake-clock zone, including unmount before permission completion.
+Web Alerts/Admin/Operations regressions: 73 passed; typecheck and lint passed.
+Web actions require downloaded separate capabilities and explicit versioned
+confirmation. Production write grants remain deny-by-default pending clarification.
