@@ -22,10 +22,12 @@ export const progressTrip = z.object({ id, status: z.enum(['PLANNED','ASSIGNED',
 }).strict()
 export type ProgressTrip = z.infer<typeof progressTrip>
 export type ProgressStop = ProgressTrip['stops'][number]
-export const progressPage = z.object({ orderId:id,customerId:id,orderVersion:z.number().int().nonnegative(),requestEditable:z.boolean(),items: z.array(progressTrip), nextCursor: id.nullable() }).strict()
+export const progressPage = z.object({ orderId:id,customerId:id,orderVersion:z.number().int().nonnegative(),requestEditable:z.boolean(),items: z.array(progressTrip), nextCursor: id.nullable(),
+  changes:z.array(z.object({version:z.number().int().positive(),changeType:z.enum(['ORDER_EDITED','ORDER_CANCELLED','ORDER_CANCELLATION_REQUESTED','ORDER_COMPLETED']),recordedAt:instant,reason:nullableText,resolution:z.object({type:z.string(),destinationSiteId:id.nullable(),instructions:nullableText}).nullable()}).strict()),
+}).strict()
 export const createOrderInput = z.object({ customerId: id, orderNumber: z.string().trim().min(1), poNumber: nullableText, shipmentNumber: nullableText, bolReference: nullableText,
   cargoLines: z.array(cargoInput), requestedStops: z.array(stopInput).min(1), plannedTrailerId: id.nullable(),
-}).superRefine((value, context) => {
+}).strict().superRefine((value, context) => {
   const sequences = new Set<number>()
   value.requestedStops.forEach((s, index) => {
     if (sequences.has(s.sequenceNumber) || !s.siteId && (!s.siteSnapshot || s.locationId)) context.addIssue({ code: 'custom', path: ['requestedStops',index], message: 'Each Stop needs a unique sequence and an authorized Site or destination snapshot.' })

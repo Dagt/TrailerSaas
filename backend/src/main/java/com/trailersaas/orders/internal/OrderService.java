@@ -100,7 +100,7 @@ class OrderService {
         authorization.requireCustomerCapability(actor,tenant,customer,Capability.ORDER_CREATE);
         return actions.capabilities(actor,tenant,customer);
     }
-    @Transactional(readOnly=true)
+    @Transactional(readOnly=true,isolation=org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     Progress progress(AuthenticatedUserPrincipal actor,UUID tenant,UUID id,Map<String,String> parameters) {
         OrderValidation.fields(parameters,java.util.Set.of("cursor","limit"),"query");
         var scope=access.readScope(actor,tenant);
@@ -110,7 +110,7 @@ class OrderService {
         try { if(parameters.containsKey("limit")) limit=Integer.parseInt(parameters.get("limit")); } catch(NumberFormatException e) { throw OrderFailure.invalid("limit"); }
         if(limit<1||limit>50) throw OrderFailure.invalid("limit");
         var page=progress.read(actor,tenant,id,order.customerId,after,limit);
-        return new Progress(order.id,order.customerId,order.version,requestEditor.editable(order),page.items(),page.nextCursor());
+        return new Progress(order.id,order.customerId,order.version,requestEditor.editable(order),page.items(),page.nextCursor(),requestEditor.history(order));
     }
     private Detail detail(OrderEntity order) {
         return Detail.of(order, repository.cargo(order.tenantId, order.id), repository.stops(order.tenantId, order.id));

@@ -25,8 +25,8 @@ export function RequestedStopsEditor({value,onChange,disabled=false}:{value:Stop
   </fieldset>
 }
 export function DestinationEditor({stop,change,prefix,normalizedOnly=false}:{stop:StopInput;change(value:StopInput):void;prefix:string;normalizedOnly?:boolean}) {
-  const sites=useOrderSites(), locations=useOrderLocations(stop.siteId??'')
   const normalized=normalizedOnly||stop.siteId!==null
+  const sites=useOrderSites(normalized), locations=useOrderLocations(stop.siteId??'')
   return <>
     {!normalizedOnly&&<label>Destination type <select aria-label={`${prefix} destination type`} value={normalized?'site':'snapshot'} onChange={e=>change({...stop,siteId:e.target.value==='site'?'':null,locationId:null,siteSnapshot:e.target.value==='site'?null:{name:''}})}><option value="site">Authorized Site</option><option value="snapshot">Ad hoc destination snapshot</option></select></label>}
     {normalized?<><FormField id={`${prefix}-site`} label="Site"><select id={`${prefix}-site`} value={stop.siteId??''} onChange={e=>change({...stop,siteId:e.target.value,locationId:null,siteSnapshot:null})}><option value="">Choose an authorized Site</option>{sites.data?.items.filter(s=>s.active).map(s=><option key={s.id} value={s.id}>{'name' in s?s.name:''}</option>)}</select></FormField>

@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
-import { orderFixture, order, trip, orderId, tripId, stopId, siteId, trailerId, alternateId } from '../../test/customerOrderFixture'
+import { orderFixture, order, trip, commandReceipt, orderId, tripId, stopId, siteId, trailerId, alternateId } from '../../test/customerOrderFixture'
 import { customerId, customerB, dispatcher, response } from '../../test/customerFixture'
 
 afterEach(()=>vi.unstubAllGlobals())
@@ -109,7 +109,7 @@ it('administratively completes only with explicit confirmation and the actual DE
 })
 it('reroutes a real mapped Stop with current Trip version and records no requested-Stop PATCH',async()=>{
   const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`);f.state.orders[0]=order({status:'IN_PROGRESS'});f.state.trips=[trip()]
-  let body:unknown;f.handlers.set(f.root+`/trips/${tripId}/reroutes`,async o=>{body=JSON.parse(String(o?.body));return response({id:tripId,status:'IN_TRANSIT',version:13})})
+  let body:unknown;f.handlers.set(f.root+`/trips/${tripId}/reroutes`,async o=>{body=JSON.parse(String(o?.body));return response(commandReceipt())})
   await detail();await u.click(await screen.findByRole('button',{name:'Change destination: Receiving'}))
   await u.type(screen.getByLabelText('Reason'),'Receiving relocated');await u.type(screen.getByLabelText('Instructions'),'Use the new receiving entrance')
   await u.click(screen.getByLabelText('I reviewed the previous and new operational destination.'));await u.click(screen.getByRole('button',{name:'Confirm operational reroute'}))
@@ -118,7 +118,7 @@ it('reroutes a real mapped Stop with current Trip version and records no request
 })
 it.each(['AUTHORIZE','REJECT'])('records explicit %s substitution without fake version, scan request or physical Hook',async decision=>{
   const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`);f.state.orders[0]=order({status:'IN_PROGRESS'});f.state.trips=[trip()]
-  let body:unknown;f.handlers.set(f.root+`/trips/${tripId}/trailer-substitution-decisions`,async o=>{body=JSON.parse(String(o?.body));return response({id:tripId,status:'IN_TRANSIT',version:13})})
+  let body:unknown;f.handlers.set(f.root+`/trips/${tripId}/trailer-substitution-decisions`,async o=>{body=JSON.parse(String(o?.body));return response(commandReceipt(decision==='AUTHORIZE'?alternateId:trailerId))})
   await detail();await u.click(await screen.findByRole('button',{name:'Decide alternate Trailer'}));await u.selectOptions(screen.getByLabelText('Decision'),decision)
   await u.selectOptions(screen.getByLabelText('Requested Trailer'),alternateId);await u.type(screen.getByLabelText('Decision reason'),'Reported equipment mismatch')
   await u.click(screen.getByLabelText('I reviewed the expected Trailer, requested Trailer and decision.'));await u.click(screen.getByRole('button',{name:decision==='AUTHORIZE'?'Authorize alternate Trailer':'Reject and retain expected Trailer'}))
@@ -163,4 +163,82 @@ it('uses labelled keyboard-accessible controls and no direct arbitrary-UUID requ
   const f=orderFixture('/customer/orders/not-a-uuid');await screen.findByText('Order unavailable.')
   expect(f.requests.some(r=>r.path.endsWith('/orders/not-a-uuid'))).toBe(false)
   const nav=screen.getByRole('navigation',{name:'Customer navigation'});expect(within(nav).getByRole('link',{name:'Orders'})).toHaveAttribute('href','/customer/orders')
+})
+it('reconciles a committed creation with lost ACK through reads without posting a duplicate',async()=>{
+  const u=userEvent.setup(),f=orderFixture('/customer/orders/new'), original=f.handlers.get(f.root+'/orders')!
+  f.handlers.set(f.root+'/orders',async(options,query)=>{const accepted=await original(options,query);return options?.method==='POST'?response({},503):accepted})
+  await readyCreate(u);await u.click(screen.getByRole('button',{name:'Confirm and create Order'}));await screen.findByText(/Creation result is uncertain/)
+  await u.click(screen.getByRole('link',{name:'Review server Orders / return to list'}));await u.click(await screen.findByRole('link',{name:'NEW-900'}))
+  await screen.findByRole('heading',{name:'Order NEW-900'});expect(f.requests.filter(r=>r.method==='POST')).toHaveLength(1)
+})
+it('accepts normalized destination choices only through explicit Customer-filtered Site and Location reads',async()=>{
+  const u=userEvent.setup(),f=orderFixture('/customer/orders/new');await creation();await u.type(await screen.findByLabelText('Order number (required)'),'NORMALIZED')
+  await u.click(screen.getByRole('button',{name:'Requested Stops'}));await u.selectOptions(screen.getByLabelText('stop-0 destination type'),'site')
+  await u.selectOptions(screen.getByLabelText('Site'),await screen.findByRole('option',{name:'Authorized receiving'}))
+  await u.click(screen.getByRole('button',{name:'Review'}));expect(screen.getByText(/Authorized receiving/)).toBeInTheDocument()
+  await u.click(screen.getByLabelText('I reviewed this Order and its requested itinerary.'));await u.click(screen.getByRole('button',{name:'Confirm and create Order'}));await screen.findByRole('heading',{name:'Order NORMALIZED'})
+  const body=JSON.parse(String(f.fetcher.mock.calls.find(([,options])=>options?.method==='POST')?.[1]?.body))
+  expect(body.requestedStops[0]).toMatchObject({siteId,locationId:null,siteSnapshot:null})
+  expect(f.requests.filter(r=>r.path.endsWith('/sites')||r.path.endsWith('/locations')).every(r=>r.query.get('customerId')===customerId)).toBe(true)
+})
+it('preserves pre-execution cancellation history and displays only the acknowledged terminal state',async()=>{
+  const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`);let body:unknown
+  f.handlers.set(f.root+`/orders/${orderId}/cancellations`,async o=>{body=JSON.parse(String(o?.body));f.state.orders[0]=order({status:'CANCELLED',version:1,cancelledAt:'2026-10-15T18:00:00Z'});return response(f.state.orders[0])})
+  await detail();await u.click(await screen.findByRole('button',{name:'Cancel Order'}));expect(screen.queryByLabelText('Operational instructions')).not.toBeInTheDocument()
+  await u.type(screen.getByLabelText('Cancellation reason'),'Customer no longer needs pickup');await u.click(screen.getByLabelText('I reviewed this cancellation and its consequences.'))
+  expect(body).toBeUndefined();await u.click(screen.getByRole('button',{name:'Confirm cancellation'}))
+  await waitFor(()=>expect(body).toEqual({expectedVersion:0,reason:'Customer no longer needs pickup'}));await screen.findByText('State CANCELLED · Version 1')
+})
+it('does not acknowledge a completed command whose successful response contradicts the requested outcome',async()=>{
+  const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`);f.state.orders[0]=order({status:'DELIVERED',version:8})
+  f.handlers.set(f.root+`/orders/${orderId}/completion`,async()=>response(order({status:'OPEN',version:9})))
+  await detail();await u.click(await screen.findByRole('button',{name:'Complete delivered Order'}));await u.click(screen.getByLabelText('I confirm administrative closure of this delivered Order.'))
+  await u.click(screen.getByRole('button',{name:'Confirm administrative completion'}));await screen.findByText(/server result is uncertain/)
+  expect(screen.getByRole('dialog')).toBeInTheDocument();expect(f.requests.filter(r=>r.method==='POST')).toHaveLength(1)
+})
+it('removes a stale reroute modal after an authoritative Trip revision changes',async()=>{
+  const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`);f.state.orders[0]=order({status:'IN_PROGRESS'});f.state.trips=[trip()]
+  await detail();await u.click(await screen.findByRole('button',{name:'Change destination: Receiving'}));expect(screen.getByRole('dialog')).toBeInTheDocument()
+  f.state.trips=[trip({version:13})]
+  await act(async()=>{await f.cache.invalidateQueries({predicate:q=>q.queryKey[5]==='order-progress'})})
+  await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());await screen.findByText(/Operational context changed/)
+  expect(f.requests.some(r=>r.method==='POST')).toBe(false)
+})
+it('renders the real specific Order decision history separately from physical fulfillment',async()=>{
+  const f=orderFixture(`/customer/orders/${orderId}`);f.state.orders[0]=order({status:'CANCELLING',version:1})
+  f.handlers.set(f.root+`/orders/${orderId}/progress`,async()=>response({orderId,customerId,orderVersion:1,requestEditable:false,items:[],nextCursor:null,changes:[{version:1,changeType:'ORDER_CANCELLATION_REQUESTED',recordedAt:'2026-10-15T18:00:00Z',reason:'Remaining work stopped',resolution:{type:'HOLD_CONTACT_DISPATCH',destinationSiteId:null,instructions:'Hold remaining cargo'}}]}))
+  await detail();await screen.findByRole('heading',{name:'Recent Order decisions'});expect(screen.getByText(/Hold remaining cargo/)).toBeInTheDocument()
+  expect(screen.getByText(/generic audit are separate/)).toBeInTheDocument()
+})
+it('aborts submission on same-owner revalidation and retains an uncertain draft without late navigation',async()=>{
+  const u=userEvent.setup(),f=orderFixture('/customer/orders/new');let finish!:(r:Response)=>void
+  await readyCreate(u);f.handlers.set(f.root+'/orders',async options=>options?.method==='POST'?new Promise(r=>{finish=r}):response({items:[],nextCursor:null}))
+  await u.click(screen.getByRole('button',{name:'Confirm and create Order'}));await waitFor(()=>expect(finish).toBeTypeOf('function'))
+  const sending=f.requests.find(r=>r.method==='POST')!
+  await u.click(screen.getByRole('button',{name:'Refresh access'}));await creation();await screen.findByText(/Creation result is uncertain/)
+  await act(async()=>finish(response(order({orderNumber:'NEW-900'}),201)))
+  expect(sending.signal?.aborted).toBe(true);expect(f.router.state.location.pathname).toBe('/customer/orders/new');expect(f.requests.filter(r=>r.method==='POST')).toHaveLength(1)
+})
+it.each(['duplicate Trip','impossible history'])('rejects a contradictory successful progress response: %s',async defect=>{
+  const f=orderFixture(`/customer/orders/${orderId}`)
+  f.handlers.set(f.root+`/orders/${orderId}/progress`,async()=>response({orderId,customerId,orderVersion:0,requestEditable:true,items:defect==='duplicate Trip'?[trip(),trip()]:[],nextCursor:null,changes:defect==='impossible history'?[{version:1,changeType:'ORDER_EDITED',recordedAt:'2026-10-15T18:00:00Z',reason:null,resolution:null}]:[]}))
+  await detail();await screen.findByRole('alert');expect(screen.queryByRole('button',{name:'Decide alternate Trailer'})).not.toBeInTheDocument()
+  expect(f.requests.some(r=>r.method==='POST')).toBe(false)
+})
+it('rejects foreign Trailer choices even in an HTTP 200 response',async()=>{
+  const f=orderFixture('/customer/orders/new')
+  f.handlers.set(f.root+'/trailers',async()=>response({items:[{id:alternateId,operationalNumber:'PRIVATE-EQUIPMENT',designatedCustomerId:customerB,active:true,serviceabilityState:'IN_SERVICE'}]}))
+  await creation();await screen.findByText(/Trailer selection is unavailable/);expect(screen.queryByRole('option',{name:'PRIVATE-EQUIPMENT'})).not.toBeInTheDocument()
+})
+it('requires a new cancellation review when its reason changes',async()=>{
+  const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`)
+  await detail();await u.click(await screen.findByRole('button',{name:'Cancel Order'}));await u.type(screen.getByLabelText('Cancellation reason'),'First reason')
+  await u.click(screen.getByLabelText('I reviewed this cancellation and its consequences.'));expect(screen.getByRole('button',{name:'Confirm cancellation'})).toBeEnabled()
+  await u.type(screen.getByLabelText('Cancellation reason'),' changed');expect(screen.getByRole('button',{name:'Confirm cancellation'})).toBeDisabled();expect(f.requests.some(r=>r.method==='POST')).toBe(false)
+})
+it('closes operational actions if a continuation page belongs to another Order version',async()=>{
+  const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`),next='00000000-0000-4000-8000-000000000999'
+  f.handlers.set(f.root+`/orders/${orderId}/progress`,async(_options,q)=>response({orderId,customerId,orderVersion:q?.get('cursor')?1:0,requestEditable:false,items:q?.get('cursor')?[]:[trip()],nextCursor:q?.get('cursor')?null:next,changes:[]}))
+  await detail();await screen.findByRole('button',{name:'Decide alternate Trailer'});await u.click(screen.getByRole('button',{name:'Load more linked work'}))
+  await screen.findByText(/Progress and Order versions need refreshing/);expect(screen.queryByRole('button',{name:'Decide alternate Trailer'})).not.toBeInTheDocument()
 })

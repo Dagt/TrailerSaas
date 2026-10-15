@@ -34,7 +34,7 @@ export function useSubmission(key:string) {
       record.save({status:uncertain?'uncertain':'blocked',error})
     } finally {controller.current=null}
   }
-  const canRevise=record.value.error instanceof ApiProblem&&record.value.error.problem.status===400
+  const canRevise=record.value.error instanceof ApiProblem&&(record.value.error.problem.status===400||record.value.error.problem.status===409&&record.value.error.problem.code==='RESOURCE_CONFLICT')
   const revise=()=>{if(canRevise)record.save({status:'idle'})}
   return {...record.value,receipt,send,canRevise,revise,busy:record.value.status==='pending',blocked:record.value.status!=='idle'}
 }

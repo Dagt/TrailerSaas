@@ -34,12 +34,16 @@ class CustomerOrderWorkflowPostgresTests extends PostgresIntegrationTest {
         dispatcher=f.db.user();membership=f.db.membership(tenant,dispatcher,"ACTIVE",null);
         f.db.execute("insert into role_assignments values(?,?,?,'CUSTOMER_DISPATCHER','CUSTOMER',?,now())",UUID.randomUUID(),tenant,membership,customer);
         when(verifier.verify("customer")).thenReturn(new VerifiedFirebaseIdentity("fixture-"+dispatcher,null,null));
+        when(verifier.verify("admin")).thenReturn(new VerifiedFirebaseIdentity("fixture-"+user,null,null));
         order=f.order(tenant,customer,user);site=f.site(tenant,customer);f.stop(tenant,order,1,site,null,"{\"name\":\"Own destination\"}");
     }
     String base(){return "/api/v1/tenants/"+tenant;}
     HttpResponse<String> http(String method,String path,String body) throws Exception {
+        return httpAs(method,path,body,"customer");
+    }
+    HttpResponse<String> httpAs(String method,String path,String body,String token) throws Exception {
         return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+base()+path)).timeout(Duration.ofSeconds(30))
-            .header("Authorization","Bearer customer").header("Content-Type","application/json").method(method,HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
+            .header("Authorization","Bearer "+token).header("Content-Type","application/json").method(method,HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
     }
     String json(Object value) throws Exception{return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value);}
     void error(HttpResponse<String> r,int status,String code){assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(status);assertThat(JsonPath.<String>read(r.body(),"$.code")).isEqualTo(code);assertThat(r.body()).doesNotContain(otherCustomer.toString(),"SQL","constraint");}
@@ -49,6 +53,31 @@ class CustomerOrderWorkflowPostgresTests extends PostgresIntegrationTest {
         var r=http("GET","/orders/customer-context?customerId="+customer,"");assertThat(r.statusCode()).isEqualTo(200);
         assertThat(JsonPath.<List<String>>read(r.body(),"$.capabilities")).contains("ORDER_CREATE","ORDER_COMPLETE","TRIP_REROUTE").doesNotContain("TRIP_VIEW_ALL","TRIP_PLAN");
         error(http("GET","/orders/customer-context?customerId="+otherCustomer,""),403,"CUSTOMER_SCOPE_DENIED");
+    }
+    @Test void customerCreationPersistsMultipleCargoStopsAndEntersExistingOperationsQueue() throws Exception {
+        var r=http("POST","/orders",json(Map.of("customerId",customer.toString(),"orderNumber","CUSTOMER-CREATED","cargoLines",List.of(Map.of("description","Sheets","quantity",12.5),Map.of("description","Boxes")),"requestedStops",List.of(Map.of("sequenceNumber",1,"siteId",site.toString(),"stopType","PICKUP"),Map.of("sequenceNumber",2,"siteSnapshot",Map.of("name","Ad hoc receiving"),"stopType","DELIVERY")))));
+        assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(201);String created=JsonPath.read(r.body(),"$.id");
+        assertThat(JsonPath.<String>read(r.body(),"$.status")).isEqualTo("OPEN");assertThat(JsonPath.<List<?>>read(r.body(),"$.cargoLines")).hasSize(2);assertThat(JsonPath.<List<?>>read(r.body(),"$.requestedStops")).hasSize(2);
+        var board=httpAs("GET","/dispatch/board?customerId="+customer,"","admin");assertThat(board.statusCode()).isEqualTo(200);
+        assertThat(JsonPath.<List<String>>read(board.body(),"$.pendingOrders[*].id")).contains(created);
+        assertThat(f.db.value("select count(*) from trips where tenant_id=?",tenant)).isEqualTo(0L);assertThat(f.db.value("select count(*) from trailer_movement_events where tenant_id=?",tenant)).isEqualTo(0L);
+    }
+    @Test void fabricatedCustomerCreationCannotWriteAnotherCustomersOrder() throws Exception {
+        error(http("POST","/orders",json(Map.of("customerId",otherCustomer.toString(),"orderNumber","Denied","requestedStops",List.of(Map.of("sequenceNumber",1,"stopType","DELIVERY","siteSnapshot",Map.of("name","No authority")))))),403,"CUSTOMER_SCOPE_DENIED");
+        assertThat(f.db.value("select count(*) from orders where tenant_id=? and customer_id=?",tenant,otherCustomer)).isEqualTo(0L);
+    }
+    @ParameterizedTest @ValueSource(strings={"IN_PROGRESS","PARTIALLY_DELIVERED"})
+    void activeCancellationPreservesItsOwnDurableReasonAndInstructionsWithoutPhysicalMutation(String status) throws Exception {
+        f.db.execute("update orders set status=? where id=?",status,order);
+        var before=f.db.value("select jsonb_agg(to_jsonb(s))::text from order_stops s where order_id=?",order);
+        var r=http("POST","/orders/"+order+"/cancellations",json(Map.of("expectedVersion",0,"reason","Customer request","resolution",Map.of("type","HOLD_CONTACT_DISPATCH","instructions","Preserve and hold remaining cargo"))));
+        assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);assertThat(JsonPath.<String>read(r.body(),"$.status")).isEqualTo("CANCELLING");
+        var progress=http("GET","/orders/"+order+"/progress","");assertThat(progress.statusCode()).withFailMessage(progress.body()).isEqualTo(200);
+        assertThat(JsonPath.<String>read(progress.body(),"$.changes[0].reason")).isEqualTo("Customer request");assertThat(JsonPath.<String>read(progress.body(),"$.changes[0].resolution.instructions")).isEqualTo("Preserve and hold remaining cargo");
+        error(http("POST","/orders/"+order+"/cancellations","{\"expectedVersion\":0,\"reason\":\"No duplicate\"}"),409,"STALE_VERSION");
+        assertThat(f.db.value("select count(*) from order_request_revisions where order_id=?",order)).isEqualTo(1L);
+        assertThat(f.db.value("select jsonb_agg(to_jsonb(s))::text from order_stops s where order_id=?",order)).isEqualTo(before);
+        assertThat(f.db.value("select count(*) from trailer_movement_events where tenant_id=?",tenant)).isEqualTo(0L);
     }
     @Test void onlyOwnMappedStopsNoSharedRouteOrPrivateIdentity() throws Exception {
         var foreign=f.order(tenant,otherCustomer,user);
@@ -104,6 +133,7 @@ class CustomerOrderWorkflowPostgresTests extends PostgresIntegrationTest {
         f.db.execute("insert into role_assignments values(?,?,?,'CUSTOMER_DISPATCHER','CUSTOMER',?,now())",UUID.randomUUID(),tenant,membership,otherCustomer);
         var r=http("GET","/sites?customerId="+customer,"");assertThat(r.statusCode()).isEqualTo(200);assertThat(r.body()).contains(site.toString()).doesNotContain(foreignSite.toString());
         error(http("GET","/sites/"+foreignSite+"/locations?customerId="+customer,""),404,"RESOURCE_NOT_FOUND");
+        error(http("GET","/sites?customerId=",""),400,"VALIDATION_FAILED");
     }
     @Test void twoRequestEditsSameVersionHaveExactlyOneWinner() throws Exception {
         try(var pool=Executors.newVirtualThreadPerTaskExecutor()) {
@@ -112,5 +142,22 @@ class CustomerOrderWorkflowPostgresTests extends PostgresIntegrationTest {
             gate.countDown();assertThat(List.of(jobs.get(0).get(30,TimeUnit.SECONDS),jobs.get(1).get(30,TimeUnit.SECONDS))).containsExactlyInAnyOrder(200,409);
             assertThat(f.db.value("select count(*) from order_request_revisions where order_id=?",order)).isEqualTo(1L);
         }
+    }
+    @Test void customerDecisionReceiptsDoNotExposeDriverRouteOrOtherAllocationsAndNeverPerformHook() throws Exception {
+        var driver=f.db.driver(tenant,null);var tractor=f.db.tractor(tenant,"Operational-"+UUID.randomUUID());
+        var expected=new TrailerFixtures(flyway).trailer(tenant,"Expected-"+UUID.randomUUID(),customer);var alternate=new TrailerFixtures(flyway).trailer(tenant,"Alternate-"+UUID.randomUUID(),customer);
+        var trip=trips.create(admin,tenant,Map.of("orderIds",List.of(order.toString()),"driverId",driver.toString(),"tractorId",tractor.toString(),"plannedInitialTrailerId",expected.toString(),"stops",List.of(Map.of("sequenceNumber",1,"stopType","DELIVERY","siteId",site.toString(),"orderIds",List.of(order.toString()))))).id();
+        var physical=f.db.value("select jsonb_agg(to_jsonb(t) order by id)::text from trailers t where tenant_id=?",tenant);
+        for(var decision:List.of("REJECT","AUTHORIZE")) {
+            var r=http("POST","/trips/"+trip+"/trailer-substitution-decisions",json(Map.of("expectedTrailerId",expected.toString(),"requestedTrailerId",alternate.toString(),"decision",decision,"reason","Reported discrepancy")));
+            assertThat(r.statusCode()).withFailMessage(r.body()).isEqualTo(200);
+            assertThat(JsonPath.<Object>read(r.body(),"$.currentDriverId")).isNull();assertThat(JsonPath.<Object>read(r.body(),"$.currentTractorId")).isNull();
+            for(var field:List.of("stops","assignmentHistory","operationalHistory"))assertThat(JsonPath.<List<?>>read(r.body(),"$."+field)).isEmpty();
+            assertThat(JsonPath.<String>read(r.body(),"$.plannedInitialTrailerId")).isEqualTo((decision.equals("AUTHORIZE")?alternate:expected).toString());
+            assertThat(r.body()).doesNotContain(driver.toString(),tractor.toString(),order.toString());
+        }
+        assertThat(f.db.value("select jsonb_agg(to_jsonb(t) order by id)::text from trailers t where tenant_id=?",tenant)).isEqualTo(physical);
+        assertThat(f.db.value("select count(*) from trailer_couplings where tenant_id=?",tenant)).isEqualTo(0L);assertThat(f.db.value("select count(*) from trailer_movement_events where tenant_id=?",tenant)).isEqualTo(0L);
+        assertThat(f.db.value("select count(*) from trip_assignment_events where trip_id=? and event_type like 'TRAILER_SUBSTITUTION_%' and actor_user_id=?",trip,dispatcher)).isEqualTo(2L);
     }
 }

@@ -19,9 +19,11 @@ function OrderDetail({id}:{id:string}) {
   if(order.isPending||order.isFetching)return <LoadingState/>
   if(order.isError)return <ErrorBanner error={order.error} retry={()=>void order.refetch()}/>
   const row=order.data, capabilities=actions.data?.capabilities??[], fresh=!actions.isFetching&&!actions.isError
-  const p=progress.data?.pages[0], coherent=p?.orderVersion===row.version&&!progress.isFetching&&!progress.isError
+  const p=progress.data?.pages[0], coherent=!!p&&progress.data!.pages.every(page=>page.orderVersion===row.version)&&!progress.isFetching&&!progress.isError
   const trips=progress.data?.pages.flatMap(page=>page.items)??[]
   const unique=new Set(trips.map(t=>t.id)).size===trips.length
+  const currentActionTrip=tripAction&&trips.find(t=>t.id===tripAction.trip.id&&t.version===tripAction.trip.version&&t.status===tripAction.trip.status)
+  const validTripAction=!!currentActionTrip&&(tripAction?.stop?currentActionTrip.stops.some(s=>s.id===tripAction.stop!.id&&s.canReroute):currentActionTrip.canSubstitute)
   return <section><PageHeader title={`Order ${row.orderNumber}`} description={`State ${row.status} · Version ${row.version}`}><button onClick={reload}>Reload latest</button></PageHeader>
     <p>DELIVERED: required operational delivery and evidence satisfied. COMPLETED: administratively closed. CANCELLING: physical resolution remains pending.</p>
     <DetailList items={Object.entries({PO:row.poNumber,Shipment:row.shipmentNumber,BOL:row.bolReference,Created:row.createdAt,Updated:row.updatedAt,Delivered:row.deliveredAt,Completed:row.completedAt,Cancelled:row.cancelledAt})}/>
@@ -33,16 +35,18 @@ function OrderDetail({id}:{id:string}) {
       {capabilities.includes('ORDER_COMPLETE')&&row.status==='DELIVERED'&&<button onClick={()=>setAction('complete')}>Complete delivered Order</button>}
     </div>}{actions.isError&&<ErrorBanner error={actions.error} retry={()=>void actions.refetch()}/>}
     <h2>Delivery progress</h2><p>Only actual work mapped to this Order is shown. A POD alone does not determine DELIVERED.</p>
+    {!!p?.changes.length&&<><h3>Recent Order decisions</h3><p>Up to 20 recorded Customer request changes; physical fulfillment and generic audit are separate.</p><ul>{p.changes.map(change=><li key={change.version}>{change.changeType} · Version {change.version} · {change.recordedAt} · {change.reason}{change.resolution&&<> · {change.resolution.type}: {change.resolution.instructions}</>}</li>)}</ul></>}
     {progress.isPending?<LoadingState/>:progress.isError?<ErrorBanner error={progress.error} retry={()=>void progress.refetch()}/>:!unique?<p role="alert">Progress pages changed. Reload before continuing.</p>:<>
       {!coherent&&<p role="status">Progress and Order versions need refreshing before operational changes.</p>}
       {!trips.length&&<p>No linked Trip reported for this Order.</p>}{trips.map(trip=><article key={trip.id} className="progress-trip"><h3>Trip {trip.id}</h3><p>{trip.status} · Version {trip.version} · Expected Trailer: {trip.expectedTrailer?.operationalNumber??'Not available in this context'}</p>
         <ul>{trip.stops.map(stop=><li key={stop.id}><strong>{stop.destination??'Recorded destination unavailable'}</strong> · {stop.stopType} · {stop.status}<p>Appointment: {stop.scheduledAt??'Not scheduled'} · Arrival: {stop.arrivedAt??'Not recorded'} · Completion: {stop.completedAt??'Not recorded'}</p>
           {coherent&&stop.canReroute&&<button onClick={()=>setTripAction({trip,stop})}>Change destination: {stop.destination??stop.stopType}</button>}</li>)}</ul>
         {coherent&&trip.canSubstitute&&<button onClick={()=>setTripAction({trip})}>Decide alternate Trailer</button>}
-        <h4>Recorded operational changes</h4>{trip.history.length?<ul>{trip.history.map(h=><li key={h.id}>{h.eventType} · {h.occurredAt} · {h.reason}{h.previousDestination&&<> · Previous: {h.previousDestination}</>}{h.newDestination&&<> · New: {h.newDestination}</>}{h.decision&&<> · {h.decision}</>}</li>)}</ul>:<p>No Customer-specific operational history returned. Shared/internal history is not exposed.</p>}
+        <h4>Recent recorded operational changes</h4><p>Up to 100 own reroutes and 100 substitutions.</p>{trip.history.length?<ul>{trip.history.map(h=><li key={h.id}>{h.eventType} · {h.occurredAt} · {h.reason}{h.previousDestination&&<> · Previous: {h.previousDestination}</>}{h.newDestination&&<> · New: {h.newDestination}</>}{h.decision&&<> · {h.decision}</>}</li>)}</ul>:<p>No Customer-specific operational history returned. Shared/internal history is not exposed.</p>}
       </article>)}{progress.hasNextPage&&<button disabled={progress.isFetchingNextPage} onClick={()=>void progress.fetchNextPage()}>Load more linked work</button>}</>}
     {action&&fresh&&<OrderAction key={`${row.version}:${action}`} action={action} order={row} requestEditable={coherent&&!!p?.requestEditable} close={close} reload={reload}/>}
-    {tripAction&&coherent&&unique&&(tripAction.stop?<RerouteAction key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} stop={tripAction.stop} close={close} reload={reload}/>:<TrailerSubstitutionDecision key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} close={close} reload={reload}/>)}
+    {tripAction&&!validTripAction&&<p role="status">Operational context changed. Review the latest work and reopen the action.</p>}
+    {tripAction&&validTripAction&&coherent&&unique&&(tripAction.stop?<RerouteAction key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} stop={tripAction.stop} close={close} reload={reload}/>:<TrailerSubstitutionDecision key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} close={close} reload={reload}/>)}
     <Link to="/customer/orders">Return to Orders</Link>
   </section>
 }

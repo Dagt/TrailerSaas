@@ -19,6 +19,7 @@ class MasterDataController {
     void rejectUnsupportedFilters(@RequestParam Map<String, String> parameters, jakarta.servlet.http.HttpServletRequest request) {
         boolean choices="GET".equals(request.getMethod()) && (request.getRequestURI().endsWith("/sites") || request.getRequestURI().matches(".*/sites/[^/]+/locations"));
         if (parameters.keySet().stream().anyMatch(k->!choices || !k.equals("customerId"))) { throw MasterDataFailure.invalid("query"); }
+        if(parameters.containsKey("customerId")&&parameters.get("customerId").isBlank()) throw MasterDataFailure.invalid("customerId");
     }
 
     @PostMapping("/customers") @ResponseStatus(HttpStatus.CREATED)

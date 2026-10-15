@@ -31,7 +31,8 @@ class DatabaseCustomerOrderProgress implements CustomerOrderProgress {
         var result=new ArrayList<Trip>();
         for(var id:page) {
             var t=repository.resource(tenant,id,false);
-            var mapped=repository.mappings(tenant,id).stream().filter(a->a.orderId.equals(order)).map(a->a.tripStopId).collect(Collectors.toSet());
+            var relevant=repository.orderProgressStops(tenant,id,order);
+            var mapped=relevant.stream().map(s->s.id).collect(Collectors.toSet());
             var customers=repository.mappedCustomers(tenant,id);
             // No broad Driver/Tractor/history/other-Order projection, even with multi-Customer access.
             boolean reroute=actions.covers(actor,tenant,customers,Capability.TRIP_REROUTE);
@@ -42,15 +43,15 @@ class DatabaseCustomerOrderProgress implements CustomerOrderProgress {
                 expected=new Trailer(t.plannedInitialTrailerId,(String)number);
             }
             boolean active=Set.of("IN_TRANSIT","AT_STOP").contains(t.status);
-            var stops=repository.stops(tenant,id).stream().filter(s->mapped.contains(s.id)).map(s->new Stop(s.id,s.stopType,s.status,s.siteId,s.locationId,
+            var stops=relevant.stream().map(s->new Stop(s.id,s.stopType,s.status,s.siteId,s.locationId,
                     s.siteSnapshot==null?null:Objects.toString(s.siteSnapshot.get("name"),null),s.scheduledAt,s.arrivedAt,s.completedAt,
                     reroute&&active&&Set.of("PENDING","EN_ROUTE").contains(s.status))).toList();
             var history=new ArrayList<Change>();
             // Shared Stop instructions/reasons may describe other Customers. Never expose them.
             if(customers.equals(Set.of(customer))) {
-                for(var e:repository.operationalHistory(tenant,id)) if("TRIP_REROUTED".equals(e.eventType)&&mapped.contains(e.tripStopId))
+                for(var e:repository.orderReroutes(tenant,id,mapped))
                     history.add(new Change(e.id,e.eventType,e.occurredAt,e.reason,destination(e.metadata,"previous"),destination(e.metadata,"replacement"),null));
-                for(var e:repository.history(tenant,id)) if(e.eventType.startsWith("TRAILER_SUBSTITUTION_"))
+                for(var e:repository.orderSubstitutions(tenant,id))
                     history.add(new Change(e.id,e.eventType,e.occurredAt,e.reason,null,null,e.eventType.endsWith("AUTHORIZED")?"AUTHORIZE":"REJECT"));
             }
             history.sort(Comparator.comparing(Change::occurredAt).thenComparing(Change::id));
