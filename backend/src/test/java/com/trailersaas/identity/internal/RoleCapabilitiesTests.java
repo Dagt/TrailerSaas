@@ -48,6 +48,6 @@ class RoleCapabilitiesTests {
         assertThat(RoleCapabilities.grants(RoleCode.TENANT_ADMIN, null)).isFalse();
         assertThat(Arrays.stream(Capability.values()).filter(RoleCapabilities::requiresAssignment))
                 .containsExactlyInAnyOrder(Capability.TRIP_VIEW_ASSIGNED, Capability.TRIP_EXECUTE_ASSIGNED);
-        assertThat(Capability.values()).hasSize(57);
+        assertThat(Capability.values()).hasSize(59);
     }
 }

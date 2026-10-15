@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   push:
     branches: [main]
 
@@ -14,8 +15,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  policy:
+    name: CI Policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify Draft/Ready policy without installing project dependencies
+        run: node --test .github/scripts/ci-policy.test.mjs
+
   backend:
     name: Backend
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
@@ -38,6 +51,7 @@ jobs:
 
   web:
     name: Web
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
@@ -60,6 +74,7 @@ jobs:
 
   mobile:
     name: Mobile
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
@@ -91,14 +106,11 @@ jobs:
       - name: Check format
         run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze --fatal-infos
-      - name: Verify session widget regressions individually
-        run: |
-          flutter test test/app/trailer_saas_app_test.dart --reporter expanded
-          flutter test test/session/session_view_test.dart --reporter expanded
       - run: flutter test --reporter expanded
 
   openapi:
     name: OpenAPI
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     defaults:
@@ -120,3 +132,18 @@ jobs:
         run: npm run validate
       - name: Verify invalid contracts fail validation
         run: npm test
+
+  full-gate:
+    name: Full CI
+    if: always()
+    needs: [policy, backend, mobile, web, openapi]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Require actual successful full jobs on the current integrable revision
+        env:
+          CI_RESULTS: ${{ toJSON(needs) }}
+        run: node .github/scripts/full-ci-gate.mjs

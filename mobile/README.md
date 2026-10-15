@@ -1,5 +1,35 @@
 # TrailerSaaS Mobile
 
+## Issue #56 — optional Firebase Messaging
+
+Firebase Messaging 16.7.0 reuses existing Firebase Core/Auth. Explicit Enable
+requests OS permission; denied permission never blocks Road/Yard work. The app
+queries permission without prompting after login, reads the current token, and
+registers a stable per-User device UUID through the global API. Token refresh,
+foreground/reconnect and logout use the existing session/connectivity lifecycle,
+not the offline operational queue. Drift stays v9. A private local identity file
+stores only User/registration UUID, never the FCM token. Account changes allocate
+another registration, cancel subscriptions and fence late responses.
+
+Push is a minimal hint, not an operational ACK. Only the selected authorized
+Tenant and ALERT_VIEW can expose Review Alert; details come from an authenticated
+GET. Revoked visibility clears details, including in-flight same-Tenant reads.
+Full inbox/actions remain in Web. No physical action is invoked from a push.
+
+Android declares POST_NOTIFICATIONS; Messaging auto-init is disabled until the
+permission decision. Existing Firebase environment configuration is required.
+iOS uses the existing implicit Flutter engine registration and Messaging's
+notification-center delegate, When-allowed notification permission and
+Runner.entitlements APNs capability. Configure Apple team/bundle provisioning and
+APNs key/certificate in the matching Firebase project. Debug uses development
+APS_ENVIRONMENT; Profile/Release production, overridable by signed provisioning.
+No silent/background execution mode or background handler is added. System
+notification display while suspended is OS behavior, not a new sync worker.
+Real Android/iOS permission/token/APNs/display QA remains #65; Linux fake-provider
+tests do not prove physical delivery. Offline logout cannot confirm server
+deactivation, but performs best-effort native deletion and does not retry under
+another account. See [complete limitations](../docs/backend/issue-56-alerts-fcm-delivery.md).
+
 ## Issue #49 — Yard discrepancy, load correction and evidenced OOS
 
 

@@ -9,6 +9,7 @@ class Membership {
   bool get yard =>
       capabilities.contains('YARD_MOVE_EXECUTE') ||
       capabilities.contains('YARD_CHECK_EXECUTE');
+  bool get alerts => capabilities.contains('ALERT_VIEW');
   Map<String, dynamic> toJson() => {
     'tenantId': tenantId,
     'name': name,
@@ -37,7 +38,7 @@ class UserContext {
             Set<String>.from(m['capabilities'] as List),
           ),
         )
-        .where((m) => m.road || m.yard)
+        .where((m) => m.road || m.yard || m.alerts)
         .toList(),
   );
 }

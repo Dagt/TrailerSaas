@@ -24,6 +24,7 @@ class SessionController extends ChangeNotifier {
   final ApiClient api;
   final SessionCache cache;
   final Connectivity network;
+  Future<void> Function()? beforeSignOut;
   SessionState state = SessionState.loading;
   UserContext? user;
   SessionSnapshot? snapshot;
@@ -413,6 +414,8 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    final logoutUid = auth.uid;
+    final pushCleanup = beforeSignOut?.call();
     final generation = ++_generation;
     _uid = null;
     snapshot = null;
@@ -423,12 +426,21 @@ class SessionController extends ChangeNotifier {
     _notify();
     var failed = false;
     try {
+      await pushCleanup;
+    } catch (_) {
+      failed = true;
+    }
+    if (_disposed || generation != _generation || auth.uid != logoutUid) return;
+    try {
       await _clearCache();
     } catch (_) {
       failed = true;
       _storageBlocked = true;
     }
     try {
+      if (_disposed || generation != _generation || auth.uid != logoutUid) {
+        return;
+      }
       await auth.signOut();
     } catch (_) {
       failed = true;

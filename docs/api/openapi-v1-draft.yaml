@@ -2564,11 +2564,146 @@ paths:
     get:
       tags: [Alerts]
       operationId: listAlerts
+      x-implementation-status: implemented-issue-56
+      description: >-
+        Fresh Firebase User, ACTIVE membership and ACTIVE Tenant, ALERT_VIEW and
+        related Trailer/Customer scope on every request. Conservative approved
+        readers are Tenant Admin and Transport Operations. Closed query fields;
+        bounded keyset cursor is a position, never authority. Only implemented
+        TRAILER_MISSING/WARNING occurrences. Push acceptance is not phone delivery.
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED] } }
+        - { name: alertType, in: query, schema: { type: string, enum: [TRAILER_MISSING] } }
+        - { name: severity, in: query, schema: { type: string, enum: [WARNING] } }
+        - { name: relatedEntityType, in: query, schema: { type: string, enum: [TRAILER] } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
       responses:
         '200':
-          $ref: '#/components/responses/PagedResponse'
+          description: Authorized minimized Alert occurrences, newest first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertInboxPage' }
         default:
           $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/alerts/{alertId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - { name: alertId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Alerts]
+      operationId: getAlert
+      x-implementation-status: implemented-issue-56
+      description: Fresh ALERT_VIEW, ACTIVE membership/Tenant and related Trailer/Customer scope. No query fields. Invisible resource is safe 404 RESOURCE_NOT_FOUND. No FCM tokens or arbitrary message data.
+      responses:
+        '200':
+          description: Current authorized occurrence and minimized resource summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertOccurrence' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/alerts/{alertId}/acknowledgement:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - { name: alertId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [Alerts]
+      operationId: acknowledgeAlert
+      x-implementation-status: implemented-issue-56
+      description: >-
+        Fresh ALERT_ACKNOWLEDGE plus ALERT_VIEW, ACTIVE membership/Tenant and related
+        Trailer/Customer scope. Write capability role grants remain unassigned pending
+        approval, deny-by-default. OPEN to ACKNOWLEDGED means attention, never physical
+        recovery. expectedVersion is mandatory; stale or repeated requests receive
+        409 STALE_VERSION, invalid transitions 409 INVALID_STATE_TRANSITION.
+        Server derives actor/timestamp. No query fields or mobile ledger/key required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AlertAcknowledgementRequest' }
+      responses:
+        '200':
+          description: Persisted versioned acknowledgement
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertOccurrence' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/alerts/{alertId}/resolution:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - { name: alertId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [Alerts]
+      operationId: resolveAlert
+      x-implementation-status: implemented-issue-56
+      description: >-
+        Fresh ALERT_RESOLVE plus ALERT_VIEW, ACTIVE membership/Tenant and related
+        Trailer/Customer scope. Write capability role grants remain unassigned pending
+        approval, deny-by-default. OPEN or ACKNOWLEDGED to terminal RESOLVED requires
+        current active Trailer AT_LOCATION with normalized currentLocationId under lock.
+        Never repairs Trailer location. expectedVersion plus nonblank reason required;
+        409 STALE_VERSION or INVALID_STATE_TRANSITION leaves all facts unchanged.
+        Original Alert facts and acknowledgement are immutable. Server actor/timestamp.
+        No query fields or mobile ledger/key required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AlertResolutionRequest' }
+      responses:
+        '200':
+          description: Persisted terminal resolution, not a physical correction
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertOccurrence' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/devices:
+    post:
+      tags: [Identity]
+      operationId: registerUserDevice
+      x-implementation-status: implemented-issue-56
+      description: >-
+        Global authenticated User registry, no Tenant or Driver prerequisite. Owner
+        comes from Firebase, never body. Optional stable proposed deviceId supports
+        lost-ACK recovery for the same User. Omit it to upsert a same-User/platform
+        token or create a server UUID. Nullable token supports denied permission.
+        Atomic token transfer deactivates old registration without changing its User.
+        At most 32 active registrations per User, including reactivation. Foreign ID,
+        changed platform or exceeded bound is safe 409 RESOURCE_CONFLICT. Unknown
+        fields and malformed data reject 400 VALIDATION_FAILED. deviceName is validated
+        but not persisted. Response never exposes a token. This does not grant Alert
+        visibility or subscribe the User; OQ-059 remains open. No query fields.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserDeviceRegistrationRequest' }
+      responses:
+        '200':
+          description: Current immutable-owner registration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserDeviceRegistration' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/devices/{deviceId}:
+    parameters:
+      - { name: deviceId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [Identity]
+      operationId: deactivateUserDevice
+      x-implementation-status: implemented-issue-56
+      description: Global authenticated owner only. Deactivates and clears token atomically; retains historical User/registration. Repeated owner deactivation succeeds. Foreign or unavailable ID is safe 404 RESOURCE_NOT_FOUND. No query fields or request body.
+      responses:
+        '204': { description: 'Registration deactivated, history retained' }
+        default: { $ref: '#/components/responses/Problem' }
 
   /api/v1/tenants/{tenantId}/audit-events:
     parameters:
@@ -2985,6 +3120,92 @@ components:
             $ref: '#/components/schemas/PagedResponse'
 
   schemas:
+    AlertAcknowledgementRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+    AlertResolutionRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, reason]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 1, maxLength: 4000, pattern: '\S' }
+    AlertInboxPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/AlertOccurrence' } }
+        nextCursor: { type: [string, 'null'] }
+    AlertOccurrence:
+      type: object
+      additionalProperties: false
+      required: [id, tenantId, alertType, severity, status, version, createdAt, acknowledgedBy, acknowledgedAt, resolvedBy, resolvedAt, resolutionReason, relatedEntityType, relatedResource, context, pushSummary]
+      properties:
+        id: { type: string, format: uuid }
+        tenantId: { type: string, format: uuid }
+        alertType: { type: string, const: TRAILER_MISSING }
+        severity: { type: string, const: WARNING }
+        status: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED] }
+        version: { type: integer, format: int64, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        acknowledgedBy: { type: [string, 'null'], format: uuid }
+        acknowledgedAt: { type: [string, 'null'], format: date-time }
+        resolvedBy: { type: [string, 'null'], format: uuid }
+        resolvedAt: { type: [string, 'null'], format: date-time }
+        resolutionReason: { type: [string, 'null'], maxLength: 4000 }
+        relatedEntityType: { type: string, const: TRAILER }
+        relatedResource:
+          type: object
+          additionalProperties: false
+          required: [id, operationalNumber, designatedCustomerId, locationState, currentLocationId]
+          properties:
+            id: { type: string, format: uuid }
+            operationalNumber: { type: string }
+            designatedCustomerId: { type: [string, 'null'], format: uuid }
+            locationState: { type: string, enum: [AT_LOCATION, IN_TRANSIT, LOCATION_UNKNOWN] }
+            currentLocationId: { type: [string, 'null'], format: uuid }
+        context:
+          type: object
+          additionalProperties: false
+          properties:
+            yardCheckId: { type: string, format: uuid }
+            itemId: { type: string, format: uuid }
+            movementEventId: { type: string, format: uuid }
+        pushSummary:
+          description: >-
+            Counts of authorized recipient diagnostic states. ACCEPTED_BY_FCM is
+            provider acceptance only, not device delivery. DEAD reflects durable-job
+            exhaustion/permanent failure while preserving per-device attempt history.
+          type: object
+          propertyNames:
+            enum: [PENDING, ATTEMPTED, ACCEPTED_BY_FCM, RETRYABLE_FAILURE, PERMANENT_FAILURE, INVALIDATED_TOKEN, SUPPRESSED_AUTHORIZATION, ALERT_INELIGIBLE, NO_ELIGIBLE_DEVICE, PARTIAL_FAILURE, DEAD]
+          additionalProperties: { type: integer, minimum: 0 }
+    UserDeviceRegistrationRequest:
+      type: object
+      additionalProperties: false
+      required: [platform]
+      properties:
+        deviceId: { type: [string, 'null'], format: uuid }
+        platform: { type: string, enum: [ANDROID, IOS] }
+        fcmToken: { type: [string, 'null'], minLength: 1, maxLength: 4096, pattern: '^\S+$' }
+        deviceName: { type: [string, 'null'], minLength: 1, maxLength: 128, pattern: '\S' }
+    UserDeviceRegistration:
+      type: object
+      additionalProperties: false
+      required: [id, userId, platform, active, pushRegistered, lastSeenAt, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        platform: { type: string, enum: [ANDROID, IOS] }
+        active: { type: boolean }
+        pushRegistered: { type: boolean }
+        lastSeenAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     YardCustomer:
       type: object
       additionalProperties: false

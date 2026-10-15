@@ -31,10 +31,10 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
     @Test
     void flywayV5PreservesAcceptedIdentityColumnsAndAddsCustomerForeignKey() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("25");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("26");
         // Flyway history is migrator-owned; runtime deliberately has no grant.
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             var tables = new ArrayList<String>();
             try (var rows = statement.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname='public'")) {
@@ -42,7 +42,7 @@ class TenancyPostgresTests extends PostgresIntegrationTest {
             }
             assertThat(tables).containsExactlyInAnyOrder("users", "tenants", "tenant_memberships",
                     "role_assignments", "flyway_schema_history", "customers", "physical_sites", "customer_sites", "operational_locations",
-                    "membership_invitations", "invitation_role_assignments", "drivers", "tractors", "trailers", "trailer_qr_identities", "tenant_settings", "orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders", "trips", "trip_stops", "trip_stop_orders", "trip_assignment_events", "trip_operational_events", "trip_driver_updates", "trailer_movement_events", "trailer_couplings", "processed_client_operations", "trip_stop_events", "documents", "document_links", "delivery_evidence", "shifts", "shift_corrections", "inspections", "fuel_events", "operational_exceptions", "operational_exception_documents", "order_fulfillment_events", "yard_discrepancy_reports", "trailer_oos_evidence", "yard_checks", "yard_check_items", "yard_check_reconciliations", "alerts", "outbox_jobs");
+                    "membership_invitations", "invitation_role_assignments", "drivers", "tractors", "trailers", "trailer_qr_identities", "tenant_settings", "orders", "order_cargo_lines", "order_stops", "load_manifests", "manifest_orders", "trips", "trip_stops", "trip_stop_orders", "trip_assignment_events", "trip_operational_events", "trip_driver_updates", "trailer_movement_events", "trailer_couplings", "processed_client_operations", "trip_stop_events", "documents", "document_links", "delivery_evidence", "shifts", "shift_corrections", "inspections", "fuel_events", "operational_exceptions", "operational_exception_documents", "order_fulfillment_events", "yard_discrepancy_reports", "trailer_oos_evidence", "yard_checks", "yard_check_items", "yard_check_reconciliations", "alerts", "outbox_jobs", "alert_recipients", "user_devices", "alert_deliveries");
             for (var entry : java.util.Map.of(
                     "users", List.of("id", "firebase_uid", "email", "display_name", "created_at", "updated_at"),
                     "tenants", List.of("id", "name", "status", "created_at", "updated_at"),

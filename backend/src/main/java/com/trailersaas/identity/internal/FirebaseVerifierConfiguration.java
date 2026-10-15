@@ -24,7 +24,8 @@ class FirebaseVerifierConfiguration {
         }
         try {
             var options = FirebaseOptions.builder().setProjectId(projectId)
-                    .setCredentials(GoogleCredentials.getApplicationDefault()).build();
+                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .setConnectTimeout(5000).setReadTimeout(8000).build();
             return FirebaseApp.initializeApp(options, "trailersaas-identity-" + UUID.randomUUID());
         } catch (IOException | IllegalArgumentException exception) {
             throw new IllegalStateException("Firebase administrative credentials could not be initialized securely.");

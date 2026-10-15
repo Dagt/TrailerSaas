@@ -27,7 +27,9 @@ class YardCheckSecurityPostgresTests extends YardCheckFixture {
       for(var table:List.of("yard_checks","yard_check_items","yard_check_reconciliations","alerts")){
         assertThat(jdbc.queryForObject("select has_table_privilege(current_user,?,'SELECT') and has_table_privilege(current_user,?,'INSERT')",Boolean.class,table,table)).isTrue();
         assertThat(jdbc.queryForObject("select has_table_privilege(current_user,?,'DELETE')",Boolean.class,table)).isFalse();
-        assertThat(jdbc.queryForObject("select has_table_privilege(current_user,?,'UPDATE')",Boolean.class,table)).isEqualTo(table.equals("yard_checks")||table.equals("yard_check_items"));
+        // #56 permits only guarded, versioned Alert lifecycle updates; its original
+        // facts stay immutable (the history regressions below remain unchanged).
+        assertThat(jdbc.queryForObject("select has_table_privilege(current_user,?,'UPDATE')",Boolean.class,table)).isEqualTo(Set.of("yard_checks","yard_check_items","alerts").contains(table));
         assertThat(jdbc.queryForObject("select relrowsecurity and relowner<>(select oid from pg_roles where rolname=current_user) from pg_class where oid=?::regclass",Boolean.class,table)).isTrue();
         assertThat(jdbc.queryForObject("select count(*) from information_schema.role_table_grants where grantee='PUBLIC' and table_name=?",Long.class,table)).isZero();
       }

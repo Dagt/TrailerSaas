@@ -151,6 +151,69 @@ class ApiClient {
     }
   }
 
+  /// Global device deactivation only; no command queue or automatic mutation replay.
+  Future<void> delete(String path) async {
+    final uid = auth.uid;
+    if (uid == null) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    String? token;
+    try {
+      token = await auth.token(forceRefresh: true);
+    } catch (_) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    if (token == null || auth.uid != uid) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    http.Response response;
+    try {
+      response = await client
+          .delete(
+            Uri.parse(
+              '${baseUrl.toString().replaceFirst(RegExp(r'/$'), '')}/$path',
+            ),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 20));
+    } on SocketException {
+      throw ApiUnavailable();
+    } on http.ClientException {
+      throw ApiUnavailable();
+    } on TimeoutException {
+      throw ApiUnavailable();
+    }
+    if (auth.uid != uid) {
+      throw const ApiProblem(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        'Sign in to continue.',
+      );
+    }
+    if (response.statusCode == 204) return;
+    _decode(response);
+    throw const ApiProblem(
+      502,
+      'UNEXPECTED_RESPONSE',
+      'Device deactivation was not confirmed.',
+    );
+  }
+
   Map<String, dynamic> _decode(http.Response response) {
     Map<String, dynamic> body;
     try {

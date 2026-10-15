@@ -65,6 +65,9 @@ logging:
     software.amazon.awssdk: OFF
 
 trailersaas:
+  notifications:
+    fcm:
+      enabled: ${FCM_ENABLED:false}
   jobs:
     enabled: false
     tenants: []

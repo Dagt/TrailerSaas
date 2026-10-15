@@ -19,6 +19,9 @@ import '../shift/camera_capture.dart';
 import '../road/road_evidence_replay.dart';
 import '../road/road_evidence_store.dart';
 import '../road/driver_updates_store.dart';
+import '../notifications/messaging_port.dart';
+import '../notifications/notifications_controller.dart';
+import '../notifications/device_registration_store.dart';
 
 class TrailerSaasApp extends StatefulWidget {
   const TrailerSaasApp({
@@ -27,12 +30,14 @@ class TrailerSaasApp extends StatefulWidget {
     required this.database,
     this.session,
     this.journal,
+    this.messaging,
   });
 
   final AppConfiguration configuration;
   final AppDatabase database;
   final SessionController? session;
   final OnlineCommandJournal? journal;
+  final MessagingPort? messaging;
 
   @override
   State<TrailerSaasApp> createState() => _TrailerSaasAppState();
@@ -43,6 +48,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
   late Future<void> _databaseReady;
   ReplayWorker? _worker;
   DriverUpdatesStore? _updates;
+  NotificationsController? _notifications;
 
   @override
   void initState() {
@@ -54,6 +60,14 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
   Future<void> _initialize() async {
     await widget.database.initialize();
     await widget.session?.start();
+    if (widget.session != null && widget.messaging != null) {
+      _notifications ??= NotificationsController(
+        widget.session!,
+        widget.messaging!,
+        FileDeviceRegistrationStore(),
+      );
+      unawaited(_notifications!.start());
+    }
     if (widget.session != null && widget.journal == null) {
       final shiftReplay = ShiftReplay(
         CommandStore(widget.database),
@@ -96,10 +110,14 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
     if (state == AppLifecycleState.resumed) {
       unawaited(_worker?.sync());
       unawaited(_updates?.refresh().catchError((Object _) {}));
+      unawaited(_notifications?.resume());
+    } else {
+      _notifications?.suspend();
     }
   }
 
   Future<void> _close() async {
+    await _notifications?.shutdown();
     await _updates?.shutdown();
     await _worker?.shutdown();
     await widget.session?.shutdown();
@@ -155,6 +173,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
                   journal: widget.journal,
                   worker: _worker,
                   updates: _updates,
+                  notifications: _notifications,
                 );
         },
       ),

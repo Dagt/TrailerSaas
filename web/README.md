@@ -1,5 +1,16 @@
 # TrailerSaaS Web
 
+## Issue #56 — operational Alerts
+
+Admin and Operations expose Alerts only when the downloaded active membership
+contains ALERT_VIEW. Inbox filters, bounded cursor pages and minimized detail use
+the authoritative API. Separate write capabilities gate explicit versioned
+acknowledgement/resolution dialogs; production role grants remain unassigned until
+approved. Physical recovery must be recorded separately before resolution. Query
+cache/requests/dialogs are fenced by User, Tenant and occurrence. Push diagnostics
+say accepted by FCM, never delivered. See
+[acceptance and policy limits](../docs/backend/issue-56-alerts-fcm-delivery.md).
+
 Issue #30 extends the #16 foundation with Firebase email/password authentication,
 Tenant Admin master-data forms and Settings, using ADR-004/007/011/018/020.
 The backend remains the sole authority for authorization and concurrency.
