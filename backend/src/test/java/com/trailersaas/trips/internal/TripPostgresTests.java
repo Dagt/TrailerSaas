@@ -1377,6 +1377,10 @@ class TripPostgresTests extends PostgresIntegrationTest {
         tenant,
         tenant,
         dispatcher);
+    // Customer reads require an operational Tenant; the shared fixture starts CANDIDATE.
+    problem(
+        http("GET", base() + "/orders?unplanned=true", "dispatcher", ""), 403, "TENANT_ACCESS_DENIED");
+    f.db.execute("UPDATE tenants SET status='ACTIVE' WHERE id=?", tenant);
     var response = http("GET", base() + "/orders?unplanned=true", "dispatcher", "");
     assertThat(response.statusCode()).isEqualTo(200);
     assertThat(JsonPath.<List<String>>read(response.body(), "$.items[*].id"))
@@ -1384,6 +1388,9 @@ class TripPostgresTests extends PostgresIntegrationTest {
     assertThat(response.body()).doesNotContain(orderB.toString(), customerB.toString());
     var foreign = rawTrip(other);
     problem(http("GET", base() + "/trips/" + foreign, "admin", ""), 404, "RESOURCE_NOT_FOUND");
+    f.db.execute("UPDATE tenants SET status='DISABLED' WHERE id=?", tenant);
+    problem(
+        http("GET", base() + "/orders?unplanned=true", "dispatcher", ""), 403, "TENANT_ACCESS_DENIED");
   }
 
   @Test

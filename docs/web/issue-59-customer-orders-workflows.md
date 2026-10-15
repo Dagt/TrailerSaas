@@ -221,6 +221,15 @@ all tests; Drift remains v9 with no Mobile changes. Final counts, candidate SHA,
 commands and per-log SHA-256 are published in PR #113 and local evidence files.
 The full attempt also exposed one historical Authorization inventory still expecting 52 tables. It now requires exactly 53 and explicitly verifies the new table's forced RLS and SELECT/INSERT-only runtime grants; no assertion is removed. No earlier SHA's result is substituted for that execution. Git archives are created with core.autocrlf=false: an initial Windows export converted generated-source LF to CRLF; byte comparisons against the real Git blob proved that only export conversion differed. No Drift source/schema was changed.
 
+The subsequent complete Backend run executed 2,467 tests and exposed one remaining
+positive Customer fixture in `TripPostgresTests` using a CANDIDATE Tenant. That
+run is retained as failed evidence, not approved validation. The test now verifies
+denial while CANDIDATE, explicitly activates its own Tenant for the original scoped
+unplanned-Orders read and foreign-Trip checks, then verifies fresh denial after
+DISABLED. Production authorization is unchanged; no historical assertion is removed.
+The affected Trips/Customer workflow run passed all 123 tests with zero failures/errors/skips. All final-candidate suites are rerun;
+their measured outcomes belong in PR #113 and the evidence manifest.
+
 ## Release and deferred limitations
 
 The owner explicitly deferred GitHub Actions Billing. Remote Full CI is
