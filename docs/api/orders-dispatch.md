@@ -8,7 +8,7 @@ Base:
 
 ## 1. Orders
 
-### Implemented surface — issues #31–#34
+### Implemented surface — issues #31–#34, extended by #59
 
 The Accepted v0.1 contracts below describe the full future surface. Issue #31
 implements only POST/list/detail for the initial Order aggregate:
@@ -23,7 +23,8 @@ implements only POST/list/detail for the initial Order aggregate:
   weight-unit example below is not a closed catalog.
 - GET/list returns Order summaries and `nextCursor`; GET/detail and POST return
   the projection plus `cargoLines` and `requestedStops`, their IDs and timestamps.
-  Order responses contain no Manifest, Trip, fulfillment, evidence or history projections.
+  The original detail contains no Manifest, Trip, fulfillment or evidence projection.
+  #59 adds the separate Order-authorized progress/decision read described below.
 - List supports `customerId`, `status`, `unplanned`, `cursor`, `limit` (default 50,
   maximum 200). Ordering is `createdAt DESC, id DESC`; opaque keyset continuation
   is scoped again on every request, not an authorization token or public cursor
@@ -446,11 +447,12 @@ Internal audit noise should not be mixed into the primary operational timeline.
 
 ## Issue #33 implementation boundary
 
-PATCH `/orders/{orderId}` is implemented for OPEN/PLANNED only and changes exactly
+At #33, PATCH `/orders/{orderId}` was implemented for OPEN/PLANNED and changed exactly
 `poNumber`, `shipmentNumber`, `bolReference`. Omission preserves; explicit null clears.
 Strict bodies require a nonnegative integer `expectedVersion`. No-op keeps version;
 material edit advances it once. Cargo, Stops, Customer, number and Trailer are immutable
-through this command. Invalid state returns `409 INVALID_STATE_TRANSITION`, distinct
+through the original command. #59's bounded unallocated-content extension is below.
+Invalid state returns `409 INVALID_STATE_TRANSITION`, distinct
 from `409 STALE_VERSION` after the scoped Order lock/version check.
 
 `POST /orders/{orderId}/cancellations` requires ORDER_CANCEL, expectedVersion and
@@ -494,9 +496,9 @@ reason/resolution where applicable. Publication is an **in-process transaction-b
 hook, not durable history**. Audit persistence/query and generic actor infrastructure
 remain #61; future durable listeners must participate in the transaction (for example
 BEFORE_COMMIT), never treat a rolled-back publication as committed history. No reason
-or resolution is exposed in GET. #33 deliberately adds no history table/column or
-Audit API. Until #61, the operational resolution payload has no durable replay store;
-this bounded integration gap is explicit, not a claim of audit durability.
+or resolution was exposed in the original GET. #33 added no history table/column or
+Audit API. #59 closes the specific human request/decision persistence gap with V28
+below; it does not claim a generic Audit API or durable replay of these commands.
 
 
 ## Issue #34 implementation boundary
@@ -817,3 +819,62 @@ timeline; #44 Driver execution/real scan discrepancy; #45 POD/Fuel/exceptions;
 optimization, production mock records, browser-only state changes and demo state
 bypass buttons are absent. Demo active states must already exist in an authorized
 backend/demo environment; Web cannot manufacture execution facts.
+
+## Issue #59 — Customer Order workflow implementation
+
+The existing endpoints remain authoritative; no Customer Orders/Trips REST API is
+duplicated. See [implementation/security/acceptance](../web/issue-59-customer-orders-workflows.md).
+Customer-scoped commands/read paths revalidate active Tenant, current membership,
+capability and Customer scope. Tenant-wide Admin/Operations authority is preserved.
+
+GET `/orders/customer-context?customerId={uuid}` requires ORDER_CREATE for that
+Customer and returns `{customerId, capabilities}` as UI hints only. It grants no
+command permission. GET `/orders/{orderId}/progress` requires current Order read
+scope and follows actual Order→Trip→Stop associations. `cursor` is the previous
+Trip UUID, `limit` defaults to 20 (1–50), ordering is Trip UUID ascending. It returns
+`orderId, customerId, orderVersion, requestEditable, items, nextCursor, changes`.
+Each Trip has status/version, a visible expected Trailer identifier/number when
+allowed, only this Order's mapped Stops/milestones/action hints, and bounded
+Customer-relevant reroute/substitution history. No Driver/Tractor, other Order IDs,
+full route, raw metadata or private assignment history. Shared-Customer history is
+withheld. Each page uses repeatable-read; the caller must refresh inconsistent
+Order versions across continuation pages before operational changes. Stop count
+is bounded at 500 per Trip (overflow rejects), recent history at 100 reroutes and
+100 substitutions; `changes` contains up to 20 minimized human request decisions.
+
+PATCH evolves compatibly: required `expectedVersion`; optional reference fields
+retain omission/null semantics; optional non-null `cargoLines` and `requestedStops`
+reuse strict create validators. Child replacement is restricted to OPEN Orders
+with no Manifest allocation (including CLOSED history), Trip mapping or fulfillment
+event. The exclusive Order lock coordinates with planning. PLANNED reference edits
+remain supported; committed itinerary rewrites return INVALID_STATE_TRANSITION.
+Actual version mismatch is STALE_VERSION. Entire mutation rolls back on failure.
+
+V28 preserves before/after request facts, current human actor, actual Order version,
+server time, cancellation reason/resolution and administrative completion in forced-
+RLS append-only `order_request_revisions`. Only its minimized latest decisions are
+returned by progress. Required history failure rolls back the business transaction.
+V1–V27 stay unchanged. Original physical fulfillment history is independent; generic
+Audit/search and historic backfill are not implemented by #59.
+
+Pre-execution cancellation releases only existing releasable allocations. Active
+cancellation remains CANCELLING until physical resolution; it does not cancel a
+shared Trip. DELIVERED → COMPLETED requires ORDER_COMPLETE, explicit confirmation
+and actual expectedVersion. No endpoint here generates operational delivery facts.
+
+Reroute uses the existing Trip/affected Stop/version command with all mapped Customer
+scopes. Substitution keeps the actual expectedTrailerId concurrency guard, explicit
+AUTHORIZE/REJECT and durable decision history; it accepts no expectedVersion field
+and never performs Hook/Drop. Customer-scoped Trip command receipts redact Driver/
+Tractor IDs and return empty stops/assignmentHistory/operationalHistory. Tenant-wide
+receipts retain full existing detail. Refresh the minimized progress after ACK.
+
+Existing Site/Location lists accept optional explicit `customerId`, fresh SITE_VIEW,
+active Tenant and actual association/Customer-specific Location checks, including
+multi-role callers. This is no new directory grant. Trailer selection uses existing
+`designatedCustomerId` scope, visibility and planning eligibility. Browser context
+is never authorization. Unknown/foreign resources retain safe errors.
+
+These commercial mutations have no general durable replay guarantee. No fabricated
+Idempotency-Key or automatic POST retry is introduced. After timeout/lost/malformed
+ACK retain the draft, block repeated sending and reconcile with authorized reads.

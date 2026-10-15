@@ -469,3 +469,36 @@ Ready for wireframes when:
 6. Alternate Trailer authorization has an explicit flow.
 7. Delivered and Completed are separate.
 8. Shared Driver assignment remains capability/configuration-driven rather than hard-coded.
+
+# 19. Implemented Customer workflows — issue #59
+
+The Orders navigation is functional: explicit Customer-scoped status/planning
+filters, keyset pages, real detail and Information/Cargo/Requested Stops/Review
+creation. Stops can be added, removed and reordered. Normalized choices use
+associated active Sites/Customer Locations; accepted ad-hoc snapshots remain
+historical requests. Optional Trailer selection is scoped and planning-only.
+
+Dashboard shows real five-row Order previews, clearly not totals. Pending/planned/
+active/partial/delivered/cancelling views link to Orders; recent requests are ordered
+by creation. Customer inventory, global deliveries and Documents remain #60.
+No Driver name or private shared Trip route is displayed by this implementation.
+
+Detail separates requested itinerary, mapped operational Stop milestones and recent
+specific request decisions. OPEN unallocated cargo/destinations can be replaced;
+PLANNED allows reference edits only. After execution starts, destination changes use
+real operational reroute. Cancellation shows explicit consequences and reason;
+active cancellation includes resolution instructions and remains visibly CANCELLING.
+Cancelling one Order never means cancelling the shared Trip. Alternate-Trailer
+AUTHORIZE/REJECT is a separate reviewed planning decision, not physical Hook.
+DELIVERED and administrative COMPLETED remain separate; only the latter is a
+Customer completion action after the server reports DELIVERED.
+
+Forms require renewed review after changes. Double sends and automatic mutation
+retries are blocked. Uncertain outcomes retain the same-context in-memory draft and
+offer authorized read reconciliation. Drafts survive navigation/access refresh,
+but not account/Customer/Tenant switch or browser reload. Old asynchronous results
+cannot update the new scope. Shared semantic UI/dialogs, keyboard focus and table
+overflow are reused; no new framework. Automated browser tests use jsdom; physical
+desktop/tablet and production session testing remain release work under #65.
+
+[Architecture, bounded API/V28 changes, acceptance and evidence](../web/issue-59-customer-orders-workflows.md).
