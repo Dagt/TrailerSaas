@@ -52,6 +52,18 @@ class AlertInboxPostgresTests extends YardCheckFixture {
   assertThatThrownBy(()->f.db.execute("update alerts set status='OPEN',version=3 where id=?",alert)).isInstanceOf(java.sql.SQLException.class);
   assertThatThrownBy(()->f.db.execute("delete from alerts where id=?",alert)).isInstanceOf(java.sql.SQLException.class);
  }
+ @org.junit.jupiter.params.ParameterizedTest @org.junit.jupiter.params.provider.ValueSource(booleans={false,true})
+ void concurrentVersionedLifecycleWritesHaveOnlyOneWinnerUnderRuntimeRls(boolean resolve)throws Exception{
+  if(resolve){var r=command("/trailers/"+trailer+"/location-corrections",null,Map.of("expectedVersion",1,"newLocationId",a.toString(),"reason","Verified recovery before resolution"));assertThat(r.statusCode()).as(r.body()).isEqualTo(200);}
+  String sql=resolve?"update alerts set status='RESOLVED',resolved_by=?,resolution_reason='Verified recovered',version=1 where tenant_id=? and id=? and version=0":"update alerts set status='ACKNOWLEDGED',acknowledged_by=?,version=1 where tenant_id=? and id=? and version=0";
+  try(var pool=java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()){
+   var one=pool.submit(()->transactions.execute(tenant,()->jdbc.update(sql,user,tenant,alert)));
+   var two=pool.submit(()->transactions.execute(tenant,()->jdbc.update(sql,user,tenant,alert)));
+   assertThat(List.of(one.get(),two.get())).containsExactlyInAnyOrder(0,1);
+  }
+  assertThat(f.db.value("select version from alerts where id=?",alert)).isEqualTo(1L);
+  assertThat(f.db.value("select status from alerts where id=?",alert)).isEqualTo(resolve?"RESOLVED":"ACKNOWLEDGED");
+ }
  @Test void paginationNeverMixesExpectedFiltersOrDuplicatesOccurrences()throws Exception{
   for(int n=0;n<2;n++){var t=f.trailer(tenant,"Finding-"+UUID.randomUUID(),customer);f.db.execute("update trailers set location_state='AT_LOCATION',current_location_id=? where id=?",a,t);}
   var c=check(start());assertThat(command("/yard-checks/"+c+"/completion",UUID.randomUUID().toString(),Map.of("expectedVersion",0)).statusCode()).isEqualTo(200);
