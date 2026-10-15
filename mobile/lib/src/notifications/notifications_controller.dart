@@ -61,8 +61,9 @@ class NotificationsController extends ChangeNotifier {
     final uid = session.auth.uid;
     try {
       final initial = await messaging.initialHint();
-      if (!_closed && uid == session.auth.uid && initial != null)
+      if (!_closed && uid == session.auth.uid && initial != null) {
         _received(initial);
+      }
     } catch (_) {}
     await _running;
   }
@@ -101,8 +102,9 @@ class NotificationsController extends ChangeNotifier {
         _signingOut ||
         _user == null ||
         _uid == null ||
-        messaging.platform == null)
+        messaging.platform == null) {
       return Future.value();
+    }
     _pending = true;
     _request = _request || requestPermission;
     if (busy) return _running;
@@ -137,8 +139,9 @@ class NotificationsController extends ChangeNotifier {
           if (!_current(epoch, user, uid)) continue;
           final token = granted ? await messaging.token() : null;
           if (!_current(epoch, user, uid)) continue;
-          if (granted && (token == null || token.isEmpty))
+          if (granted && (token == null || token.isEmpty)) {
             throw StateError('Token unavailable.');
+          }
           final id = await store.ensure(user);
           if (!_current(epoch, user, uid)) continue;
           _registration = id;
@@ -152,8 +155,9 @@ class NotificationsController extends ChangeNotifier {
               receipt['userId'] != user ||
               receipt['active'] != true ||
               receipt['platform'] != messaging.platform ||
-              receipt['pushRegistered'] != granted)
+              receipt['pushRegistered'] != granted) {
             throw const FormatException();
+          }
           status = granted
               ? 'Push registration confirmed by server. Delivery is not guaranteed.'
               : 'Device registered without push. You can continue without notifications.';
@@ -169,12 +173,14 @@ class NotificationsController extends ChangeNotifier {
   }
 
   void _received(PushHint value) {
-    if (_closed || _signingOut || _user == null || session.auth.uid != _uid)
+    if (_closed || _signingOut || _user == null || session.auth.uid != _uid) {
       return;
+    }
     final membership = session.snapshot?.membership;
     if (membership?.tenantId != value.tenantId ||
-        !membership!.capabilities.contains('ALERT_VIEW'))
+        !membership!.capabilities.contains('ALERT_VIEW')) {
       return;
+    }
     hint = value;
     detail = null;
     _notify();
@@ -188,21 +194,24 @@ class NotificationsController extends ChangeNotifier {
         !_current(epoch, user, uid) ||
         session.snapshot?.membership.tenantId != current.tenantId ||
         !(session.snapshot?.membership.capabilities.contains('ALERT_VIEW') ??
-            false))
+            false)) {
       return;
+    }
     try {
       final response = await session.api.get(
         'tenants/${current.tenantId}/alerts/${current.alertId}',
       );
       if (!_current(epoch, user, uid) ||
           hint != current ||
-          session.snapshot?.membership.tenantId != current.tenantId)
+          session.snapshot?.membership.tenantId != current.tenantId) {
         return;
+      }
       if (response['id'] != current.alertId ||
           response['tenantId'] != current.tenantId ||
           !{'OPEN', 'ACKNOWLEDGED', 'RESOLVED'}.contains(response['status']) ||
-          response['relatedResource'] is! Map<String, dynamic>)
+          response['relatedResource'] is! Map<String, dynamic>) {
         throw const FormatException();
+      }
       detail = Map.unmodifiable(response);
       status = 'Current authorized Alert retrieved from server.';
     } on ApiProblem catch (_) {

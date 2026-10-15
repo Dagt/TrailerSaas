@@ -438,8 +438,9 @@ class SessionController extends ChangeNotifier {
       _storageBlocked = true;
     }
     try {
-      if (_disposed || generation != _generation || auth.uid != logoutUid)
+      if (_disposed || generation != _generation || auth.uid != logoutUid) {
         return;
+      }
       await auth.signOut();
     } catch (_) {
       failed = true;

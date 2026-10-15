@@ -154,12 +154,13 @@ class ApiClient {
   /// Global device deactivation only; no command queue or automatic mutation replay.
   Future<void> delete(String path) async {
     final uid = auth.uid;
-    if (uid == null)
+    if (uid == null) {
       throw const ApiProblem(
         401,
         'AUTHENTICATION_REQUIRED',
         'Sign in to continue.',
       );
+    }
     String? token;
     try {
       token = await auth.token(forceRefresh: true);
@@ -170,12 +171,13 @@ class ApiClient {
         'Sign in to continue.',
       );
     }
-    if (token == null || auth.uid != uid)
+    if (token == null || auth.uid != uid) {
       throw const ApiProblem(
         401,
         'AUTHENTICATION_REQUIRED',
         'Sign in to continue.',
       );
+    }
     http.Response response;
     try {
       response = await client
@@ -196,12 +198,13 @@ class ApiClient {
     } on TimeoutException {
       throw ApiUnavailable();
     }
-    if (auth.uid != uid)
+    if (auth.uid != uid) {
       throw const ApiProblem(
         401,
         'AUTHENTICATION_REQUIRED',
         'Sign in to continue.',
       );
+    }
     if (response.statusCode == 204) return;
     _decode(response);
     throw const ApiProblem(

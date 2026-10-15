@@ -201,6 +201,24 @@ visible. No full historical suite was substituted by these checkpoint filters.
 
 ## Deferred policies and release limits
 
+### First FULL candidate feedback (retained, not green)
+
+Run 38676995014 on candidate 6f5767e ran Web 262 and OpenAPI 44 successfully.
+Mobile fatal-info analysis rejected missing control-flow braces. The local focused
+helper had omitted the repository analysis_options.yaml; that environment omission
+was corrected and analysis rerun with the actual options (no issues), preserving
+all lints. No CI check or rule was relaxed. The 62 focused Mobile tests still pass.
+Backend logs also identified exact historical schema inventories missing V26's
+three new tables; a focused runtime-grant regression reproduced the V24-only
+expectation that Alerts had no UPDATE. Inventories now include exactly those three
+tables and the guarded Alert lifecycle UPDATE grant, while all original history,
+RLS, no DELETE/no PUBLIC/no BYPASSRLS assertions remain. The PR returned to Draft;
+the interrupted Backend run is not reported as passed. A new finished published
+candidate must run all four suites again; previous green jobs do not authorize it.
+The corrected exact inventories and original Yard Check security suite passed
+32 focused PostgreSQL tests, zero failures/errors/skipped. Final focused Mobile
+analysis with the repository options and format passed; 62 tests passed again.
+
 OQ-059 remains open: production recipient policies, definitive severities,
 escalations and write-role authority are not invented. OQ-057 retention remains
 separate. No #57 detector, Customer Portal, generic audit UI or automatic physical

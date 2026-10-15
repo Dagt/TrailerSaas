@@ -17,8 +17,9 @@ class PushHint {
         data['tenantId'] is! String ||
         data['alertId'] is! String ||
         !uuid.hasMatch(data['tenantId'] as String) ||
-        !uuid.hasMatch(data['alertId'] as String))
+        !uuid.hasMatch(data['alertId'] as String)) {
       return null;
+    }
     return PushHint(data['tenantId'] as String, data['alertId'] as String);
   }
 }

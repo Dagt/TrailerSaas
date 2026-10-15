@@ -86,14 +86,16 @@ class Fixture {
   }
 
   http.Response response(http.Request r) {
-    if (r.url.path.endsWith('/me'))
+    if (r.url.path.endsWith('/me')) {
       return f.response({
         'userId': f.auth.uid == 'firebase-A' ? 'user-A' : 'user-B',
         'memberships': f.memberships,
       });
+    }
     if (r.url.path.endsWith('/devices')) {
-      if (deviceFailure != null)
+      if (deviceFailure != null) {
         return f.response({'code': 'DENIED', 'detail': 'safe'}, deviceFailure!);
+      }
       final b = jsonDecode(r.body) as Map<String, dynamic>;
       return f.response({
         'id': b['deviceId'],
