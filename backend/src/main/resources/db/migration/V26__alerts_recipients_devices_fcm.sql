@@ -118,7 +118,8 @@ BEGIN
  SELECT user_id,platform INTO prior_owner,prior_platform FROM public.user_devices WHERE id=result_id;
  IF FOUND AND (prior_owner<>owner_id OR prior_platform<>device_platform)
  THEN RAISE EXCEPTION 'Registration unavailable' USING ERRCODE='42501'; END IF;
- IF prior_owner IS NULL AND (SELECT count(*) FROM public.user_devices WHERE user_id=owner_id AND active)>=32
+ IF NOT EXISTS(SELECT 1 FROM public.user_devices WHERE id=result_id AND active)
+ AND (SELECT count(*) FROM public.user_devices WHERE user_id=owner_id AND active)>=32
  THEN RAISE EXCEPTION 'Active registration bound exceeded' USING ERRCODE='23514'; END IF;
  IF token IS NOT NULL THEN
   UPDATE public.user_devices SET active=false,fcm_token=NULL WHERE fcm_token=token AND id<>result_id;

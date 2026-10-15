@@ -111,3 +111,13 @@ it('empty and denied server responses stay truthful', async () => {
   const f = fixture(); f.override(url => url.pathname.includes('/alerts') ? f.response({ items: [], nextCursor: null }) : null)
   await screen.findByText('No Alerts match these filters.'); expect(screen.queryByText('TR-100')).not.toBeInTheDocument()
 })
+it.each([403, 404, 503])('server %s cannot produce false acknowledgement or automatic retry', async status => {
+  const u=userEvent.setup(), f=fixture(`/admin/alerts/${alertId}`);f.fail({status,code:status===403?'CAPABILITY_REQUIRED':status===404?'RESOURCE_NOT_FOUND':'UNAVAILABLE'})
+  await u.click(await screen.findByRole('button',{name:'Acknowledge'}));await u.click(screen.getByRole('button',{name:'Confirm acknowledgement'}));await screen.findByRole('alert')
+  expect(f.requests.filter(r=>r.method==='POST')).toHaveLength(1);expect(screen.queryByText('ACKNOWLEDGED')).not.toBeInTheDocument()
+})
+it('navigating to another occurrence disposes a previous confirmation', async()=>{
+  const u=userEvent.setup(), f=fixture(`/admin/alerts/${alertId}`)
+  await u.click(await screen.findByRole('button',{name:'Acknowledge'}));await act(()=>f.router.navigate(`/admin/alerts/${nextId}`))
+  await screen.findByRole('heading',{name:'Alert detail'});expect(screen.queryByRole('dialog')).not.toBeInTheDocument();expect(f.requests.filter(r=>r.method==='POST')).toHaveLength(0)
+})

@@ -28,7 +28,7 @@ class ShiftSchemaPostgresTests extends PostgresIntegrationTest {
     var id=UUID.randomUUID();db.execute("INSERT INTO shifts VALUES(?,?,?,now(),NULL,now(),now())",id,t,d);return id;
   }
   @Test void exactSchemaAndMigrationHistoryRetainAcceptedColumns() throws Exception {
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("25");flyway.validate();
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("26");flyway.validate();
     try(var c=flyway.getConfiguration().getDataSource().getConnection();var q=c.createStatement()) {
       var columns=new ArrayList<String>();
       try(var r=q.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_name='inspections' ORDER BY ordinal_position")) {while(r.next())columns.add(r.getString(1));}

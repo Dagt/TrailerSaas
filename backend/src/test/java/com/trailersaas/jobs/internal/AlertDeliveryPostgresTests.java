@@ -129,6 +129,40 @@ class AlertDeliveryPostgresTests extends JobsFixture {
   device("lost-ack-token");var r=queue();var id=job(r);var claim=store.claim(tenant,1,Duration.ofSeconds(2)).claims().getFirst();executeClaim(claim);
   assertThat(push.calls.get()).isEqualTo(1);assertThat(status(id)).isEqualTo("PROCESSING");expired(claim);deliveryWorker().pollOnce();assertThat(status(id)).isEqualTo("SUCCEEDED");assertThat(push.calls.get()).isEqualTo(1);assertThat(store.succeed(claim)).isFalse();
  }
+ @Test void earlierPermanentDeviceFailureCannotBecomeSuccessWhenOtherDeviceLaterAccepts()throws Exception{
+  device("first-bad");device("second-good");push.scenario="PERMANENT_AND_RETRY";var r=queue();var id=job(r);var w=deliveryWorker();
+  w.pollOnce();assertThat(status(id)).isEqualTo("PENDING");due(id);w.pollOnce();
+  assertThat(status(id)).isEqualTo("DEAD");assertThat(recipientStatus(r)).isEqualTo("PARTIAL_FAILURE");
+  assertThat(db.value("select sum(attempt_count) from alert_deliveries where recipient_id=?",r)).isEqualTo(3L);
+ }
+ @Test void oldInvalidTokenResponseCannotStrandOrDeactivateRotatedToken()throws Exception{
+  var d=device("old-in-flight");var r=queue();var id=job(r);push.scenario="INVALIDATED_TOKEN";
+  push.duringSend=()->{try{assertThat(request("POST","devices",Map.of("deviceId",d.toString(),"platform","ANDROID","fcmToken","new-during-send")).statusCode()).isEqualTo(200);}catch(Exception e){throw new AssertionError(e);}};
+  var w=deliveryWorker();w.pollOnce();assertThat(status(id)).isEqualTo("PENDING");assertThat(db.value("select active from user_devices where id=?",d)).isEqualTo(true);
+  push.duringSend=()->{};push.scenario="ACCEPTED_BY_FCM";due(id);w.pollOnce();assertThat(status(id)).isEqualTo("SUCCEEDED");assertThat(recipientStatus(r)).isEqualTo("ACCEPTED_BY_FCM");
+ }
+ @Test void exhaustedDeliveryIsVisibleAsDeadWithoutChangingAlertOrLosingAttemptMetadata()throws Exception{
+  device("always-retry");push.scenario="RETRYABLE_FAILURE";var r=queue();var id=job(r);
+  var w=deliveryWorker();for(int i=0;i<5;i++){if(i>0)due(id);w.pollOnce();}assertThat(status(id)).isEqualTo("DEAD");assertThat(attempts(id)).isEqualTo(5);
+  var detail=request("GET",path("alerts/"+alert),null);assertThat(detail.statusCode()).isEqualTo(200);assertThat(json.readTree(detail.body()).path("pushSummary").path("DEAD").asInt()).isEqualTo(1);
+  assertThat(db.value("select status from alerts where id=?",alert)).isEqualTo("OPEN");
+ }
+ @Test void recipientAndDestinationRowsAreTenantScopedAndCrossTenantAssociationsFailClosed()throws Exception{
+  device("isolated-token");var r=queue();deliveryWorker().pollOnce();
+  for(var table:List.of("alert_recipients","alert_deliveries")){
+   assertThat(transactions.execute(tenant,()->jdbc.queryForObject("select count(*) from "+table+" where tenant_id=?",Long.class,tenant))).isEqualTo(1L);
+   assertThat(transactions.execute(other,()->jdbc.queryForObject("select count(*) from "+table+" where tenant_id=?",Long.class,tenant))).isZero();
+   assertThat(jdbc.queryForObject("select count(*) from "+table,Long.class)).isZero();
+   assertThat(transactions.execute(other,()->jdbc.update("update "+table+" set updated_at=clock_timestamp() where tenant_id=?",tenant))).isZero();
+  }
+  assertThatThrownBy(()->transactions.execute(other,()->jdbc.update("insert into alert_recipients(id,tenant_id,alert_id,user_id,policy_code) values(?,?,?,?,'TEST_APPROVED')",UUID.randomUUID(),other,alert,user))).isInstanceOf(org.springframework.dao.DataAccessException.class);
+  assertThat(db.value("select push_status from alert_recipients where id=?",r)).isEqualTo("ACCEPTED_BY_FCM");
+ }
+ @Test void permanentReceiptSurvivesCrashBeforeDeadJobPersistence()throws Exception{
+  device("permanent-before-crash");push.scenario="PERMANENT_FAILURE";var r=queue();var id=job(r);var c=store.claim(tenant,1,Duration.ofSeconds(2)).claims().getFirst();
+  assertThatThrownBy(()->executeClaim(c)).isInstanceOf(JobFailure.class);assertThat(status(id)).isEqualTo("PROCESSING");expired(c);
+  deliveryWorker().pollOnce();assertThat(status(id)).isEqualTo("DEAD");assertThat(push.calls.get()).isEqualTo(1);assertThat(recipientStatus(r)).isEqualTo("PERMANENT_FAILURE");
+ }
  void executeClaim(JobClaim claim){executeTyped(registry.decode(claim.type(),claim.payload()),claim);}
  <P> void executeTyped(JobRegistry.Decoded<P> d,JobClaim c){d.handler().execute(new JobExecution<>(c.id(),c.tenantId(),c.attempt(),c.aggregate(),d.payload(),new JobExecution.TenantWork(){public <T>T execute(java.util.function.Supplier<T> f){return store.fencedTransaction(c,f);}}));}
 }

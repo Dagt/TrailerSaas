@@ -76,6 +76,13 @@ class NotificationSchemaPostgresTests extends PostgresIntegrationTest {
    a.get();b.get();assertThat(db.value("select count(*) from user_devices where fcm_token='racing-token' and active")).isEqualTo(1L);
   }
  }
+ @Test void reactivatingHistoricalRegistrationCannotExceedActiveDeviceBound(){
+  var historical=register(user,null,null);
+  as(user,()->jdbc.queryForObject("select deactivate_user_device(?)",Boolean.class,historical));
+  UUID active=null;for(int i=0;i<32;i++)active=register(user,null,null);
+  assertThatThrownBy(()->register(user,historical,"over-bound")).isInstanceOf(org.springframework.dao.DataAccessException.class);
+  assertThat(register(user,active,"existing-active-rotation")).isEqualTo(active);
+ }
  @Test void ordinaryTenantAndNoContextCannotUseDeliveryTokenLookup(){
   register(user,null,"hidden-token");
   assertThat(tenants.execute(tenant,()->jdbc.queryForList("select * from alert_delivery_devices(?,?)",UUID.randomUUID(),UUID.randomUUID()))).isEmpty();

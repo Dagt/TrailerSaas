@@ -85,7 +85,14 @@ class AlertService {
   var id=r.getObject("id",UUID.class);var tenant=r.getObject("tenant_id",UUID.class);
   var context=new LinkedHashMap<String,String>();var data=tools.jackson.databind.json.JsonMapper.builder().build().readTree(r.getString("message_data"));
   for(var key:List.of("yardCheckId","itemId","movementEventId"))if(data.path(key).isTextual())context.put(key,data.path(key).asText());
-  var diagnostics=new LinkedHashMap<String,Long>();jdbc.query("select push_status,count(*) as n from alert_recipients where tenant_id=? and alert_id=? group by push_status",(org.springframework.jdbc.core.RowCallbackHandler)rs->diagnostics.put(rs.getString(1),rs.getLong(2)),tenant,id);
+  var diagnostics=new LinkedHashMap<String,Long>();jdbc.query("""
+   select diagnostic,count(*) from (
+    select case when exists(select 1 from outbox_jobs j where j.tenant_id=r.tenant_id
+      and j.job_type='ALERT_FCM' and j.aggregate_id=r.alert_id and j.status='DEAD'
+      and j.payload->'data'->>'recipientId'=r.id::text) then 'DEAD' else r.push_status end as diagnostic
+    from alert_recipients r where r.tenant_id=? and r.alert_id=?
+   ) states group by diagnostic
+   """,(org.springframework.jdbc.core.RowCallbackHandler)rs->diagnostics.put(rs.getString(1),rs.getLong(2)),tenant,id);
   return new Alert(id,tenant,r.getString("alert_type"),r.getString("severity"),r.getString("status"),r.getLong("version"),r.getTimestamp("created_at").toInstant(),
    r.getObject("acknowledged_by",UUID.class),instant(r,"acknowledged_at"),r.getObject("resolved_by",UUID.class),instant(r,"resolved_at"),r.getString("resolution_reason"),r.getString("related_entity_type"),
    new Resource(r.getObject("related_entity_id",UUID.class),r.getString("operational_number"),r.getObject("designated_customer_id",UUID.class),r.getString("location_state"),r.getObject("current_location_id",UUID.class)),Map.copyOf(context),Map.copyOf(diagnostics));

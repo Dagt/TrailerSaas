@@ -29,6 +29,10 @@ export function OperationsAlerts() {
   return <AlertsWorkspace owner={owner} area="operations" />
 }
 export function AlertsWorkspace({ owner, area }: { owner: Context; area: 'admin' | 'operations' }) {
+  const { identity } = useAuth(), { alertId } = useParams()
+  return <AlertsWorkspaceContent key={`${owner.tenantId}:${identity?.uid}:${alertId ?? ''}`} owner={owner} area={area} />
+}
+function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin' | 'operations' }) {
   const { api, identity } = useAuth(), cache = useQueryClient(), { alertId } = useParams()
   const [draft, setDraft] = useState({ status: 'OPEN', alertType: '', severity: '', relatedEntityType: '', from: '', to: '' }), [filters, setFilters] = useState<Record<string, string>>({ status: 'OPEN' })
   const [action, setAction] = useState<{ kind: 'acknowledgement' | 'resolution'; alert: Alert } | null>(null), [reason, setReason] = useState('')

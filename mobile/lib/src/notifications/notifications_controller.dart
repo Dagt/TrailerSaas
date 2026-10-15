@@ -87,6 +87,11 @@ class NotificationsController extends ChangeNotifier {
       detail = null;
       if (hint?.tenantId != tenant) hint = null;
     }
+    if (!(session.snapshot?.membership.capabilities.contains('ALERT_VIEW') ??
+        false)) {
+      hint = null;
+      detail = null;
+    }
     _notify();
   }
 

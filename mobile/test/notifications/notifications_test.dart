@@ -134,6 +134,46 @@ class Fixture {
 }
 
 void main() {
+  test('revoked Alert capability clears detail and fences in-flight same-Tenant read', () async {
+    final t = Fixture();
+    await t.start();
+    addTearDown(t.close);
+    t.port.messages.add(const PushHint(tenant, alertId));
+    await t.controller.reviewHint();
+    expect(t.controller.detail, isNotNull);
+    final result = Completer<http.Response>();
+    t.intercept = (r) async =>
+        r.url.path.contains('/alerts/') ? result.future : t.response(r);
+    final review = t.controller.reviewHint();
+    await pumpEventQueue();
+    t.f.memberships = [
+      membership(tenant, capabilities: ['YARD_MOVE_EXECUTE']),
+    ];
+    await t.f.session.refresh();
+    result.complete(
+      t.f.response({
+        'id': alertId,
+        'tenantId': tenant,
+        'status': 'OPEN',
+        'relatedResource': {'operationalNumber': 'Revoked resource'},
+      }),
+    );
+    await review;
+    expect(t.controller.detail, isNull);
+    expect(t.controller.hint, isNull);
+  });
+  test(
+    'malformed registration receipt does not claim server confirmation',
+    () async {
+      final t = Fixture();
+      await t.prepare();
+      t.intercept = (r) async =>
+          r.method == 'POST' ? t.f.response({'active': true}) : t.response(r);
+      await t.controller.start();
+      addTearDown(t.close);
+      expect(t.controller.status, isNot(contains('confirmed by server')));
+    },
+  );
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
     'existing OS permission registers one stable owner ID without asking again',

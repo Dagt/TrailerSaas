@@ -1,5 +1,24 @@
 # Backend PostgreSQL and Identity Boundary
 
+## Issue #56 — Alerts, global devices and bounded FCM
+
+V26 extends existing Missing Alert occurrences with versioned acknowledgement and
+terminal resolution, recipient associations, global immutable User registrations
+and per-device transport diagnostics. List/detail are scoped by fresh ALERT_VIEW
+and related-resource authority; separate write capabilities remain unassigned
+until their role policy is approved. Resolution requires actual physical recovery.
+
+`/api/v1/devices` is global and owner-only; tokens are optional, rotatable and
+transferable without rewriting historical ownership. An explicit compiled approved
+recipient policy may enqueue ALERT_FCM v1 through the existing #55 publisher/worker.
+No production recipient policy is installed while OQ-059 remains open, so there
+are no automatic deliveries. Set `FCM_ENABLED=true` only after configuring ADC,
+Firebase project/APNs and an approved producer policy; jobs still require the
+existing explicit Tenant worker configuration. The real Firebase Admin adapter
+uses bounded waits and sanitized diagnostics; accepted is not delivered.
+See [configuration, security and acceptance](../docs/backend/issue-56-alerts-fcm-delivery.md).
+Historical V1–V25 and synchronous V24 reconciliation alerts are preserved.
+
 ## Issue #55 — durable PostgreSQL jobs
 
 V25 adds `outbox_jobs`, strict versioned registered payloads, transaction-joining
@@ -16,8 +35,9 @@ Handlers own current resource/Customer-scope validation and idempotency. Externa
 effects remain at-least-once. HTTP Actuator stays health-only; technical metrics
 use the existing registry and optional secured-local Actuator JMX, described in
 the [implementation and operations guide](../docs/backend/issue-55-postgresql-outbox-worker.md).
-V24 synchronous TRAILER_MISSING persistence is unchanged. #56/#57 handlers,
-notification delivery, global maintenance and retention are not implemented.
+V24 synchronous TRAILER_MISSING persistence is unchanged. #56 adds the bounded
+notification handler described above; #57 detection, global maintenance and
+retention are not implemented.
 
 ## Issue #50 — Yard Check snapshot and reconciliation
 

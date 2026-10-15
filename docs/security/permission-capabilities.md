@@ -87,6 +87,12 @@ Roles map to capabilities centrally. Domain-state rules are evaluated after capa
 - `DOCUMENT_VIEW_CUSTOMER_SCOPED`
 - `ALERT_VIEW`
 
+Issue #56 additionally declares separate `ALERT_ACKNOWLEDGE` and `ALERT_RESOLVE`
+enforcement points. Neither capability has an approved role assignment; the
+conservative mapping below intentionally grants neither. Read authority does not
+imply write authority. Role grants require an explicit policy approval, not a
+client-provided capability, QR, notification or recipient association.
+
 ## Initial role mapping
 
 | Capability group | Tenant Admin | Transport Operations | Customer Dispatcher | Yard Spotter | Driver |
