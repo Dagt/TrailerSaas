@@ -1,5 +1,18 @@
 # TrailerSaaS Web
 
+## Issue #58 — Customer portal shell
+
+/customer reuses Firebase, the shared router/UI and existing server Customer reads.
+ACTIVE membership + Customer-scoped CUSTOMER_DISPATCHER roles + the additive
+/me tenantActive hint supply navigation candidates even with capabilities: [].
+Server APIs remain authoritative. Explicit assigned-ID detail reads, owner/Tenant/
+Customer cache keys, abort fencing, fresh context reads and cache disposal protect
+scope changes. The dashboard/four future sections display no invented operations.
+The official Firebase SDK now uses memory-only persistence before authentication;
+page reload requires sign-in, without remembered localStorage tokens. No #59/#60
+commercial flow or new permission. See [architecture, API compatibility, tests and
+limits](../docs/web/issue-58-customer-portal-shell.md).
+
 ## Issue #56 — operational Alerts
 
 Admin and Operations expose Alerts only when the downloaded active membership

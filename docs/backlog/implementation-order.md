@@ -112,7 +112,7 @@ CI process on [PR #110](https://github.com/Dagt/TrailerSaas/pull/110); see
 Alerts/recovery and API/Web integration on [PR #111](https://github.com/Dagt/TrailerSaas/pull/111);
 see [acceptance/configuration](../backend/issue-57-stale-trailer-detector.md).
 OQ-059 recipients/escalation and human write-role grants remain pending; zero
-automatic production recipients. #58/#61/retention remain deferred.
+automatic production recipients. #61/retention remain deferred; #58 shell implementation is tracked below.
 
 ## Wave 4 — Mobile synchronization foundation
 
@@ -142,7 +142,8 @@ Validate snapshot behavior and physical-state conflicts carefully.
 
 ## Wave 7 — Customer/Audit surfaces
 
-- #58 → #59 → #60 Customer portal
+- #58 Customer portal shell implemented on [PR #112](https://github.com/Dagt/TrailerSaas/pull/112), pending external review/merge; [architecture/evidence](../web/issue-58-customer-portal-shell.md).
+- #59 → #60 remain deferred: actual Orders/commercial operations, inventory, deliveries and evidence views.
 - #61 → #62 Audit/history
 
 These rely heavily on the stable domain/API implemented earlier.
