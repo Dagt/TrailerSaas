@@ -70,6 +70,24 @@ class TripRepository {
         .getResultList();
   }
 
+  List<TripStopEntity> orderProgressStops(UUID tenant,UUID trip,UUID order) {
+    var rows=em.createQuery("select s from TripStopEntity s where s.tenantId=:tenant and s.tripId=:trip and exists(select a.id from TripStopOrderEntity a where a.tenantId=s.tenantId and a.tripStopId=s.id and a.orderId=:order) order by s.sequenceNumber,s.id",TripStopEntity.class)
+        .setParameter("tenant",tenant).setParameter("trip",trip).setParameter("order",order).setMaxResults(501).getResultList();
+    if(rows.size()>500)throw TripFailure.conflict();
+    return rows;
+  }
+
+  List<TripOperationalEventEntity> orderReroutes(UUID tenant,UUID trip,Set<UUID> stops) {
+    if(stops.isEmpty())return List.of();
+    return em.createQuery("select e from TripOperationalEventEntity e where e.tenantId=:tenant and e.tripId=:trip and e.tripStopId in :stops and e.eventType='TRIP_REROUTED' order by e.occurredAt desc,e.id desc",TripOperationalEventEntity.class)
+        .setParameter("tenant",tenant).setParameter("trip",trip).setParameter("stops",stops).setMaxResults(100).getResultList();
+  }
+
+  List<TripAssignmentEventEntity> orderSubstitutions(UUID tenant,UUID trip) {
+    return em.createQuery("select e from TripAssignmentEventEntity e where e.tenantId=:tenant and e.tripId=:trip and e.eventType in ('TRAILER_SUBSTITUTION_AUTHORIZED','TRAILER_SUBSTITUTION_REJECTED') order by e.occurredAt desc,e.id desc",TripAssignmentEventEntity.class)
+        .setParameter("tenant",tenant).setParameter("trip",trip).setMaxResults(100).getResultList();
+  }
+
   List<TripStopEntity> stopsForTrips(UUID tenant,List<UUID> trips) {
     return em.createQuery("select s from TripStopEntity s where s.tenantId=:tenant and s.tripId in :trips order by s.sequenceNumber,s.id",TripStopEntity.class).setParameter("tenant",tenant).setParameter("trips",trips).getResultList();
   }

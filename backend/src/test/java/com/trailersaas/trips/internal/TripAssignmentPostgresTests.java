@@ -57,6 +57,7 @@ class TripAssignmentPostgresTests extends PostgresIntegrationTest {
   void seed() throws Exception {
     f = new OrderFixtures(flyway);
     tenant = f.db.tenant();
+    f.db.execute("UPDATE tenants SET status='ACTIVE' WHERE id=?",tenant);
     other = f.db.tenant();
     customer = f.customer(tenant);
     customerB = f.customer(tenant);
@@ -875,7 +876,7 @@ class TripAssignmentPostgresTests extends PostgresIntegrationTest {
 
   @Test
   void migrationExactShapeChronologicalIndexNoBackfillAndNoCascade() throws Exception {
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("27");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("28");
     flyway.validate();
     try (var c = flyway.getConfiguration().getDataSource().getConnection();
         var q = c.createStatement()) {

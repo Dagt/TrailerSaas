@@ -28,6 +28,7 @@ class OrderHttpPostgresTests extends PostgresIntegrationTest {
     UUID tenant, foreignTenant, a, b, c, foreignCustomer, site, neutral, own, foreignLocation, otherSite, otherLocation, user, dispatcher, dispatcherMembership;
     @BeforeEach void seed() throws Exception {
         f = new OrderFixtures(flyway); tenant = f.db.tenant(); foreignTenant = f.db.tenant();
+        f.db.execute("UPDATE tenants SET status='ACTIVE' WHERE id=?",tenant);
         a = f.customer(tenant); b = f.customer(tenant); c = f.customer(tenant); foreignCustomer = f.customer(foreignTenant);
         site = f.site(tenant, a); neutral = f.location(tenant, site, null); own = f.location(tenant, site, a);
         f.db.execute("INSERT INTO customer_sites VALUES(?,?,?,?,now())", UUID.randomUUID(), tenant, b, site);

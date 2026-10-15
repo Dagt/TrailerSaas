@@ -142,8 +142,9 @@ Validate snapshot behavior and physical-state conflicts carefully.
 
 ## Wave 7 — Customer/Audit surfaces
 
-- #58 Customer portal shell implemented on [PR #112](https://github.com/Dagt/TrailerSaas/pull/112), pending external review/merge; [architecture/evidence](../web/issue-58-customer-portal-shell.md).
-- #59 → #60 remain deferred: actual Orders/commercial operations, inventory, deliveries and evidence views.
+- #58 Customer portal shell merged through [PR #112](https://github.com/Dagt/TrailerSaas/pull/112); [architecture/evidence](../web/issue-58-customer-portal-shell.md).
+- #59 Customer Order/commercial workflows implemented on Draft [PR #113](https://github.com/Dagt/TrailerSaas/pull/113); [scope, V28, acceptance and validation](../web/issue-59-customer-orders-workflows.md). Remote Full CI remains unverified while owner-deferred Billing prevents execution; not merged or release-approved.
+- #60 remains deferred: Customer inventory, delivery catalogs and evidence views.
 - #61 → #62 Audit/history
 
 These rely heavily on the stable domain/API implemented earlier.

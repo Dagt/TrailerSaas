@@ -19,7 +19,7 @@ it('recognizes a Customer role with capabilities [] and verifies the sole contex
   expect(screen.queryByRole('link',{name:'Tenant Admin'})).not.toBeInTheDocument()
   expect(screen.queryByRole('link',{name:'Transport Operations'})).not.toBeInTheDocument()
   expect(screen.queryByLabelText('Active Customer')).not.toBeInTheDocument()
-  expect(f.requests.every(r=>r.path==='/me'||r.path===path())).toBe(true)
+  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||r.path===`/tenants/${tenantA}/orders`&&r.query.get('customerId')===customerId)).toBe(true)
   expect(f.requests.every(r=>r.method==='GET')).toBe(true)
   const key=customerKey({uid:'customer-user',userId:resourceId,tenantId:tenantA,membership:dispatcher(),customerId},'context')
   expect(f.cache.getQueryData(key)).toMatchObject({id:customerId})
@@ -73,18 +73,21 @@ it('switches Tenants without retaining the old Customer or its cache',async()=>{
   expect(screen.getByText('Workspace for Beta Customer in Beta Logistics.')).toBeInTheDocument()
   expect(f.cache.getQueryCache().getAll().filter(q=>q.queryKey[0]==='customer').every(q=>q.queryKey[3]===tenantB)).toBe(true)
 })
-it.each(['Orders','Trailers','Deliveries','Documents'])('provides a protected honest %s placeholder without business requests or fake actions',async label=>{
+it.each(['Orders','Trailers','Deliveries','Documents'])('protects %s and keeps deferred catalogs honest without fake actions',async label=>{
   const f=customerFixture(`/customer/${label.toLowerCase()}`)
   await screen.findByRole('heading',{name:label})
-  expect(screen.getByText(/will be available in a later phase/)).toBeInTheDocument()
+  if(label==='Orders') {
+    await screen.findByText('No Orders found in this Customer scope.')
+    expect(f.requests.filter(r=>r.path.endsWith('/orders')).every(r=>r.query.get('customerId')===customerId)).toBe(true)
+  } else expect(screen.getByText(/will be available in a later phase/)).toBeInTheDocument()
   expect(screen.queryByRole('button',{name:/create|save|cancel order|download/i})).not.toBeInTheDocument()
-  expect(f.requests.every(r=>r.path==='/me'||r.path===path())).toBe(true)
+  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||label==='Orders'&&(r.path===`/tenants/${tenantA}/orders`||r.path.endsWith('/orders/customer-context'))&&r.query.get('customerId')===customerId)).toBe(true)
 })
 it('shows informative dashboard cards without numeric inventory or operational projections',async()=>{
   const f=customerFixture();await dashboard()
   for(const label of ['Pending Orders','Active Deliveries','Trailer Inventory','Recent Evidence'])expect(screen.getByRole('link',{name:label})).toBeInTheDocument()
-  expect(screen.getAllByText('Operational data is not loaded in this phase.')).toHaveLength(4)
-  expect(f.requests.every(r=>!r.path.includes('/orders')&&!r.path.includes('/trailers')&&!r.path.includes('/documents'))).toBe(true)
+  expect(screen.getAllByText('These catalogs remain deferred to #60.')).toHaveLength(3)
+  expect(f.requests.every(r=>!r.path.includes('/trailers')&&!r.path.includes('/documents')&&(!r.path.endsWith('/orders')||r.query.get('customerId')===customerId))).toBe(true)
 })
 it.each([401,403,404,409,503])('handles %s safely without rendering stale content or private server error detail',async status=>{
   const f=customerFixture();f.handlers.set(path(),async()=>response({detail:'Private other Customer, SQL password',code:status===409?'STALE_VERSION':'DENIED'},status))
@@ -132,12 +135,14 @@ it('does not download a Tenant-wide Customer directory for dual-role users',asyn
   const m=dispatcher();m.roles.push({roleCode:'TENANT_ADMIN',scopeType:'TENANT',customerId:null})
   const f=customerFixture('/customer',[m]);await dashboard()
   expect(screen.getByRole('link',{name:'Tenant Admin'})).toBeInTheDocument()
-  expect(f.requests.every(r=>r.path==='/me'||r.path===path())).toBe(true)
+  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||r.path===`/tenants/${tenantA}/orders`&&r.query.get('customerId')===customerId)).toBe(true)
 })
 it('does not accept arbitrary URL context parameters or resource paths as authority',async()=>{
   const f=customerFixture(`/customer/orders/${customerB}?customerId=${customerB}&tenantId=${tenantB}`)
-  await screen.findByRole('heading',{name:'Page not found'})
-  expect(f.requests.every(r=>r.path==='/me'||r.path===path())).toBe(true)
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('heading',{name:/Order /})).not.toBeInTheDocument()
+  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||r.path.startsWith(`/tenants/${tenantA}/orders/`))).toBe(true)
+  expect(f.requests.some(r=>r.path.startsWith(`/tenants/${tenantB}/`))).toBe(false)
 })
 it('supports accessible keyboard navigation with a scope banner and labelled navigation',async()=>{
   const u=userEvent.setup();customerFixture();await dashboard()

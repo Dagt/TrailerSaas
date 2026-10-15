@@ -1257,3 +1257,24 @@ locks precede Trip/Driver/Stops/document locks. Run ./mvnw clean verify with Jav
 and Docker/PostgreSQL18; RoadOperationsPostgresTests uses real HTTP, SQL and signed
 S3 transport, including complete Shift-to-Off-Duty and joint rollback scenarios.
 See docs/mobile/issue-45-pod-fuel-exceptions.md for contracts and scope boundaries.
+
+## Customer Order workflows (#59)
+
+Existing Orders commands and Customer authorization now support the real Web flow.
+GET orders/customer-context provides fresh per-Customer UI capability hints; GET
+orders/{id}/progress is Order-authorized and returns only actual mapped Stop/Trip
+progress, never a full shared route, Driver/Tractor or other Order identities.
+Existing Site/Location reads accept an optional explicit Customer filter. No
+TRIP_VIEW_ALL grant or parallel Customer API. Trip command receipts are redacted
+for scoped callers; commands independently require all mapped Customer scopes.
+
+V28 adds forced-RLS, append-only order_request_revisions with before/after facts,
+actor/time/version, cancellation reason/resolution and administrative completion.
+Cargo/Stops PATCH is allowed only OPEN with no Manifest/Trip/fulfillment commitment;
+SQL delete guards coordinate through the Order lock. Existing reference edits,
+transport/physical state machines, V1–V27 and mobile ledger remain unchanged.
+Required history write failure rolls back the business transaction. Tests include
+V27→V28 real physical history preservation, strict RLS/grants, two concurrent edits,
+shared Trip privacy and actual Customer create→Operations queue. Run Java25
+mvnw clean verify with real PostgreSQL18.6/Testcontainers. See
+[contracts, scope and test evidence](../docs/web/issue-59-customer-orders-workflows.md).

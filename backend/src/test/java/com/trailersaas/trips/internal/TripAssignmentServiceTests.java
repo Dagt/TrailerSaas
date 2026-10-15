@@ -21,7 +21,7 @@ class TripAssignmentServiceTests {
   final TrailerPlanningPolicy trailers = mock(TrailerPlanningPolicy.class);
   final TripAssignmentService service =
       new TripAssignmentService(
-          auth, repository, reads, drivers, tractors, trailers, mock(TripDriverUpdateSink.class));
+          auth, repository, reads, drivers, tractors, trailers, mock(TripDriverUpdateSink.class), mock(CustomerActionAccess.class));
   final UUID tenant = UUID.randomUUID(),
       tripId = UUID.randomUUID(),
       customer = UUID.randomUUID(),
@@ -67,7 +67,7 @@ class TripAssignmentServiceTests {
         .thenReturn(new CustomerAccessScope(true, Set.of()));
     when(repository.resource(tenant, tripId, true)).thenReturn(t);
     service.assign(actor, tenant, tripId, TripAssignmentService.Kind.DRIVER, body());
-    verify(reads).detail(t);
+    verify(reads).commandDetail(actor,t,Capability.TRIP_ASSIGN_DRIVER);
     verifyNoInteractions(drivers, tractors, trailers);
     verify(repository, never()).insert(any());
     verify(repository, never()).flush();

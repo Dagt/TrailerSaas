@@ -23,24 +23,33 @@ class OrderMutationService {
     private final OrderDestinationPolicy destinations;
     private final ApplicationEventPublisher events;
     private final List<com.trailersaas.orders.OrderPreExecutionPlanningRelease> planningReleases;
+    private final CustomerActionAccess actions;
+    private final OrderRequestEditor requestEditor;
     OrderMutationService(TenantAuthorization authorization, TenantActorMembership attribution, OrderRepository repository,
-            ManifestService manifests, OrderDestinationPolicy destinations, ApplicationEventPublisher events, List<com.trailersaas.orders.OrderPreExecutionPlanningRelease> planningReleases) {
+            ManifestService manifests, OrderDestinationPolicy destinations, ApplicationEventPublisher events, List<com.trailersaas.orders.OrderPreExecutionPlanningRelease> planningReleases, CustomerActionAccess actions, OrderRequestEditor requestEditor) {
         this.authorization = authorization; this.attribution = attribution; this.repository = repository;
         this.manifests = manifests; this.destinations = destinations; this.events = events; this.planningReleases = List.copyOf(planningReleases);
+        this.actions=actions;
+        this.requestEditor=requestEditor;
     }
     Detail patch(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, Map<String, Object> input) {
-        long expected = OrderMutationValidation.version(input, Set.of("expectedVersion", "poNumber", "shipmentNumber", "bolReference"));
+        long expected = OrderMutationValidation.version(input, Set.of("expectedVersion", "poNumber", "shipmentNumber", "bolReference", "cargoLines", "requestedStops"));
+        for(var field:List.of("cargoLines","requestedStops")) if(input.containsKey(field) && !(input.get(field) instanceof List<?>)) throw OrderFailure.invalid(field);
         for (var field : List.of("poNumber", "shipmentNumber", "bolReference")) {
             if (input.containsKey(field)) { OrderValidation.text(input.get(field), field, true); }
         }
         var order = authorized(actor, tenant, id, Capability.ORDER_EDIT, expected);
         OrderStateMachine.next(order.status, Action.ORDER_EDITED);
+        var previousRequest=requestEditor.snapshot(order);
+        boolean content=input.containsKey("cargoLines")||input.containsKey("requestedStops");
+        if(content) requestEditor.replace(order,input);
         var po = input.containsKey("poNumber") ? (String) input.get("poNumber") : order.poNumber;
         var shipment = input.containsKey("shipmentNumber") ? (String) input.get("shipmentNumber") : order.shipmentNumber;
         var bol = input.containsKey("bolReference") ? (String) input.get("bolReference") : order.bolReference;
-        if (!Objects.equals(po, order.poNumber) || !Objects.equals(shipment, order.shipmentNumber) || !Objects.equals(bol, order.bolReference)) {
+        if (content || !Objects.equals(po, order.poNumber) || !Objects.equals(shipment, order.shipmentNumber) || !Objects.equals(bol, order.bolReference)) {
             var previous = order.status; order.poNumber = po; order.shipmentNumber = shipment; order.bolReference = bol;
-            touch(order); flush(); publish(order, previous, Action.ORDER_EDITED, human(actor, tenant), null, null);
+            touch(order); flush(); requestEditor.record(order,actor.userId(),Action.ORDER_EDITED.name(),null,null,previousRequest);
+            publish(order, previous, Action.ORDER_EDITED, human(actor, tenant), null, null);
         }
         return detail(order);
     }
@@ -73,13 +82,17 @@ class OrderMutationService {
     }
     private OrderEntity authorized(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, Capability capability, long expected) {
         var scope = authorization.resolveCustomerScope(actor, tenant, capability);
-        var order = repository.lockForMutation(tenant, id, scope); expected(order, expected); return order;
+        var order = repository.lockForMutation(tenant, id, scope);
+        if(!scope.tenantWide()) actions.capabilities(actor,tenant,order.customerId);
+        expected(order, expected); return order;
     }
     static void expected(OrderEntity order, long expected) {
         if (expected < 0) { throw OrderFailure.invalid("expectedVersion"); }
         if (order.version != expected) { throw OrderFailure.stale(); }
     }
     void transition(OrderEntity order, Action action, Actor actor, String reason, Resolution resolution) {
+        boolean commercial="HUMAN_USER".equals(actor.actorType()) && Set.of(Action.ORDER_CANCELLED,Action.ORDER_CANCELLATION_REQUESTED,Action.ORDER_COMPLETED).contains(action);
+        var previousRequest=commercial?requestEditor.snapshot(order):null;
         var previous = order.status;
         order.status = OrderStateMachine.next(previous, action); touch(order);
         switch (order.status) {
@@ -88,7 +101,9 @@ class OrderMutationService {
             case CANCELLED -> order.cancelledAt = order.updatedAt;
             default -> { }
         }
-        flush(); publish(order, previous, action, actor, reason, resolution);
+        flush();
+        if(commercial) requestEditor.record(order,actor.userId(),action.name(),reason,resolution,previousRequest);
+        publish(order, previous, action, actor, reason, resolution);
     }
     private Actor human(AuthenticatedUserPrincipal actor, UUID tenant) {
         return new Actor("HUMAN_USER", "USER_ACTION", actor.userId(), attribution.forActor(actor, tenant));

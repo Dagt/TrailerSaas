@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.*;
 class StaleSchemaPostgresTests extends PostgresIntegrationTest {
  @Autowired Flyway flyway; @Autowired JdbcTemplate jdbc; @Autowired TenantTransactionExecutor transactions;
  @Test void freshV27IsScopedAndDoesNotAddAnotherQueue()throws Exception{
-  flyway.validate();assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("27");
+  flyway.validate();assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("28");
   var db=new EquipmentFixtures(flyway);var a=db.tenant();var b=db.tenant();
   transactions.execute(a,()->{jdbc.update("insert into stale_trailer_scans(tenant_id) values(?)",a);return null;});
   assertThat(transactions.execute(a,()->jdbc.queryForObject("select count(*) from stale_trailer_scans",Long.class))).isEqualTo(1L);

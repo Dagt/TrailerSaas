@@ -4,6 +4,9 @@ import { MasterList, MasterDetail, SettingsPage } from '../areas/tenant-admin/Ma
 import { TransportOperationsArea } from '../areas/transport-operations/TransportOperationsArea'
 import { CustomerDashboard, CustomerSection } from '../areas/customer-portal/CustomerPages'
 import { CustomerPortalArea } from '../areas/customer-portal/CustomerPortalArea'
+import { OrdersList } from '../areas/customer-portal/OrdersList'
+import { CreateOrder } from '../areas/customer-portal/CreateOrder'
+import { CustomerOrderDetail } from '../areas/customer-portal/OrderDetail'
 import { AppShell } from './AppShell'
 import { Home } from './Home'
 import { NotFound } from './NotFound'
@@ -46,7 +49,10 @@ export const appRoutes: RouteObject[] = [
       ] },
       { path: 'customer', Component: CustomerPortalArea, children: [
         { index: true, Component: CustomerDashboard },
-        ...['orders','trailers','deliveries','documents'].map(section => ({ path: section, element: <CustomerSection section={section} /> })),
+        { path:'orders',Component:OrdersList },
+        { path:'orders/new',Component:CreateOrder },
+        { path:'orders/:orderId',Component:CustomerOrderDetail },
+        ...['trailers','deliveries','documents'].map(section => ({ path: section, element: <CustomerSection section={section} /> })),
         { path: '*', Component: NotFound },
       ] },
       { path: '*', Component: NotFound },

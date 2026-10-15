@@ -286,6 +286,12 @@ paths:
       tags: [Sites]
       operationId: listSites
       description: SITE_VIEW. Tenant-wide readers see all; Customer readers see associated Sites only.
+      parameters:
+        - name: customerId
+          in: query
+          required: false
+          description: Optional explicit Customer choice scope (#59); freshly requires SITE_VIEW for that Customer and ACTIVE Tenant, and restricts even Tenant-wide readers to its associated Sites.
+          schema: { type: string, format: uuid }
       responses:
         '200':
           description: Scoped master data
@@ -399,6 +405,12 @@ paths:
       tags: [Sites]
       operationId: listOperationalLocations
       description: SITE_VIEW. Customer readers see only their Customer Locations, never neutral Locations.
+      parameters:
+        - name: customerId
+          in: query
+          required: false
+          description: Optional explicit Customer scope (#59); active Tenant and fresh SITE_VIEW. Site association and Customer-specific Locations are enforced server-side, including multi-role callers.
+          schema: { type: string, format: uuid }
       responses:
         '200':
           description: Scoped master data
@@ -1148,6 +1160,64 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/orders/customer-context:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Orders]
+      operationId: getCustomerOrderContext
+      x-implementation-status: implemented-issue-59
+      description: Fresh ORDER_CREATE for the specific Customer and ACTIVE Tenant/membership. Returns persisted effective capability hints; every command authorizes again. Does not grant TRIP_VIEW_ALL or expose a directory.
+      parameters:
+        - name: customerId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Current Customer action hints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerOrderContext'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/v1/tenants/{tenantId}/orders/{orderId}/progress:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Orders]
+      operationId: getCustomerOrderProgress
+      x-implementation-status: implemented-issue-59
+      description: >
+        Order read scope, ACTIVE Tenant and fresh persisted membership. Repeatable-read
+        projection of actual Order-to-Trip-to-Stop mappings, not general Trip access.
+        No other Order IDs, Driver/Tractor identity, full shared route or internal history.
+        Actions require scope over every Customer in the Trip and commands authorize again.
+        Shared-Customer history is omitted. Recent own reroutes/substitutions are bounded
+        to 100 of each type. At most 500 mapped Stops per Trip; excess fails closed.
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          description: Last Trip UUID position, ascending PostgreSQL UUID order; never authority.
+          schema: { type: string, format: uuid }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 20, minimum: 1, maximum: 50 }
+      responses:
+        '200':
+          description: Bounded authorized execution progress and current Order revision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerOrderProgress'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /api/v1/tenants/{tenantId}/orders/{orderId}:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -1172,8 +1242,14 @@ paths:
     patch:
       tags: [Orders]
       operationId: updateOrderBeforeExecution
-      x-implementation-status: implemented-issue-33
-      description: ORDER_EDIT with fresh Customer scope; only OPEN/PLANNED. STALE_VERSION and INVALID_STATE_TRANSITION are distinct 409 outcomes.
+      x-implementation-status: implemented-issues-33-59
+      description: >
+        ORDER_EDIT with fresh Customer scope; reference edits only OPEN/PLANNED.
+        Optional cargoLines/requestedStops replacement additionally requires OPEN with no
+        Manifest, Trip or fulfillment commitment, parent lock and immutable V28 request
+        revision history. No planned/physical itinerary rewrite. Null arrays are invalid;
+        omitted arrays retain existing data. STALE_VERSION and INVALID_STATE_TRANSITION
+        are distinct 409 outcomes. No general idempotent replay guarantee.
       requestBody:
         required: true
         content:
@@ -1187,6 +1263,15 @@ paths:
                 poNumber: { type: [string, "null"] }
                 shipmentNumber: { type: [string, "null"] }
                 bolReference: { type: [string, "null"] }
+                cargoLines:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OrderCargoLineInputImplemented'
+                requestedStops:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/OrderRequestedStopInputImplemented'
       responses:
         '200':
           description: Updated Order
@@ -1476,6 +1561,8 @@ paths:
         AUTHORIZE requires visible active IN_SERVICE target and updates planned expectation.
         REJECT requires visible same-Tenant target (inactive/OOS allowed) and preserves expectation.
         Both append durable history, advance version/time and leave physical coupling/state untouched.
+        Customer-scoped receipts redact Driver/Tractor IDs and return empty stops, assignmentHistory
+        and operationalHistory; refresh the Order-authorized progress projection for visible changes.
       requestBody:
         required: true
         content:
@@ -1503,6 +1590,7 @@ paths:
       x-implementation-status: implemented-issue-36
       description: >
         Fresh TRIP_REROUTE and ALL mapped Customer scopes. IN_TRANSIT/AT_STOP only; affected Stop PENDING/EN_ROUTE only. Retains frozen previous/replacement destination history and changes future instructions, never physical movement. expectedVersion guards Trip and Stop mutation. No replay guarantee; reconcile uncertain response via reads.
+        Customer-scoped receipts redact Driver/Tractor IDs and return empty stops, assignmentHistory and operationalHistory. Tenant-wide receipts retain the existing full Trip detail contract.
       requestBody:
         required: true
         content:
@@ -4285,10 +4373,123 @@ components:
         longitude: { type: [number, "null"], minimum: -180, maximum: 180 }
         geofenceRadiusM: { type: [integer, "null"], minimum: 1 }
 
+    CustomerOrderContext:
+      type: object
+      additionalProperties: false
+      required: [customerId, capabilities]
+      properties:
+        customerId: { type: string, format: uuid }
+        capabilities:
+          type: array
+          uniqueItems: true
+          description: Fresh effective grants for rendering this Customer context, never a command authorization token.
+          items: { type: string }
+
+    CustomerOrderProgress:
+      type: object
+      additionalProperties: false
+      required: [orderId, customerId, orderVersion, requestEditable, items, nextCursor, changes]
+      properties:
+        orderId: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        orderVersion: { type: integer, format: int64, minimum: 0 }
+        requestEditable:
+          type: boolean
+          description: OPEN with no Manifest/Trip/fulfillment commitment at this read; PATCH locks and rechecks independently.
+        items:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CustomerOrderTrip'
+        nextCursor: { type: [string, "null"], format: uuid }
+        changes:
+          type: array
+          maxItems: 20
+          description: Recent specific human Order request changes; not a generic audit or physical fulfillment history.
+          items:
+            type: object
+            additionalProperties: false
+            required: [version, changeType, recordedAt, reason, resolution]
+            properties:
+              version: { type: integer, format: int64, minimum: 1 }
+              changeType: { type: string, enum: [ORDER_EDITED, ORDER_CANCELLED, ORDER_CANCELLATION_REQUESTED, ORDER_COMPLETED] }
+              recordedAt: { type: string, format: date-time }
+              reason: { type: [string, "null"] }
+              resolution:
+                anyOf:
+                  - type: object
+                    additionalProperties: false
+                    required: [type, destinationSiteId, instructions]
+                    properties:
+                      type: { type: string }
+                      destinationSiteId: { type: [string, "null"], format: uuid }
+                      instructions: { type: [string, "null"] }
+                  - type: "null"
+
+    CustomerOrderTrip:
+      type: object
+      additionalProperties: false
+      required: [id, status, version, expectedTrailer, canSubstitute, stops, history]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [PLANNED, ASSIGNED, IN_TRANSIT, AT_STOP, CANCELLING, COMPLETED, CANCELLED] }
+        version: { type: integer, format: int64, minimum: 0 }
+        expectedTrailer:
+          anyOf:
+            - type: object
+              additionalProperties: false
+              required: [id, operationalNumber]
+              properties:
+                id: { type: string, format: uuid }
+                operationalNumber: { type: string }
+            - type: "null"
+        canSubstitute:
+          type: boolean
+          description: Current all-Customer capability/state/visible expected-Trailer hint. Decision remains explicit and freshly authorized.
+        stops:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/CustomerOrderProgressStop'
+        history:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/CustomerOrderChange'
+
+    CustomerOrderProgressStop:
+      type: object
+      additionalProperties: false
+      required: [id, stopType, status, siteId, locationId, destination, scheduledAt, arrivedAt, completedAt, canReroute]
+      properties:
+        id: { type: string, format: uuid }
+        stopType: { type: string }
+        status: { type: string, enum: [PENDING, EN_ROUTE, ARRIVED, IN_SERVICE, COMPLETED, CANCELLED] }
+        siteId: { type: [string, "null"], format: uuid }
+        locationId: { type: [string, "null"], format: uuid }
+        destination: { type: [string, "null"] }
+        scheduledAt: { type: [string, "null"], format: date-time }
+        arrivedAt: { type: [string, "null"], format: date-time }
+        completedAt: { type: [string, "null"], format: date-time }
+        canReroute: { type: boolean }
+
+    CustomerOrderChange:
+      type: object
+      additionalProperties: false
+      required: [id, eventType, occurredAt, reason, previousDestination, newDestination, decision]
+      properties:
+        id: { type: string, format: uuid }
+        eventType: { type: string, enum: [TRIP_REROUTED, TRAILER_SUBSTITUTION_AUTHORIZED, TRAILER_SUBSTITUTION_REJECTED] }
+        occurredAt: { type: string, format: date-time }
+        reason: { type: [string, "null"] }
+        previousDestination: { type: [string, "null"] }
+        newDestination: { type: [string, "null"] }
+        decision: { type: [string, "null"], enum: [AUTHORIZE, REJECT, null] }
+
     OrderStatus:
       type: string
       enum: [OPEN, PLANNED, IN_PROGRESS, PARTIALLY_DELIVERED, DELIVERED, COMPLETED, CANCELLING, CANCELLED]
-      description: Accepted full catalog; issue 31 creates only OPEN and implements no transitions.
+      description: Full accepted lifecycle. Creation returns OPEN; execution drives delivery; DELIVERED and administrative COMPLETED remain distinct. Commands are state-aware.
 
     OrderList:
       type: object

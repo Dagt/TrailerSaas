@@ -9,6 +9,7 @@ import type { CurrentUser, Membership } from '../tenant-admin/contracts'
 import { assignedCustomers, customerChoices, customerQuery, customerRoot, portalMemberships } from './queries'
 import type { CustomerOwner } from './queries'
 import { PortalContext } from './context'
+import { WorkspaceMemory } from './workspaceMemory'
 
 export function CustomerPortalArea() {
   const { identity, expired } = useAuth()
@@ -31,20 +32,23 @@ function CustomerDirectory({ uid }: { uid: string }) {
 }
 function ContextPicker({ uid, me, memberships, readRevision, verifying, refresh }: { uid: string; me: CurrentUser; memberships: Membership[]; readRevision: number; verifying: boolean; refresh(): void }) {
   const [tenantId, setTenant] = useState(''), [customerId, setCustomer] = useState('')
+  const [workspace,setWorkspace]=useState(()=>new Map<string,unknown>())
   const cache = useQueryClient(), navigate = useNavigate(), { signOut } = useAuth()
   const current = memberships.find(m => m.tenantId === tenantId) ?? (memberships.length === 1 ? memberships[0] : undefined)
   const changeTenant = (id: string) => {
     if (!memberships.some(m => m.tenantId === id)) return
     void cache.cancelQueries({ queryKey: customerRoot(uid) }); cache.removeQueries({ queryKey: customerRoot(uid) })
     setCustomer(''); setTenant(id); void navigate('/customer')
+    setWorkspace(new Map())
   }
   const changeCustomer = (id: string) => {
     if (!current || !assignedCustomers(current).includes(id)) return
     const oldScopes = { predicate: (q: { queryKey: readonly unknown[] }) => q.queryKey[0] === 'customer' && q.queryKey[1] === uid && q.queryKey[4] !== 'directory' }
     void cache.cancelQueries(oldScopes); cache.removeQueries(oldScopes)
     setCustomer(id); void navigate('/customer')
+    setWorkspace(new Map())
   }
-  return <section className="customer-area">
+  return <WorkspaceMemory.Provider value={workspace}><section className="customer-area">
     <header className="admin-topbar"><strong>Customer Portal</strong><span>{me.displayName ?? me.email ?? 'Signed in'}</span>
       {memberships.length > 1 ? <label>Tenant <select aria-label="Customer portal Tenant" value={current?.tenantId ?? ''} onChange={e => changeTenant(e.target.value)}><option value="">Choose a Tenant</option>{memberships.map(m => <option key={m.tenantId} value={m.tenantId}>{m.tenantName}</option>)}</select></label> : current && <span>Tenant: {current.tenantName}</span>}
       <button onClick={refresh}>Refresh access</button><button onClick={() => void signOut()}>Sign out</button>
@@ -52,7 +56,7 @@ function ContextPicker({ uid, me, memberships, readRevision, verifying, refresh 
     {verifying ? <LoadingState /> : !memberships.length ? <EmptyState><h1>Customer access is not available</h1><p>Your account has no active Customer Dispatcher context. Refresh access after your administrator updates it.</p></EmptyState> : !current ?
       <EmptyState><h1>Select a Tenant</h1><p>Choose one of your Customer workspaces.</p></EmptyState> :
       <CustomerPicker key={`${current.tenantId}:${readRevision}`} owner={{ uid, userId: me.userId, tenantId: current.tenantId, membership: current }} selected={customerId} select={changeCustomer} />}
-  </section>
+  </section></WorkspaceMemory.Provider>
 }
 function CustomerPicker({ owner, selected, select }: { owner: Omit<CustomerOwner,'customerId'>; selected: string; select(id: string): void }) {
   const { api } = useAuth()

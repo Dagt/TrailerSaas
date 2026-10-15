@@ -9,9 +9,29 @@ Server APIs remain authoritative. Explicit assigned-ID detail reads, owner/Tenan
 Customer cache keys, abort fencing, fresh context reads and cache disposal protect
 scope changes. The dashboard/four future sections display no invented operations.
 The official Firebase SDK now uses memory-only persistence before authentication;
-page reload requires sign-in, without remembered localStorage tokens. No #59/#60
-commercial flow or new permission. See [architecture, API compatibility, tests and
+page reload requires sign-in, without remembered localStorage tokens. #58 introduced
+no commercial flows or new permission; #59 extends this shell below. See [architecture, API compatibility, tests and
 limits](../docs/web/issue-58-customer-portal-shell.md).
+
+## Issue #59 — Customer Orders and delivery progress
+
+Orders list/detail/create now use the existing authenticated API with explicit
+Customer filters, real status/unplanned keysets, multiple cargo/requested Stops,
+authorized Site/Location choices and optional eligible planned Trailer. Dashboard
+previews are real bounded queries, not counts. New Order-authorized progress shows
+actual mapped work without Driver/Tractor, unrelated Orders or a full shared route.
+Reference edits, bounded OPEN/unallocated request replacement, cancellation,
+operational reroute, explicit alternate-Trailer decisions and DELIVERED completion
+reuse authoritative versioned commands. No optimistic physical/Order transition.
+
+Owner/Tenant/Customer query keys and abort fencing preserve scope isolation.
+Ephemeral drafts survive same-context navigation/access refresh; scope/account
+changes or browser reload clear them. Uncertain/malformed ACKs block repeat POST
+and require read reconciliation; there is no durable browser idempotency promise.
+#60 catalogs and generic #61 Audit remain deferred. See [architecture, migration,
+security, acceptance and test evidence](../docs/web/issue-59-customer-orders-workflows.md).
+Run npm ci, typecheck, lint, test and build; final remote CI remains unverified while
+Billing is owner-deferred. Keep PR Draft and unmerged until actual final checks pass.
 
 ## Issue #56 — operational Alerts
 

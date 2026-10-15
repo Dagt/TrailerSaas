@@ -150,7 +150,7 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
     void resolverRunsWithV4RlsAndUnchangedV3SchemaAndRuntimeGrants() throws Exception {
         flyway.validate();
         assertThat(flyway.info().applied()).extracting(info -> info.getVersion().getVersion())
-                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28");
         try (var connection = database.getConnection(); var statement = connection.createStatement()) {
             assertThat(connection.getMetaData().getDatabaseProductName()).isEqualTo("PostgreSQL");
             assertThat(connection.getMetaData().getDatabaseMajorVersion()).isEqualTo(18);
@@ -176,7 +176,18 @@ class AuthorizationPostgresTests extends PostgresIntegrationTest {
                 }
             }
             try (var rows = statement.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname='public'")) {
-                rows.next(); assertThat(rows.getInt(1)).isEqualTo(52);
+                rows.next(); assertThat(rows.getInt(1)).isEqualTo(53);
+            }
+            try (var rows = statement.executeQuery("""
+                    SELECT relrowsecurity, relforcerowsecurity,
+                      has_table_privilege(current_user,'order_request_revisions','SELECT'),
+                      has_table_privilege(current_user,'order_request_revisions','INSERT'),
+                      has_table_privilege(current_user,'order_request_revisions','UPDATE,DELETE')
+                    FROM pg_class WHERE oid='order_request_revisions'::regclass
+                    """)) {
+                assertThat(rows.next()).isTrue();
+                for (int column=1;column<=4;column++) assertThat(rows.getBoolean(column)).isTrue();
+                assertThat(rows.getBoolean(5)).isFalse();
             }
         }
     }

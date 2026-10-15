@@ -37,6 +37,7 @@ class TripAssignmentService {
   private final TractorPlanningPolicy tractors;
   private final TrailerPlanningPolicy trailers;
   private final TripDriverUpdateSink updates;
+  private final CustomerActionAccess actions;
 
   TripAssignmentService(
       TenantAuthorization auth,
@@ -45,7 +46,7 @@ class TripAssignmentService {
       DriverPlanningPolicy drivers,
       TractorPlanningPolicy tractors,
       TrailerPlanningPolicy trailers,
-      TripDriverUpdateSink updates) {
+      TripDriverUpdateSink updates, CustomerActionAccess actions) {
     this.auth = auth;
     this.repository = repository;
     this.reads = reads;
@@ -53,6 +54,7 @@ class TripAssignmentService {
     this.tractors = tractors;
     this.trailers = trailers;
     this.updates = updates;
+    this.actions=actions;
   }
 
   Detail assign(
@@ -77,7 +79,7 @@ class TripAssignmentService {
           case TRAILER -> t.plannedInitialTrailerId;
         };
     if (request.resourceId().equals(previous)) {
-      return reads.detail(t);
+      return reads.commandDetail(actor,t,kind.capability);
     }
     if (kind == Kind.TRAILER
         && previous != null
@@ -132,7 +134,7 @@ class TripAssignmentService {
     if (kind == Kind.DRIVER && previous != null)
       updates.assignment(t, previous, false, "DRIVER", null, at, t.version + 1);
     flush();
-    return reads.detail(t);
+    return reads.commandDetail(actor,t,kind.capability);
   }
 
   Detail decide(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, Map<String, Object> input) {
@@ -162,7 +164,7 @@ class TripAssignmentService {
         at);
     updates.assignment(t, t.currentDriverId, true, "TRAILER", r.decision(), at, t.version + 1);
     flush();
-    return reads.detail(t);
+    return reads.commandDetail(actor,t,Capability.TRAILER_SUBSTITUTE_AUTHORIZE);
   }
 
   private TripEntity authorizedLock(
@@ -174,6 +176,7 @@ class TripAssignmentService {
       if (customers.isEmpty() || !scope.customerIds().containsAll(customers)) {
         throw TripFailure.missing();
       }
+      if(!actions.covers(actor,tenant,customers,capability)) throw TripFailure.missing();
     }
     return t;
   }

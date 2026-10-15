@@ -41,4 +41,7 @@ final class OrderContracts {
         }
     }
     record Page(List<Summary> items, String nextCursor) {}
+    record Progress(UUID orderId,UUID customerId,long orderVersion,boolean requestEditable,
+            List<com.trailersaas.orders.CustomerOrderProgress.Trip> items,String nextCursor,List<RequestChange> changes) {}
+    record RequestChange(long version,String changeType,Instant recordedAt,String reason,Map<String,Object> resolution) {}
 }
