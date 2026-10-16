@@ -1,5 +1,8 @@
 # TrailerSaaS — Route and Screen Inventory for UI/UX
 
+**Approved UI style:** **Fleet Simple (Option D)** — light gray sidebar, white content surfaces, subdued blue action hierarchy and teal accents. Apply to all listed Web route families and verified Flutter widgets. Route/function inventory and permissions are unchanged; see [design-system.md](design-system.md).
+
+
 **Baseline:** `main` after merged PR #116. Source of truth: `web/src/app/routes.tsx`, `web/src/areas/`, `mobile/lib/src/`, and the five accepted functional UX documents. **VERIFY** means Codex must inspect the actual widget/route before redesign; do not invent a screen.
 
 ## Web shared shell — UX-02
