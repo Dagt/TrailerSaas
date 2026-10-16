@@ -44,6 +44,7 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
   void seed() throws Exception {
     f = new TrailerFixtures(flyway);
     tenant = f.db.tenant();
+    f.db.execute("update tenants set status='ACTIVE' where id=?",tenant);
     user = f.db.user();
     membership = f.db.membership(tenant, user, "ACTIVE", "TENANT_ADMIN");
     a = f.customer(tenant);
@@ -51,6 +52,7 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
     f.db.execute("update customers set name='Visible Customer' where id=?", a);
     f.db.execute("update customers set name='Hidden Customer' where id=?", b);
     trailer = f.trailer(tenant, " tr-123 ", a);
+    f.db.execute("update trailers set created_at=? where id=?",Timestamp.from(TIME.minusSeconds(86400)),trailer);
     location = f.location(tenant);
     known = f.location(tenant);
     f.db.execute("update operational_locations set name='Current Dock' where id=?", location);
@@ -81,6 +83,12 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
   }
 
   UUID fact(String type, Instant occurred, Instant recorded, String metadata) throws Exception {
+    if(type.equals("DESIGNATED_CUSTOMER_CHANGED")) {
+      var mapper=new com.fasterxml.jackson.databind.ObjectMapper();
+      var values=mapper.readValue(metadata,new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>(){});
+      values.put("newDesignatedCustomerId",a.toString());
+      metadata=mapper.writeValueAsString(values);
+    }
     UUID id = UUID.randomUUID();
     f.db.execute(
         "insert into"
@@ -198,7 +206,7 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
         .containsEntry("designatedCustomerName", "Visible Customer")
         .containsEntry("currentLocationName", "Current Dock")
         .containsEntry("lastKnownLocationName", "Last Yard")
-        .containsEntry("lastDriverName", "Last observed Driver")
+        .containsEntry("lastDriverName", r.equals("CUSTOMER_DISPATCHER")?null:"Last observed Driver")
         .containsEntry("couplingState", "UNCOUPLED");
     assertThat(response.body())
         .doesNotContain("tenantId", "normalizedNumber", "actorUserId", "clientOperationId");
@@ -561,7 +569,7 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
   @Test
   void v17ContainsOnlyTwoIndexesAndRuntimeSecurityIsUnchanged() throws Exception {
     flyway.validate();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("28");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("29");
     String sql =
         new String(
             getClass()
@@ -751,6 +759,62 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
   void missing(HttpResponse<String> r) {
     problem(r, 404, "RESOURCE_NOT_FOUND");
     assertThat(body(r)).containsEntry("detail", "The resource was not found.");
+  }
+
+  @Test void scopedDetailRedactsInternalEquipmentEvenWithAnActivePhysicalCoupling()throws Exception {
+    coupling(driver,tractor,TIME,false,null);f.db.execute("update trailers set capability_notes='Internal dispatcher instructions' where id=?",trailer);
+    role("CUSTOMER_DISPATCHER");var r=get("/"+trailer+"?customerId="+a);
+    assertThat(r.statusCode()).isEqualTo(200);assertThat(body(r)).containsEntry("couplingState","COUPLED");
+    assertThat(r.body()).doesNotContain(driver.toString(),tractor.toString(),"Last observed Driver","TRACTOR-A","Internal dispatcher instructions");
+    for(String field:List.of("currentDriverId","lastDriverId","currentTractorId","lastTractorId","currentCoupling","lastCoupling","lastDriver")) assertThat(body(r)).containsEntry(field,null);
+  }
+  @Test void selectedCustomerDoesNotInheritAnotherAllowedCustomersManifestOrLocations()throws Exception {
+    var own=order(a,"VISIBLE-SELECTED");var hidden=order(b,"HIDDEN-ALLOWED-ELSEWHERE");manifest("OPEN",own,hidden);
+    role("CUSTOMER_DISPATCHER");f.role(tenant,membership,"CUSTOMER_DISPATCHER",b);
+    f.db.execute("update operational_locations set customer_id=? where id=?",b,location);
+    var r=get("/"+trailer+"?customerId="+a);assertThat(r.statusCode()).isEqualTo(200);
+    assertThat(r.body()).contains("VISIBLE-SELECTED").doesNotContain("HIDDEN-ALLOWED-ELSEWHERE",hidden.toString(),location.toString(),"Current Dock");
+    missing(get("/"+trailer+"?customerId="+b));
+  }
+  @Test void currentDesignationPeriodExcludesOldAndLateRecordedForeignFacts()throws Exception {
+    var before=fact("ARRIVED",TIME,TIME,"{}");
+    var transfer=fact("DESIGNATED_CUSTOMER_CHANGED",TIME.plusSeconds(10),TIME.plusSeconds(10),"{\"previousDesignatedCustomerId\":\""+b+"\"}");
+    var after=fact("YARD_MOVED",TIME.plusSeconds(20),TIME.plusSeconds(20),"{}");
+    var late=fact("DEPARTED",TIME.plusSeconds(5),TIME.plusSeconds(30),"{}");
+    role("CUSTOMER_DISPATCHER");var r=get("/"+trailer+"/timeline?customerId="+a);
+    assertThat(items(r)).extracting(row->row.get("id")).containsExactly(after.toString(),transfer.toString());
+    assertThat(r.body()).doesNotContain(before.toString(),late.toString(),driver.toString(),tractor.toString(),b.toString());
+    role("TENANT_ADMIN");assertThat(items(get("/"+trailer+"/timeline"))).hasSize(4);
+  }
+  @Test void sharedTripHistoryIsNotAuthorizedByDesignationOrMultiCustomerAssignment()throws Exception {
+    var trip=UUID.randomUUID();var stop=UUID.randomUUID();
+    f.db.execute("insert into trips(id,tenant_id,status,created_at,updated_at) values(?,?,'ASSIGNED',now(),now())",trip,tenant);
+    f.db.execute("insert into trip_stops(id,tenant_id,trip_id,sequence_number,stop_type,status,site_snapshot,created_at,updated_at) values(?,?,?,1,'DELIVERY','PENDING','{\"name\":\"Shared\"}',now(),now())",stop,tenant,trip);
+    for(var customer:List.of(a,b)) f.db.execute("insert into trip_stop_orders(id,tenant_id,trip_stop_id,order_id) values(?,?,?,?)",UUID.randomUUID(),tenant,stop,order(customer,"Trip-"+customer));
+    var fact=fact("DEPARTED",TIME,TIME,"{}");f.db.execute("update trailer_movement_events set trip_id=? where id=?",trip,fact);
+    role("CUSTOMER_DISPATCHER");f.role(tenant,membership,"CUSTOMER_DISPATCHER",b);
+    assertThat(items(get("/"+trailer+"/timeline?customerId="+a))).isEmpty();
+    role("TENANT_ADMIN");assertThat(items(get("/"+trailer+"/timeline"))).hasSize(1);
+  }
+  @Test void pagedInventoryIsBoundedAndDoesNotLoseTrailersBeyondOneHundred()throws Exception {
+    f.db.execute("insert into trailers(id,tenant_id,operational_number,designated_customer_id,location_state,load_state,serviceability_state,active,created_at,updated_at) select gen_random_uuid(),?,'Paged-'||n,?,'LOCATION_UNKNOWN','UNKNOWN','IN_SERVICE',true,now(),now() from generate_series(1,105) n",tenant,a);
+    role("CUSTOMER_DISPATCHER");var first=get("?designatedCustomerId="+a+"&limit=100");assertThat(items(first)).hasSize(100);
+    var cursor=(String)body(first).get("nextCursor");assertThat(cursor).isNotBlank();var next=get("?designatedCustomerId="+a+"&limit=100&cursor="+cursor);
+    assertThat(items(next)).hasSize(6);var ids=new HashSet<>(items(first).stream().map(r->r.get("id")).toList());
+    assertThat(items(next).stream().map(r->r.get("id")).toList()).doesNotContainAnyElementsOf(ids);
+    assertThat(body(next).get("nextCursor")).isNull();problem(get("?limit=101"),400,"VALIDATION_FAILED");
+    problem(get("?designatedCustomerId="+a+"&active=false&cursor="+cursor),400,"VALIDATION_FAILED");
+  }
+  @Test void timelineCursorCannotBeReusedForAnotherTrailer()throws Exception {
+    fact("ARRIVED",TIME,TIME,"{}");fact("DEPARTED",TIME.plusSeconds(1),TIME.plusSeconds(1),"{}");
+    var cursor=body(get("/"+trailer+"/timeline?limit=1")).get("nextCursor");var another=f.trailer(tenant,"Another",a);
+    problem(get("/"+another+"/timeline?cursor="+cursor),400,"VALIDATION_FAILED");
+  }
+  @Test void tenantRevocationStopsCustomerReadWithoutChangingInternalBootstrapAuthority()throws Exception {
+    role("CUSTOMER_DISPATCHER");f.db.execute("update tenants set status='DISABLED' where id=?",tenant);
+    problem(get("/"+trailer+"?customerId="+a),403,"TENANT_ACCESS_DENIED");
+    problem(get("/"+trailer+"/timeline"),403,"TENANT_ACCESS_DENIED");
+    role("TENANT_ADMIN");assertThat(get("/"+trailer).statusCode()).isEqualTo(200);
   }
 
   void problem(HttpResponse<String> r, int status, String code) {

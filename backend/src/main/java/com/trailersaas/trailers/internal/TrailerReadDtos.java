@@ -8,7 +8,9 @@ import java.util.*;
 final class TrailerReadDtos {
   private TrailerReadDtos() {}
 
-  record Items(List<Item> items) {}
+  record Items(List<Item> items, String nextCursor) {
+    Items(List<Item> items) { this(items, null); }
+  }
 
   record Named(UUID id, String name) {}
 

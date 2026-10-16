@@ -76,6 +76,26 @@ Customer uploads, Audit #61, deployment/retention or Mobile/Drift changes.
 
 ## Validation and release policy
 
+Backend checkpoint B–D/F: existing Trailer reads now support opt-in UUID keysets,
+explicit selected Customer and redacted identities. Customer history is restricted
+to the current designation period and non-shared work. New read-only Customer
+Delivery/Document projections join actual persisted associations and enforce the
+existing all-linked-resource rule for the selected Customer. Existing metadata and
+download accept optional `customerId`; ordinary internal transport stays intact.
+V29 adds two nullable historical file references to the existing receipt and three
+read indexes, with mode/pair and composite Tenant FK checks; no new table or grants.
+The real evidence writer now retains both validated file IDs in its current joint
+transaction. Legacy ambiguous receipts keep NULL file references.
+
+Focused Backend run: 213 passed, 0 failures/errors/skipped, Java25/PostgreSQL18.6.
+Includes 33 new Customer read cases, one actual V28→V29 upgrade case, seven new
+Trailer cases, all existing Evidence/Documents/Trailer read tests and Modulith.
+The initial 204-case run exposed two obsolete/incorrect test expectations:
+Customer Driver-name disclosure and the new test's denied-code expectation. The
+historical parameterized test now preserves Admin/Operations name assertions and
+requires Customer redaction; no case or assertion is disabled. Failed logs remain
+outside the checkout. These focused results do not replace final-candidate checks.
+
 Focused tests during implementation; freeze/publish the final candidate, then run
 complete local Backend/Web/OpenAPI/Mobile/CI policy suites once. Any corrective
 commit invalidates prior final-SHA evidence. Record actual counts/logs in the PR.

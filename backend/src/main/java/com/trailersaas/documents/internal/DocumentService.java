@@ -25,10 +25,11 @@ class DocumentService {
   private final MobileOperationLedger ledger;
   private final com.trailersaas.trailers.TrailerEvidenceDirectory trailers;
   private final org.springframework.jdbc.core.JdbcTemplate jdbc;
+  private final CustomerOperationalReads customerReads;
   DocumentService(DocumentRepository r,ObjectStoragePort s,R2Configuration.Settings c,TenantAuthorization a,
       DocumentAccessPolicy p,DocumentUploadAuthority d,DocumentStopDirectory t,MobileOperationLedger l,
-      DocumentResourceAccess v,EvidenceWorkDirectory w,com.trailersaas.trailers.TrailerEvidenceDirectory trailers,org.springframework.jdbc.core.JdbcTemplate jdbc) {
-    repository=r;storage=s;settings=c;authorization=a;access=p;uploads=d;stops=t;ledger=l;resources=v;work=w;this.trailers=trailers;this.jdbc=jdbc;
+      DocumentResourceAccess v,EvidenceWorkDirectory w,com.trailersaas.trailers.TrailerEvidenceDirectory trailers,org.springframework.jdbc.core.JdbcTemplate jdbc,CustomerOperationalReads customerReads) {
+    repository=r;storage=s;settings=c;authorization=a;access=p;uploads=d;stops=t;ledger=l;resources=v;work=w;this.trailers=trailers;this.jdbc=jdbc;this.customerReads=customerReads;
   }
 
   @Transactional
@@ -130,7 +131,11 @@ class DocumentService {
 
   @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
   Metadata metadata(AuthenticatedUserPrincipal actor,UUID tenant,UUID document) {
-    var scope=access.readScope(actor,tenant);
+    return metadata(actor,tenant,document,null);
+  }
+  @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
+  Metadata metadata(AuthenticatedUserPrincipal actor,UUID tenant,UUID document,UUID customer) {
+    var scope=customerScope(actor,tenant,document,customer);
     var row=repository.find(tenant,document,false);
     var linked=repository.links(tenant,document);
     var visible=resources.visible(actor,tenant,linked,scope);
@@ -143,12 +148,23 @@ class DocumentService {
 
   @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
   Download download(AuthenticatedUserPrincipal actor,UUID tenant,UUID document) {
-    var scope=access.readScope(actor,tenant);
+    return download(actor,tenant,document,null);
+  }
+  @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
+  Download download(AuthenticatedUserPrincipal actor,UUID tenant,UUID document,UUID customer) {
+    var scope=customerScope(actor,tenant,document,customer);
     var row=repository.find(tenant,document,false);
     if(resources.visible(actor,tenant,repository.links(tenant,document),scope).isEmpty()) throw DocumentFailure.missing();
     if(row.status()!=Status.UPLOADED) throw DocumentFailure.conflict("UPLOAD_NOT_COMPLETE");
     if(!storage.exists(row.key())) throw DocumentFailure.storage();
     var signed=storage.get(row.key(),settings.downloadTtl());return new Download(signed.url(),signed.expiresAt());
+  }
+  private DocumentAccessPolicy.ReadScope customerScope(AuthenticatedUserPrincipal actor,UUID tenant,UUID document,UUID customer) {
+    var scope=access.readScope(actor,tenant);
+    if(customer==null)return scope;
+    customerReads.documentAuthority(actor,tenant,customer);
+    if(!customerReads.containsDocument(tenant,customer,document))throw DocumentFailure.missing();
+    return new DocumentAccessPolicy.ReadScope(false,Set.of(customer),false);
   }
 
   private UUID trailerContext(DocumentRepository.Row row,List<Link> links) {

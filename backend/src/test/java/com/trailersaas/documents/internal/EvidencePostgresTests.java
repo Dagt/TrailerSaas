@@ -242,6 +242,8 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     assertThat(db.value("SELECT status FROM trip_stops WHERE id=?",stop)).isEqualTo("COMPLETED");
     assertThat(db.value("SELECT completed_by_user_id FROM delivery_evidence WHERE trip_stop_id=?",stop)).isEqualTo(user);
     assertThat(db.value("SELECT evidence_mode FROM delivery_evidence WHERE trip_stop_id=?",stop)).isEqualTo(mode.name());
+    assertThat(db.value("SELECT bol_document_id FROM delivery_evidence WHERE trip_stop_id=?",stop)).isEqualTo(delivery.bolDocumentId());
+    assertThat(db.value("SELECT delivery_photo_document_id FROM delivery_evidence WHERE trip_stop_id=?",stop)).isEqualTo(delivery.deliveryPhotoDocumentId());
     assertThat(db.value("SELECT completed_at IS NOT NULL FROM delivery_evidence WHERE trip_stop_id=?",stop)).isEqualTo(true);
     assertThat(db.value("SELECT comment FROM delivery_evidence WHERE trip_stop_id=?",stop)).isEqualTo(mode==Mode.SIGNED_BOL?null:"No receiver available");
     assertProblem(http("driver","POST",harness("record"),deliveryJson(delivery),null),409,"INVALID_STATE_TRANSITION");
@@ -302,7 +304,7 @@ class EvidencePostgresTests extends DocumentHttpPostgresFixture {
     assertThatThrownBy(()->db.execute("INSERT INTO delivery_evidence VALUES(?,?,?,'SIGNED_BOL',NULL,?,now())",UUID.randomUUID(),tenant,stop,UUID.randomUUID())).isInstanceOf(SQLException.class);
     var valid=signed();assertThat(http("driver","POST",harness("record"),deliveryJson(valid),null).statusCode()).isEqualTo(200);
     assertThatThrownBy(()->db.execute("INSERT INTO delivery_evidence VALUES(?,?,?,'SIGNED_BOL',NULL,?,now())",UUID.randomUUID(),tenant,stop,user)).isInstanceOf(SQLException.class);
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("28");flyway.validate();
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("29");flyway.validate();
     try(var c=runtime.getConnection();var q=c.createStatement()) {
       c.setAutoCommit(false);assertThat(c.getMetaData().getDatabaseMajorVersion()).isEqualTo(18);
       try(var r=q.executeQuery("SELECT has_table_privilege(current_user,'delivery_evidence','SELECT'),has_table_privilege(current_user,'delivery_evidence','INSERT'),has_table_privilege(current_user,'delivery_evidence','UPDATE'),has_table_privilege(current_user,'delivery_evidence','DELETE')")) {r.next();assertThat(r.getBoolean(1)).isTrue();assertThat(r.getBoolean(2)).isTrue();assertThat(r.getBoolean(3)).isFalse();assertThat(r.getBoolean(4)).isFalse();}
