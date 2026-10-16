@@ -5,6 +5,7 @@ import { DataTable, DetailList, EmptyState, ErrorBanner, LoadingState, StatusBad
 import { trailerReadApi } from './api'
 import type { TrailerDetail } from './contracts'
 import { currentLocationLabel, observedAt, readable } from './display'
+import { ApiProblem } from '../api/client'
 export function TrailerReadView({ trailer: t, tenantId, namespace }: { trailer: TrailerDetail; tenantId: string; namespace: 'operations' | 'tenant' }) {
   const coupling = t.currentCoupling
   return <div className="trailer-read-grid">
@@ -40,16 +41,19 @@ export function TrailerReadView({ trailer: t, tenantId, namespace }: { trailer: 
   </div>
 }
 export function TrailerTimeline({ tenantId, trailerId, namespace }: { tenantId: string; trailerId: string; namespace: 'operations' | 'tenant' }) {
-  const { api } = useAuth()
+  const { api, identity } = useAuth()
   const reads = trailerReadApi(api, tenantId)
-  const query = useInfiniteQuery({ queryKey: [namespace, tenantId, 'trailer-timeline', trailerId], initialPageParam: undefined as string | undefined,
+  const query = useInfiniteQuery({ queryKey: [namespace, tenantId, 'trailer-timeline', trailerId, identity?.uid], initialPageParam: undefined as string | undefined,
     queryFn: ({ signal, pageParam }) => reads.timeline(trailerId, pageParam, signal), getNextPageParam: p => p.nextCursor ?? undefined })
   if (query.isPending) return <LoadingState />
+  if (query.isError && query.error instanceof ApiProblem && [401, 403, 404].includes(query.error.problem.status)) return <ErrorBanner error={query.error} retry={() => void query.refetch()} />
   const items = query.data?.pages.flatMap(p => p.items) ?? []
   return <>
+    <p className="muted">Newest physical observations first. Recorded time may be later after offline replay. This is operational movement history, separate from administrative Audit.</p>
     {query.isError && <ErrorBanner error={query.error} retry={() => void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch())} />}
     {!items.length && !query.isError ? <EmptyState>No recorded Trailer movements.</EmptyState> : <ol className="operations-timeline" aria-label="Trailer movement timeline">
       {items.map(e => <li key={e.id}><strong>{readable(e.eventType)}</strong><time dateTime={e.occurredAt}>{observedAt(e.occurredAt)}</time>
+        <small>Actor type: {readable(e.actorType)} · Source: {readable(e.sourceType)}</small>
         {e.recordedAt !== e.occurredAt && <small>Recorded {observedAt(e.recordedAt)}</small>}
         {e.reason && <p>{e.reason}</p>}
         {(e.locationName || e.driverName || e.tractorOperationalNumber) && <p>{[e.locationName, e.driverName, e.tractorOperationalNumber].filter(Boolean).join(' · ')}</p>}

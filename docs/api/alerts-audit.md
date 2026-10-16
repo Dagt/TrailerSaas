@@ -152,7 +152,7 @@ Use resource-specific timeline endpoints for operational UX:
 
 `GET /trips/{tripId}/timeline`
 
-Potential future:
+Implemented by #41 (bounded cursor pages):
 
 `GET /trailers/{trailerId}/timeline`
 
@@ -275,3 +275,11 @@ ALERT_ACKNOWLEDGE/ALERT_RESOLVE; clients cannot submit detector actors/evidence.
 Internal SYSTEM recovery is separately guarded. No production recipients or
 escalation exist while OQ-059 is pending; inbox works independently of FCM.
 See [current-threshold semantics](../backend/issue-57-stale-trailer-detector.md).
+
+## #62 Web consumption
+
+Admin Audit list/detail consumes the unchanged #61 endpoints and minimized actor/
+snapshot DTOs. AUDIT_VIEW gates navigation and every server read. Exact filters,
+inclusive RFC3339 boundaries and opaque cursors are preserved; no client writes
+or Customer Audit are added. Trip timeline now offers opt-in bounded SQL pages
+while retaining legacy unpaged responses; see orders-dispatch and OpenAPI.

@@ -4,6 +4,15 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { adminFixture, admin, tenantA, tenantB, fakeAuth } from '../../test/adminFixture'
 
 afterEach(() => vi.unstubAllGlobals())
+it('preserves candidate bootstrap administration while withholding ACTIVE-only Audit', async () => {
+  const membership = { ...admin(), tenantActive: false, capabilities: ['AUDIT_VIEW'] }
+  const f = adminFixture('/admin/settings', [membership])
+  expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: 'Audit' })).not.toBeInTheDocument()
+  await act(async () => f.router.navigate('/admin/audit'))
+  await screen.findByRole('heading', { name: 'Audit access is not available' })
+  expect(f.requests.some(r => r.path.includes('/audit-events'))).toBe(false)
+})
 it('restores Firebase session and selects the sole ACTIVE Admin membership from /me', async () => {
   const fixture = adminFixture('/admin')
   expect(await screen.findByRole('navigation', { name: 'Admin navigation' })).toBeInTheDocument()

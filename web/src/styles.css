@@ -203,3 +203,16 @@ dialog { max-height: calc(100dvh - 2rem); overflow-y: auto; }
   .customer-cards { grid-template-columns: minmax(0,1fr); }
   .customer-area .admin-topbar label { flex-direction: column; align-items: start; }
 }
+
+/* Audit is read-only, ephemeral administrative evidence. */
+.audit-workspace { min-width: 0; }
+.audit-filters { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin: 1rem 0 1.5rem; border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; }
+.audit-filters legend { font-weight: 700; }
+.audit-filters label { display: flex; flex-direction: column; gap: .4rem; }
+.audit-filters .muted, .audit-filters .actions { grid-column: 1/-1; }
+.audit-reference, .audit-value, .audit-workspace dd { overflow-wrap: anywhere; }
+.audit-value { white-space: pre-wrap; min-width: 10rem; max-width: 32rem; }
+.audit-workspace small { display: block; }
+.audit-workspace time { white-space: normal; }
+@media (max-width: 1000px) { .audit-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 540px) { .audit-filters { grid-template-columns: minmax(0,1fr); } }

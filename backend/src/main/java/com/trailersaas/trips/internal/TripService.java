@@ -180,11 +180,20 @@ class TripService {
 
   @Transactional(readOnly = true)
   Detail get(AuthenticatedUserPrincipal actor, UUID tenant, UUID id) {
+    return get(actor, tenant, id, true);
+  }
+
+  @Transactional(readOnly = true)
+  Detail get(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, boolean includeHistory) {
     auth.requireTenantCapability(actor, tenant, Capability.TRIP_VIEW_ALL);
-    return detail(repository.resource(tenant, id, false));
+    return detail(repository.resource(tenant, id, false), includeHistory);
   }
 
   Detail detail(TripEntity trip) {
+    return detail(trip, true);
+  }
+
+  private Detail detail(TripEntity trip, boolean includeHistory) {
     var mappings = repository.mappings(trip.tenantId, trip.id);
     return Detail.of(
         trip,
@@ -200,10 +209,8 @@ class TripService {
                             .sorted()
                             .toList()))
             .toList(),
-        repository.history(trip.tenantId, trip.id).stream().map(Assignment::of).toList(),
-        repository.operationalHistory(trip.tenantId, trip.id).stream()
-            .map(Operational::of)
-            .toList());
+        includeHistory ? repository.history(trip.tenantId, trip.id).stream().map(Assignment::of).toList() : List.of(),
+        includeHistory ? repository.operationalHistory(trip.tenantId, trip.id).stream().map(Operational::of).toList() : List.of());
   }
 
   Detail commandDetail(AuthenticatedUserPrincipal actor, TripEntity trip, Capability capability) {
@@ -225,6 +232,13 @@ class TripService {
     // PostgreSQL UUID ordering is unsigned; Java UUID natural order is signed.
     items.sort(Comparator.comparing(HistoryItem::occurredAt).thenComparing(e -> e.id().toString()));
     return new Timeline(List.copyOf(items));
+  }
+
+  @Transactional(readOnly = true)
+  TimelinePage timelinePage(AuthenticatedUserPrincipal actor, UUID tenant, UUID id, Map<String, String> query) {
+    auth.requireTenantCapability(actor, tenant, Capability.TRIP_VIEW_ALL);
+    repository.resource(tenant, id, false);
+    return repository.timelinePage(actor.userId(), tenant, id, query);
   }
 
   private void flush() {

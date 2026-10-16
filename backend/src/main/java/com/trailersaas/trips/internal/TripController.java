@@ -7,6 +7,7 @@ import java.util.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.MultiValueMap;
 
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/trips")
@@ -47,9 +48,12 @@ class TripController {
       @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
       @PathVariable UUID tenantId,
       @PathVariable UUID tripId,
-      @RequestParam Map<String, String> query) {
-    TripValidation.fields(query, Set.of());
-    return service.get(actor, tenantId, tripId);
+      @RequestParam MultiValueMap<String, String> query) {
+    TripValidation.fields(query, Set.of("includeHistory"));
+    if (query.values().stream().anyMatch(v -> v.size() != 1)
+        || query.containsKey("includeHistory") && !Set.of("true", "false").contains(query.getFirst("includeHistory")))
+      throw TripFailure.invalid("includeHistory");
+    return service.get(actor, tenantId, tripId, !"false".equals(query.getFirst("includeHistory")));
   }
 
   @PostMapping("/{tripId}/driver-assignments")
@@ -119,12 +123,13 @@ class TripController {
   }
 
   @GetMapping("/{tripId}/timeline")
-  Timeline timeline(
+  Object timeline(
       @AuthenticationPrincipal AuthenticatedUserPrincipal actor,
       @PathVariable UUID tenantId,
       @PathVariable UUID tripId,
-      @RequestParam Map<String, String> query) {
-    TripValidation.fields(query, Set.of());
-    return service.timeline(actor, tenantId, tripId);
+      @RequestParam MultiValueMap<String, String> query) {
+    if (query.isEmpty()) return service.timeline(actor, tenantId, tripId);
+    if (query.values().stream().anyMatch(v -> v.size() != 1)) throw TripFailure.invalid("query");
+    return service.timelinePage(actor, tenantId, tripId, query.toSingleValueMap());
   }
 }

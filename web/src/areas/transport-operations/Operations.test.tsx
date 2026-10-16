@@ -133,8 +133,8 @@ it.each(['PLANNED', 'ASSIGNED', 'IN_TRANSIT', 'AT_STOP', 'CANCELLING', 'COMPLETE
 it('shows assignments, ordered Stops, history and timeline without raw metadata', async () => {
   const t = trip('ASSIGNED'); t.currentDriverId = resourceId; t.currentTractorId = resourceId
   t.stops = [{ ...t.stops[0]!, sequenceNumber: 2 }, { ...t.stops[0]!, id: alternateId, sequenceNumber: 1, instructions: 'First visit' }]
-  t.assignmentHistory = [{ id: alternateId, eventType: 'DRIVER_ASSIGNED', driverId: resourceId, tractorId: null, trailerId: null, actorUserId: 'hidden-actor', occurredAt: stamps(), reason: 'Initial resource', metadata: null }]
-  t.operationalHistory = [{ id: resourceId, eventType: 'TRIP_REROUTED', tripStopId: t.stops[0]!.id, actorUserId: 'hidden-actor', targetDriverId: resourceId, occurredAt: stamps(), reason: 'Customer instructions changed', metadata: { previous: { siteSnapshot: { name: 'Previous frozen' } }, replacement: { siteSnapshot: { name: 'New frozen' }, instructions: 'Use dock two' } } }]
+  t.assignmentHistory = [{ id: alternateId, eventType: 'DRIVER_ASSIGNED', driverId: resourceId, tractorId: null, trailerId: null, actorUserId: resourceId, occurredAt: stamps(), reason: 'Initial resource', metadata: null }]
+  t.operationalHistory = [{ id: resourceId, eventType: 'TRIP_REROUTED', tripStopId: t.stops[0]!.id, actorUserId: resourceId, targetDriverId: resourceId, occurredAt: stamps(), reason: 'Customer instructions changed', metadata: { previous: { siteSnapshot: { name: 'Previous frozen' } }, replacement: { siteSnapshot: { name: 'New frozen' }, instructions: 'Use dock two' } } }]
   operationsFixture(`/operations/trips/${tripId}`, { trip: t })
   const table = await screen.findByRole('table', { name: 'Executable Stops' })
   expect(within(table).getAllByRole('row')[1]).toHaveTextContent('1. Delivery')
@@ -142,6 +142,7 @@ it('shows assignments, ordered Stops, history and timeline without raw metadata'
   expect(await screen.findAllByText('Driver assigned')).not.toHaveLength(0)
   expect(await screen.findByText(/Previous frozen → New frozen/)).toBeInTheDocument()
   expect(screen.queryByText('hidden-actor')).not.toBeInTheDocument()
+  expect(screen.getAllByText(`Recorded actor: User ${resourceId}`)).toHaveLength(2)
 })
 function stamps() { return '2026-10-09T15:00:00Z' }
 it.each(['driver', 'tractor', 'trailer'] as const)('sends exact versioned %s assignment and uses returned detail', async kind => {
@@ -155,7 +156,7 @@ it.each(['driver', 'tractor', 'trailer'] as const)('sends exact versioned %s ass
   const post = f.requests.find(r => r.method === 'POST')!
   expect(post.body).toEqual({ expectedVersion: 0, [`${kind}Id`]: kind === 'trailer' ? alternateId : resourceId, reason: 'Resource change' })
   expect(f.cache.getQueryData<ReturnType<typeof trip>>(key(tenantA, 'trip', tripId))?.version).toBe(1)
-  expect(f.requests.filter(r => r.path.endsWith('/timeline')).length).toBeGreaterThan(1)
+  expect(f.requests.filter(r => r.path.split('?')[0]!.endsWith('/timeline')).length).toBeGreaterThan(1)
 })
 it('shows explicit stale reload and never replays a mutation with a newer version', async () => {
   const u = userEvent.setup(), f = await detail()

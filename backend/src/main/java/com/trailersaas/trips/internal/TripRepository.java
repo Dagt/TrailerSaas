@@ -249,4 +249,8 @@ class TripRepository {
   void flush() {
     em.flush();
   }
+
+  TripContracts.TimelinePage timelinePage(UUID user, UUID tenant, UUID trip, Map<String, String> query) {
+    return TripTimelinePage.read(em, user, tenant, trip, query);
+  }
 }

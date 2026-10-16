@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useAuth } from '../../shared/auth/context'
 import { EmptyState, ErrorBanner, FormField, LoadingState, PageHeader } from '../../shared/ui/components'
-import type { CurrentUser } from './contracts'
-import { AdminTenant } from './tenant'
+import { AdminIdentity, AdminTenant } from './tenant'
+import { useCurrentUser } from '../../shared/auth/currentUser'
 export function AdminLayout() {
   const session = useAuth()
   if (session.identity === undefined) return <LoadingState />
@@ -14,11 +14,11 @@ export function AdminLayout() {
   return <AdminDirectory key={session.identity.uid} />
 }
 function AdminDirectory() {
-  const { api, identity, signOut } = useAuth()
+  const { signOut } = useAuth()
   const cache = useQueryClient()
   const navigate = useNavigate()
   const [selected, select] = useState<string | null>(null)
-  const me = useQuery({ queryKey: ['me', identity?.uid], queryFn: ({ signal }) => api.request<CurrentUser>('/me', { signal }) })
+  const me = useCurrentUser(60_000)
   if (me.isPending) return <LoadingState />
   if (me.isError) return <ErrorBanner error={me.error} retry={() => void me.refetch()} />
   const eligible = me.data.memberships.filter(m => m.status === 'ACTIVE' && m.roles.some(r => r.roleCode === 'TENANT_ADMIN' && r.scopeType === 'TENANT'))
@@ -26,6 +26,8 @@ function AdminDirectory() {
   const changeTenant = (id: string) => {
     void cache.cancelQueries({ queryKey: ['tenant'] })
     cache.removeQueries({ queryKey: ['tenant'] })
+    void cache.cancelQueries({ queryKey: ['audit'] })
+    cache.removeQueries({ queryKey: ['audit'] })
     select(id); navigate('/admin')
   }
   return <section className="admin-area">
@@ -38,11 +40,11 @@ function AdminDirectory() {
     </div>
     {!eligible.length ? <EmptyState><h1>Admin access is not available</h1><p>Your account has no active Tenant Admin membership.</p></EmptyState>
       : !current ? <EmptyState><h1>Select a Tenant</h1><p>Choose the workspace you want to manage.</p></EmptyState>
-        : <AdminTenant.Provider value={current}><div className="admin-workspace" key={current.tenantId}>
+        : <AdminIdentity.Provider value={me.data.userId}><AdminTenant.Provider value={current}><div className="admin-workspace" key={`${me.data.userId}:${current.tenantId}`}>
           <nav aria-label="Admin navigation">{['Customers', 'Locations', 'Drivers', 'Tractors', 'Trailers', 'Settings'].map(label =>
-            <NavLink key={label} to={`/admin/${label.toLowerCase()}`}>{label}</NavLink>)}{current.capabilities?.includes('ALERT_VIEW') && <NavLink to="/admin/alerts">Alerts</NavLink>}</nav>
+            <NavLink key={label} to={`/admin/${label.toLowerCase()}`}>{label}</NavLink>)}{current.capabilities?.includes('ALERT_VIEW') && <NavLink to="/admin/alerts">Alerts</NavLink>}{current.tenantActive !== false && current.capabilities?.includes('AUDIT_VIEW') && <NavLink to="/admin/audit">Audit</NavLink>}</nav>
           <div className="admin-content"><Outlet /></div>
-        </div></AdminTenant.Provider>}
+        </div></AdminTenant.Provider></AdminIdentity.Provider>}
   </section>
 }
 export function AdminHome() { return <PageHeader title="Tenant Admin" description="Manage master data and Tenant settings. Choose a section from the navigation." /> }

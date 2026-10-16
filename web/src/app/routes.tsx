@@ -13,6 +13,7 @@ import { Home } from './Home'
 import { NotFound } from './NotFound'
 import { LoadingState } from '../shared/ui/components'
 import { AdminAlerts, OperationsAlerts } from '../areas/alerts/AlertsWorkspace'
+import { AuditWorkspace } from '../areas/tenant-admin/audit/AuditWorkspace'
 
 export const appRoutes: RouteObject[] = [
   {
@@ -35,6 +36,8 @@ export const appRoutes: RouteObject[] = [
         { path: 'settings', Component: SettingsPage },
         { path: 'alerts', Component: AdminAlerts },
         { path: 'alerts/:alertId', Component: AdminAlerts },
+        { path: 'audit', Component: AuditWorkspace },
+        { path: 'audit/:auditEventId', Component: AuditWorkspace },
       ] },
       { path: 'operations', Component: TransportOperationsArea, children: [
         { index: true, lazy: async () => ({ Component: (await import('../areas/transport-operations/BoardPages')).Dashboard }) },

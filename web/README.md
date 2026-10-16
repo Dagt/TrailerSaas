@@ -311,3 +311,18 @@ and delivered Stop from administratively completed Order. No maps/tracking,
 physical controls, Customer uploads or fake operational data. Tests use jsdom;
 deployed Firebase/private R2 and real desktop/tablet QA remain release work #65.
 See [API, V29, acceptance and validation policy](../docs/web/issue-60-customer-inventory-deliveries-documents.md).
+
+## Admin Audit and operational history (#62)
+
+`/admin/audit` and `/admin/audit/:auditEventId` reuse Admin/Firebase/ApiClient and
+require current AUDIT_VIEW before issuing any Audit read. Real API catalogs and
+closed Zod snapshots support six URL filters, bounded cursor pages, historical
+actor attribution and deterministic before/after comparison with withheld-field
+markers. The view is read-only and has no durable browser snapshot cache.
+
+Trip Detail requests includeHistory=false and opt-in SQL-paginated timeline
+reads; older API clients keep their defaults. Trailer history remains shared by
+Admin/Operations; Customer continues its distinct minimized projection. No new
+UI/authentication dependency, writer, grants, migration or mobile change.
+Focused tests live in tenant-admin/audit and transport-operations/History.
+See [architecture, security, validation and release limitations](../docs/web/issue-62-admin-audit-operational-history.md).

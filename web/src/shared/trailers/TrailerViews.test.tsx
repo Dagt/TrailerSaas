@@ -155,6 +155,7 @@ it.each(['HOOKED','DROPPED','DEPARTED','ARRIVED','YARD_MOVED','LOCATION_CORRECTE
   const ui = within(await screen.findByRole('list', { name: 'Trailer movement timeline' }))
   expect(ui.getByText(type.toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase()))).toBeInTheDocument()
   expect(ui.getByText('Physically confirmed')).toBeInTheDocument()
+  expect(ui.getByText('Actor type: Human user · Source: User action')).toBeInTheDocument()
   expect(ui.getByText('Dock 12 · Maria Driver · TR-100')).toBeInTheDocument()
   expect(ui.getByText(/Recorded/)).toBeInTheDocument()
   expect(ui.getByText(new Date(event().occurredAt).toLocaleString())).toHaveAttribute('dateTime',event().occurredAt)
@@ -167,6 +168,20 @@ it('timeline Load more uses opaque cursor without client reordering', async () =
   await waitFor(() => expect(screen.getByRole('list', { name: 'Trailer movement timeline' }).querySelectorAll('li')).toHaveLength(2))
   expect(f.requests.some(r => r.path.endsWith('/timeline?cursor=opaque-position'))).toBe(true)
   expect(screen.queryByRole('button', { name: 'Load more movements' })).not.toBeInTheDocument()
+})
+it('a denied continuation hides previously visible internal movements', async () => {
+  const u = userEvent.setup(), f = fixture(`/operations/trailers/${resourceId}`)
+  f.pages({ items: [event()], nextCursor: 'opaque-position' })
+  const original = f.fetcher.getMockImplementation()!
+  f.fetcher.mockImplementation(async (input, init) => {
+    const url = new URL(String(input))
+    if (url.pathname.endsWith('/timeline') && url.searchParams.has('cursor')) return new Response(JSON.stringify({ detail: 'synthetic-private-context' }), { status: 403, headers: { 'Content-Type': 'application/problem+json' } })
+    return original(input, init)
+  })
+  await u.click(await screen.findByRole('button', { name: 'Load more movements' }))
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('list', { name: 'Trailer movement timeline' })).not.toBeInTheDocument()
+  expect(screen.queryByText('synthetic-private-context')).not.toBeInTheDocument()
 })
 it('pagination failure retains prior movement rows, read detail and permits bounded retry', async () => {
   const u = userEvent.setup(), f = fixture(`/operations/trailers/${resourceId}`)

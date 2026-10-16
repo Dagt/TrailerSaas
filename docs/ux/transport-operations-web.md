@@ -633,3 +633,18 @@ detection time and SYSTEM origin/recovery. Acknowledgement history stays visible
 SYSTEM resolution displays no invented User. Operations Dashboard links to this
 same authorized inbox. No parallel board, automatic recipients or promised push
 delivery. Effective capabilities govern write buttons; read access grants no writes.
+
+## Issue #62 implementation note
+
+Trip Detail now opts out of full embedded histories and reads one SQL-paginated
+assignment/operational timeline, oldest first. It displays actual actor IDs,
+reasons, previous assignments and frozen destination changes. Stop execution
+timestamps remain a distinct current projection; unavailable physical events are
+not synthesized. Expected Trailer is planning, not physical coupling; Audit is
+separate and absent from Operations. Legacy Trip reads remain compatible.
+
+Internal Trailer history reuses the existing newest-observation-first cursor
+view, adding actual actor type/source and preserving occurrence versus receipt
+time. Denied reads hide old history; transient page failures retain loaded facts.
+The Customer Portal retains its separate minimized current-designation projection.
+See [contracts and privacy review](../web/issue-62-admin-audit-operational-history.md).
