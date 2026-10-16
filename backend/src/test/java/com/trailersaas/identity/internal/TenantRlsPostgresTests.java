@@ -310,20 +310,21 @@ class TenantRlsPostgresTests extends PostgresIntegrationTest {
     @Test
     void policiesTargetOnlyRuntimeAndForceOutboxAndRequestRevisions() {
         tx(() -> {
-            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(58);
+            assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public'")).isEqualTo(59);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='ALL' AND with_check IS NOT NULL"))
-                    .isEqualTo(50);
+                    .isEqualTo(51);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='SELECT' AND with_check IS NULL"))
                     .isEqualTo(7);
             assertThat(number("SELECT count(*) FROM pg_policies WHERE schemaname='public' AND roles::text='{"
-                    + RUNTIME_USERNAME + "}'")).isEqualTo(58);
+                    + RUNTIME_USERNAME + "}'")).isEqualTo(59);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relrowsecurity"))
-                    .isEqualTo(51);
+                    .isEqualTo(52);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relforcerowsecurity"))
-                    .isEqualTo(2);
+                    .isEqualTo(3);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relname='outbox_jobs' AND relforcerowsecurity")).isEqualTo(1);
             assertThat(number("SELECT count(*) FROM pg_class WHERE relname='order_request_revisions' AND relforcerowsecurity")).isEqualTo(1);
-            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(53);
+            assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname='public'")).isEqualTo(54);
+            assertThat(number("SELECT count(*) FROM pg_class WHERE relname='audit_events' AND relforcerowsecurity")).isEqualTo(1);
             return null;
         });
     }

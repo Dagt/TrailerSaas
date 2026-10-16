@@ -569,7 +569,7 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
   @Test
   void v17ContainsOnlyTwoIndexesAndRuntimeSecurityIsUnchanged() throws Exception {
     flyway.validate();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("29");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("30");
     String sql =
         new String(
             getClass()
