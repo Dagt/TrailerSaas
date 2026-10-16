@@ -10,13 +10,18 @@ import com.trailersaas.identity.TenantAuthorization;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.trailersaas.audit.AuditWriter;
+import static com.trailersaas.audit.AuditWriter.snapshot;
+import static com.trailersaas.audit.AuditWriter.Action.TENANT_SETTINGS_UPDATED;
 
 @Service @Transactional
 class TenantSettingsService {
     private final EntityManager entityManager;
     private final TenantAuthorization authorization;
-    TenantSettingsService(EntityManager entityManager, TenantAuthorization authorization) {
+    private final AuditWriter audit;
+    TenantSettingsService(EntityManager entityManager, TenantAuthorization authorization, AuditWriter audit) {
         this.entityManager = entityManager; this.authorization = authorization;
+        this.audit = audit;
     }
     record Settings(int staleTrailerThresholdHours, String defaultTimezone, long version) {
         static Settings of(TenantSettingsEntity row) {
@@ -31,12 +36,17 @@ class TenantSettingsService {
         var row = resource(user, tenantId);
         long expected = validatePatch(fields);
         if (row.version != expected) { throw TenantSettingsFailure.stale(); }
+        var before = auditState(row);
         if (fields.containsKey("staleTrailerThresholdHours")) {
             row.staleTrailerThresholdHours = threshold(fields.get("staleTrailerThresholdHours"));
         }
         if (fields.containsKey("defaultTimezone")) { row.defaultTimezone = timezone(fields.get("defaultTimezone")); }
         entityManager.flush(); // @Version detects races; unchanged values remain a no-op.
+        audit.human(tenantId,user.userId(),TENANT_SETTINGS_UPDATED,tenantId,before,auditState(row));
         return Settings.of(row);
+    }
+    private static Map<String,Object> auditState(TenantSettingsEntity row) {
+        return snapshot("staleTrailerThresholdHours",row.staleTrailerThresholdHours,"defaultTimezone",row.defaultTimezone,"version",row.version);
     }
     private TenantSettingsEntity resource(AuthenticatedUserPrincipal user, UUID tenantId) {
         authorization.requireTenantCapability(user, tenantId, Capability.TENANT_SETTINGS_MANAGE);

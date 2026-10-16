@@ -1,6 +1,9 @@
 package com.trailersaas.customers.internal;
 
 import java.time.Instant;
+import com.trailersaas.audit.AuditWriter;
+import static com.trailersaas.audit.AuditWriter.snapshot;
+import static com.trailersaas.audit.AuditWriter.Action.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,10 +25,12 @@ import static com.trailersaas.customers.internal.MasterDataValidation.*;
 @Transactional
 class MasterDataService {
     private final TenantAuthorization authorization;
+    private final AuditWriter audit;
     private final MasterDataRepository repository;
     private final List<CustomerSiteUsageGuard> siteUsageGuards;
     MasterDataService(TenantAuthorization authorization, MasterDataRepository repository,
-            List<CustomerSiteUsageGuard> siteUsageGuards) {
+            List<CustomerSiteUsageGuard> siteUsageGuards, AuditWriter audit) {
+        this.audit = audit;
         this.authorization = authorization; this.repository = repository;
         this.siteUsageGuards = List.copyOf(siteUsageGuards);
     }
@@ -35,6 +40,7 @@ class MasterDataService {
         var entity = new CustomerEntity();
         entity.initialize(tenant, text(request.name(), "name", false));
         repository.insert(entity); repository.flush();
+        audit.human(tenant,user.userId(),CUSTOMER_CREATED,entity.id,null,MasterDataAudit.state(entity));
         return Customer.of(entity);
     }
 
@@ -57,9 +63,11 @@ class MasterDataService {
         long expected = patch(fields, Set.of("expectedVersion", "name", "status"));
         var entity = repository.resource(CustomerEntity.class, tenant, id);
         entity.requireVersion(expected);
+        var before = MasterDataAudit.state(entity);
         if (fields.containsKey("name")) { entity.name = text(fields.get("name"), "name", false); }
         if (fields.containsKey("status")) { entity.status = choice(fields.get("status"), "status", Set.of("ACTIVE", "INACTIVE")); }
         repository.flush();
+        audit.human(tenant,user.userId(),CUSTOMER_UPDATED,entity.id,before,MasterDataAudit.state(entity));
         return Customer.of(entity);
     }
 
@@ -78,6 +86,7 @@ class MasterDataService {
             entity.countryCode = country(a.countryCode());
         }
         repository.insert(entity); repository.flush();
+        audit.human(tenant,user.userId(),SITE_CREATED,entity.id,null,MasterDataAudit.state(entity));
         return Site.of(entity);
     }
 
@@ -112,6 +121,7 @@ class MasterDataService {
                 "longitude", "geofenceRadiusM", "active"));
         var entity = repository.resource(PhysicalSiteEntity.class, tenant, id);
         entity.requireVersion(expected);
+        var before = MasterDataAudit.state(entity);
         if (fields.containsKey("name")) { entity.name = text(fields.get("name"), "name", false); }
         if (fields.containsKey("address")) { address(entity, fields.get("address")); }
         if (fields.containsKey("timezone")) { entity.timezone = timezone(fields.get("timezone")); }
@@ -120,6 +130,7 @@ class MasterDataService {
         if (fields.containsKey("geofenceRadiusM")) { entity.geofenceRadiusM = radius(fields.get("geofenceRadiusM")); }
         if (fields.containsKey("active")) { entity.active = bool(fields.get("active")); }
         repository.flush();
+        audit.human(tenant,user.userId(),SITE_UPDATED,entity.id,before,MasterDataAudit.state(entity));
         return Site.of(entity);
     }
 
@@ -132,6 +143,7 @@ class MasterDataService {
         entity.id = UUID.randomUUID(); entity.tenantId = tenant; entity.customerId = customer;
         entity.siteId = request.siteId(); entity.createdAt = Instant.now();
         repository.insert(entity); repository.flush();
+        audit.human(tenant,user.userId(),CUSTOMER_SITE_ASSOCIATED,customer,snapshot("siteId",entity.siteId,"associationId",null,"associated",false),snapshot("siteId",entity.siteId,"associationId",entity.id,"associated",true));
         return CustomerSite.of(entity);
     }
 
@@ -143,6 +155,7 @@ class MasterDataService {
             throw MasterDataFailure.conflict();
         }
         repository.deleteAssociation(tenant, association);
+        audit.human(tenant,user.userId(),CUSTOMER_SITE_DISASSOCIATED,customer,snapshot("siteId",site,"associationId",association,"associated",true),snapshot("siteId",site,"associationId",association,"associated",false));
     }
 
     Location createLocation(AuthenticatedUserPrincipal user, UUID tenant, UUID site, CreateLocation request) {
@@ -155,6 +168,7 @@ class MasterDataService {
         entity.code = text(request.code(), "code", true);
         requireAssociation(entity);
         repository.insert(entity); repository.flush();
+        audit.human(tenant,user.userId(),LOCATION_CREATED,entity.id,null,MasterDataAudit.state(entity));
         return Location.of(entity);
     }
 
@@ -186,6 +200,7 @@ class MasterDataService {
         long expected = patch(fields, Set.of("expectedVersion", "name", "type", "code", "customerId", "active"));
         var entity = repository.resource(OperationalLocationEntity.class, tenant, id);
         entity.requireVersion(expected);
+        var before = MasterDataAudit.state(entity);
         var oldCustomer = entity.customerId;
         if (fields.containsKey("name")) { entity.name = text(fields.get("name"), "name", false); }
         if (fields.containsKey("type")) { entity.type = choice(fields.get("type"), "type", LOCATION_TYPES); }
@@ -195,6 +210,7 @@ class MasterDataService {
         // Inactive historical locations may retain an association removed since deactivation.
         if (entity.active || !Objects.equals(oldCustomer, entity.customerId)) { requireAssociation(entity); }
         repository.flush();
+        audit.human(tenant,user.userId(),LOCATION_UPDATED,entity.id,before,MasterDataAudit.state(entity));
         return Location.of(entity);
     }
 }
