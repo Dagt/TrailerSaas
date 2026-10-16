@@ -1,5 +1,8 @@
 # TrailerSaaS — UI Interaction and Content Standards
 
+**Approved visual vocabulary:** Fleet Simple (Option D): concise US English labels presented with calm light surfaces, clear blue actions and minimal decoration. No visual-only wording may imply fake live telemetry or unsupported state. See [design-system.md](design-system.md).
+
+
 **Status:** proposal; applies to all redesign issues. Users: Tenant Admin, Transport Operations, Customer Dispatcher, Road Driver, Yard Spotter. User-facing content in **US English**; code enum values remain unchanged.
 
 ## 1. Content voice
