@@ -2928,11 +2928,61 @@ paths:
     get:
       tags: [Audit]
       operationId: listAuditEvents
+      x-implementation-status: implemented-issue-61
+      description: >-
+        Fresh AUDIT_VIEW, ACTIVE Tenant and ACTIVE membership on every request.
+        Current grants permit Tenant Admin only; Customer Dispatcher, Driver and Yard
+        Spotter receive no Audit access. Tenant RLS and minimized per-action snapshots.
+        Read-only administrative history complements specialized operational timelines.
+        Closed filters, no duplicate query parameters. Stable occurredAt DESC/id DESC
+        database keyset; cursor bound to authenticated User, Tenant and all filters,
+        never authorization. Immutable anchor lookup; limit may change between pages.
+        Inclusive RFC3339 from/to; from must not exceed to. No arbitrary HTTP writes.
+      parameters:
+        - { name: actorUserId, in: query, schema: { type: string, format: uuid } }
+        - { name: actionCode, in: query, schema: { $ref: '#/components/schemas/AuditActionCode' } }
+        - { name: entityType, in: query, schema: { $ref: '#/components/schemas/AuditEntityType' } }
+        - { name: entityId, in: query, schema: { type: string, format: uuid } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+        - { name: cursor, in: query, schema: { type: string }, description: Opaque context-bound position; invalid or changed-context cursor is 400 VALIDATION_FAILED. }
       responses:
         '200':
-          $ref: '#/components/responses/PagedResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          description: Bounded page of authorized administrative Audit events
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditEventPage' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/audit-events/{auditEventId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - { name: auditEventId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Audit]
+      operationId: getAuditEvent
+      x-implementation-status: implemented-issue-61
+      description: >-
+        Fresh AUDIT_VIEW, ACTIVE Tenant and membership, same policy as list.
+        Foreign/unavailable UUID is generic 404 RESOURCE_NOT_FOUND. No query fields.
+        Historical actor User/membership IDs remain referenceable after disablement;
+        no current profile or private identity joins. SYSTEM/INTEGRATION never invent a human.
+        No HTTP creation, editing or deletion. Secrets and credential tokens are excluded.
+      responses:
+        '200':
+          description: Authorized immutable administrative event
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditEvent' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
 
   /api/v1/tenants/{tenantId}/yard/sites:
     parameters:
@@ -3343,6 +3393,25 @@ components:
             $ref: '#/components/schemas/PagedResponse'
 
   schemas:
+    AuditActionCode: {"type":"string","enum":["TENANT_SETTINGS_UPDATED","CUSTOMER_CREATED","CUSTOMER_UPDATED","CUSTOMER_SITE_ASSOCIATED","CUSTOMER_SITE_DISASSOCIATED","SITE_CREATED","SITE_UPDATED","LOCATION_CREATED","LOCATION_UPDATED","DRIVER_CREATED","DRIVER_UPDATED","DRIVER_USER_LINKED","DRIVER_USER_UNLINKED","TRACTOR_CREATED","TRACTOR_UPDATED","TRAILER_CREATED","TRAILER_UPDATED","TRAILER_QR_ISSUED","TRAILER_QR_REVOKED","INVITATION_CREATED","INVITATION_EXPIRED","INVITATION_REVOKED","INVITATION_ACCEPTED","MEMBERSHIP_CREATED"]}
+    AuditEntityType: {"type":"string","enum":["TENANT_SETTINGS","CUSTOMER","PHYSICAL_SITE","OPERATIONAL_LOCATION","DRIVER","TRACTOR","TRAILER","TRAILER_QR_IDENTITY","INVITATION","TENANT_MEMBERSHIP"]}
+    AuditActor: {"type":"object","additionalProperties":false,"required":["type","userId","membershipId"],"properties":{"type":{"type":"string","enum":["HUMAN_USER","SYSTEM","INTEGRATION"]},"userId":{"type":["string","null"],"format":"uuid"},"membershipId":{"type":["string","null"],"format":"uuid"}}}
+    AuditRole: {"type":"object","additionalProperties":false,"required":["roleCode","scopeType","customerId"],"properties":{"roleCode":{"type":"string","enum":["TENANT_ADMIN","TRANSPORT_OPERATIONS","CUSTOMER_DISPATCHER","YARD_SPOTTER","DRIVER"]},"scopeType":{"type":"string","enum":["TENANT","CUSTOMER"]},"customerId":{"type":["string","null"],"format":"uuid"}}}
+    AuditBusinessAddress: {"type":"object","additionalProperties":false,"required":["line1","line2","city","stateRegion","postalCode","countryCode"],"properties":{"line1":{"type":["string","null"]},"line2":{"type":["string","null"]},"city":{"type":["string","null"]},"stateRegion":{"type":["string","null"]},"postalCode":{"type":["string","null"]},"countryCode":{"type":["string","null"]}}}
+    AuditSettingsSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"staleTrailerThresholdHours":{"type":"integer","minimum":1},"defaultTimezone":{"type":["string","null"]},"version":{"type":"integer","minimum":0,"maximum":9223372036854775807}}}
+    AuditCustomerSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"name":{"type":"string"},"status":{"type":"string","enum":["ACTIVE","INACTIVE"]},"version":{"type":"integer","minimum":0,"maximum":9223372036854775807}}}
+    AuditSiteSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"name":{"type":"string"},"address":{"$ref":"#/components/schemas/AuditBusinessAddress"},"timezone":{"type":"string"},"latitude":{"type":["number","null"],"minimum":-90,"maximum":90},"longitude":{"type":["number","null"],"minimum":-180,"maximum":180},"geofenceRadiusM":{"type":["integer","null"],"minimum":1},"active":{"type":"boolean"},"version":{"type":"integer","minimum":0,"maximum":9223372036854775807}}}
+    AuditLocationSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"siteId":{"type":"string","format":"uuid"},"customerId":{"type":["string","null"],"format":"uuid"},"name":{"type":"string"},"type":{"type":"string","enum":["BASE","YARD","DOCK","CUSTOMER_AREA","SHOP","OTHER"]},"code":{"type":["string","null"]},"active":{"type":"boolean"},"version":{"type":"integer","minimum":0,"maximum":9223372036854775807}}}
+    AuditDriverSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"name":{"type":"string"},"userId":{"type":["string","null"],"format":"uuid"},"active":{"type":"boolean"},"licenseNumberPresent":{"type":"boolean"},"medicalCertificatePresent":{"type":"boolean"},"redactedChanges":{"type":"array","items":{"type":"string","enum":["licenseNumber","medicalCertificateExpires"]},"uniqueItems":true},"version":{"type":"integer","minimum":0,"maximum":9223372036854775807}}}
+    AuditTractorSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"operationalNumber":{"type":"string"},"active":{"type":"boolean"},"version":{"type":"integer","minimum":0,"maximum":9223372036854775807}}}
+    AuditTrailerSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"operationalNumber":{"type":"string"},"designatedCustomerId":{"type":["string","null"],"format":"uuid"},"trailerType":{"type":["string","null"]},"usagePurpose":{"type":["string","null"]},"active":{"type":"boolean"},"capabilityNotesPresent":{"type":"boolean"},"redactedChanges":{"type":"array","items":{"type":"string","enum":["capabilityNotes"]},"uniqueItems":true},"version":{"type":"integer","minimum":0,"maximum":9223372036854775807}}}
+    AuditQrSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"trailerId":{"type":"string","format":"uuid"},"active":{"type":"boolean"},"issuedAt":{"type":"string","format":"date-time"},"revokedAt":{"type":["string","null"],"format":"date-time"}}}
+    AuditInvitationSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"status":{"type":"string","enum":["PENDING","ACCEPTED","EXPIRED","REVOKED"]},"expiresAt":{"type":"string","format":"date-time"},"roles":{"type":"array","items":{"$ref":"#/components/schemas/AuditRole"}},"membershipId":{"type":["string","null"],"format":"uuid"}}}
+    AuditMembershipSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"userId":{"type":"string","format":"uuid"},"status":{"type":"string","enum":["ACTIVE","SUSPENDED","DISABLED"]},"roles":{"type":"array","items":{"$ref":"#/components/schemas/AuditRole"}}}}
+    AuditAssociationSnapshot: {"type":"object","additionalProperties":false,"required":[],"properties":{"siteId":{"type":"string","format":"uuid"},"associationId":{"type":["string","null"],"format":"uuid"},"associated":{"type":"boolean"}}}
+    AuditSnapshot: {"description":"Closed per-action whitelist. Raw licenses, medical values, free notes, invitation email/name, QR/FCM/Firebase tokens and secrets are excluded. Null beforeData for creations; snapshots bounded to 64 KiB. RedactedChanges names indicate actual edits without retaining sensitive values.","anyOf":[{"$ref":"#/components/schemas/AuditSettingsSnapshot"},{"$ref":"#/components/schemas/AuditCustomerSnapshot"},{"$ref":"#/components/schemas/AuditSiteSnapshot"},{"$ref":"#/components/schemas/AuditLocationSnapshot"},{"$ref":"#/components/schemas/AuditDriverSnapshot"},{"$ref":"#/components/schemas/AuditTractorSnapshot"},{"$ref":"#/components/schemas/AuditTrailerSnapshot"},{"$ref":"#/components/schemas/AuditQrSnapshot"},{"$ref":"#/components/schemas/AuditInvitationSnapshot"},{"$ref":"#/components/schemas/AuditMembershipSnapshot"},{"$ref":"#/components/schemas/AuditAssociationSnapshot"}]}
+    AuditEvent: {"type":"object","additionalProperties":false,"required":["id","actor","sourceType","actionCode","entityType","entityId","beforeData","afterData","reason","occurredAt"],"properties":{"id":{"type":"string","format":"uuid"},"actor":{"$ref":"#/components/schemas/AuditActor"},"sourceType":{"type":"string","enum":["USER_ACTION","MOBILE_AUTOMATION","SYSTEM_PROCESS","EXTERNAL_INTEGRATION"]},"actionCode":{"$ref":"#/components/schemas/AuditActionCode"},"entityType":{"$ref":"#/components/schemas/AuditEntityType"},"entityId":{"type":"string","format":"uuid"},"beforeData":{"anyOf":[{"$ref":"#/components/schemas/AuditSnapshot"},{"type":"null"}]},"afterData":{"$ref":"#/components/schemas/AuditSnapshot"},"reason":{"type":["string","null"],"maxLength":4000},"occurredAt":{"type":"string","format":"date-time"}}}
+    AuditEventPage: {"type":"object","additionalProperties":false,"required":["items","nextCursor"],"properties":{"items":{"type":"array","maxItems":100,"items":{"$ref":"#/components/schemas/AuditEvent"}},"nextCursor":{"type":["string","null"]}}}
     CustomerDeliveryDocument:
       type: object
       additionalProperties: false

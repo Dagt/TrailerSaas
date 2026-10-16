@@ -72,7 +72,7 @@ Exit: equipment/locations exist and durable evidence/background infrastructure i
 #31 is merged/complete via [PR #85](https://github.com/Dagt/TrailerSaas/pull/85).
 #32 is merged/complete via [PR #86](https://github.com/Dagt/TrailerSaas/pull/86).
 #33 is merged/complete via [PR #87](https://github.com/Dagt/TrailerSaas/pull/87).
-Generic durable Audit persistence/query remains #61.
+Generic durable Audit persistence/query is implemented on Draft PR #115 (#61); specialized histories remain unchanged.
 
 ### Trips
 - #34 → #35 → #36 → #37
@@ -112,7 +112,7 @@ CI process on [PR #110](https://github.com/Dagt/TrailerSaas/pull/110); see
 Alerts/recovery and API/Web integration on [PR #111](https://github.com/Dagt/TrailerSaas/pull/111);
 see [acceptance/configuration](../backend/issue-57-stale-trailer-detector.md).
 OQ-059 recipients/escalation and human write-role grants remain pending; zero
-automatic production recipients. #61/retention remain deferred; #58 shell implementation is tracked below.
+automatic production recipients. #61 implementation is tracked below; retention remains deferred; #58 shell implementation is tracked below.
 
 ## Wave 4 — Mobile synchronization foundation
 
@@ -144,8 +144,9 @@ Validate snapshot behavior and physical-state conflicts carefully.
 
 - #58 Customer portal shell merged through [PR #112](https://github.com/Dagt/TrailerSaas/pull/112); [architecture/evidence](../web/issue-58-customer-portal-shell.md).
 - #59 Customer Order/commercial workflows merged through [PR #113](https://github.com/Dagt/TrailerSaas/pull/113), base `c5777cef44a7737ebe67dc876ff0da12dff737e7`; [scope, V28, acceptance and validation](../web/issue-59-customer-orders-workflows.md). Historical owner-deferred Billing limits remain documented; merge is not claimed as remote Full CI evidence.
-- #60 Customer inventory, scoped delivery catalogs and exact accepted evidence views implemented on Draft [PR #114](https://github.com/Dagt/TrailerSaas/pull/114); [V29, security matrix, final validation policy and limits](../web/issue-60-customer-inventory-deliveries-documents.md). No merge; hosted Full CI remains a separate gate while Billing is owner-deferred.
-- #61 → #62 Audit/history
+- #60 Customer inventory, scoped delivery catalogs and exact accepted evidence views merged through [PR #114](https://github.com/Dagt/TrailerSaas/pull/114); [V29, security matrix, final validation policy and limits](../web/issue-60-customer-inventory-deliveries-documents.md). Merge `a7598b3dd7e1bf10376d53c1a845ef4d24aefc83`; hosted Full CI remains a separate gate while Billing is owner-deferred.
+- #61 Audit Writer/query API implemented on Draft [PR #115](https://github.com/Dagt/TrailerSaas/pull/115); [V30, action matrix, security and validation](../backend/issue-61-audit-writer-query-api.md). Billing-blocked hosted Actions remain NO VERIFICADO; no merge.
+- #62 Admin Audit UI remains deferred.
 
 These rely heavily on the stable domain/API implemented earlier.
 
