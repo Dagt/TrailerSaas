@@ -1,5 +1,8 @@
 # TrailerSaaS — Visual Acceptance and QA Criteria
 
+**Approved presentation baseline:** Fleet Simple (Option D), selected 2026-10-16. Review **light sidebar**, white panel/table hierarchy, calm blue primary buttons, restrained teal accents and consistent semantic status colors on every affected Web route and representative Flutter surface. Dark heavy navigation or characterless sparse screens do not meet visual acceptance. See [design-system.md](design-system.md).
+
+
 **Goal:** objective, repeatable review of every visual redesign PR, without weakening functional, privacy or operational correctness. Target: WCAG 2.2 AA for applicable Web accessibility, plus practical touch/legibility verification in Flutter.
 
 ## 1. Required acceptance checklist per route
