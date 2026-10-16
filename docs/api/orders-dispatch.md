@@ -878,3 +878,14 @@ is never authorization. Unknown/foreign resources retain safe errors.
 These commercial mutations have no general durable replay guarantee. No fabricated
 Idempotency-Key or automatic POST retry is introduced. After timeout/lost/malformed
 ACK retain the draft, block repeated sending and reconcile with authorized reads.
+
+## Customer delivery read extension (#60)
+
+Per-Order progress remains unchanged. The Customer portal additionally uses
+bounded `GET /customers/{customerId}/deliveries` and composite
+`GET /customers/{customerId}/deliveries/{orderId}/{stopId}` under the current Tenant
+for efficient cross-Order discovery. Actual mappings and fresh existing scoped
+Order capability are required; no shared Trip directory or Driver/Tractor data.
+Stop milestones never imply administrative Order completion. Accepted-file
+discovery is separately document-authorized and all-linked-resource scoped;
+see [contracts, pagination and privacy](../web/issue-60-customer-inventory-deliveries-documents.md).

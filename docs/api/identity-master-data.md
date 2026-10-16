@@ -730,3 +730,25 @@ including for dual-role users, without downloading a Tenant-wide directory and
 filtering it. Each selected Customer is revalidated before its protected routes.
 Server authorization remains authoritative; /me roles only suggest navigation.
 See [portal architecture and evidence](../web/issue-58-customer-portal-shell.md).
+# Customer Trailer read extension — #60
+
+Existing Trailer list/detail/timeline are reused. List accepts optional
+`limit` (default50/max100 when paging) and `cursor`, ordered UUID ascending.
+Legacy calls without either retain their unpaged normalized-number order.
+The Customer Portal always pages and sends explicit `designatedCustomerId`.
+Detail/timeline accept optional `customerId`, narrowing even additive roles to
+that currently authorized Customer. No new broad read capability or directory.
+
+Customer projections redact capability notes, Driver/Tractor identities and
+coupling detail while preserving factual couplingState. Current and Last Known
+Locations remain distinct; unauthorized Customer-specific references are NULL.
+Location filters cannot probe hidden IDs. Customer timeline is limited to the
+current designation period and physical occurredAt, withholding shared/foreign
+Trip work and late older facts. Only whitelisted state changes and authorized
+previous/new Location labels are returned. Cursor anchors are reauthorized for
+the same Trailer; internal full history stays intact.
+
+Fresh ACTIVE Tenant/membership/role checks remain mandatory. The selected browser
+Customer and cursor never confer authorization. OpenAPI and
+[security/regression evidence](../web/issue-60-customer-inventory-deliveries-documents.md)
+describe the exact read-only extension.

@@ -290,3 +290,24 @@ evidence linking/workflows #49/#53 remain dependencies, with no upload, R2 or
 document placeholders added here. Trip links use actual coupling or movement
 fact references; planned Manifest Orders link to the existing read-only Order
 route and never imply physical cargo or coupling.
+# Customer inventory, deliveries and accepted evidence (#60)
+
+The existing `/customer` shell now has real Trailer inventory/detail/history,
+delivery list/composite Order-Stop detail, document index and metadata/viewer.
+Orders link to actual mapped deliveries and designated planned Trailers.
+Dashboard adds five-row authorized previews, never page-length totals. Existing
+Firebase/session/QueryClient, responsive semantic tables and error states are
+reused; no second app or new UI dependencies.
+
+`readQueries` always requests bounded Customer-scoped SQL reads, validates strict
+DTO ownership and uses UID/internal User/Tenant/Customer/resource/filter keys.
+Scope change/logout cancels/removes old queries and unmounts grants. Download
+authorization is explicit and bypasses Query/mutation cache; signed URLs remain
+component-only, expire and cannot survive account changes. R2-disabled reads
+remain useful; download reports unavailable without fabricating a file.
+
+Current Location is distinct from Last Known, uploaded file from accepted POD,
+and delivered Stop from administratively completed Order. No maps/tracking,
+physical controls, Customer uploads or fake operational data. Tests use jsdom;
+deployed Firebase/private R2 and real desktop/tablet QA remain release work #65.
+See [API, V29, acceptance and validation policy](../docs/web/issue-60-customer-inventory-deliveries-documents.md).
