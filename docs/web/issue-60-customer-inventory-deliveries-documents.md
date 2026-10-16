@@ -212,6 +212,14 @@ administrative reads and strict Tenant migration inventory. A subsequent
 33-case Customer read run also passed after adding a 75-delivery two-page
 regression. These overlapping runs are not added together as a suite total.
 
+The first full candidate exposed a stale application-startup assertion: the
+current migration version was correctly V29 but its description still expected
+V28's `unallocated order request revisions`. The assertion now requires V29's
+exact `accepted delivery document references`; separate credentials, runtime
+role, Flyway validation and table inventory assertions are retained. The failed
+candidate log is preserved. All full local suites must rerun on the corrective
+published HEAD; prior Mobile/Web/OpenAPI results do not substitute for that run.
+
 Focused tests during implementation; freeze/publish the final candidate, then run
 complete local Backend/Web/OpenAPI/Mobile/CI policy suites once. Any corrective
 commit invalidates prior final-SHA evidence. Record actual counts/logs in the PR.
