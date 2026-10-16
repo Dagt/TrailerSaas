@@ -50,6 +50,11 @@ describe('filters and real cursor pages', () => {
     const from = '2026-10-16T13:00:00.123-05:00', to = '2026-10-16T18:00:00.123Z'
     expect(parseFilters(new URLSearchParams({ from, to }))).toEqual({ from, to })
   })
+  it('compares nanosecond boundaries and equivalent offset instants without Date rounding', () => {
+    expect(() => parseFilters(new URLSearchParams({ from: '2026-10-16T13:00:00.123456789-05:00', to: '2026-10-16T18:00:00.123456788Z' }))).toThrow()
+    expect(parseFilters(new URLSearchParams({ from: '2026-10-16T13:00:00.123456789-05:00', to: '2026-10-16T18:00:00.123456789Z' })).to).toBe('2026-10-16T18:00:00.123456789Z')
+  })
+  it.each(['2026-10-16T18:00Z', '2026-10-16T18:00:00.1234567890Z'])('rejects a timestamp unsupported by the RFC3339 Instant boundary: %s', from => expect(() => parseFilters(new URLSearchParams({ from }))).toThrow())
   it.each(['actorUserId=invalid', 'entityId=invalid', 'from=2026-10-16T18:00:00', 'from=2026-10-17T00:00:00Z&to=2026-10-16T00:00:00Z', 'actionCode=FAKE', 'entityType=ORDER', 'actorUserId=x&actorUserId=y', 'cursor=fabricated', 'from=%2B10000-01-01T00:00:00Z'])('rejects invalid URL filter %s', value => expect(() => parseFilters(new URLSearchParams(value))).toThrow())
   const owner = { firebaseUid: 'firebase', userId: actorId, tenantId: actorId }, signal = new AbortController().signal
   it('sends only the actual read contract and validates the detail identity', async () => {

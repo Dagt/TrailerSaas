@@ -69,8 +69,8 @@ class TripTimelinePostgresTests extends PostgresIntegrationTest {
     assertThat(get("?includeHistory=false&includeHistory=true", "admin").statusCode()).isEqualTo(400);
   }
   @Test void equalTimestampAndEqualUuidAcrossBothTablesDoNotLoseAnEvent() throws Exception {
-    var same = UUID.fromString("80000000-0000-4000-8000-000000000001");
-    var lower = UUID.fromString("10000000-0000-4000-8000-000000000001");
+    var same = new UUID(0x8000000000004000L, trip.getLeastSignificantBits());
+    var lower = new UUID(0x1000000000004000L, trip.getLeastSignificantBits());
     event(same, true, at); event(same, false, at); event(lower, false, at);
     var types = new ArrayList<String>(); String cursor = null;
     for (int i = 0; i < 3; i++) {
@@ -81,7 +81,7 @@ class TripTimelinePostgresTests extends PostgresIntegrationTest {
   }
   @Test void multipleSqlBoundedPagesRetainDeterministicUnionOrder() throws Exception {
     var expected = new ArrayList<String>();
-    for (int i = 1; i <= 206; i++) { var id = new UUID(0, i); expected.add(id.toString()); event(id, i % 2 == 0, at.plusSeconds(i / 5)); }
+    for (int i = 1; i <= 206; i++) { var id = new UUID(trip.getMostSignificantBits(), i); expected.add(id.toString()); event(id, i % 2 == 0, at.plusSeconds(i / 5)); }
     var actual = new ArrayList<String>(); String cursor = null; int pages = 0;
     do {
       var response = get("/timeline?limit=100" + (cursor == null ? "" : "&cursor=" + cursor), "ops"); assertThat(response.statusCode()).isEqualTo(200);
@@ -118,7 +118,7 @@ class TripTimelinePostgresTests extends PostgresIntegrationTest {
     var body = JsonPath.parse(response.body()); assertThat(body.<List<?>>read("$.items")).isEmpty(); assertThat(body.<String>read("$.nextCursor")).isNull();
   }
   @Test void queryCountStaysBoundedAndDetailOptOutNeverLoadsHistory() throws Exception {
-    for (int i = 1; i <= 60; i++) event(new UUID(0, i), i % 2 == 0, at.plusSeconds(i));
+    for (int i = 1; i <= 60; i++) event(new UUID(trip.getMostSignificantBits(), i), i % 2 == 0, at.plusSeconds(i));
     var stats = emf.unwrap(org.hibernate.SessionFactory.class).getStatistics();
     var actor = new AuthenticatedUserPrincipal(user, "fixture-" + user, null, null);
     stats.clear(); service.timelinePage(actor, tenant, trip, Map.of("limit", "2")); long small = stats.getPrepareStatementCount();

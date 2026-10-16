@@ -3,7 +3,7 @@ import { ApiProblem } from '../../../shared/api/client'
 
 // Closed catalogs and per-action whitelists from the accepted #61 OpenAPI.
 export const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
-export const instant = z.iso.datetime({ offset: true }).regex(/^\d{4}-/)
+export const instant = z.iso.datetime({ offset: true }).regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/).refine(v => Number.isFinite(Date.parse(v)))
 export const cursor = z.string().min(1).max(512).regex(/^[A-Za-z0-9_-]+$/)
 export const auditActionCode = z.enum(["TENANT_SETTINGS_UPDATED", "CUSTOMER_CREATED", "CUSTOMER_UPDATED", "CUSTOMER_SITE_ASSOCIATED", "CUSTOMER_SITE_DISASSOCIATED", "SITE_CREATED", "SITE_UPDATED", "LOCATION_CREATED", "LOCATION_UPDATED", "DRIVER_CREATED", "DRIVER_UPDATED", "DRIVER_USER_LINKED", "DRIVER_USER_UNLINKED", "TRACTOR_CREATED", "TRACTOR_UPDATED", "TRAILER_CREATED", "TRAILER_UPDATED", "TRAILER_QR_ISSUED", "TRAILER_QR_REVOKED", "INVITATION_CREATED", "INVITATION_EXPIRED", "INVITATION_REVOKED", "INVITATION_ACCEPTED", "MEMBERSHIP_CREATED"])
 export const auditEntityType = z.enum(["TENANT_SETTINGS", "CUSTOMER", "PHYSICAL_SITE", "OPERATIONAL_LOCATION", "DRIVER", "TRACTOR", "TRAILER", "TRAILER_QR_IDENTITY", "INVITATION", "TENANT_MEMBERSHIP"])
@@ -57,7 +57,13 @@ export function validated<T>(schema: z.ZodType<T>, value: unknown): T {
   return result.data
 }
 export const filterSchema = z.object({ actorUserId: uuid.optional(), actionCode: auditActionCode.optional(), entityType: auditEntityType.optional(), entityId: uuid.optional(), from: instant.optional(), to: instant.optional() }).strict()
-  .refine(v => !v.from || !v.to || Date.parse(v.from) <= Date.parse(v.to), 'From must be earlier than or equal to To.')
+  .refine(v => !v.from || !v.to || !instant.safeParse(v.from).success || !instant.safeParse(v.to).success || instantOrder(v.from) <= instantOrder(v.to), 'From must be earlier than or equal to To.')
+function instantOrder(value: string): bigint {
+  // Date is used only for whole seconds; preserve Instant's nine fractional digits.
+  const fraction = value.match(/\.(\d+)(?=Z|[+-])/)?.[1] ?? ''
+  const wholeSecond = value.replace(/\.\d+(?=Z|[+-])/, '')
+  return BigInt(Date.parse(wholeSecond)) * 1_000_000n + BigInt(fraction.padEnd(9, '0'))
+}
 export type AuditFilters = z.infer<typeof filterSchema>
 export function parseFilters(search: URLSearchParams): AuditFilters {
   const entries = [...search.entries()]

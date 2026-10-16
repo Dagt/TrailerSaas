@@ -40,6 +40,7 @@ it('renders historical actor, exact time, null reason and a readable before/afte
   expect(screen.getByText('No reason recorded')).toBeInTheDocument()
   expect(screen.getByText('2026-10-16T18:00:00Z')).toBeInTheDocument()
   expect(document.querySelector('time')?.getAttribute('dateTime')).toBe('2026-10-16T18:00:00Z')
+  expect(screen.getByRole('link', { name: 'View entity history' })).toHaveAttribute('href', `/admin/audit?entityType=CUSTOMER&entityId=${resourceId}`)
 })
 it.each(['SYSTEM', 'INTEGRATION'])('renders %s with no invented human actor', async type => {
   const f = auditFixture(`/admin/audit/${auditId}`)
@@ -161,4 +162,50 @@ it('provides labelled keyboard navigation and an honest empty state', async () =
   screen.getByLabelText('Actor User ID').focus(); await u.tab()
   expect(screen.getByLabelText('Action code')).toHaveFocus()
   expect(screen.getByRole('form', { name: 'Audit filters' })).toBeInTheDocument()
+})
+it('cancels an old account response before rendering the new account context', async () => {
+  const f = auditFixture(); let finish!: (r: Response) => void
+  f.handler(() => new Promise(resolve => { finish = resolve }))
+  await waitFor(() => expect(finish).toBeDefined())
+  const pending = f.requests.find(r => r.path.includes('/audit-events'))!
+  f.handler(async () => json({ items: [], nextCursor: null }))
+  await act(async () => f.auth.emit({ uid: 'different-firebase-user' }))
+  await screen.findByText('No administrative changes match these filters.')
+  await act(async () => finish(json({ items: [auditEvent()], nextCursor: null })))
+  expect(pending.signal?.aborted).toBe(true)
+  expect(screen.queryByText(`User ${auditUser}`)).not.toBeInTheDocument()
+  expect(f.cache.getQueryCache().getAll().filter(q => q.queryKey[0] === 'audit').every(q => q.queryKey[1] === 'different-firebase-user')).toBe(true)
+})
+it('restarts an invalid server cursor from the initial page only', async () => {
+  const u = userEvent.setup(), f = auditFixture()
+  f.handler(async url => url.searchParams.has('cursor') ? json({ code: 'VALIDATION_FAILED' }, 400) : json({ items: [auditEvent()], nextCursor: 'initial' }))
+  await u.click(await screen.findByRole('button', { name: 'Load more Audit events' }))
+  await screen.findByText('The history cursor or filters are no longer valid. Restart the query or review the filters.')
+  await u.click(screen.getByRole('button', { name: 'Restart history query' }))
+  await screen.findByRole('table')
+  expect(new URL('https://test' + f.requests.at(-1)!.path).searchParams.has('cursor')).toBe(false)
+  expect(f.requests.filter(r => r.path.includes('cursor='))).toHaveLength(1)
+})
+it('rejects an invalid detail UUID without requesting a resource', async () => {
+  const f = auditFixture('/admin/audit/not-a-uuid')
+  await screen.findByRole('heading', { name: 'Audit event unavailable' })
+  expect(f.requests.some(r => r.path.includes('/audit-events'))).toBe(false)
+})
+it('preserves the real filter URL when opening an event and returning', async () => {
+  const u = userEvent.setup(), f = auditFixture('/admin/audit?entityType=CUSTOMER')
+  await u.click(await screen.findByRole('link', { name: `View Audit event ${auditId}` }))
+  await screen.findByRole('heading', { name: 'Audit event detail' })
+  await u.click(screen.getByRole('link', { name: 'Back to Audit' }))
+  expect(f.router.state.location.search).toBe('?entityType=CUSTOMER')
+  expect(await screen.findByLabelText('Entity type')).toHaveValue('CUSTOMER')
+})
+it('refreshes current access after a server denial and removes revoked data', async () => {
+  const u = userEvent.setup(), f = auditFixture()
+  await screen.findByRole('table')
+  f.memberships[0]!.status = 'DISABLED'
+  f.handler(async () => json({ detail: 'unavailable' }, 403))
+  await u.click(screen.getByRole('button', { name: 'Refresh Audit' }))
+  await screen.findByRole('heading', { name: 'Admin access is not available' })
+  expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  await waitFor(() => expect(f.cache.getQueryCache().getAll().some(q => q.queryKey[0] === 'audit')).toBe(false))
 })
