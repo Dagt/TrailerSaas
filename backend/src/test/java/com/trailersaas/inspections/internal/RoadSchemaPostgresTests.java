@@ -26,7 +26,7 @@ class RoadSchemaPostgresTests extends PostgresIntegrationTest {
     db.execute("INSERT INTO documents(id,tenant_id,object_key,document_type,upload_status,source_type,created_at) VALUES(?,?,?,'FUEL_RECEIPT','PENDING','SYSTEM_PROCESS',now())",document,tenant,document.toString());
   }
   @Test void exactFuelColumnsAndHistory() throws Exception {
-    flyway.validate();assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("29");
+    flyway.validate();assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("30");
     try(var c=flyway.getConfiguration().getDataSource().getConnection();var q=c.createStatement()) {
       var columns=new ArrayList<String>();try(var r=q.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='fuel_events' ORDER BY ordinal_position")){while(r.next())columns.add(r.getString(1));}
       assertThat(columns).containsExactly("id","tenant_id","driver_id","tractor_id","trip_id","odometer","receipt_document_id","occurred_at","created_at");

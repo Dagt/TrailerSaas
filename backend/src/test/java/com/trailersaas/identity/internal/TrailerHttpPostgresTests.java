@@ -227,7 +227,13 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
             problem(scan(token,TOKEN),404,"RESOURCE_NOT_FOUND");assertThat(body(scan(token,TOKEN))).containsEntry("detail",detail);
         }
         f.db.execute("DELETE FROM role_assignments WHERE membership_id=?",membership);
-        f.db.execute("DELETE FROM tenant_memberships WHERE id=?",membership);
+        // #61 retains historical actor/membership references. Prove deletion is denied,
+        // then exercise the original no-membership QR denial with a real unassigned User.
+        assertThatThrownBy(()->f.db.execute("DELETE FROM tenant_memberships WHERE id=?",membership))
+                .isInstanceOf(java.sql.SQLException.class);
+        assertThat(f.db.value("SELECT count(*) FROM audit_events WHERE actor_membership_id=?",membership)).isEqualTo(2L);
+        var unassigned=f.db.user();
+        when(verifier.verify(TOKEN)).thenReturn(new VerifiedFirebaseIdentity("fixture-"+unassigned,null,null));
         problem(scan(token,TOKEN),404,"RESOURCE_NOT_FOUND");
         problem(scan("AAAAAAAAAAAAAAAAAAAAAA",TOKEN),404,"RESOURCE_NOT_FOUND");
         problem(scan("synthetic-secret-qr-token",TOKEN),400,"VALIDATION_FAILED");

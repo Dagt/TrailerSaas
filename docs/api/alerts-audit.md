@@ -143,7 +143,8 @@ Returns:
 - reason;
 - timestamp.
 
-Audit is read-only.
+Audit is read-only. Implemented by #61 (V30); see the precise implementation
+boundary below. No client creation, editing or deletion routes exist.
 
 ## 8. Operational timeline vs Audit
 
@@ -166,6 +167,53 @@ Customer Dispatcher must not receive:
 - internal administrative metadata unrelated to its Customer scope.
 
 Driver audit visibility, if exposed at all, should be limited to own operational actions.
+
+### #61 implemented Audit boundary
+
+Both GET routes require current `AUDIT_VIEW`, ACTIVE membership and ACTIVE Tenant
+under runtime PostgreSQL RLS on every request. Current grants authorize Tenant
+Admin only. Customer Dispatcher, Driver, Yard Spotter and Transport Operations
+have no general Audit access. Customer-scoped Audit is denied pending an explicit
+future grant model; the server does not invent a filtered Customer subset.
+
+List accepts only `actorUserId`, `actionCode`, `entityType`, `entityId`, `from`,
+`to`, `limit`, `cursor`. UUIDs are canonical, actions/entities use the closed
+OpenAPI catalog, dates are RFC3339 instants and inclusive (`from <= to`).
+Default limit 50, range 1–100. Duplicate/unknown query fields, invalid values or
+malformed/changed-context cursors return 400 `VALIDATION_FAILED`. Detail accepts
+no query fields. Firebase authentication failures return 401, authorization
+failures 403; foreign/unavailable event UUIDs return generic 404
+`RESOURCE_NOT_FOUND`, with no foreign metadata.
+
+The response is `{items, nextCursor}`; there is no invented total. SQL orders by
+`occurred_at DESC, id DESC`, fetching limit+1. An existing `ReadCursor` identifies
+an immutable event anchor and binds User/Tenant/filter context; the timestamp is
+read from that authorized anchor rather than trusted from the browser. Page size
+may change. A cursor never authorizes access. Concurrent inserts can appear on a
+new first page; continuation is stable over its immutable older anchor.
+
+Each event returns `id`, `actor:{type,userId,membershipId}`, `sourceType`,
+`actionCode`, `entityType`, `entityId`, `beforeData`, `afterData`, `reason`,
+`occurredAt`. Human provenance retains the actual global User and acting Tenant
+membership, including after membership disablement; no current profile name is
+misrepresented as a historical name. SYSTEM/INTEGRATION have null human IDs and
+SYSTEM_PROCESS/EXTERNAL_INTEGRATION respectively. The time comes from PostgreSQL.
+None of these fields can be supplied through an Audit HTTP write API.
+
+Snapshots are explicit per-action whitelists, bounded to 64 KiB each. Before is
+null for creation. Settings, Customer/Site/Location, Driver/Tractor administrative
+data, Trailer metadata/QR lifecycle and invitation/onboarding mutations are
+instrumented in their existing transactions. License/medical values, free-form
+Trailer notes, invitation email/display name/token/hash, opaque QR tokens,
+Firebase/FCM tokens, credentials, signed URLs and documents are not copied.
+Presence flags and `redactedChanges` identify actual sensitive-field edits without
+retaining their values. Reason is null unless actually supplied by a trusted
+internal producer; existing HTTP commands are not extended to fabricate reasons.
+
+Specialized Trailer movements/corrections/designations, Orders revisions, Trip
+events, Yard Checks, shifts and physical evidence retain their own histories.
+They are not duplicated into Audit. There is no backfill pretending to know past
+actors/before values. See the [action matrix and transaction evidence](../backend/issue-61-audit-writer-query-api.md).
 
 ## 10. Alert creation
 

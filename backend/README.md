@@ -1293,3 +1293,14 @@ V1–V28 and old receipts remain intact; ambiguous links are never backfilled.
 Existing metadata/download routes support selected `customerId` with exact
 accepted-file/all-links checks. No new physical command, event ledger or download
 transport. [Architecture, HTTP contracts, migration and tests](../docs/web/issue-60-customer-inventory-deliveries-documents.md).
+
+# Administrative Audit (#61)
+
+V30 adds forced-RLS append-only audit_events and historical User/membership
+attribution. Public AuditWriter joins the required existing transaction; explicit
+owner snapshots instrument Settings, master data, equipment metadata/QR and real
+invitation onboarding. No duplicate operational histories or new role grants.
+GET Tenant audit-events list/detail requires fresh AUDIT_VIEW and ACTIVE Tenant/
+membership, with bounded context-bound keysets, minimized snapshots and safe
+foreign-resource errors. No client writes or Audit UI. See [architecture, action
+matrix, privacy, V29 upgrade and validation](../docs/backend/issue-61-audit-writer-query-api.md).

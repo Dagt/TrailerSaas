@@ -31,7 +31,7 @@ class OutboxSchemaPostgresTests extends PostgresIntegrationTest {
 
     @Test void migrationAndHistoricalChecksumsAreIntact() throws Exception {
         flyway.validate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("29");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("30");
         var hashes = new Properties();
         try (var stream = getClass().getResourceAsStream("/jobs/historical-migrations.sha256")) { hashes.load(stream); }
         assertThat(hashes).hasSize(24);

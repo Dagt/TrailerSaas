@@ -1030,9 +1030,9 @@ class TripOperationalPostgresTests extends PostgresIntegrationTest {
   }
 
   @Test
-  void exactV15ColumnsGrantsRlsAndNoFutureTables() throws Exception {
+  void exactOperationalColumnsGrantsRlsAndAuditBoundary() throws Exception {
     flyway.validate();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("29");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("30");
     var columns =
         Map.of(
             "trip_operational_events",
@@ -1101,10 +1101,9 @@ class TripOperationalPostgresTests extends PostgresIntegrationTest {
         .isEqualTo(false);
     assertThat(f.db.value("SELECT has_schema_privilege(?,'public','CREATE')", RUNTIME_USERNAME))
         .isEqualTo(false);
-    for (var table :
-        List.of(
-            "audit_events"))
-      assertThat(f.db.value("SELECT to_regclass(?)", table)).isNull();
+    // #61 implements the previously reserved Audit table, without duplicating Trip history.
+    assertThat(f.db.value("SELECT to_regclass('audit_events')::text")).isEqualTo("audit_events");
+    assertThat(f.db.value("SELECT count(*) FROM audit_events WHERE tenant_id=?", tenant)).isEqualTo(0L);
     assertThat(f.db.value("SELECT to_regclass('outbox_jobs')::text")).isEqualTo("outbox_jobs");
     assertThat(f.db.value("SELECT count(*) FROM outbox_jobs WHERE tenant_id=?",tenant)).isEqualTo(0L);
     assertThat(f.db.value("SELECT to_regclass('trip_stop_events')::text")).isEqualTo("trip_stop_events");
