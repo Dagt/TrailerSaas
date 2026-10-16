@@ -32,8 +32,9 @@ change or browser mutation was introduced. Operations and Customer have no Audit
 navigation or improvised Customer Audit subset.
 
 Admin now reuses the existing validated `/me` query, rechecking on focus,
-reconnect and every 60 seconds while foregrounded. An inactive Tenant, suspended/
-disabled membership or removed capability removes protected content. A403 Audit
+reconnect and every 60 seconds while foregrounded. An inactive Tenant removes protected Audit content; existing CANDIDATE Tenant
+bootstrap administration remains available under its unchanged Backend rules. A
+suspended/disabled membership or removed capability also removes Audit content. A403 Audit
 read triggers identity revalidation. Authentication/expired-session behavior stays
 with the shared Firebase boundary; neither snapshots nor credentials are logged
 or stored in browser storage.
@@ -185,7 +186,14 @@ isolation without changing assertions or production behavior. Its failure log
 and 19-test passing rerun are retained. Two intermediate existing Web navigation
 assertions caught duplicated explanatory copy; the copy was fixed and the full
 169-test affected UI subset passed, followed by 75 Audit tests including exact
-nanosecond bounds. Broader Backend and final full-source results are recorded in the PR and
+nanosecond bounds. Final compatibility review reproduced an Admin regression:
+/me's tenantActive=false also includes CANDIDATE, whose existing bootstrap
+administration must remain usable. ACTIVE-only gating was moved specifically to
+Audit navigation/routes, retaining the original Admin eligibility. A failing
+Settings-navigation regression and its complete85-test Admin/Audit passing rerun
+are preserved. The earlier full491-Web/73-OpenAPI/12-policy candidate and its
+interrupted Backend run are superseded, never reused as final-HEAD approval.
+All five suites are rerun for the corrected published candidate. Broader Backend and final full-source results are recorded in the PR and
 external evidence archive, preserving intermediate failures and corrections.
 
 ## Scope, diagnostics and final release boundary

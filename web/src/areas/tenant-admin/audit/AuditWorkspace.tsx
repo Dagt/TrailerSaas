@@ -11,7 +11,7 @@ import { auditDiff, canonical, label, localTime } from './diff'
 
 export function AuditWorkspace() {
   const tenant = useAdminTenant(), userId = useAdminIdentity(), { identity } = useAuth(), { auditEventId } = useParams()
-  if (!tenant.capabilities?.includes('AUDIT_VIEW')) return <EmptyState><h1>Audit access is not available</h1><p>Your current membership does not grant Audit viewing.</p></EmptyState>
+  if (tenant.tenantActive === false || !tenant.capabilities?.includes('AUDIT_VIEW')) return <EmptyState><h1>Audit access is not available</h1><p>Audit requires an active Tenant and your current membership's Audit viewing capability.</p></EmptyState>
   const owner: AuditOwner = { firebaseUid: identity!.uid, userId, tenantId: tenant.tenantId }
   return <AuditContent key={`${owner.firebaseUid}:${userId}:${owner.tenantId}:${auditEventId ?? 'list'}`} owner={owner} id={auditEventId} />
 }

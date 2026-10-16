@@ -21,7 +21,7 @@ function AdminDirectory() {
   const me = useCurrentUser(60_000)
   if (me.isPending) return <LoadingState />
   if (me.isError) return <ErrorBanner error={me.error} retry={() => void me.refetch()} />
-  const eligible = me.data.memberships.filter(m => m.tenantActive !== false && m.status === 'ACTIVE' && m.roles.some(r => r.roleCode === 'TENANT_ADMIN' && r.scopeType === 'TENANT'))
+  const eligible = me.data.memberships.filter(m => m.status === 'ACTIVE' && m.roles.some(r => r.roleCode === 'TENANT_ADMIN' && r.scopeType === 'TENANT'))
   const current = eligible.find(m => m.tenantId === selected) ?? (eligible.length === 1 ? eligible[0] : undefined)
   const changeTenant = (id: string) => {
     void cache.cancelQueries({ queryKey: ['tenant'] })
@@ -42,7 +42,7 @@ function AdminDirectory() {
       : !current ? <EmptyState><h1>Select a Tenant</h1><p>Choose the workspace you want to manage.</p></EmptyState>
         : <AdminIdentity.Provider value={me.data.userId}><AdminTenant.Provider value={current}><div className="admin-workspace" key={`${me.data.userId}:${current.tenantId}`}>
           <nav aria-label="Admin navigation">{['Customers', 'Locations', 'Drivers', 'Tractors', 'Trailers', 'Settings'].map(label =>
-            <NavLink key={label} to={`/admin/${label.toLowerCase()}`}>{label}</NavLink>)}{current.capabilities?.includes('ALERT_VIEW') && <NavLink to="/admin/alerts">Alerts</NavLink>}{current.capabilities?.includes('AUDIT_VIEW') && <NavLink to="/admin/audit">Audit</NavLink>}</nav>
+            <NavLink key={label} to={`/admin/${label.toLowerCase()}`}>{label}</NavLink>)}{current.capabilities?.includes('ALERT_VIEW') && <NavLink to="/admin/alerts">Alerts</NavLink>}{current.tenantActive !== false && current.capabilities?.includes('AUDIT_VIEW') && <NavLink to="/admin/audit">Audit</NavLink>}</nav>
           <div className="admin-content"><Outlet /></div>
         </div></AdminTenant.Provider></AdminIdentity.Provider>}
   </section>
