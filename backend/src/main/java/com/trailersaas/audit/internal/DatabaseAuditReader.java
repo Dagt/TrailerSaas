@@ -26,7 +26,7 @@ class DatabaseAuditReader implements AuditReader {
         try {
             for(var field:List.of("actorUserId","entityId"))if(raw.containsKey(field)){UUID id=UUID.fromString(raw.get(field));if(!id.toString().equals(raw.get(field)))throw AuditQueryFailure.invalid();args.put(field,id);where+=" and "+(field.equals("entityId")?"entity_id":"actor_user_id")+"=:"+field;}
             for(var field:List.of("actionCode","entityType"))if(raw.containsKey(field)){String v=field.equals("actionCode")?Action.valueOf(raw.get(field)).name():EntityType.valueOf(raw.get(field)).name();args.put(field,v);where+=" and "+(field.equals("actionCode")?"action_code":"entity_type")+"=:"+field;}
-            Instant from=raw.containsKey("from")?Instant.parse(raw.get("from")):null,to=raw.containsKey("to")?Instant.parse(raw.get("to")):null;
+            Instant from=raw.containsKey("from")?filterTime(raw.get("from")):null,to=raw.containsKey("to")?filterTime(raw.get("to")):null;
             if(from!=null && to!=null && from.isAfter(to))throw AuditQueryFailure.invalid();
             if(from!=null){where+=" and occurred_at>=:from";args.put("from",Timestamp.from(from));}
             if(to!=null){where+=" and occurred_at<=:to";args.put("to",Timestamp.from(to));}
@@ -48,6 +48,12 @@ class DatabaseAuditReader implements AuditReader {
         store.requireContext(tenant,false);
         var rows=store.db.query("select * from audit_events where tenant_id=:tenant and id=:id",Map.of("tenant",tenant,"id",id),(r,n)->event(r));
         if(rows.isEmpty())throw AuditQueryFailure.missing();return rows.getFirst();
+    }
+    private static Instant filterTime(String value) {
+        // RFC3339 has a four-digit year. Extended Java Instant years can exceed
+        // PostgreSQL's range and must be a safe 400, never a database failure.
+        if(value==null || !value.matches("[0-9]{4}-.*"))throw AuditQueryFailure.invalid();
+        return Instant.parse(value);
     }
     private Event event(ResultSet r)throws SQLException {
         return new Event(r.getObject("id",UUID.class),new AuditReader.Actor(ActorType.valueOf(r.getString("actor_type")),r.getObject("actor_user_id",UUID.class),r.getObject("actor_membership_id",UUID.class)),SourceType.valueOf(r.getString("source_type")),Action.valueOf(r.getString("action_code")),EntityType.valueOf(r.getString("entity_type")),r.getObject("entity_id",UUID.class),data(r.getString("before_data")),data(r.getString("after_data")),r.getString("reason"),r.getTimestamp("occurred_at").toInstant());

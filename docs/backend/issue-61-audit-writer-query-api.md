@@ -130,7 +130,7 @@ change. Customer Dispatcher/Driver/Yard/Operations Audit reads remain denied.
 There is no Customer Audit capability or improvised Customer subset.
 
 Filters: canonical actorUserId/entityId, closed actionCode/entityType, inclusive
-RFC3339 from/to, limit default50/max100 and cursor. Unknown/duplicate fields reject.
+RFC3339 four-digit-year from/to, limit default50/max100 and cursor. Unknown/duplicate fields reject.
 The existing ReadCursor binds User/Tenant/filters and immutable anchor UUID; the
 server fetches its authorized timestamp and seeks `(occurred_at,id)<(anchor,id)`.
 No timestamp trust or in-memory pagination. Changing page limit is allowed;
@@ -153,13 +153,13 @@ No HTTP Audit mutations. Response DTOs/minimized snapshot shapes are in OpenAPI.
 | Query API | All filters, malformed/changed-context cursor, multiple pages/timestamp ties, detail and bounded SQL/index paths |
 | Modulith | Public leaf ports; explicit producer dependencies; existing module validation |
 | OpenAPI | Existing full contracts plus audit.test.mjs closed routes/catalog/DTOs/snapshot minimization |
-| Final regressions | Pending final published-candidate validation; exact evidence will be attached to PR115 |
+| Final regressions | PR115 records the exact published candidate, complete local logs/counts and SHA-256 manifest; previous-SHA results are not final evidence |
 
 ## Validation protocol and limitations
 
 Focused implementation run `issue61-focus3.log`:184 tests, zero failures/errors/
 skipped with Java25/PostgreSQL18.6; this is development evidence, not final-SHA
-full validation. Additional focused tests cover physical nonduplication and ties.
+full validation. Additional focused tests cover physical nonduplication and ties. A failing PostgreSQL regression reproduced an extended-year filter returning500; the reader now rejects unsupported extended/negative years as400 before querying. The superseded candidate run is not final evidence.
 Final candidate must run complete Backend clean verify, Web locked install/type/
 lint/tests/build, Mobile locked install/Drift9 reproducibility/format/fatal-info
 analysis/tests, OpenAPI and local CI Policy. Evidence is recorded externally with

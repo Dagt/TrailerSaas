@@ -223,7 +223,7 @@ class AuditPostgresTests extends PostgresIntegrationTest {
         assertThat(pages).isEqualTo(3);assertThat(seen).hasSize(5);
         assertThat(items(body(ok(call("GET","/audit-events?actorUserId="+UUID.randomUUID(),null),200)))).isEmpty();
     }
-    @ParameterizedTest @ValueSource(strings={"limit=0","limit=101","limit=01","limit=x","limit=1&limit=2","unknown=x","actorUserId=bad","actionCode=DROP","entityType=USER","entityId=bad","from=bad","from=2030-01-01T00:00:00Z&to=2000-01-01T00:00:00Z","cursor=bad","cursor=","actorUserId="})
+    @ParameterizedTest @ValueSource(strings={"limit=0","limit=101","limit=01","limit=x","limit=1&limit=2","unknown=x","actorUserId=bad","actionCode=DROP","entityType=USER","entityId=bad","from=bad","from=%2B999999-01-01T00:00:00Z","to=-9999-01-01T00:00:00Z","from=2030-01-01T00:00:00Z&to=2000-01-01T00:00:00Z","cursor=bad","cursor=","actorUserId="})
     void invalidFiltersAndMalformedCursorRejectSafely(String query)throws Exception {
         ok(call("GET","/audit-events?"+query,null),400);
     }
