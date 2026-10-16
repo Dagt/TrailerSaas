@@ -41,6 +41,7 @@ abstract class DocumentHttpPostgresFixture extends PostgresIntegrationTest {
   @BeforeEach void seed() throws Exception {
     peer.failHead=false;peer.failCopy=false;peer.afterCopy=()->{};
     db=new EquipmentFixtures(flyway);tenant=db.tenant();other=db.tenant();user=db.user();
+    db.execute("UPDATE tenants SET status='ACTIVE' WHERE id=?",tenant);
     membership=db.membership(tenant,user,"ACTIVE","DRIVER");driver=db.driver(tenant,user);
     admin=db.user();db.membership(tenant,admin,"ACTIVE","TENANT_ADMIN");
     operations=db.user();db.membership(tenant,operations,"ACTIVE","TRANSPORT_OPERATIONS");

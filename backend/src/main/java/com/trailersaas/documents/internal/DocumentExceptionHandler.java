@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
-@RestControllerAdvice(assignableTypes={DocumentController.class,TrailerDamageUploadController.class})
+@RestControllerAdvice(assignableTypes={DocumentController.class,TrailerDamageUploadController.class,CustomerOperationalReadController.class})
 @Order(10)
 class DocumentExceptionHandler {
   @ExceptionHandler(DocumentFailure.class) ProblemDetail failure(DocumentFailure e) {

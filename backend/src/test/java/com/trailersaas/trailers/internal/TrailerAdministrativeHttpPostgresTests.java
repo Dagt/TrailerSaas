@@ -51,6 +51,7 @@ class TrailerAdministrativeHttpPostgresTests extends PostgresIntegrationTest {
   void seed() throws Exception {
     f = new TrailerFixtures(flyway);
     tenant = f.db.tenant();
+    f.db.execute("UPDATE tenants SET status='ACTIVE' WHERE id=?", tenant);
     user = f.db.user();
     membership = f.db.membership(tenant, user, "ACTIVE", "TENANT_ADMIN");
     customerA = f.customer(tenant);

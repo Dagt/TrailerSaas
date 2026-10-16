@@ -356,3 +356,33 @@ no DOCUMENT_VIEW_ALL grant is added to Spotter. Upload/finalization alone is no
 OOS event or accepted operational evidence: /yard/out-of-service validates and
 associates the finalized set atomically to the actual event. Road/POD/Fuel/inspection
 transport and evidence policy remain unchanged.
+
+## Customer accepted-evidence reads (#60)
+
+`GET /tenants/{tenant}/customers/{customer}/documents` is a bounded discovery
+index of published files explicitly retained by an accepted Delivery receipt and
+actually mapped to this Customer's Orders. Filters: documentType BOL/POD/
+DELIVERY_PHOTO, orderId, stopId, documentId, limit20/max50 and cursor. Order is
+uploadedAt DESC, then document/Order/Stop IDs ASC. Each row is a file/Order/Stop
+association, not a unique-file count. No signed URLs or storage keys in the index.
+
+V29 retains the validated BOL/photo IDs in the existing append-only receipt during
+the real delivery transaction. Historical receipts remain unmodified with NULL
+file references: their acceptance is real but cannot prove which later-linked
+file was accepted. Generic uploaded POD has no current accepted operational
+writer and is not inferred as proof. BOL reference text never becomes a file.
+
+All linked work must be visible to the single selected Customer. Shared Stop/
+file evidence is withheld even for additive Admin/multi-Customer roles. Pending,
+unlinked and unrelated later uploads are not discoverable. Existing metadata
+and download routes accept optional query `customerId`, requiring ACTIVE Tenant,
+membership, Customer, current document capability, exact accepted association and
+the original all-linked-resource checks. No new download endpoint or Customer
+upload authority. Ordinary internal/Driver transport is unchanged.
+
+Download remains an explicit fresh authenticated POST, returning a private
+short-lived grant. Disabled R2 returns safe503 OBJECT_STORAGE_UNAVAILABLE;
+authorized metadata/index reads remain available. React keeps grants only in
+component memory and clears on expiry, cancellation, logout or scope change.
+An issued URL can remain valid until expiry; instant revocation is not promised.
+See [implementation, SQL/migration and tests](../web/issue-60-customer-inventory-deliveries-documents.md).

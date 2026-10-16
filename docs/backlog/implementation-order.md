@@ -143,8 +143,8 @@ Validate snapshot behavior and physical-state conflicts carefully.
 ## Wave 7 — Customer/Audit surfaces
 
 - #58 Customer portal shell merged through [PR #112](https://github.com/Dagt/TrailerSaas/pull/112); [architecture/evidence](../web/issue-58-customer-portal-shell.md).
-- #59 Customer Order/commercial workflows implemented on Draft [PR #113](https://github.com/Dagt/TrailerSaas/pull/113); [scope, V28, acceptance and validation](../web/issue-59-customer-orders-workflows.md). Remote Full CI remains unverified while owner-deferred Billing prevents execution; not merged or release-approved.
-- #60 remains deferred: Customer inventory, delivery catalogs and evidence views.
+- #59 Customer Order/commercial workflows merged through [PR #113](https://github.com/Dagt/TrailerSaas/pull/113), base `c5777cef44a7737ebe67dc876ff0da12dff737e7`; [scope, V28, acceptance and validation](../web/issue-59-customer-orders-workflows.md). Historical owner-deferred Billing limits remain documented; merge is not claimed as remote Full CI evidence.
+- #60 Customer inventory, scoped delivery catalogs and exact accepted evidence views implemented on Draft [PR #114](https://github.com/Dagt/TrailerSaas/pull/114); [V29, security matrix, final validation policy and limits](../web/issue-60-customer-inventory-deliveries-documents.md). No merge; hosted Full CI remains a separate gate while Billing is owner-deferred.
 - #61 → #62 Audit/history
 
 These rely heavily on the stable domain/API implemented earlier.

@@ -142,9 +142,9 @@ class DatabaseOperationalEvidencePolicy implements OperationalEvidencePolicy {
       throw failure(INVALID_STATE_TRANSITION);
     var id=UUID.randomUUID();var time=Instant.now();var comment=comment(request.comment());
     if(jdbc.update("""
-        INSERT INTO delivery_evidence(id,tenant_id,trip_stop_id,evidence_mode,comment,completed_by_user_id,completed_at)
-        VALUES(?,?,?,?,?,?,?) ON CONFLICT(tenant_id,trip_stop_id) DO NOTHING
-        """,id,tenant,stop,request.mode().name(),comment,actor.userId(),java.sql.Timestamp.from(time))!=1)
+        INSERT INTO delivery_evidence(id,tenant_id,trip_stop_id,evidence_mode,comment,completed_by_user_id,completed_at,bol_document_id,delivery_photo_document_id)
+        VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(tenant_id,trip_stop_id) DO NOTHING
+        """,id,tenant,stop,request.mode().name(),comment,actor.userId(),java.sql.Timestamp.from(time),request.bolDocumentId(),request.deliveryPhotoDocumentId())!=1)
       throw failure(RESOURCE_CONFLICT);
     return new Receipt(id,stop,request.mode(),comment,time);
   }

@@ -26,7 +26,9 @@ export function customerFixture(path = '/customer', memberships = [dispatcher()]
     if (path === '/me') return response(me)
     if (/\/orders\/customer-context$/.test(path))return response({customerId:url.searchParams.get('customerId'),capabilities:['ORDER_CREATE','ORDER_EDIT','ORDER_CANCEL','ORDER_COMPLETE','TRIP_REROUTE','TRAILER_SUBSTITUTE_AUTHORIZE','TRIP_ASSIGN_TRAILER']})
     if (/\/orders$/.test(path))return response({items:[],nextCursor:null})
-    if (/\/(sites|trailers)$/.test(path))return response({items:[]})
+    if (/\/(sites|trailers)$/.test(path))return response({items:[],nextCursor:null})
+    const read = /^\/tenants\/([^/]+)\/customers\/([^/]+)\/(deliveries|documents)$/.exec(path)
+    if(read)return response({customerId:read[2],items:[],nextCursor:null})
     const match = /^\/tenants\/([^/]+)\/customers\/([^/]+)$/.exec(path)
     if (match) {
       const m = me.memberships.find(m=>m.tenantId===match[1]&&m.status==='ACTIVE'&&m.tenantActive===true)

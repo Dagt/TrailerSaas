@@ -45,8 +45,8 @@ class TrailerController {
       @PathVariable UUID tenantId,
       @PathVariable UUID trailerId,
       @RequestParam Map<String, String> parameters) {
-    TrailerValidation.noParameters(parameters);
-    return reads.detail(actor, tenantId, trailerId);
+    TrailerValidation.fields(parameters, java.util.Set.of("customerId"));
+    return reads.detail(actor, tenantId, trailerId, parameters.containsKey("customerId")?TrailerValidation.uuid(parameters.get("customerId")):null);
   }
 
   @GetMapping("/{trailerId}/timeline")

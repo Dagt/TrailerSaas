@@ -12,8 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 class DatabaseDocumentAccessPolicy implements DocumentAccessPolicy {
   private final ActiveMembershipRepository memberships;
   private final TenantContext context;
-  DatabaseDocumentAccessPolicy(ActiveMembershipRepository memberships,TenantContext context) {
-    this.memberships=memberships;this.context=context;
+  private final CustomerActionAccess actions;
+  DatabaseDocumentAccessPolicy(ActiveMembershipRepository memberships,TenantContext context,CustomerActionAccess actions) {
+    this.memberships=memberships;this.context=context;this.actions=actions;
   }
   public ReadScope readScope(AuthenticatedUserPrincipal actor,UUID tenant) {
     if(actor==null || actor.userId()==null || tenant==null) throw new AuthorizationDeniedException(AuthorizationDeniedException.Reason.TENANT_ACCESS_DENIED);
@@ -25,6 +26,7 @@ class DatabaseDocumentAccessPolicy implements DocumentAccessPolicy {
     var customers=roles.stream().filter(r->r.scopeType()==RoleScopeType.CUSTOMER && r.customerId()!=null && RoleCapabilities.grants(r.roleCode(),Capability.DOCUMENT_VIEW_CUSTOMER_SCOPED))
         .map(AuthorizationRoleRow::customerId).collect(Collectors.toSet());
     boolean assigned=roles.stream().anyMatch(r->r.scopeType()==RoleScopeType.TENANT && RoleCapabilities.grants(r.roleCode(),Capability.TRIP_VIEW_ASSIGNED));
+    for(var customer:customers) actions.capabilities(actor,tenant,customer);
     if(!customers.isEmpty() || assigned) return new ReadScope(false,customers,assigned);
     throw new AuthorizationDeniedException(AuthorizationDeniedException.Reason.CAPABILITY_DENIED);
   }

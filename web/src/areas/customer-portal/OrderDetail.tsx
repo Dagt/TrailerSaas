@@ -39,8 +39,9 @@ function OrderDetail({id}:{id:string}) {
     {!!p?.changes.length&&<><h3>Recent Order decisions</h3><p>Up to 20 recorded Customer request changes; physical fulfillment and generic audit are separate.</p><ul>{p.changes.map(change=><li key={change.version}>{change.changeType} · Version {change.version} · {change.recordedAt} · {change.reason}{change.resolution&&<> · {change.resolution.type}: {change.resolution.instructions}</>}</li>)}</ul></>}
     {progress.isPending?<LoadingState/>:progress.isError?<ErrorBanner error={progress.error} retry={()=>void progress.refetch()}/>:!unique?<p role="alert">Progress pages changed. Reload before continuing.</p>:<>
       {!coherent&&<p role="status">Progress and Order versions need refreshing before operational changes.</p>}
-      {!trips.length&&<p>No linked Trip reported for this Order.</p>}{trips.map(trip=><article key={trip.id} className="progress-trip"><h3>Trip {trip.id}</h3><p>{trip.status} · Version {trip.version} · Expected Trailer: {trip.expectedTrailer?.operationalNumber??'Not available in this context'}</p>
+      {!trips.length&&<p>No linked Trip reported for this Order.</p>}{trips.map(trip=><article key={trip.id} className="progress-trip"><h3>Trip {trip.id}</h3><p>{trip.status} · Version {trip.version} · Expected Trailer: {trip.expectedTrailer?<Link to={`/customer/trailers/${trip.expectedTrailer.id}`}>{trip.expectedTrailer.operationalNumber}</Link>:'Not available in this context'}</p>
         <ul>{trip.stops.map(stop=><li key={stop.id}><strong>{stop.destination??'Recorded destination unavailable'}</strong> · {stop.stopType} · {stop.status}<p>Appointment: {stop.scheduledAt??'Not scheduled'} · Arrival: {stop.arrivedAt??'Not recorded'} · Completion: {stop.completedAt??'Not recorded'}</p>
+          {stop.stopType==='DELIVERY'&&<Link to={`/customer/deliveries/${row.id}/${stop.id}`}>Delivery and authorized evidence</Link>}
           {coherent&&stop.canReroute&&<button onClick={()=>setTripAction({trip,stop})}>Change destination: {stop.destination??stop.stopType}</button>}</li>)}</ul>
         {coherent&&trip.canSubstitute&&<button onClick={()=>setTripAction({trip})}>Decide alternate Trailer</button>}
         <h4>Recent recorded operational changes</h4><p>Up to 100 own reroutes and 100 substitutions.</p>{trip.history.length?<ul>{trip.history.map(h=><li key={h.id}>{h.eventType} · {h.occurredAt} · {h.reason}{h.previousDestination&&<> · Previous: {h.previousDestination}</>}{h.newDestination&&<> · New: {h.newDestination}</>}{h.decision&&<> · {h.decision}</>}</li>)}</ul>:<p>No Customer-specific operational history returned. Shared/internal history is not exposed.</p>}
@@ -48,6 +49,7 @@ function OrderDetail({id}:{id:string}) {
     {action&&fresh&&<OrderAction key={`${row.version}:${action}`} action={action} order={row} requestEditable={coherent&&!!p?.requestEditable} close={close} reload={reload}/>}
     {tripAction&&!validTripAction&&<p role="status">Operational context changed. Review the latest work and reopen the action.</p>}
     {tripAction&&validTripAction&&coherent&&unique&&(tripAction.stop?<RerouteAction key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} stop={tripAction.stop} close={close} reload={reload}/>:<TrailerSubstitutionDecision key={`${tripAction.trip.id}:${tripAction.trip.version}`} trip={tripAction.trip} close={close} reload={reload}/>)}
+    <p><Link to={`/customer/deliveries?orderId=${row.id}`}>All deliveries for this Order</Link> · <Link to={`/customer/documents?orderId=${row.id}`}>Authorized documents for this Order</Link></p>
     <Link to="/customer/orders">Return to Orders</Link>
   </section>
 }

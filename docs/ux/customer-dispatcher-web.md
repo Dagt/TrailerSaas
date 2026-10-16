@@ -480,7 +480,7 @@ historical requests. Optional Trailer selection is scoped and planning-only.
 
 Dashboard shows real five-row Order previews, clearly not totals. Pending/planned/
 active/partial/delivered/cancelling views link to Orders; recent requests are ordered
-by creation. Customer inventory, global deliveries and Documents remain #60.
+by creation. Customer inventory, global deliveries and Documents are implemented by #60 below.
 No Driver name or private shared Trip route is displayed by this implementation.
 
 Detail separates requested itinerary, mapped operational Stop milestones and recent
@@ -502,3 +502,28 @@ overflow are reused; no new framework. Automated browser tests use jsdom; physic
 desktop/tablet and production session testing remain release work under #65.
 
 [Architecture, bounded API/V28 changes, acceptance and evidence](../web/issue-59-customer-orders-workflows.md).
+
+# 20. Implemented inventory, delivery and document reads — issue #60
+
+Trailers/Deliveries/Documents navigation now opens real Customer-scoped lists
+and details. Inventory has server-side exact number/state/Location/service/load/
+active/coupled filters and bounded pagination. Detail shows authorized planning
+allocations and current-designation movement history, with internal staff and
+equipment identities withheld. Current Location is never inferred from Last Known
+when IN_TRANSIT or LOCATION_UNKNOWN. No maps, tracking or physical commands.
+
+Deliveries show actual Order/Stop mappings, distinct Stop/Order states and real
+appointment/arrival/service/completion/departure times. One Order can have several
+deliveries/Trips. Evidence is available only when exact accepted published files
+and all linked work are authorized to the selected Customer. Shared or ambiguous
+historical receipt files stay unavailable without guessing. Upload status and
+accepted POD are separate facts. Files link back to actual Order/Delivery detail.
+
+The viewer loads safe metadata before an explicit download authorization action.
+It displays storage-unavailable and expired-link states, supports cancellation,
+and discards temporary grants on navigation/scope/logout. Issued URLs can remain
+valid until expiry. No credentials or files are persisted in browser storage.
+Dashboard uses up to five actual records per preview, never invented totals.
+Existing responsive tables, accessible labels/keyboard controls and empty/error/
+loading states are retained. Real browser/provider/device release QA stays #65.
+[Architecture, V29, security matrix and evidence](../web/issue-60-customer-inventory-deliveries-documents.md).

@@ -1278,3 +1278,18 @@ V27→V28 real physical history preservation, strict RLS/grants, two concurrent 
 shared Trip privacy and actual Customer create→Operations queue. Run Java25
 mvnw clean verify with real PostgreSQL18.6/Testcontainers. See
 [contracts, scope and test evidence](../docs/web/issue-59-customer-orders-workflows.md).
+# Customer read models and accepted-file identity (#60)
+
+Read-only Customer delivery list/detail and accepted-document index use existing
+ACTIVE Tenant/membership/capabilities, TenantContext and runtime RLS. Keysets
+are bounded and explicit selected Customer narrows additive roles. Existing
+Trailer reads redact internal staff/equipment for Customers and constrain
+history to the current designation period/non-shared work. No role grants.
+
+V29 adds nullable historical accepted BOL/photo references to delivery_evidence,
+Tenant-safe composite FKs, mode/pair constraints and read indexes. Existing
+validated delivery writer retains IDs atomically in its business transaction.
+V1–V28 and old receipts remain intact; ambiguous links are never backfilled.
+Existing metadata/download routes support selected `customerId` with exact
+accepted-file/all-links checks. No new physical command, event ledger or download
+transport. [Architecture, HTTP contracts, migration and tests](../docs/web/issue-60-customer-inventory-deliveries-documents.md).

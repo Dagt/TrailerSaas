@@ -66,6 +66,12 @@ class TrailerReadRepository {
   }
 
   Items list(UUID tenant, CustomerAccessScope scope, Map<String, Object> filters) {
+    return selectList(tenant,scope,filters,null,null,null);
+  }
+  Items page(UUID tenant, CustomerAccessScope scope, Map<String,Object> filters, UUID after, int limit, String context) {
+    return selectList(tenant,scope,filters,after,limit,context);
+  }
+  private Items selectList(UUID tenant, CustomerAccessScope scope, Map<String,Object> filters, UUID after, Integer limit, String context) {
     var sql = new StringBuilder(projection(scope));
     var columns =
         Map.of(
@@ -76,7 +82,7 @@ class TrailerReadRepository {
             "locationState",
             "t.location_state",
             "currentLocationId",
-            "t.current_location_id",
+            "cl.id",
             "loadState",
             "t.load_state",
             "serviceabilityState",
@@ -92,15 +98,20 @@ class TrailerReadRepository {
                     (Boolean) filters.get(k) ? " and ac.id is not null" : " and ac.id is null");
               else sql.append(" and ").append(columns.get(k)).append("=:").append(k);
             });
-    sql.append(" order by t.operational_number_normalized,t.id");
+    if(after!=null) sql.append(" and t.id>:after");
+    sql.append(limit==null?" order by t.operational_number_normalized,t.id":" order by t.id");
     var q = scoped(sql.toString(), tenant, scope);
+    if(after!=null) q.setParameter("after",after);
+    if(limit!=null) q.setMaxResults(limit+1);
     filters.forEach(
         (k, v) -> {
           if (!k.equals("coupled")) q.setParameter(k, v);
         });
     var items = new ArrayList<Item>();
     for (Object row : q.getResultList()) items.add(read((Object[]) row, scope).item());
-    return new Items(List.copyOf(items));
+    boolean more=limit!=null && items.size()>limit;
+    if(more) items.removeLast();
+    return new Items(List.copyOf(items),more?com.trailersaas.ReadCursor.encode(context,items.getLast().trailer().id()):null);
   }
 
   Detail detail(UUID tenant, UUID id, CustomerAccessScope scope) {
@@ -167,6 +178,9 @@ class TrailerReadRepository {
     String driver = r.text();
     var coupling = coupling(r, scope);
     var last = coupling(r, scope);
+    if(!scope.tenantWide()) t=new TrailerDtos.Trailer(t.id(),t.operationalNumber(),t.designatedCustomerId(),t.trailerType(),null,
+        t.locationState(),t.currentLocationId(),t.lastKnownLocationId(),t.lastSeenAt(),null,t.loadState(),t.serviceabilityState(),
+        t.usagePurpose(),t.active(),t.version(),t.createdAt(),t.updatedAt());
     return new Projection(
         new Item(
             t,
@@ -174,17 +188,17 @@ class TrailerReadRepository {
             current == null ? null : current.name(),
             known == null ? null : known.name(),
             coupling == null ? "UNCOUPLED" : "COUPLED",
-            coupling == null ? null : coupling.driverId(),
-            coupling == null ? null : coupling.driverName(),
-            coupling == null ? null : coupling.tractorId(),
-            coupling == null ? null : coupling.tractorOperationalNumber(),
-            driver,
-            last == null ? null : last.tractorId(),
-            last == null ? null : last.tractorOperationalNumber()),
+            !scope.tenantWide() || coupling == null ? null : coupling.driverId(),
+            !scope.tenantWide() || coupling == null ? null : coupling.driverName(),
+            !scope.tenantWide() || coupling == null ? null : coupling.tractorId(),
+            !scope.tenantWide() || coupling == null ? null : coupling.tractorOperationalNumber(),
+            scope.tenantWide()?driver:null,
+            !scope.tenantWide() || last == null ? null : last.tractorId(),
+            !scope.tenantWide() || last == null ? null : last.tractorOperationalNumber()),
         current,
         known,
-        coupling,
-        last);
+        scope.tenantWide()?coupling:null,
+        scope.tenantWide()?last:null);
   }
 
   private static Location location(Row r) {
@@ -294,6 +308,10 @@ class TrailerReadRepository {
         select e.id,e.event_type,e.actor_type,e.source_type,e.occurred_at,e.recorded_at,e.reason,
         l.id,l.name,e.driver_id,d.name,e.tractor_id,t.operational_number,e.trip_id,e.trip_stop_id,cast(e.metadata as text)
         from trailer_movement_events e
+        join trailers owner on owner.tenant_id=e.tenant_id and owner.id=e.trailer_id
+        left join lateral (select x.id,x.recorded_at,x.metadata from trailer_movement_events x
+          where x.tenant_id=e.tenant_id and x.trailer_id=e.trailer_id and x.event_type='DESIGNATED_CUSTOMER_CHANGED'
+          order by x.recorded_at desc,x.id desc limit 1) designation on true
         left join operational_locations l on l.tenant_id=e.tenant_id and l.id=e.location_id %s
         left join drivers d on d.tenant_id=e.tenant_id and d.id=e.driver_id
         left join tractors t on t.tenant_id=e.tenant_id and t.id=e.tractor_id
@@ -302,9 +320,25 @@ class TrailerReadRepository {
                 .formatted(
                     scope.tenantWide()
                         ? ""
-                        : "and (l.customer_id is null or l.customer_id in (:customers))")
-            + (input.position() == null ? "" : " and (e.occurred_at,e.id)<(:occurred,:id)")
-            + " order by e.occurred_at desc,e.id desc";
+                    : "and (l.customer_id is null or l.customer_id=owner.designated_customer_id)")
+            + (scope.tenantWide()?"":"""
+              and owner.designated_customer_id in (:customers)
+              and (designation.id is null or designation.metadata->>'newDesignatedCustomerId'=owner.designated_customer_id::text)
+              and (e.id=designation.id or e.occurred_at>=coalesce(designation.recorded_at,owner.created_at))
+              and (e.trip_id is null or (
+                exists(select 1 from trip_stop_orders a join trip_stops s on s.tenant_id=a.tenant_id and s.id=a.trip_stop_id
+                  join orders o on o.tenant_id=a.tenant_id and o.id=a.order_id
+                  where a.tenant_id=e.tenant_id and s.trip_id=e.trip_id and o.customer_id=owner.designated_customer_id)
+                and not exists(select 1 from trip_stop_orders a join trip_stops s on s.tenant_id=a.tenant_id and s.id=a.trip_stop_id
+                  join orders o on o.tenant_id=a.tenant_id and o.id=a.order_id
+                  where a.tenant_id=e.tenant_id and s.trip_id=e.trip_id and o.customer_id<>owner.designated_customer_id)))
+              """)
+            ;
+    if(input.position()!=null && scoped(sql+" and e.id=:anchor and e.occurred_at=:anchorTime",tenant,scope)
+        .setParameter("trailer",trailer).setParameter("anchor",input.position().id()).setParameter("anchorTime",input.position().occurredAt())
+        .setMaxResults(1).getResultList().isEmpty()) throw TrailerFailure.invalid();
+    sql += (input.position() == null ? "" : " and (e.occurred_at,e.id)<(:occurred,:id)")
+        + " order by e.occurred_at desc,e.id desc";
     var q =
         scoped(sql, tenant, scope)
             .setParameter("trailer", trailer)
@@ -313,6 +347,7 @@ class TrailerReadRepository {
       q.setParameter("occurred", input.position().occurredAt())
           .setParameter("id", input.position().id());
     var rows = q.getResultList();
+    var visibleLocations = scope.tenantWide()?Map.<UUID,String>of():visibleLocations(tenant,trailer,scope,rows);
     var items = new ArrayList<TimelineItem>();
     for (Object value : rows.subList(0, Math.min(input.limit(), rows.size()))) {
       var r = new Row((Object[]) value);
@@ -327,7 +362,7 @@ class TrailerReadRepository {
       UUID tractor = r.uuid();
       String tractorNumber = r.text();
       UUID trip = r.uuid(), stop = r.uuid();
-      var changes = changes(r.text(), scope);
+      var changes = changes(r.text(), scope, visibleLocations);
       items.add(
           new TimelineItem(
               id,
@@ -339,10 +374,10 @@ class TrailerReadRepository {
               scope.tenantWide() ? reason : null,
               location,
               locationName,
-              driver,
-              driverName,
-              tractor,
-              tractorNumber,
+              scope.tenantWide()?driver:null,
+              scope.tenantWide()?driverName:null,
+              scope.tenantWide()?tractor:null,
+              scope.tenantWide()?tractorNumber:null,
               scope.tenantWide() ? trip : null,
               scope.tenantWide() ? stop : null,
               changes));
@@ -355,7 +390,21 @@ class TrailerReadRepository {
     return new TimelinePage(List.copyOf(items), cursor);
   }
 
-  private Map<String, Object> changes(String metadata, CustomerAccessScope scope) {
+  private Map<UUID,String> visibleLocations(UUID tenant,UUID trailer,CustomerAccessScope scope,List<?> rows) {
+    var ids=new HashSet<UUID>();
+    for(Object value:rows) {
+      var row=(Object[])value;String metadata=(String)row[row.length-1];if(metadata==null)continue;
+      var node=json.readTree(metadata);
+      for(String key:List.of("previousLocationId","newLocationId")) {
+        var v=node.get(key);if(v==null||!v.isString())continue;
+        try{UUID id=TrailerValidation.uuid(v.asString());if(id!=null)ids.add(id);}catch(TrailerFailure ignored){/* malformed historical references grant nothing */}
+      }
+    }
+    if(ids.isEmpty())return Map.of();
+    var found=scoped("select l.id,l.name from operational_locations l join trailers owner on owner.tenant_id=l.tenant_id and owner.id=:trailer where l.tenant_id=:tenant and l.id in (:ids) and owner.designated_customer_id in (:customers) and (l.customer_id is null or l.customer_id=owner.designated_customer_id)",tenant,scope).setParameter("trailer",trailer).setParameter("ids",ids).getResultList();
+    var names=new HashMap<UUID,String>();for(Object value:found){var row=(Object[])value;names.put((UUID)row[0],(String)row[1]);}return names;
+  }
+  private Map<String, Object> changes(String metadata, CustomerAccessScope scope, Map<UUID,String> locations) {
     if (metadata == null) return Map.of();
     var node = json.readTree(metadata);
     var values = new LinkedHashMap<String, Object>();
@@ -377,14 +426,17 @@ class TrailerReadRepository {
           if (v != null && v.isString() && catalog.contains(v.asString()))
             values.put(key, v.asString());
         });
-    if (scope.tenantWide())
       for (String key : List.of("previousLocationId", "newLocationId")) {
         var v = node.get(key);
         if (v == null) continue;
         if (v.isNull()) values.put(key, null);
         else if (v.isString()) {
           try {
-            values.put(key, TrailerValidation.uuid(v.asString()));
+            var id=TrailerValidation.uuid(v.asString());
+            if(scope.tenantWide()||locations.containsKey(id)) {
+              values.put(key,id);
+              if(!scope.tenantWide()) values.put(key.replace("Id","Name"),locations.get(id));
+            }
           } catch (TrailerFailure ignored) {
             /* Unknown details are omitted. */
           }

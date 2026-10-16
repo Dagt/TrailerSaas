@@ -34,6 +34,6 @@ export function orderFixture(path='/customer/orders',memberships?:Parameters<typ
   f.handlers.set(root+`/orders/${orderId}/progress`,async()=>response({orderId,customerId,orderVersion:state.orders[0]!.version,requestEditable:state.requestEditable,items:state.trips,nextCursor:null,changes:[]}))
   f.handlers.set(root+'/sites',async()=>response({items:[{...stamps,id:siteId,name:'Authorized receiving',active:true}]}))
   f.handlers.set(root+`/sites/${siteId}/locations`,async()=>response({items:[]}))
-  f.handlers.set(root+'/trailers',async()=>response({items:[trailerId,alternateId].map((id,i)=>({...stamps,id,operationalNumber:i?'T116':'T114',designatedCustomerId:customerId,active:true,serviceabilityState:'IN_SERVICE'}))}))
+  f.handlers.set(root+'/trailers',async()=>response({items:[trailerId,alternateId].map((id,i)=>({...stamps,id,operationalNumber:i?'T116':'T114',designatedCustomerId:customerId,designatedCustomerName:'Acme Packaging',active:true,serviceabilityState:'IN_SERVICE',trailerType:null,capabilityNotes:null,locationState:'LOCATION_UNKNOWN',currentLocationId:null,currentLocationName:null,lastKnownLocationId:null,lastKnownLocationName:null,lastSeenAt:null,lastDriverId:null,loadState:'UNKNOWN',usagePurpose:null,couplingState:'UNCOUPLED',currentDriverId:null,currentDriverName:null,currentTractorId:null,currentTractorOperationalNumber:null,lastDriverName:null,lastTractorId:null,lastTractorOperationalNumber:null})),nextCursor:null}))
   return {...f,state,root}
 }

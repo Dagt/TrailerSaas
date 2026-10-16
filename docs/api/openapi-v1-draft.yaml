@@ -675,9 +675,18 @@ paths:
       tags: [Trailers]
       operationId: listTrailers
       x-implementation-status: implemented-issue-41
+      x-customer-read-extension: implemented-issue-60
       description: >
-        Fresh TRAILER_VIEW_ALL Tenant scope or TRAILER_VIEW_CUSTOMER_SCOPED Customer IDs. Exact normalized operationalNumber; filters AND together with scope. Foreign designatedCustomerId filter returns CUSTOMER_SCOPE_DENIED. coupled=true means an open physical coupling interval exists; false means none. No pagination; unknown filters rejected. Order normalized number/id.
+        Fresh TRAILER_VIEW_ALL Tenant scope or TRAILER_VIEW_CUSTOMER_SCOPED Customer IDs. Exact normalized operationalNumber; filters AND together with scope. Foreign designatedCustomerId filter returns CUSTOMER_SCOPE_DENIED. coupled=true means an open physical coupling interval exists; false means none.
+        Optional limit/cursor enables bounded UUID-ascending keyset pages (default 50, maximum 100); cursor binds User/Tenant/Customer/filters and is never authority. Legacy calls without either paging parameter retain normalized number/id ordering and the existing unpaged contract. Customer Portal always pages.
+        Explicit designatedCustomerId narrows even additive Admin/multi-Customer authority to one selected Customer. Customer reads require ACTIVE Tenant/membership and redact capability notes and Driver/Tractor identities. Location filters cannot probe hidden Location IDs. Unknown filters rejected.
       parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: cursor
+          in: query
+          schema: { type: string, maxLength: 512 }
         - name: operationalNumber
           in: query
           schema: { type: string }
@@ -746,8 +755,12 @@ paths:
       tags: [Trailers]
       operationId: getTrailer
       x-implementation-status: implemented-issue-41
+      x-customer-read-extension: implemented-issue-60
       description: >
         Fresh Trailer read scope. Nonexistent, cross-Tenant or outside Customer scope returns RESOURCE_NOT_FOUND, including unassigned Trailers for Dispatcher.
+        Optional customerId narrows the projection to one currently authorized Customer even for multi-role readers. Customer output withholds capability notes, Driver/Tractor identities and coupling details; couplingState remains factual. Manifest allocations include only the selected Customer. Current and last-known authorized Locations remain distinct. No physical mutation.
+      parameters:
+        - $ref: '#/components/parameters/SelectedCustomerId'
       responses:
         '200':
           description: TrailerDetail
@@ -789,12 +802,15 @@ paths:
       tags: [Trailers]
       operationId: getTrailerTimeline
       x-implementation-status: implemented-issue-41
+      x-customer-read-extension: implemented-issue-60
       description: >
         Fresh TRAILER_VIEW_ALL or TRAILER_VIEW_CUSTOMER_SCOPED scope on every page.
         Missing/foreign/out-of-scope Trailer returns generic RESOURCE_NOT_FOUND even with an old cursor after designation changes.
         Durable movement/admin facts ordered occurredAt DESC/id DESC; recordedAt is secondary server chronology.
-        Strict cursor/limit only; unknown parameters rejected. No replay or mutation.
+        Customer history is limited to the current designation period, including physical occurredAt no earlier than that period. Trip facts shared with another Customer are withheld. Driver/Tractor, actor identities, Trip/Stop references, reasons and free metadata are redacted. Previous/new Location names and IDs are included only when authorized. Internal history remains intact.
+        Optional customerId forces a single-Customer projection; cursor anchors must belong to this authorized Trailer/history. Strict cursor/limit/customerId only; unknown parameters rejected. No replay or mutation.
       parameters:
+        - $ref: '#/components/parameters/SelectedCustomerId'
         - name: cursor
           in: query
           schema: { type: string }
@@ -2520,6 +2536,105 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /api/v1/tenants/{tenantId}/customers/{customerId}/deliveries:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CustomerId'
+    get:
+      tags: [Orders]
+      operationId: listCustomerDeliveries
+      x-implementation-status: implemented-issue-60
+      description: >-
+        Fresh ACTIVE Tenant/membership/Customer and ORDER_VIEW_CUSTOMER_SCOPED for this Customer or ORDER_VIEW_ALL. Read-only repeatable-read SQL projection of actual Order/Trip/DELIVERY Stop mappings; no Tenant-wide Trip directory or client filtering. One row per Order/Stop, ordered by orderId/stopId ascending; at most 50 rows and one bulk evidence query per page.
+        Expected Trailer appears only when currently designated to this Customer. Shared Stop milestones remain Order-scoped, but acceptance/files are withheld if any mapped Order belongs to another Customer. Documents require current document capability and all linked resources visible to this single Customer. No actors, Driver/Tractor identities, reasons or free metadata. Stop COMPLETED is distinct from Order COMPLETED. Unknown filters rejected; cursor binds User/Tenant/Customer/resource/filters and grants no access.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - name: cursor
+          in: query
+          schema: { type: string, maxLength: 512 }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ExecutableStopStatusImplemented' }
+        - name: active
+          in: query
+          description: True selects PENDING/EN_ROUTE/ARRIVED/IN_SERVICE; false selects terminal Stops.
+          schema: { type: boolean }
+        - name: orderId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Authorized bounded delivery associations, never an inventory total
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomerDeliveryPage' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/customers/{customerId}/deliveries/{orderId}/{stopId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CustomerId'
+      - name: orderId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: stopId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Orders]
+      operationId: getCustomerDelivery
+      x-implementation-status: implemented-issue-60
+      description: Same fresh authorization and redactions as Customer delivery list; composite Order/Stop identity must have an actual mapping. Missing, foreign and invisible associations return generic RESOURCE_NOT_FOUND. No query parameters or mutation.
+      responses:
+        '200':
+          description: Authorized delivery milestones and permitted accepted files
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomerDelivery' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /api/v1/tenants/{tenantId}/customers/{customerId}/documents:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CustomerId'
+    get:
+      tags: [Documents]
+      operationId: listCustomerDeliveryDocuments
+      x-implementation-status: implemented-issue-60
+      description: >-
+        Fresh ACTIVE Tenant/membership/Customer and DOCUMENT_VIEW_CUSTOMER_SCOPED for this Customer or DOCUMENT_VIEW_ALL. Only exact accepted delivery_evidence file references with UPLOADED state, valid BOL/DELIVERY_PHOTO type, real completed DELIVERY Stop/Order association and authorized links. All linked resources must be TRIP_STOP, exist, and serve only this selected Customer; no additive Admin/Driver/other-Customer override. At most 50 links per file. An arbitrary upload, textual bolReference or ambiguous historical receipt is never accepted-file proof. Generic POD uploads currently have no accepted operational writer and are not inferred.
+        Rows are Document/Order/Stop associations, ordered uploadedAt DESC then documentId/orderId/stopId ASC, not unique-file totals. Cursor binds User/Tenant/Customer/resource/filters; authorized anchor is revalidated. Metadata and download use existing document routes with customerId and the same fail-closed checks. No signed URLs, storage keys or uploader identity in this index. Unknown filters rejected.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - name: cursor
+          in: query
+          schema: { type: string, maxLength: 512 }
+        - name: documentType
+          in: query
+          schema: { type: string, enum: [BOL, POD, DELIVERY_PHOTO] }
+        - name: orderId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: stopId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: documentId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Authorized published accepted-file associations
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomerDeliveryDocumentPage' }
+        default: { $ref: '#/components/responses/Problem' }
+
   /api/v1/tenants/{tenantId}/documents/{documentId}:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -2531,6 +2646,7 @@ paths:
       tags: [Documents]
       operationId: getDocumentMetadata
       x-implementation-status: implemented-issue-52
+      x-customer-read-extension: implemented-issue-60
       description: >-
         Fresh DOCUMENT_VIEW_ALL or DOCUMENT_VIEW_CUSTOMER_SCOPED plus linked-resource scope;
         Driver own assigned work uses TRIP_VIEW_ASSIGNED. Uploaders may inspect only their own
@@ -2538,6 +2654,9 @@ paths:
         not confer download access. Linked documents always require current resource authority.
         Customer-scoped readers must see every Customer served by every linked Stop.
         Missing, foreign or invisible documents return safe 404. No object keys or uploader UUIDs.
+        Optional customerId requires ACTIVE selected Customer/Tenant/membership, current document capability, exact accepted delivery file identity and all linked resources visible to that single Customer. Additional roles do not widen the selected context. Historical receipts without file identity cannot authorize discovery/download in this mode.
+      parameters:
+        - $ref: '#/components/parameters/SelectedCustomerId'
       responses:
         '200':
           description: Safe current document metadata and authorized references
@@ -2627,12 +2746,16 @@ paths:
       tags: [Documents]
       operationId: createDocumentDownloadUrl
       x-implementation-status: implemented-issue-52
+      x-customer-read-extension: implemented-issue-60
       description: >-
         Fresh document/resource read authorization on every call. UPLOADED and at least one
         valid linked resource required; uploader identity alone is insufficient. Scoped readers
         must see all linked work and every Customer served by shared Stops. An issued GET URL
         is a temporary bearer grant (default 60 seconds, configured maximum 300); permission
         revocation cannot revoke an already-issued URL. Never log or share signed URLs.
+        Optional customerId applies the same exact accepted-file and single-Customer all-links checks as the Customer document index. Disabled/unavailable R2 returns 503 OBJECT_STORAGE_UNAVAILABLE, never a fabricated URL. Body and endpoint remain unchanged.
+      parameters:
+        - $ref: '#/components/parameters/SelectedCustomerId'
       requestBody:
         required: false
         content:
@@ -3155,6 +3278,12 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    SelectedCustomerId:
+      name: customerId
+      in: query
+      required: false
+      description: Explicit selected Customer, freshly authorized server-side; narrows additive roles and never grants access.
+      schema: { type: string, format: uuid }
     SiteId:
       name: siteId
       in: path
@@ -3214,6 +3343,81 @@ components:
             $ref: '#/components/schemas/PagedResponse'
 
   schemas:
+    CustomerDeliveryDocument:
+      type: object
+      additionalProperties: false
+      description: Exact accepted published file and authorized Order/Stop association. No storage key, signed URL, uploader identity or free metadata.
+      required: [customerId, id, documentType, uploadStatus, contentType, sizeBytes, uploadedAt, orderId, orderNumber, stopId, acceptedAt, evidenceMode]
+      properties:
+        customerId: { type: string, format: uuid }
+        id: { type: string, format: uuid }
+        documentType: { type: string, enum: [BOL, POD, DELIVERY_PHOTO] }
+        uploadStatus: { type: string, const: UPLOADED }
+        contentType: { type: string, enum: [image/jpeg, image/png, application/pdf] }
+        sizeBytes: { type: integer, format: int64, minimum: 1 }
+        uploadedAt: { type: string, format: date-time }
+        orderId: { type: string, format: uuid }
+        orderNumber: { type: string }
+        stopId: { type: string, format: uuid }
+        acceptedAt: { type: string, format: date-time }
+        evidenceMode: { type: string, enum: [SIGNED_BOL, NO_RECEIVER_AVAILABLE] }
+    CustomerDeliveryDocumentPage:
+      type: object
+      additionalProperties: false
+      required: [customerId, items, nextCursor]
+      properties:
+        customerId: { type: string, format: uuid }
+        items:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/CustomerDeliveryDocument' }
+        nextCursor: { type: [string, "null"], maxLength: 512 }
+    CustomerDelivery:
+      type: object
+      additionalProperties: false
+      description: Real composite Order/Stop identity. Shared Stop acceptance is withheld. Historical acceptance may have no recorded file association. No other Customer route or staff details.
+      required: [customerId, orderId, orderNumber, orderStatus, stopId, tripId, destination, scheduledAt, status, arrivedAt, serviceStartedAt, completedAt, departedAt, expectedTrailer, evidenceMode, acceptedAt, fileAssociationRecorded, documents]
+      properties:
+        customerId: { type: string, format: uuid }
+        orderId: { type: string, format: uuid }
+        orderNumber: { type: string }
+        orderStatus: { $ref: '#/components/schemas/OrderStatus' }
+        stopId: { type: string, format: uuid }
+        tripId: { type: string, format: uuid }
+        destination: { type: [string, "null"] }
+        scheduledAt: { type: [string, "null"], format: date-time }
+        status: { $ref: '#/components/schemas/ExecutableStopStatusImplemented' }
+        arrivedAt: { type: [string, "null"], format: date-time }
+        serviceStartedAt: { type: [string, "null"], format: date-time }
+        completedAt: { type: [string, "null"], format: date-time }
+        departedAt: { type: [string, "null"], format: date-time }
+        expectedTrailer:
+          type: [object, "null"]
+          additionalProperties: false
+          required: [id, operationalNumber]
+          properties:
+            id: { type: string, format: uuid }
+            operationalNumber: { type: string }
+        evidenceMode: { type: [string, "null"], enum: [SIGNED_BOL, NO_RECEIVER_AVAILABLE, null] }
+        acceptedAt: { type: [string, "null"], format: date-time }
+        fileAssociationRecorded:
+          type: boolean
+          description: A receipt retains exact accepted-file identity; not a guarantee that the current viewer can see every file.
+        documents:
+          type: array
+          maxItems: 2
+          items: { $ref: '#/components/schemas/CustomerDeliveryDocument' }
+    CustomerDeliveryPage:
+      type: object
+      additionalProperties: false
+      required: [customerId, items, nextCursor]
+      properties:
+        customerId: { type: string, format: uuid }
+        items:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/CustomerDelivery' }
+        nextCursor: { type: [string, "null"], maxLength: 512 }
     AlertAcknowledgementRequest:
       type: object
       additionalProperties: false
@@ -4645,7 +4849,7 @@ components:
     TrailerReadItem:
       type: object
       additionalProperties: false
-      description: All original Trailer fields plus derived labels and physical coupling. Customer-owned Location references outside fresh scope are null.
+      description: All original Trailer fields plus derived labels and physical coupling. Customer-owned Location references outside fresh scope are null. Customer projections set capabilityNotes, lastDriverId and all current/last Driver/Tractor identities to null; couplingState remains factual. Explicit Customer selection narrows even additive roles.
       required: [id, operationalNumber, designatedCustomerId, trailerType, capabilityNotes, locationState, currentLocationId, lastKnownLocationId, lastSeenAt, lastDriverId, loadState, serviceabilityState, usagePurpose, active, version, createdAt, updatedAt, designatedCustomerName, currentLocationName, lastKnownLocationName, couplingState, currentDriverId, currentDriverName, currentTractorId, currentTractorOperationalNumber, lastDriverName, lastTractorId, lastTractorOperationalNumber]
       properties:
         id: { type: string, format: uuid }
@@ -4848,11 +5052,13 @@ components:
           $ref: '#/components/schemas/TrailerServiceabilityState'
         previousLocationId: { type: [string, "null"], format: uuid }
         newLocationId: { type: [string, "null"], format: uuid }
+        previousLocationName: { type: [string, "null"], description: Included only for a currently authorized Customer Location reference. }
+        newLocationName: { type: [string, "null"], description: Included only for a currently authorized Customer Location reference. }
 
     TrailerTimelineItem:
       type: object
       additionalProperties: false
-      description: Safe durable facts only. No actor User ID, Tenant ID, client operation ID or raw metadata. Scoped readers receive reason/tripId/tripStopId=null and foreign Customer-owned locations are omitted.
+      description: Safe durable facts only. No actor User ID, Tenant ID, client operation ID or raw metadata. Scoped readers receive reason/tripId/tripStopId and all Driver/Tractor identities null; foreign Customer-owned Locations and their change references are omitted. Current designation and non-shared work constrain Customer history.
       required: [id, eventType, actorType, sourceType, occurredAt, recordedAt, reason, locationId, locationName, driverId, driverName, tractorId, tractorOperationalNumber, tripId, tripStopId, changes]
       properties:
         id: { type: string, format: uuid }
@@ -4889,8 +5095,9 @@ components:
     TrailerList:
       type: object
       additionalProperties: false
-      required: [items]
+      required: [items, nextCursor]
       properties:
+        nextCursor: { type: [string, "null"], maxLength: 512 }
         items:
           type: array
           items:

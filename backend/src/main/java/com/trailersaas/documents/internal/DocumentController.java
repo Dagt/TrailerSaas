@@ -3,6 +3,7 @@ package com.trailersaas.documents.internal;
 import static com.trailersaas.documents.internal.DocumentContracts.*;
 import com.trailersaas.identity.AuthenticatedUserPrincipal;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -51,13 +52,17 @@ class DocumentController {
   @GetMapping("/{documentId}")
   Metadata metadata(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenantId,
       @PathVariable UUID documentId,@RequestParam Map<String,String> query) {
-    noQuery(query);return service.metadata(actor,tenantId,documentId);
+    return service.metadata(actor,tenantId,documentId,customer(query));
   }
   @PostMapping("/{documentId}/download-url")
   Download download(@AuthenticationPrincipal AuthenticatedUserPrincipal actor,@PathVariable UUID tenantId,
       @PathVariable UUID documentId,@RequestBody(required=false) String body,@RequestParam Map<String,String> query) {
-    noQuery(query);
+    UUID customer=customer(query);
     if(body!=null && !body.isBlank() && !body.trim().equals("{}")) throw DocumentFailure.invalid();
-    return service.download(actor,tenantId,documentId);
+    return service.download(actor,tenantId,documentId,customer);
+  }
+  private static UUID customer(Map<String,String> query) {
+    if(!Set.of("customerId").containsAll(query.keySet()))throw DocumentFailure.invalid();
+    return query.containsKey("customerId")?CustomerOperationalReads.uuid(query.get("customerId")):null;
   }
 }
