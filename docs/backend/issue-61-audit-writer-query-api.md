@@ -159,7 +159,7 @@ No HTTP Audit mutations. Response DTOs/minimized snapshot shapes are in OpenAPI.
 
 Focused implementation run `issue61-focus3.log`:184 tests, zero failures/errors/
 skipped with Java25/PostgreSQL18.6; this is development evidence, not final-SHA
-full validation. Additional focused tests cover physical nonduplication and ties. A failing PostgreSQL regression reproduced an extended-year filter returning500; the reader now rejects unsupported extended/negative years as400 before querying. The superseded candidate run is not final evidence.
+full validation. Additional focused tests cover physical nonduplication and ties. A failing PostgreSQL regression reproduced an extended-year filter returning500; the reader now rejects unsupported extended/negative years as400 before querying. The superseded candidate run is not final evidence. Full regression also located two historical schema assertions requiring the exact V30 inventory:54 tables and Audit presence (with zero duplicate Trip Audit rows), replacing the old reserved-table absence. Existing column/grant/RLS assertions stay intact.
 Final candidate must run complete Backend clean verify, Web locked install/type/
 lint/tests/build, Mobile locked install/Drift9 reproducibility/format/fatal-info
 analysis/tests, OpenAPI and local CI Policy. Evidence is recorded externally with
