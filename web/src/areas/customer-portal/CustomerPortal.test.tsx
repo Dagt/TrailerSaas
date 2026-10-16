@@ -11,6 +11,7 @@ import { ApiProblem } from '../../shared/api/client'
 afterEach(() => { vi.unstubAllGlobals(); focusManager.setFocused(undefined) })
 const dashboard = () => screen.findByRole('heading', { name: 'Customer dashboard' })
 const path = (tenant=tenantA, id=customerId) => `/tenants/${tenant}/customers/${id}`
+const dashboardRead=(r:ReturnType<typeof customerFixture>['requests'][number])=>r.path==='/me'||r.path===path()||r.path===`/tenants/${tenantA}/orders`&&r.query.get('customerId')===customerId||r.path===`/tenants/${tenantA}/trailers`&&r.query.get('designatedCustomerId')===customerId&&r.query.get('limit')==='5'||[path()+'/deliveries',path()+'/documents'].includes(r.path)&&r.query.get('limit')==='5'
 
 it('recognizes a Customer role with capabilities [] and verifies the sole context through real API boundaries', async () => {
   const f = customerFixture(); await dashboard()
@@ -19,7 +20,7 @@ it('recognizes a Customer role with capabilities [] and verifies the sole contex
   expect(screen.queryByRole('link',{name:'Tenant Admin'})).not.toBeInTheDocument()
   expect(screen.queryByRole('link',{name:'Transport Operations'})).not.toBeInTheDocument()
   expect(screen.queryByLabelText('Active Customer')).not.toBeInTheDocument()
-  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||r.path===`/tenants/${tenantA}/orders`&&r.query.get('customerId')===customerId)).toBe(true)
+  expect(f.requests.every(dashboardRead)).toBe(true)
   expect(f.requests.every(r=>r.method==='GET')).toBe(true)
   const key=customerKey({uid:'customer-user',userId:resourceId,tenantId:tenantA,membership:dispatcher(),customerId},'context')
   expect(f.cache.getQueryData(key)).toMatchObject({id:customerId})
@@ -73,21 +74,21 @@ it('switches Tenants without retaining the old Customer or its cache',async()=>{
   expect(screen.getByText('Workspace for Beta Customer in Beta Logistics.')).toBeInTheDocument()
   expect(f.cache.getQueryCache().getAll().filter(q=>q.queryKey[0]==='customer').every(q=>q.queryKey[3]===tenantB)).toBe(true)
 })
-it.each(['Orders','Trailers','Deliveries','Documents'])('protects %s and keeps deferred catalogs honest without fake actions',async label=>{
+it.each(['Orders','Trailers','Deliveries','Documents'])('protects %s and loads only its actual Customer read surface without fake actions',async label=>{
   const f=customerFixture(`/customer/${label.toLowerCase()}`)
   await screen.findByRole('heading',{name:label})
   if(label==='Orders') {
     await screen.findByText('No Orders found in this Customer scope.')
     expect(f.requests.filter(r=>r.path.endsWith('/orders')).every(r=>r.query.get('customerId')===customerId)).toBe(true)
-  } else expect(screen.getByText(/will be available in a later phase/)).toBeInTheDocument()
+  } else await screen.findByText(label==='Trailers'?'No designated Trailers found for these filters.':label==='Deliveries'?'No authorized deliveries found.':'No authorized accepted documents found.')
   expect(screen.queryByRole('button',{name:/create|save|cancel order|download/i})).not.toBeInTheDocument()
-  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||label==='Orders'&&(r.path===`/tenants/${tenantA}/orders`||r.path.endsWith('/orders/customer-context'))&&r.query.get('customerId')===customerId)).toBe(true)
+  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||r.path.startsWith(path()+'/')||r.path===`/tenants/${tenantA}/trailers`&&r.query.get('designatedCustomerId')===customerId&&r.query.has('limit')||label==='Orders'&&(r.path===`/tenants/${tenantA}/orders`||r.path.endsWith('/orders/customer-context'))&&r.query.get('customerId')===customerId)).toBe(true)
 })
-it('shows informative dashboard cards without numeric inventory or operational projections',async()=>{
+it('shows bounded actual dashboard previews without pretending page sizes are inventory totals',async()=>{
   const f=customerFixture();await dashboard()
   for(const label of ['Pending Orders','Active Deliveries','Trailer Inventory','Recent Evidence'])expect(screen.getByRole('link',{name:label})).toBeInTheDocument()
-  expect(screen.getAllByText('These catalogs remain deferred to #60.')).toHaveLength(3)
-  expect(f.requests.every(r=>!r.path.includes('/trailers')&&!r.path.includes('/documents')&&(!r.path.endsWith('/orders')||r.query.get('customerId')===customerId))).toBe(true)
+  expect(screen.getAllByText(/preview is not an inventory total/)).toHaveLength(3)
+  expect(f.requests.every(r=>!r.path.endsWith('/trips')&&!r.path.includes('/dispatch/board')&&(!r.path.endsWith('/orders')||r.query.get('customerId')===customerId)&&(!r.path.endsWith('/trailers')||r.query.get('designatedCustomerId')===customerId&&r.query.get('limit')==='5')&&(!r.path.endsWith('/documents')&&!r.path.endsWith('/deliveries')||r.path.startsWith(path()+'/')&&r.query.get('limit')==='5'))).toBe(true)
 })
 it.each([401,403,404,409,503])('handles %s safely without rendering stale content or private server error detail',async status=>{
   const f=customerFixture();f.handlers.set(path(),async()=>response({detail:'Private other Customer, SQL password',code:status===409?'STALE_VERSION':'DENIED'},status))
@@ -135,7 +136,7 @@ it('does not download a Tenant-wide Customer directory for dual-role users',asyn
   const m=dispatcher();m.roles.push({roleCode:'TENANT_ADMIN',scopeType:'TENANT',customerId:null})
   const f=customerFixture('/customer',[m]);await dashboard()
   expect(screen.getByRole('link',{name:'Tenant Admin'})).toBeInTheDocument()
-  expect(f.requests.every(r=>r.path==='/me'||r.path===path()||r.path===`/tenants/${tenantA}/orders`&&r.query.get('customerId')===customerId)).toBe(true)
+  expect(f.requests.every(dashboardRead)).toBe(true)
 })
 it('does not accept arbitrary URL context parameters or resource paths as authority',async()=>{
   const f=customerFixture(`/customer/orders/${customerB}?customerId=${customerB}&tenantId=${tenantB}`)

@@ -2,7 +2,8 @@ import type { RouteObject } from 'react-router'
 import { AdminLayout, AdminHome } from '../areas/tenant-admin/AdminLayout'
 import { MasterList, MasterDetail, SettingsPage } from '../areas/tenant-admin/MasterDataPages'
 import { TransportOperationsArea } from '../areas/transport-operations/TransportOperationsArea'
-import { CustomerDashboard, CustomerSection } from '../areas/customer-portal/CustomerPages'
+import { CustomerDashboard } from '../areas/customer-portal/CustomerPages'
+import { CustomerTrailerInventory, CustomerTrailerDetail, CustomerDeliveriesList, CustomerDeliveryDetail, CustomerDocumentsList, CustomerDocumentViewer } from '../areas/customer-portal/CustomerReadViews'
 import { CustomerPortalArea } from '../areas/customer-portal/CustomerPortalArea'
 import { OrdersList } from '../areas/customer-portal/OrdersList'
 import { CreateOrder } from '../areas/customer-portal/CreateOrder'
@@ -52,7 +53,12 @@ export const appRoutes: RouteObject[] = [
         { path:'orders',Component:OrdersList },
         { path:'orders/new',Component:CreateOrder },
         { path:'orders/:orderId',Component:CustomerOrderDetail },
-        ...['trailers','deliveries','documents'].map(section => ({ path: section, element: <CustomerSection section={section} /> })),
+        { path:'trailers',Component:CustomerTrailerInventory },
+        { path:'trailers/:trailerId',Component:CustomerTrailerDetail },
+        { path:'deliveries',Component:CustomerDeliveriesList },
+        { path:'deliveries/:orderId/:stopId',Component:CustomerDeliveryDetail },
+        { path:'documents',Component:CustomerDocumentsList },
+        { path:'documents/:documentId',Component:CustomerDocumentViewer },
         { path: '*', Component: NotFound },
       ] },
       { path: '*', Component: NotFound },

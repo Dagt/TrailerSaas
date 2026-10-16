@@ -1,0 +1,26 @@
+import { orderFixture, orderId, stopId, tripId, trailerId, siteId } from './customerOrderFixture'
+import { customerId, response } from './customerFixture'
+import { stamps } from './adminFixture'
+import type { CustomerTrailer, CustomerDelivery, EvidenceDocument } from '../areas/customer-portal/readContracts'
+
+export const locationId='00000000-0000-4000-8000-000000000501',knownId='00000000-0000-4000-8000-000000000502',documentId='00000000-0000-4000-8000-000000000503',eventId='00000000-0000-4000-8000-000000000504'
+export const inventoryTrailer=(patch:Partial<CustomerTrailer>={}):CustomerTrailer=>({...stamps,id:trailerId,operationalNumber:'T114',designatedCustomerId:customerId,designatedCustomerName:'Acme Packaging',trailerType:'VAN',capabilityNotes:null,locationState:'AT_LOCATION',currentLocationId:locationId,currentLocationName:'Recorded Dock',lastKnownLocationId:knownId,lastKnownLocationName:'Historical Yard',lastSeenAt:stamps.createdAt,lastDriverId:null,loadState:'EMPTY',serviceabilityState:'IN_SERVICE',usagePurpose:'DELIVERY',active:true,couplingState:'UNCOUPLED',currentDriverId:null,currentDriverName:null,currentTractorId:null,currentTractorOperationalNumber:null,lastDriverName:null,lastTractorId:null,lastTractorOperationalNumber:null,...patch})
+export const evidenceFile=(patch:Partial<EvidenceDocument>={}):EvidenceDocument=>({customerId,id:documentId,documentType:'BOL',uploadStatus:'UPLOADED',contentType:'image/jpeg',sizeBytes:3,uploadedAt:stamps.createdAt,orderId,orderNumber:'ACME-101',stopId,acceptedAt:stamps.createdAt,evidenceMode:'SIGNED_BOL',...patch})
+export const delivered=(patch:Partial<CustomerDelivery>={}):CustomerDelivery=>({customerId,orderId,orderNumber:'ACME-101',orderStatus:'DELIVERED',stopId,tripId,destination:'Authorized receiving',scheduledAt:stamps.createdAt,status:'COMPLETED',arrivedAt:stamps.createdAt,serviceStartedAt:stamps.createdAt,completedAt:stamps.createdAt,departedAt:null,expectedTrailer:{id:trailerId,operationalNumber:'T114'},evidenceMode:'SIGNED_BOL',acceptedAt:stamps.createdAt,fileAssociationRecorded:true,documents:[evidenceFile()],...patch})
+export const fileMetadata=()=>({id:documentId,documentType:'BOL',contentType:'image/jpeg',sizeBytes:3,checksumSha256:'0'.repeat(64),uploadStatus:'UPLOADED',createdAt:stamps.createdAt,uploadedAt:stamps.createdAt,links:[{id:eventId,entityType:'TRIP_STOP',entityId:stopId,createdAt:stamps.createdAt}]})
+export function customerReadFixture(path='/customer/trailers',memberships?:Parameters<typeof orderFixture>[1]) {
+  const f=orderFixture(path,memberships),readRoot=f.root+`/customers/${customerId}`
+  const state={trailers:[inventoryTrailer()],deliveries:[delivered()],documents:[evidenceFile()]}
+  f.handlers.set(f.root+'/trailers',async(_o,q)=>{
+    const rows=q?.get('designatedCustomerId')===customerId?state.trailers.filter(t=>(!q.get('locationState')||t.locationState===q.get('locationState'))&&(!q.get('active')||String(t.active)===q.get('active'))&&(!q.get('serviceabilityState')||t.serviceabilityState===q.get('serviceabilityState'))):[]
+    return response({items:rows,nextCursor:null})
+  })
+  f.handlers.set(f.root+`/trailers/${trailerId}`,async(_o,q)=>q?.get('customerId')!==customerId?response({},404):response({...state.trailers[0],designatedCustomer:{id:customerId,name:'Acme Packaging'},currentLocation:state.trailers[0]?.locationState==='AT_LOCATION'?{id:locationId,name:'Recorded Dock',type:'DOCK',siteId,siteName:'Receiving'}:null,lastKnownLocation:{id:knownId,name:'Historical Yard',type:'YARD',siteId,siteName:'Receiving'},lastDriver:null,currentTractor:null,lastTractor:null,currentCoupling:null,lastCoupling:null,openManifests:[],manifestSummaryTruncated:false}))
+  f.handlers.set(f.root+`/trailers/${trailerId}/timeline`,async()=>response({items:[{id:eventId,eventType:'ARRIVED',actorType:'HUMAN_USER',sourceType:'USER_ACTION',occurredAt:stamps.createdAt,recordedAt:stamps.createdAt,reason:null,locationId,locationName:'Recorded Dock',driverId:null,driverName:null,tractorId:null,tractorOperationalNumber:null,tripId:null,tripStopId:null,changes:{previousLoadState:'EMPTY',newLoadState:'LOADED'}}],nextCursor:null}))
+  f.handlers.set(readRoot+'/deliveries',async(_o,q)=>response({customerId,items:state.deliveries.filter(d=>(!q?.get('status')||d.status===q.get('status'))&&(!q?.get('active')||(['PENDING','EN_ROUTE','ARRIVED','IN_SERVICE'].includes(d.status)=== (q.get('active')==='true')))&&(!q?.get('orderId')||d.orderId===q.get('orderId'))),nextCursor:null}))
+  f.handlers.set(readRoot+`/deliveries/${orderId}/${stopId}`,async()=>response(state.deliveries[0]))
+  f.handlers.set(readRoot+'/documents',async(_o,q)=>response({customerId,items:state.documents.filter(d=>(!q?.get('documentType')||d.documentType===q.get('documentType'))&&(!q?.get('documentId')||d.id===q.get('documentId'))&&(!q?.get('orderId')||d.orderId===q.get('orderId'))&&(!q?.get('stopId')||d.stopId===q.get('stopId'))),nextCursor:null}))
+  f.handlers.set(f.root+`/documents/${documentId}`,async()=>response(fileMetadata()))
+  f.handlers.set(f.root+`/documents/${documentId}/download-url`,async()=>response({downloadUrl:'https://private.example.test/accepted-file?signature=synthetic',expiresAt:new Date(Date.now()+60_000).toISOString()}))
+  return {...f,readRoot,readState:state}
+}
