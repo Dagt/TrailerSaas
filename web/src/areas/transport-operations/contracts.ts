@@ -33,7 +33,7 @@ export interface TripStop extends StopInput {
 }
 export interface AssignmentHistory {
   id: string; eventType: string; driverId: string | null; tractorId: string | null; trailerId: string | null
-  actorUserId: string; occurredAt: string; reason: string | null; metadata: Record<string, unknown> | null
+  actorUserId: string | null; occurredAt: string; reason: string | null; metadata: Record<string, unknown> | null
 }
 export interface OperationalHistory {
   id: string; eventType: string; tripStopId: string | null; actorUserId: string | null; targetDriverId: string | null

@@ -179,6 +179,7 @@ final class TripContracts {
   }
 
   record Timeline(List<HistoryItem> items) {}
+  record TimelinePage(List<HistoryItem> items, String nextCursor) {}
 
   record DriverUpdate(
       UUID id, UUID tripId, String updateType, Instant occurredAt, Map<String, Object> payload) {

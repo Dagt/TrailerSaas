@@ -1,5 +1,6 @@
 import type { ApiClient } from '../../shared/api/client'
 import type { Cancellation, CreateTrip, DispatchBoard, OrderDetail, OrderSummary, Page, Reroute, Substitution, Timeline, TripDetail, TripSummary } from './contracts'
+import { historyPage, type HistoryPosition } from './historyContracts'
 export type Filters = Record<string, string | undefined>
 export function queryString(filters: Filters) {
   const q = new URLSearchParams()
@@ -16,7 +17,9 @@ export function operationsApi(client: ApiClient, tenant: string) {
     order: (id: string, signal?: AbortSignal) => get<OrderDetail>(`/orders/${id}`, signal),
     trips: (f: Filters, signal?: AbortSignal) => get<Page<TripSummary>>(`/trips${queryString(f)}`, signal),
     trip: (id: string, signal?: AbortSignal) => get<TripDetail>(`/trips/${id}`, signal),
+    tripWithoutHistory: (id: string, signal?: AbortSignal) => get<TripDetail>(`/trips/${id}?includeHistory=false`, signal),
     timeline: (id: string, signal?: AbortSignal) => get<Timeline>(`/trips/${id}/timeline`, signal),
+    timelinePage: async (id: string, position: HistoryPosition, signal?: AbortSignal) => historyPage(await get<unknown>(`/trips/${id}/timeline${queryString({ limit: '50', cursor: position.cursor })}`, signal), position),
     master: <T,>(path: string, signal?: AbortSignal) => get<{ items: T[] }>(path, signal),
     create: (r: CreateTrip) => client.request<TripDetail>(`${base}/trips`, { method: 'POST', body: {
       orderIds: r.orderIds, stops: r.stops.map(s => ({ sequenceNumber: s.sequenceNumber, stopType: s.stopType, siteId: s.siteId, locationId: s.locationId, siteSnapshot: s.siteSnapshot, scheduledAt: s.scheduledAt, orderIds: s.orderIds, instructions: s.instructions })),
