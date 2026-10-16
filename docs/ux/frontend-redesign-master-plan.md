@@ -1,6 +1,6 @@
 # TrailerSaaS — Frontend Redesign Master Plan
 
-> **Status:** PROPOSED / owner visual approval required before implementation.  
+> **Status:** VISUAL DIRECTION APPROVED — **Fleet Simple (Option D)** chosen by the product owner on 2026-10-16. Planning PR #126 must still be reviewed/merged before UX-01 starts.  
 > **Baseline:** `main` at `f876debe35fbe5891dd0ff15f5f5b8190a581073` (PR #116 merged, 2026-10-16).  
 > **Delivery:** documentation PR only; implementation requires individually reviewed issue branches and PRs. **NO MERGE by agent.**
 
@@ -24,19 +24,23 @@ Success is measured against a **complete route/screen inventory**, approved desi
 
 ## 3. Brand and design review gate
 
-Propose and compare three non-proprietary directions in `design-system.md`:
-A. **Fleet Command** (recommended): luminous neutral canvas, deep navy navigation, disciplined cobalt/teal accents, compact data-density.
-B. **Industrial Signal**: bolder slate/steel identity, higher-contrast accent, heavier operational emphasis.
-C. **Atlas Minimal**: restrained white/graphite, subtle links and dense editorial layout.
+**APPROVED — Fleet Simple (Option D)** supersedes the three prior directions. The owner preferred a light, uncluttered, polished enterprise SaaS and rejected the darker/complex Fleet Command and Industrial Signal directions as well as overly sparse Atlas Minimal. The official family has a **light gray sidebar**, soft gray canvas, white content surfaces, cobalt/blue primary actions, restrained teal accents, readable tables and subtle status chips. It must feel premium **without** heavy or visually complex control panels. See `design-system.md` for starter tokens and exact implementation limits.
 
-The owner chooses a direction, or requests adjustments, **before UX-01 makes production UI changes**. No reliance on unattributed third-party screenshots/mockups. Any concept visuals are marked *concept*, never screenshots of working features.
+The *visual identity decision is complete*; Codex should not reopen a theme-selection exercise. Owner still reviews the documentation Draft PR and the UX-01 component proof before any merge. No reliance on unattributed third-party screenshots/mockups. Any concept visuals are marked *concept*, never screenshots of working features.
+
+
+## Approved visual direction — implementation guardrail
+
+**Fleet Simple (Option D) has been selected.** Visual priority: simple light sidebar, restrained white cards, coherent blue CTAs, teal supporting accent, legible clean tables and minimal decoration. **Not** a dark/navy industrial control room; **not** an anonymous austere all-white mockup. Use the concrete tokens and state palette from [design-system.md](design-system.md). React and Flutter must share a design language without altering role-specific interaction semantics. Exact colors can be tuned for WCAG contrast, but a materially different concept requires owner approval.
+
+**Execution precondition:** the owner must manually merge the documentation-only PR #126 before Codex branches from `main` for #118. Codex must not create/revise the Epic or issues; those already exist as #117–#125. Each UX issue is one Draft PR and must remain unmerged pending review.
 
 ## 4. Work breakdown and order
 
 | Phase | Issue | Increment / gating dependency |
 |---|---|---|
-| 0 | This planning PR + parent Epic | Define scope, inventory, visual direction; owner reviews |
-| 1 | UX-01 | Web design tokens, components, Flutter token mapping and component examples; approved direction required |
+| 0 | This planning PR + parent Epic | Fleet Simple selected; owner reviews/merges documentation PR #126 |
+| 1 | UX-01 | Implement **approved Fleet Simple** tokens, components, Flutter theme mapping and representative examples; **not** whole-app page redesign |
 | 2 | UX-02 | Shared Web shell/navigation/auth/error/responsive, no auth contract changes; UX-01 |
 | 3 | UX-03 | Tenant Admin (including Alerts and Audit); UX-01/02 |
 | 4 | UX-04 | Transport Operations/dispatch/timelines; UX-01/02 |
@@ -77,8 +81,8 @@ For commercial review measure: information discoverability, quick lookup latency
 
 ## 8. Change freeze and checkpoints
 
-**Checkpoint 0:** owner approves plan, issue breakdown and a named visual direction.  
-**Checkpoint 1:** UX-01 token/component showcase approved.  
+**Checkpoint 0 — Fleet Simple APPROVED:** product owner selected Fleet Simple (Option D), 2026-10-16. Planning documentation PR #126 still requires review/merge prior to UX-01.  
+**Checkpoint 1:** UX-01 component showcase must be visually consistent with **light-sidebar Fleet Simple**, tested and owner-reviewed.  
 **Checkpoint 2:** UX-02 shell approved in desktop/tablet/mobile.  
 **Checkpoint 3:** admin/operations/customer screens independently accepted.  
 **Checkpoint 4:** mobile roles accepted with offline accessibility checks.  
@@ -97,7 +101,7 @@ A rejected design checkpoint blocks dependent visual work; it does **not** justi
 
 ## 10. Supporting specifications
 
-- [Design system and proposed visual directions](design-system.md)
+- [Approved Fleet Simple design system](design-system.md)
 - [Screen inventory and ownership](screen-inventory.md)
 - [Visual acceptance and QA matrix](visual-acceptance-criteria.md)
 - [Interaction and copy standards](interaction-content-standards.md)
