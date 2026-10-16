@@ -817,6 +817,14 @@ class TrailerReadPostgresTests extends PostgresIntegrationTest {
     role("TENANT_ADMIN");assertThat(get("/"+trailer).statusCode()).isEqualTo(200);
   }
 
+  @Test void timelineLocationChangesResolveOnlyPermittedNamesInOneBoundedBatch()throws Exception {
+    fact("YARD_MOVED",TIME,TIME,"{\"previousLocationId\":\""+known+"\",\"newLocationId\":\""+location+"\"}");role("CUSTOMER_DISPATCHER");
+    var changes=(Map<?,?>)items(get("/"+trailer+"/timeline?customerId="+a)).getFirst().get("changes");
+    assertThat(changes.get("previousLocationName")).isEqualTo("Last Yard");assertThat(changes.get("newLocationName")).isEqualTo("Current Dock");
+    f.db.execute("update operational_locations set customer_id=? where id=?",b,known);
+    var r=get("/"+trailer+"/timeline?customerId="+a);assertThat(r.body()).doesNotContain(known.toString(),"Last Yard");
+  }
+
   void problem(HttpResponse<String> r, int status, String code) {
     assertThat(r.statusCode()).as(r.body()).isEqualTo(status);
     assertThat(body(r)).containsEntry("code", code).containsKey("traceId");

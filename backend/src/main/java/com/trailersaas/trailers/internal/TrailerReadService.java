@@ -34,7 +34,7 @@ class TrailerReadService {
     if(limit!=null) {
       if(!limit.matches("[1-9][0-9]{0,2}") || (size=Integer.parseInt(limit))>100) throw TrailerFailure.invalid();
     }
-    String context=actor.userId()+"|"+tenant+"|trailers|"+scope+"|"+new TreeMap<>(raw);
+    String context=actor.userId()+"|"+tenant+"|trailers|"+scope.tenantWide()+"|"+scope.customerIds().stream().map(UUID::toString).sorted().toList()+"|"+new TreeMap<>(raw);
     List<UUID> after;
     try { after=com.trailersaas.ReadCursor.decode(cursor,context,1); } catch(IllegalArgumentException e) { throw TrailerFailure.invalid(); }
     return repository.page(tenant,scope,filters,after.isEmpty()?null:after.getFirst(),size,context);

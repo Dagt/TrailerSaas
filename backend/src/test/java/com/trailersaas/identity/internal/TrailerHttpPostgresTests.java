@@ -31,6 +31,7 @@ class TrailerHttpPostgresTests extends PostgresIntegrationTest {
     TrailerFixtures f; UUID tenant,actor,membership,customerA,customerB;
     @BeforeEach void seed() throws Exception {
         f=new TrailerFixtures(flyway);tenant=f.db.tenant();actor=f.db.user();
+        f.db.execute("UPDATE tenants SET status='ACTIVE' WHERE id=?",tenant);
         membership=f.db.membership(tenant,actor,"ACTIVE","TENANT_ADMIN");
         customerA=f.customer(tenant);customerB=f.customer(tenant);
         when(verifier.verify(TOKEN)).thenReturn(new VerifiedFirebaseIdentity("fixture-"+actor,null,null));

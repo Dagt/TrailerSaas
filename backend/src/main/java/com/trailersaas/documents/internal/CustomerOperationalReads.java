@@ -121,7 +121,7 @@ class CustomerOperationalReads {
         or exists(select 1 from trip_stop_orders a join orders foreign_order on foreign_order.tenant_id=a.tenant_id and foreign_order.id=a.order_id
           where a.tenant_id=l.tenant_id and a.trip_stop_id=l.entity_id and foreign_order.customer_id<>:customer)))
     """;
-  private static final String DOCUMENT_SELECT="select distinct d.id,d.document_type,d.content_type,d.size_bytes,d.uploaded_at,o.id order_id,o.order_number,s.id stop_id,ev.completed_at accepted_at,ev.evidence_mode ";
+  private static final String DOCUMENT_SELECT="select distinct d.id,d.document_type,d.upload_status,d.content_type,d.size_bytes,d.uploaded_at,o.id order_id,o.order_number,s.id stop_id,ev.completed_at accepted_at,ev.evidence_mode ";
   private List<Document> documentsFor(UUID tenant,UUID customer,List<Delivery> page) {
     if(page.isEmpty())return List.of();var args=params(tenant,customer);var pairs=new ArrayList<String>();
     for(int i=0;i<page.size();i++){pairs.add("(o.id=:o"+i+" and s.id=:s"+i+")");args.put("o"+i,page.get(i).orderId());args.put("s"+i,page.get(i).stopId());}
@@ -148,5 +148,5 @@ class CustomerOperationalReads {
     boolean more=rows.size()>q.limit;var page=List.copyOf(rows.subList(0,Math.min(rows.size(),q.limit)));
     return new Page<>(customer,page,more?ReadCursor.encode(q.context,page.getLast().id(),page.getLast().orderId(),page.getLast().stopId()):null);
   }
-  private static Document document(ResultSet r,UUID customer)throws SQLException{return new Document(customer,r.getObject("id",UUID.class),r.getString("document_type"),r.getString("content_type"),r.getLong("size_bytes"),time(r,"uploaded_at"),r.getObject("order_id",UUID.class),r.getString("order_number"),r.getObject("stop_id",UUID.class),time(r,"accepted_at"),r.getString("evidence_mode"));}
+  private static Document document(ResultSet r,UUID customer)throws SQLException{return new Document(customer,r.getObject("id",UUID.class),r.getString("document_type"),r.getString("upload_status"),r.getString("content_type"),r.getLong("size_bytes"),time(r,"uploaded_at"),r.getObject("order_id",UUID.class),r.getString("order_number"),r.getObject("stop_id",UUID.class),time(r,"accepted_at"),r.getString("evidence_mode"));}
 }

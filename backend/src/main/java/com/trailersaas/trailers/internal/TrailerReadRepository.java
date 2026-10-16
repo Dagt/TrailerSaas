@@ -347,6 +347,7 @@ class TrailerReadRepository {
       q.setParameter("occurred", input.position().occurredAt())
           .setParameter("id", input.position().id());
     var rows = q.getResultList();
+    var visibleLocations = scope.tenantWide()?Map.<UUID,String>of():visibleLocations(tenant,trailer,scope,rows);
     var items = new ArrayList<TimelineItem>();
     for (Object value : rows.subList(0, Math.min(input.limit(), rows.size()))) {
       var r = new Row((Object[]) value);
@@ -361,7 +362,7 @@ class TrailerReadRepository {
       UUID tractor = r.uuid();
       String tractorNumber = r.text();
       UUID trip = r.uuid(), stop = r.uuid();
-      var changes = changes(r.text(), scope);
+      var changes = changes(r.text(), scope, visibleLocations);
       items.add(
           new TimelineItem(
               id,
@@ -389,7 +390,21 @@ class TrailerReadRepository {
     return new TimelinePage(List.copyOf(items), cursor);
   }
 
-  private Map<String, Object> changes(String metadata, CustomerAccessScope scope) {
+  private Map<UUID,String> visibleLocations(UUID tenant,UUID trailer,CustomerAccessScope scope,List<?> rows) {
+    var ids=new HashSet<UUID>();
+    for(Object value:rows) {
+      var row=(Object[])value;String metadata=(String)row[row.length-1];if(metadata==null)continue;
+      var node=json.readTree(metadata);
+      for(String key:List.of("previousLocationId","newLocationId")) {
+        var v=node.get(key);if(v==null||!v.isString())continue;
+        try{UUID id=TrailerValidation.uuid(v.asString());if(id!=null)ids.add(id);}catch(TrailerFailure ignored){/* malformed historical references grant nothing */}
+      }
+    }
+    if(ids.isEmpty())return Map.of();
+    var found=scoped("select l.id,l.name from operational_locations l join trailers owner on owner.tenant_id=l.tenant_id and owner.id=:trailer where l.tenant_id=:tenant and l.id in (:ids) and owner.designated_customer_id in (:customers) and (l.customer_id is null or l.customer_id=owner.designated_customer_id)",tenant,scope).setParameter("trailer",trailer).setParameter("ids",ids).getResultList();
+    var names=new HashMap<UUID,String>();for(Object value:found){var row=(Object[])value;names.put((UUID)row[0],(String)row[1]);}return names;
+  }
+  private Map<String, Object> changes(String metadata, CustomerAccessScope scope, Map<UUID,String> locations) {
     if (metadata == null) return Map.of();
     var node = json.readTree(metadata);
     var values = new LinkedHashMap<String, Object>();
@@ -411,14 +426,17 @@ class TrailerReadRepository {
           if (v != null && v.isString() && catalog.contains(v.asString()))
             values.put(key, v.asString());
         });
-    if (scope.tenantWide())
       for (String key : List.of("previousLocationId", "newLocationId")) {
         var v = node.get(key);
         if (v == null) continue;
         if (v.isNull()) values.put(key, null);
         else if (v.isString()) {
           try {
-            values.put(key, TrailerValidation.uuid(v.asString()));
+            var id=TrailerValidation.uuid(v.asString());
+            if(scope.tenantWide()||locations.containsKey(id)) {
+              values.put(key,id);
+              if(!scope.tenantWide()) values.put(key.replace("Id","Name"),locations.get(id));
+            }
           } catch (TrailerFailure ignored) {
             /* Unknown details are omitted. */
           }

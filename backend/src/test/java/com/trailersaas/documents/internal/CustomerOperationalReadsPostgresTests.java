@@ -59,6 +59,17 @@ class CustomerOperationalReadsPostgresTests extends DocumentHttpPostgresFixture 
     var delivery=get("/deliveries/"+order+"/"+stop);assertThat(JsonPath.<List<?>>read(delivery.body(),"$.documents")).hasSize(1);
     assertProblem(http("customer","GET",document(extra),null,null),404,"RESOURCE_NOT_FOUND");
   }
+  @Test void deliveryInventoryBeyondOnePageIsBoundedWithoutLosingActualMappings()throws Exception{
+    for(int i=0;i<74;i++)anotherStop(customerA,true);
+    var seen=new HashSet<String>();String cursor=null;int pages=0;
+    do {
+      var response=get("/deliveries?limit=50"+(cursor==null?"":"&cursor="+cursor));var page=items(response);
+      assertThat(page).hasSizeLessThanOrEqualTo(50);
+      for(var row:page)assertThat(seen.add(row.get("orderId")+":"+row.get("stopId"))).isTrue();
+      cursor=JsonPath.read(response.body(),"$.nextCursor");pages++;
+    }while(cursor!=null&&pages<3);
+    assertThat(cursor).isNull();assertThat(pages).isEqualTo(2);assertThat(seen).hasSize(75);
+  }
   @Test void realAuthorizedDownloadContainsPublishedBytesAndRechecksAuthority()throws Exception{
     var id=acceptedFile();assertThat(http("customer","GET",document(id),null,null).statusCode()).isEqualTo(200);
     var signed=http("customer","POST",download(id),"{}",null);assertThat(signed.statusCode()).withFailMessage(signed.body()).isEqualTo(200);

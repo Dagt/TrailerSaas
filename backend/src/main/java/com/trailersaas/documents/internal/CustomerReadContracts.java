@@ -7,7 +7,7 @@ import java.util.*;
 final class CustomerReadContracts {
   record Page<T>(UUID customerId,List<T> items,String nextCursor) {}
   record Trailer(UUID id,String operationalNumber) {}
-  record Document(UUID customerId,UUID id,String documentType,String contentType,long sizeBytes,
+  record Document(UUID customerId,UUID id,String documentType,String uploadStatus,String contentType,long sizeBytes,
       Instant uploadedAt,UUID orderId,String orderNumber,UUID stopId,Instant acceptedAt,String evidenceMode) {}
   record Delivery(UUID customerId,UUID orderId,String orderNumber,String orderStatus,UUID stopId,UUID tripId,
       String destination,Instant scheduledAt,String status,Instant arrivedAt,Instant serviceStartedAt,
