@@ -889,3 +889,15 @@ Order capability are required; no shared Trip directory or Driver/Tractor data.
 Stop milestones never imply administrative Order completion. Accepted-file
 discovery is separately document-authorized and all-linked-resource scoped;
 see [contracts, pagination and privacy](../web/issue-60-customer-inventory-deliveries-documents.md).
+
+## Issue #62 compatible history reads
+
+GET Trip detail accepts includeHistory=false to return empty embedded assignment/
+operational arrays while preserving current state and Stops; default true is
+unchanged. GET Trip timeline without parameters retains legacy {items}. Supplying
+limit or cursor opts into SQL-bounded {items,nextCursor}, default50/max100, ordered
+occurredAt/id ascending with assignment before operational on identical identities.
+The opaque cursor binds authenticated User/Tenant/Trip and is not authorization.
+Every page requires current TRIP_VIEW_ALL and runtime RLS. Unknown/duplicate
+parameters and malformed/context-mismatched cursors give400. Existing chronological
+indexes are reused; neither physical events nor generic Audit are synthesized.

@@ -512,3 +512,14 @@ Ready for wireframes when:
 6. Alerts and Audit are visible tenant-wide.
 7. Historical entities are deactivated rather than destructively deleted by default.
 8. No screen exposes raw tenant IDs as an authorization mechanism.
+
+## Issue #62 implementation note
+
+`/admin/audit` and `/admin/audit/:auditEventId` now provide capability-gated,
+read-only Audit list/detail. The six real filters persist in the URL; explicit
+RFC3339 offsets preserve inclusive boundaries. Load more uses the server cursor.
+Detail compares permitted fields, distinguishes missing/null and shows withheld
+sensitive edits without reconstructing values. Historical actor references remain
+readable without an active membership. Tenant/account/session changes cancel
+reads and remove the ephemeral private cache. No Generic Undo or Customer Audit.
+See [architecture, API compatibility and evidence](../web/issue-62-admin-audit-operational-history.md).
