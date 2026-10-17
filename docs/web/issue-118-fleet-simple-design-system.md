@@ -184,3 +184,10 @@ Final browser review is rerun against the published candidate. No physical
 mobile or tablet testing, screen-reader certification, OS-level native 200%
 zoom certification, production Firebase screens or Flutter screenshots are
 claimed. Those remain honest limitations, not substituted imagery.
+
+The final CSS review also checks every Button variant as the first child of a
+legacy `.actions` container. Explicit variants must not inherit that container's
+old implicit-primary rule. The exclusion uses zero-specificity `:where` so the
+existing dialog Cancel remains secondary. Browser computed-color comparisons
+cover enabled, disabled, busy and compact variants plus the Cancel background.
+This is a presentation-only compatibility correction, not an action change.
