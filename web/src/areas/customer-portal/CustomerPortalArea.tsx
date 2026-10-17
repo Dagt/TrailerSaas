@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
+import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../shared/auth/context'
 import { useCurrentUser } from '../../shared/auth/currentUser'
 import { SignIn } from '../tenant-admin/AdminLayout'
-import { EmptyState, ErrorBanner, LoadingState } from '../../shared/ui/components'
+import { Button, EmptyState, ErrorBanner, LoadingState } from '../../shared/ui/components'
+import { WorkspaceHeader, WorkspaceNavigation, WorkspaceState } from '../../shared/ui/WorkspaceShell'
 import type { CurrentUser, Membership } from '../tenant-admin/contracts'
 import { assignedCustomers, customerChoices, customerQuery, customerRoot, portalMemberships } from './queries'
 import type { CustomerOwner } from './queries'
@@ -13,7 +14,7 @@ import { WorkspaceMemory } from './workspaceMemory'
 
 export function CustomerPortalArea() {
   const { identity, expired } = useAuth()
-  if (identity === undefined) return <LoadingState />
+  if (identity === undefined) return <WorkspaceState title="Verifying session"><LoadingState /></WorkspaceState>
   if (!identity || expired) return <SignIn customer />
   return <CustomerDirectory key={identity.uid} uid={identity.uid} />
 }
@@ -24,8 +25,8 @@ function CustomerDirectory({ uid }: { uid: string }) {
   useEffect(() => () => {
     void cache.cancelQueries({ queryKey: customerRoot(uid) }); cache.removeQueries({ queryKey: customerRoot(uid) })
   }, [cache, uid])
-  if (me.isPending) return <section><h1>Customer Portal</h1><LoadingState /><button onClick={() => void signOut()}>Sign out</button></section>
-  if (me.isError) return <section><h1>Customer Portal</h1><ErrorBanner error={me.error} retry={() => void me.refetch()} /><button onClick={() => void signOut()}>Sign out</button></section>
+  if (me.isPending) return <WorkspaceState title="Customer Portal"><LoadingState /><Button onClick={() => void signOut()}>Sign out</Button></WorkspaceState>
+  if (me.isError) return <WorkspaceState title="Customer Portal"><ErrorBanner error={me.error} retry={() => void me.refetch()} /><Button onClick={() => void signOut()}>Sign out</Button></WorkspaceState>
   const memberships = portalMemberships(me.data)
   const assignmentVersion = JSON.stringify([me.data.userId, memberships.map(m => [m.tenantId, assignedCustomers(m)])])
   return <ContextPicker key={assignmentVersion} uid={uid} me={me.data} memberships={memberships} readRevision={me.data.clientReadSequence ?? me.dataUpdatedAt} verifying={me.isFetching || me.fetchStatus === 'paused'} refresh={() => void me.refetch()} />
@@ -49,10 +50,9 @@ function ContextPicker({ uid, me, memberships, readRevision, verifying, refresh 
     setWorkspace(new Map())
   }
   return <WorkspaceMemory.Provider value={workspace}><section className="customer-area">
-    <header className="admin-topbar"><strong>Customer Portal</strong><span>{me.displayName ?? me.email ?? 'Signed in'}</span>
+    <WorkspaceHeader title="Customer Portal" identity={me.displayName ?? me.email ?? 'Signed in'} actions={<><Button onClick={refresh}>Refresh access</Button><Button onClick={() => void signOut()}>Sign out</Button></>}>
       {memberships.length > 1 ? <label>Tenant <select aria-label="Customer portal Tenant" value={current?.tenantId ?? ''} onChange={e => changeTenant(e.target.value)}><option value="">Choose a Tenant</option>{memberships.map(m => <option key={m.tenantId} value={m.tenantId}>{m.tenantName}</option>)}</select></label> : current && <span>Tenant: {current.tenantName}</span>}
-      <button onClick={refresh}>Refresh access</button><button onClick={() => void signOut()}>Sign out</button>
-    </header>
+    </WorkspaceHeader>
     {verifying ? <LoadingState /> : !memberships.length ? <EmptyState><h1>Customer access is not available</h1><p>Your account has no active Customer Dispatcher context. Refresh access after your administrator updates it.</p></EmptyState> : !current ?
       <EmptyState><h1>Select a Tenant</h1><p>Choose one of your Customer workspaces.</p></EmptyState> :
       <CustomerPicker key={`${current.tenantId}:${readRevision}`} owner={{ uid, userId: me.userId, tenantId: current.tenantId, membership: current }} selected={customerId} select={changeCustomer} />}
@@ -84,7 +84,7 @@ function VerifiedCustomer({ owner }: { owner: CustomerOwner }) {
   if (current.data.status !== 'ACTIVE') return <EmptyState><h1>Customer unavailable</h1><p>This Customer is inactive. Refresh access or select another authorized context.</p></EmptyState>
   return <PortalContext.Provider value={{ ...owner, customer: current.data }}>
     <p className="customer-scope" role="status">Tenant: <strong>{owner.membership.tenantName}</strong> · Customer: <strong>{current.data.name}</strong> · Access verified</p>
-    <div className="customer-workspace"><nav aria-label="Customer navigation">{['Dashboard','Orders','Trailers','Deliveries','Documents'].map((label,index) => <NavLink key={label} end={index === 0} to={index === 0 ? '/customer' : `/customer/${label.toLowerCase()}`}>{label}</NavLink>)}</nav>
-      <div className="customer-content"><Outlet /></div></div>
+    <div className="workspace-layout"><WorkspaceNavigation label="Customer navigation" context={current.data.name} links={['Dashboard','Orders','Trailers','Deliveries','Documents'].map((label,index) => ({ label, end: index === 0, to: index === 0 ? '/customer' : `/customer/${label.toLowerCase()}` }))} />
+      <div className="customer-content workspace-content"><Outlet /></div></div>
   </PortalContext.Provider>
 }

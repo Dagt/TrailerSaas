@@ -1,0 +1,758 @@
+{
+  "capturedAt": "2026-10-17T02:03:19.104Z",
+  "candidate": "28ffad90a7d32aaafe64681281807fcb74a0d9aa",
+  "baseline": "975a2be589193758d5de59be41045a3992739914",
+  "captures": [
+    {
+      "file": "ux02-app-home-390x844-before.png",
+      "url": "http://127.0.0.1:5191/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "f07a6367a9261f33bcb55aa074c7e14bfbcd4c7eeb8cd9aac3c04cb0150a9dea"
+    },
+    {
+      "file": "ux02-app-login-admin-390x844-before.png",
+      "url": "http://127.0.0.1:5191/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "3be2bc0da015f7f2a97bdc90995adbc7cd4bb89aa8296b260134b41430b8ff9b"
+    },
+    {
+      "file": "ux02-app-home-390x844-after.png",
+      "url": "http://127.0.0.1:5190/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "1baed376f3f60ec40ba6569c08803d9c9e0e94be4a13c802d04aa738eb6b6877"
+    },
+    {
+      "file": "ux02-app-login-admin-390x844-after.png",
+      "url": "http://127.0.0.1:5190/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "ea213c3c6f3cf359ea46799c1f330abe5f15e5de2b2a88e100f8c598ef611ff6"
+    },
+    {
+      "file": "ux02-app-not-found-390x844-after.png",
+      "url": "http://127.0.0.1:5190/unknown/path",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "eee592d9d1561f296e893e55bbfe660035681f6dc4bd5fa934edbb900ea0366f"
+    },
+    {
+      "file": "ux02-isolated-admin-390x844-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=admin",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "2308dd721b10f47e647bff3dfe44e6861f79d5afb12528b1f3746e63c8bc9361"
+    },
+    {
+      "file": "ux02-isolated-operations-390x844-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=operations",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "4c532cb70b6da88723a672275f3cdad65a6e52a34047f62449fb0fd60889b2c4"
+    },
+    {
+      "file": "ux02-isolated-customer-390x844-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=customer",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "e4f8af26e364c7deb29a4f6ac8e1d182966958855b0da678ef7fdb816e33d565"
+    },
+    {
+      "file": "ux02-app-home-768x1024-before.png",
+      "url": "http://127.0.0.1:5191/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "38554c361b174b27b122e79f91ba3a1b49b1923ae836c8181e8ba6fc8ffa2ba1"
+    },
+    {
+      "file": "ux02-app-login-admin-768x1024-before.png",
+      "url": "http://127.0.0.1:5191/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "cc97b39546116bb26542cf2c9057473c4f56dc0f0eb1a3a3181a4b6b34f4511f"
+    },
+    {
+      "file": "ux02-app-home-768x1024-after.png",
+      "url": "http://127.0.0.1:5190/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "73fa6f72b1eca3837303f73802627444fcb9f8ad3f936d76104130207640d77b"
+    },
+    {
+      "file": "ux02-app-login-admin-768x1024-after.png",
+      "url": "http://127.0.0.1:5190/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "ba806842da4750b0296704999e4c3fe7cd6f62d1f3c7da225fbbe4dc5082c675"
+    },
+    {
+      "file": "ux02-app-not-found-768x1024-after.png",
+      "url": "http://127.0.0.1:5190/unknown/path",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "5d24c8bb594e4fbbe648963eb70099f97cd0f8ab828787a6e3f3d9d15c46d8b3"
+    },
+    {
+      "file": "ux02-isolated-admin-768x1024-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=admin",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "e82306a8619d33fbc5b27e1fc66504c03c4e1912524bf5a6315b07b0478d9bcf"
+    },
+    {
+      "file": "ux02-isolated-operations-768x1024-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=operations",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "17688aafbef685f840d5f60ac5dfe887814e80207bd445e097ac5d1f77cb6100"
+    },
+    {
+      "file": "ux02-isolated-customer-768x1024-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=customer",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "sha256": "d14215547358b3126d6fdadd67a8e48e181bec4e10b4fd6afb71edf78b5647c9"
+    },
+    {
+      "file": "ux02-app-home-1280x800-before.png",
+      "url": "http://127.0.0.1:5191/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "1d208f58b7ffcb3bc8c582726d1d96c16a61f5eeac3b8af0a4e991e226fe4f4f"
+    },
+    {
+      "file": "ux02-app-login-admin-1280x800-before.png",
+      "url": "http://127.0.0.1:5191/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "1b5f4a327ceafcd5bfc11770ddda98de5acfa958308b26c748eb6b11db580d69"
+    },
+    {
+      "file": "ux02-app-home-1280x800-after.png",
+      "url": "http://127.0.0.1:5190/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "2ac7e978fafed992a2ec42b8e2c0959c8421b5781eba6d7b0237d04f928baea3"
+    },
+    {
+      "file": "ux02-app-login-admin-1280x800-after.png",
+      "url": "http://127.0.0.1:5190/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "9f83fd3b85a2f17ec3b8add3d0cde3ac51ecbd1e79654365a6d62b8503322ed6"
+    },
+    {
+      "file": "ux02-app-not-found-1280x800-after.png",
+      "url": "http://127.0.0.1:5190/unknown/path",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "bb19f1a0d9072eb28a17b3261ceddbc507003d2d3ed9b7c69ad7bbbabd11e380"
+    },
+    {
+      "file": "ux02-isolated-admin-1280x800-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=admin",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "b5b34e219b404ca6fb9b39f4c998f19a7322fe4a26f5d59268596432271baeb2"
+    },
+    {
+      "file": "ux02-isolated-operations-1280x800-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=operations",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "da16acec23193de12a944c40d61d87423831f72696cffe3e743a530cf72b7854"
+    },
+    {
+      "file": "ux02-isolated-customer-1280x800-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=customer",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "sha256": "767138f8f20d37669d97ebc1d10650136efca683236e23dcfe1dfe39907cf119"
+    },
+    {
+      "file": "ux02-app-home-1440x900-before.png",
+      "url": "http://127.0.0.1:5191/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "f43322406ad1cc05b7ac1dab3a4f3188b3b82c2c785a761dae8e6258e3908f00"
+    },
+    {
+      "file": "ux02-app-login-admin-1440x900-before.png",
+      "url": "http://127.0.0.1:5191/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "5663033bc9bb1ca4ba3d625f87e4425ce59f5454b6e7d9d5f15ca9bbfc5de630"
+    },
+    {
+      "file": "ux02-app-home-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "1f745ba99f31ab6d0bae57a3b32421500612bb1a546a5cd76cc144159e504c8d"
+    },
+    {
+      "file": "ux02-app-login-admin-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/admin",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "af2d0290f3ed388c42224cc8806398b22f2de1220633e038b99d2862151ac80f"
+    },
+    {
+      "file": "ux02-app-not-found-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/unknown/path",
+      "kind": "actual application route",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "4f67febfb747fdf4686fc9e8639c34e1ecc3f8823364c113dd5380b728e783a3"
+    },
+    {
+      "file": "ux02-isolated-admin-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=admin",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "a512a0d7898c3e3e3a5ab2af5f21183be02f5a818d7cb6e71cc07d46b99bf51b"
+    },
+    {
+      "file": "ux02-isolated-operations-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=operations",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "743d911627d0a1065feacdfb45feac8225b2e94f51ae3f738dd78a6f06ff8547"
+    },
+    {
+      "file": "ux02-isolated-customer-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=customer",
+      "kind": "ISOLATED shared component layout; DEMO DATA; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "a527e647bf43e03024ca1b1b6452fafc050409173fa7bcdc8b5d15f3afe1feda"
+    },
+    {
+      "file": "ux02-app-login-operations-390x844-after.png",
+      "url": "http://127.0.0.1:5190/operations",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "3211342789c74d880798723d2f79077aedfbafa410cbc6049098bb42368b815c"
+    },
+    {
+      "file": "ux02-app-login-customer-390x844-after.png",
+      "url": "http://127.0.0.1:5190/customer",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "sha256": "0b0c4ec8471df854bc9797b847d6424550e8ae92d5b423666b6c0d5434608165"
+    },
+    {
+      "file": "ux02-app-login-operations-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/operations",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "aca0c579b5f6775cd3ab4d0f913f942d8b7e71110e83941d6e37c95e2f615ce3"
+    },
+    {
+      "file": "ux02-app-login-customer-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/customer",
+      "kind": "actual application route; Firebase unconfigured",
+      "role": "signed out; no business data",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "20e1e95fe164090df460e4b8324e41b43838fcb37e6390718914d3d2155d6538"
+    },
+    {
+      "file": "ux02-isolated-drawer-390x844-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=admin",
+      "kind": "ISOLATED shared drawer; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "0158dfc45066d72b45d8c097e0243e3d18fa92b693c88ad8ab910f371bc29032"
+    },
+    {
+      "file": "ux02-isolated-drawer-768x1024-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=admin",
+      "kind": "ISOLATED shared drawer; not authenticated",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "sha256": "6de8e82a13a81d1425d0db5f256aee1a9053a87aee60717bc75a52ca0b78e0a9"
+    },
+    {
+      "file": "ux02-isolated-state-loading-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?state=loading",
+      "kind": "ISOLATED component feedback; not a real access result",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "8db272c7f27c778671c0e6849d071faf522fc23a2e8bde9dd706e0720aed656a"
+    },
+    {
+      "file": "ux02-isolated-state-error-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?state=error",
+      "kind": "ISOLATED component feedback; not a real access result",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "82a07485296cc984f492d6857565cfbf43df732eb2db01f585d05aa2c9753343"
+    },
+    {
+      "file": "ux02-isolated-state-denied-1440x900-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?state=denied",
+      "kind": "ISOLATED component feedback; not a real access result",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "sha256": "71a17464a668cfceaf2d4c9ffbbfdc0b3504a4993026da45638f477b20209dac"
+    },
+    {
+      "file": "ux02-app-reflow-1920x1080-after.png",
+      "url": "http://127.0.0.1:5190/customer",
+      "kind": "actual sign-in route; 720x450 = 200% layout equivalent",
+      "role": "signed out",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "dimensions": {
+        "viewport": 1920,
+        "document": 1920
+      },
+      "sha256": "cc49d18cb5c40f7525cec03b552347c8de67a72f672af242686984af7ae13399"
+    },
+    {
+      "file": "ux02-isolated-reflow-1920x1080-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=customer",
+      "kind": "ISOLATED; 720x450 = 200% layout equivalent",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "dimensions": {
+        "viewport": 1920,
+        "document": 1920
+      },
+      "sha256": "056589ee69bf1ee54c978e7d4984ed08a808ee4474f9c27c65b643bd28ea64ba"
+    },
+    {
+      "file": "ux02-app-reflow-320x844-after.png",
+      "url": "http://127.0.0.1:5190/customer",
+      "kind": "actual sign-in route; 720x450 = 200% layout equivalent",
+      "role": "signed out",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 320,
+        "document": 320
+      },
+      "sha256": "8b54cc57096c78fcc959e0cc18cb109e411a374f057d2b6e239883655605bef4"
+    },
+    {
+      "file": "ux02-isolated-reflow-320x844-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=customer",
+      "kind": "ISOLATED; 720x450 = 200% layout equivalent",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "dimensions": {
+        "viewport": 320,
+        "document": 320
+      },
+      "sha256": "0de6ef3e19c14e18a7dcb60c1edf48e503c81ad0ab485c12e969c32eae1fa3d3"
+    },
+    {
+      "file": "ux02-app-reflow-720x450-after.png",
+      "url": "http://127.0.0.1:5190/customer",
+      "kind": "actual sign-in route; 720x450 = 200% layout equivalent",
+      "role": "signed out",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "dimensions": {
+        "viewport": 720,
+        "document": 720
+      },
+      "sha256": "53ff53c00e2313356d7ed16d62b9c1edd8c1832e2cb6ce0cf73ab445a8647285"
+    },
+    {
+      "file": "ux02-isolated-reflow-720x450-after.png",
+      "url": "http://127.0.0.1:5190/dev/web-shell.html?area=customer",
+      "kind": "ISOLATED; 720x450 = 200% layout equivalent",
+      "role": "none; presentation only",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "dimensions": {
+        "viewport": 720,
+        "document": 720
+      },
+      "sha256": "40edb02c56f4e74b18affe58d7a65c5199608471e9784b02506adaa00db18327"
+    }
+  ],
+  "checks": [
+    {
+      "actualRoutes": "Skip link focuses main; keyboard; browser Back/Forward and direct entry passed"
+    },
+    {
+      "drawerViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "result": "Native modal autofocus, background inertness, Tab, Escape, close, navigation return and desktop resize passed"
+    },
+    {
+      "drawerViewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "result": "Native modal autofocus, background inertness, Tab, Escape, close, navigation return and desktop resize passed"
+    },
+    {
+      "reducedMotion": "Spinner animation none"
+    },
+    {
+      "contrast": "sidebar",
+      "ratio": 13.981703505432392,
+      "color": "rgb(30, 41, 59)",
+      "background": "rgb(248, 250, 252)"
+    },
+    {
+      "contrast": "active",
+      "ratio": 5.4928674915472,
+      "color": "rgb(29, 78, 216)",
+      "background": "rgb(219, 234, 254)"
+    },
+    {
+      "contrast": "button",
+      "ratio": 6.916973995632248,
+      "color": "rgb(71, 85, 105)",
+      "background": "rgb(241, 245, 249)"
+    }
+  ],
+  "errors": [],
+  "limitations": [
+    "Firebase not configured; no Backend Firebase ADC or authorized credentials. Authenticated application shells, selectors and API access states blocked.",
+    "Isolated layout images demonstrate shared components only; no session injection or API fixtures.",
+    "200% zoom uses CSS viewport reflow equivalence; native browser zoom is not certified."
+  ],
+  "baselineConsoleErrors": [
+    {
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://127.0.0.1:5191/favicon.ico"
+    }
+  ],
+  "result": "PASS",
+  "webTree": "c2d9b3cb9fcea5997d4ac2b3c8deeecbada634aa"
+}
