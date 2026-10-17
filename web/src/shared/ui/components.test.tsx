@@ -77,6 +77,22 @@ function DialogHarness({ busy = false, disabled = false }: { busy?: boolean; dis
   return <><button onClick={() => setOpen(true)}>Open confirmation</button>{open && <ConfirmDialog title="Confirm sample" confirmLabel="Confirm preview" busy={busy} confirmDisabled={disabled} onConfirm={() => setOpen(false)} onCancel={() => setOpen(false)}><p>Read the consequence.</p></ConfirmDialog>}</>
 }
 describe('confirmation presentation preserves lifecycle', () => {
+  it('releases native modal inertness before restoring trigger focus', async () => {
+    const user = userEvent.setup(); render(<DialogHarness />)
+    const trigger = screen.getByRole('button', { name: 'Open confirmation' })
+    await user.click(trigger)
+    const dialog = screen.getByRole('dialog')
+    const close = vi.fn(() => dialog.removeAttribute('open'))
+    Object.defineProperty(dialog, 'close', { value: close })
+    const focus = trigger.focus.bind(trigger)
+    vi.spyOn(trigger, 'focus').mockImplementation(() => {
+      expect(dialog).not.toHaveAttribute('open')
+      focus()
+    })
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(close).toHaveBeenCalledOnce()
+    expect(trigger).toHaveFocus()
+  })
   it.each(['Cancel', 'Confirm preview', 'Escape'])('restores trigger focus after %s', async action => {
     const user = userEvent.setup(); render(<DialogHarness />)
     const trigger = screen.getByRole('button', { name: 'Open confirmation' })

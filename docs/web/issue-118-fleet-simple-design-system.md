@@ -16,7 +16,7 @@ planning issues or epics are created. This PR remains Draft and unmerged.
 | Cards / filters | Repeated dispatch-card and filters styles | Tokenize existing surfaces; additive Card/FilterPanel, optional density | Whole dashboard redesign |
 | Badges | One neutral style for all statuses | Neutral remains default; explicit semantic tone never infers a business state | Mass-remap domain statuses |
 | Details / timeline | DetailList and existing paged operational timelines | Retain old consumers; add Timeline/TimelineEvent visual primitives | Replace Trip/Trailer histories or their contracts |
-| Dialogs | Native dialog, portal, focus restore, safe busy handling | Existing ConfirmDialog behavior untouched; refined visual treatment | New modal framework |
+| Dialogs | Native dialog, portal, focus restore, safe busy handling | Existing actions retained; modal closes before focus restore; refined visuals | New modal framework |
 | States | Loading/empty/ErrorBanner; feature-local denied/offline text | Shared LoadingState, existing safe error logic, additive AccessDeniedState/OfflineState | Change retries, authorization or synchronization |
 | Shell / navigation | Distinct role/context layouts | Token colors only; light sidebar reference in development harness | UX-02 #119 app shell and responsive drawer |
 | Admin / Operations / Customer / Alerts | Shared primitives plus local markup | Receive compatible palette/control foundation; no hooks/queries/forms/routes modified | UX-03–05 #120–122 |
@@ -125,7 +125,7 @@ old component defaults, field semantics, table scrolling/density, safe stale
 reload, truthful status text, timeline data, dialog confirm/cancel/Escape and
 focus restoration, busy/disabled dialogs, gallery isolation and measured
 contrast. Initial test-harness diagnostics (Vite HTTP import URLs used with
-Node fs, and strict indexed-array typing) were corrected without changing any
+Node fs, CSS raw-import stubbing, and strict indexed-array typing) were corrected without changing any
 historical assertion. All prior tests are retained.
 
 Final exact-HEAD commands: `npm ci`, `npm run typecheck`, `npm run lint`,
@@ -148,3 +148,39 @@ no workflow or protection change is permitted. The PR stays Draft.
 | Remote CI | Report actual run; Billing blocked means NOT VERIFIED |
 | Deferred scope | #119–125, #63–65, whole-page redesign and native device QA |
 | Delivery | One Draft PR for #118, owner review; NO MERGE |
+
+## Captured browser evidence and accessibility correction
+
+[Component captures](evidence/issue118/) contain real PNGs from installed
+Microsoft Edge driven with the existing local Playwright runtime, not a new
+application dependency. Baseline comparisons execute the actual base CSS and
+base shared components from `7c9a2bd`, with an identical `SharedComparison`
+fixture copied into an isolated extracted baseline. This demonstrates changed
+shared controls, not an invented old full application or shell. New-gallery
+captures separately demonstrate the approved light sidebar and new primitives.
+
+| Capture group | Viewports / content |
+|---|---|
+| `ux01-shared-*-before.png` / `*-after.png` | 390x844, 768x1024, 1280x800, 1440x900, plus 1920x1080 and 320x844; identical sample fixture |
+| `ux01-gallery-*-after.png` | Same six viewports; actual isolated development gallery |
+| `ux01-controls-focus-1440x900-after.png` | Buttons, keyboard focus, forms, statuses and Customer examples |
+| `ux01-dialog-*-after.png` | Native shared dialog at 1440x900 and 390x844 |
+| `ux01-reflow-200pct-equivalent-720x450.png` | 1440x900 at 200% layout-equivalent CSS viewport; not a native browser-zoom certification |
+| `browser-review.json` | Real widths, table overflow, sidebar color, focus, reduced motion, modal review; zero page errors |
+
+No document-level overflow at these widths; wide tables retain their own
+horizontal scroll. Text labels, controls, cards and dialog were visually
+inspected. Keyboard focus is 3px, blue primary/white text matches the approved
+tokens, reduced-motion spinner animation is none. Native dialog permits browser
+chrome focus at the tab boundary; background application controls remain inert.
+Confirm/Cancel/Escape return focus to the trigger. A real-browser regression
+exposed the old cleanup trying to focus outside a still-open modal; the narrow
+fix closes it before restoring focus. The public callbacks, permission gates,
+validation, command behavior and busy semantics are unchanged.
+
+The captures use the implemented source before the evidence/documentation
+commit; the final evidence also records hashes of the final source and captures.
+Final browser review is rerun against the published candidate. No physical
+mobile or tablet testing, screen-reader certification, OS-level native 200%
+zoom certification, production Firebase screens or Flutter screenshots are
+claimed. Those remain honest limitations, not substituted imagery.

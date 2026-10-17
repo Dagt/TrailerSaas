@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import tokens from './tokens.css?raw'
+import { readFileSync } from 'node:fs'
+
+// Vitest stubs CSS modules (including ?raw); read the actual token source.
+const tokens = readFileSync('src/shared/ui/tokens.css', 'utf8')
 
 function color(name: string) {
   const hex = tokens.match(new RegExp(`--${name}: (#[0-9a-f]{6});`))?.[1]

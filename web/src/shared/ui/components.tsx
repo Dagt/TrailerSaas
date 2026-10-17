@@ -42,10 +42,15 @@ export function ConfirmDialog({ title, children, confirmLabel = 'Confirm', onCon
   const cancel = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    if (dialog.current?.showModal) dialog.current.showModal()
-    else dialog.current?.setAttribute('open', '')
+    const element = dialog.current
+    if (element?.showModal) element.showModal()
+    else element?.setAttribute('open', '')
     cancel.current?.focus()
-    return () => { previous?.focus() }
+    return () => {
+      // Release native modal inertness before restoring focus to the trigger.
+      if (element?.open && element.close) element.close()
+      previous?.focus()
+    }
   }, [])
   return createPortal(<dialog ref={dialog} aria-labelledby="confirmation-title" onKeyDown={event => { if (event.key === 'Escape' && !busy) { event.preventDefault(); onCancel() } }} onCancel={event => { event.preventDefault(); if (!busy) onCancel() }}>
     <h2 id="confirmation-title">{title}</h2>{children}<div className="actions">
