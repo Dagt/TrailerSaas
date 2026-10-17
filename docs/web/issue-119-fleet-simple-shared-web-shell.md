@@ -35,6 +35,10 @@ Fleet Simple tokens. Existing Button, LoadingState, ErrorBanner, EmptyState,
 FormField and PageHeader remain compatible. AppShell retains its existing
 membership-filtered area navigation and focusable main/skip link. Home explains
 workspace entry; NotFound offers a clear return home.
+The existing missing favicon produced a real browser 404 during review; the
+production entry now uses a small local SVG matching the Fleet Simple brand.
+The unchanged before-build's favicon 404 is recorded separately as baseline
+evidence, never suppressed from the new application's error result.
 
 The presentation layer never receives an API client, membership or cache. Each
 portal supplies only links it already authorizes; it retains context selection,
