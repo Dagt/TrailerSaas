@@ -6,6 +6,15 @@ import { Button } from './components'
 
 export interface WorkspaceLink { label: string; to: string; end?: boolean }
 
+function restoreNavigationFocus(origin: HTMLElement | null) {
+  origin?.focus()
+  // Verification/logout can retire the protected owner and its trigger in this
+  // same render. Keep keyboard users at the surviving application landmark.
+  queueMicrotask(() => {
+    if (origin && !origin.isConnected) document.getElementById('main-content')?.focus()
+  })
+}
+
 /** Presentation only. The portal supplies authorized links and owns all context. */
 export function WorkspaceHeader({ title, identity, children, actions }: PropsWithChildren<{ title: string; identity?: string; actions: ReactNode }>) {
   return <header className="workspace-header">
@@ -28,15 +37,16 @@ export function WorkspaceNavigation({ label, links, context }: { label: string; 
     const element = dialog.current
     if (!element?.open) return
     element.close()
-    trigger.current?.focus()
+    restoreNavigationFocus(trigger.current)
   }
   useEffect(() => {
     // Back/Forward and direct in-app navigation must also dismiss the modal.
     const element = dialog.current
-    if (element?.open) { element.close(); trigger.current?.focus() }
+    if (element?.open) { element.close(); restoreNavigationFocus(trigger.current) }
   }, [location.key])
   useEffect(() => {
     const element = dialog.current
+    const origin = trigger.current
     const media = window.matchMedia?.('(min-width: 53.126rem)')
     const resize = () => {
       if (media?.matches && dialog.current?.open) {
@@ -46,7 +56,7 @@ export function WorkspaceNavigation({ label, links, context }: { label: string; 
       }
     }
     media?.addEventListener('change', resize)
-    return () => { media?.removeEventListener('change', resize); if (element?.open) element.close() }
+    return () => { media?.removeEventListener('change', resize); if (element?.open) { element.close(); restoreNavigationFocus(origin) } }
   }, [id])
   return <>
     <aside className="workspace-sidebar" id={id}>

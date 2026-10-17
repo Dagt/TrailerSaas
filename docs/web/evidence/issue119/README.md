@@ -1,10 +1,6 @@
 # UX-02 visual evidence
 
-Code revision: `
-28ffad90a7d32aaafe64681281807fcb74a0d9aa
-`. Web tree: `
-c2d9b3cb9fcea5997d4ac2b3c8deeecbada634aa
-`.
+Capture-source revision: `28ffad90a7d32aaafe64681281807fcb74a0d9aa`. Capture-source Web tree: `c2d9b3cb9fcea5997d4ac2b3c8deeecbada634aa`. Final published HEAD is recaptured and PNG hashes compared in the PR evidence package.
 
 **Actual application:** signed-out Home, Firebase-unconfigured sign-in for each area, and NotFound. No business data or authenticated role. Before uses the real extracted main baseline `975a2be589193758d5de59be41045a3992739914`.
 

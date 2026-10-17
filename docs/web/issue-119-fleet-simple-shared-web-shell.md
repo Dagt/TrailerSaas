@@ -91,6 +91,8 @@ messages and safe retry behavior. Real access does not depend on visual states.
   Autofocus starts on Close navigation. Escape, Close, backdrop click, a link,
   Back/Forward or external route navigation closes it and restores the trigger.
   Resizing to desktop closes it and focuses the active visible desktop link.
+  If verification/logout removes its trigger, focus falls back to the surviving
+  main landmark after the protected owner retires; no security owner is retained.
 - Drawer event handlers are scoped to the dialog, with type=button controls;
   no global key handler intercepts forms, feature dialogs or internal navigation.
 - Skip to content still focuses main. Semantic page headings, active
