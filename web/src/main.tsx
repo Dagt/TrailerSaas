@@ -6,6 +6,7 @@ import { appRoutes } from './app/routes'
 import { readWebEnvironment } from './shared/config/environment'
 import { initializeObservability } from './shared/observability/sentry'
 import './styles.css'
+import './shared/ui/workspace.css'
 
 const rootOptions = await initializeObservability(readWebEnvironment(import.meta.env))
 

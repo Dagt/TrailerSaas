@@ -10,9 +10,9 @@ export function AppShell() {
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <header className="app-header">
+      <header className="app-header" aria-label="TrailerSaaS workspaces">
         <NavLink className="app-name" to="/">
-          TrailerSaaS
+          <span className="brand-symbol" aria-hidden="true">T</span>TrailerSaaS
         </NavLink>
         <nav aria-label="Application areas">
           {identity && !expired ? <AuthenticatedAreas /> : <PublicAreas />}
