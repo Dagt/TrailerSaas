@@ -1,0 +1,28 @@
+/* Development harness only. Product shells remain owned by UX-02. */
+.gallery-shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+.gallery-sidebar { background: var(--color-sidebar); border-right: 1px solid var(--color-border); padding: var(--space-6) var(--space-4); }
+.gallery-brand { display: flex; align-items: center; gap: var(--space-2); font-weight: 700; font-size: var(--text-section); letter-spacing: -.025em; }
+.gallery-mark { display: inline-grid; place-items: center; background: var(--color-primary); color: var(--color-on-primary); border-radius: var(--radius-md); width: 32px; height: 32px; font-size: var(--text-body); }
+.gallery-eyebrow { font-size: var(--text-xs); color: var(--color-text-secondary); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 var(--space-2); }
+.gallery-sidebar > .gallery-eyebrow { margin: var(--space-8) var(--space-3) var(--space-3); }
+.gallery-sidebar nav { display: flex; flex-direction: column; gap: var(--space-2); }
+.gallery-sidebar a { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); text-decoration: none; color: var(--color-text-secondary); font-size: var(--text-sm); }
+.gallery-sidebar a[aria-current='page'] { background: var(--color-sidebar-active-bg); color: var(--color-sidebar-active-text); }
+.gallery-sidebar a:hover { background: var(--color-sidebar-active-bg); }
+.gallery-sidebar-note { border-top: 1px solid var(--color-border); padding: var(--space-5) var(--space-3); margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--text-xs); }
+.gallery-body { min-width: 0; }
+.gallery-topbar { padding: var(--space-4) var(--space-8); min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; background: var(--color-surface); border-bottom: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: var(--text-sm); }
+.gallery-content { max-width: 1360px; padding: var(--space-8); }
+.gallery-content > .page-header { padding-bottom: var(--space-4); }
+.gallery-section { margin-bottom: var(--space-8); scroll-margin-top: var(--space-4); }
+.gallery-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-4); }
+.gallery-section-heading h2 { margin: 0; }
+.gallery-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4); }
+.gallery-split .detail-list { grid-template-columns: 1fr; gap: var(--space-3); margin-bottom: var(--space-4); }
+.gallery-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.gallery-section > .ui-card { margin-bottom: var(--space-4); }
+.gallery-cell-note { display: block; margin-top: var(--space-1); color: var(--color-text-secondary); }
+.gallery-footer { padding: var(--space-4) 0; border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: var(--text-xs); }
+@media (max-width: 75rem) { .gallery-shell { grid-template-columns: 188px minmax(0, 1fr); } .gallery-content { padding: var(--space-6); } }
+@media (max-width: 53.125rem) { .gallery-shell { grid-template-columns: minmax(0, 1fr); } .gallery-sidebar { border-right: 0; border-bottom: 1px solid var(--color-border); padding: var(--space-4); } .gallery-sidebar nav { flex-direction: row; flex-wrap: wrap; } .gallery-sidebar > .gallery-eyebrow { margin: var(--space-4) 0 var(--space-2); } .gallery-sidebar-note { display: none; } .gallery-split { grid-template-columns: minmax(0, 1fr); } .gallery-topbar { padding: var(--space-4); } }
+@media (max-width: 34rem) { .gallery-content { padding: var(--space-4); } .gallery-sidebar a { padding: var(--space-2); min-height: var(--control-height); } }

@@ -1,0 +1,80 @@
+/* Fleet Simple — approved Option D. All component color decisions live here. */
+:root {
+  color-scheme: light;
+  --color-canvas: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-sidebar: #f8fafc;
+  --color-sidebar-active-bg: #dbeafe;
+  --color-sidebar-active-text: #1d4ed8;
+  --color-text: #1e293b;
+  --color-text-secondary: #475569;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-on-primary: #ffffff;
+  --color-accent: #0f766e;
+  --color-border: #e2e8f0;
+  /* Functional boundaries need >=3:1 on white; decorative separators do not. */
+  --color-control-border: #64748b;
+  --color-focus: #2563eb;
+  --color-disabled-bg: #f1f5f9;
+  --color-disabled-text: #475569;
+  --color-overlay: #1e293b66;
+  --status-neutral-text: #334155;
+  --status-neutral-bg: #f1f5f9;
+  --status-neutral-border: #64748b;
+  --status-success-text: #166534;
+  --status-success-bg: #f0fdf4;
+  --status-success-border: #15803d;
+  --status-attention-text: #92400e;
+  --status-attention-bg: #fffbeb;
+  --status-attention-border: #b45309;
+  --status-danger-text: #991b1b;
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #b91c1c;
+  --status-unknown-text: #475569;
+  --status-unknown-bg: #f8fafc;
+  --status-unknown-border: #64748b;
+  --status-pending-text: #1e40af;
+  --status-pending-bg: #eff6ff;
+  --status-pending-border: #2563eb;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --text-xs: .8125rem;
+  --text-sm: .875rem;
+  --text-body: 1rem;
+  --text-section: 1.25rem;
+  --text-page: 1.75rem;
+  --leading-body: 1.5;
+  --leading-heading: 1.25;
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --radius-sm: .375rem;
+  --radius-md: .5rem;
+  --radius-lg: .75rem;
+  --radius-pill: 999px;
+  --border-width: 1px;
+  --shadow-panel: 0 1px 2px #1e293b08;
+  --shadow-dialog: 0 16px 48px #1e293b26;
+  --focus-width: 3px;
+  --focus-offset: 3px;
+  --control-height: 2.75rem;
+  --control-height-compact: 2.25rem;
+  --table-padding-y: .875rem;
+  --table-padding-compact-y: .5rem;
+  --motion-quick: 150ms;
+  --motion-easing: ease-out;
+  /* CSS vars cannot be used in media query conditions. Named reference values:
+     narrow 34rem, tablet 53.125rem, wide 75rem; see foundation.css. */
+  --breakpoint-narrow: 34rem;
+  --breakpoint-tablet: 53.125rem;
+  --breakpoint-wide: 75rem;
+  /* Compatibility aliases for existing feature styles. */
+  --accent: var(--color-primary);
+  --border: var(--color-border);
+}

@@ -1,16 +1,17 @@
 import { useEffect, useRef } from 'react'
-import type { PropsWithChildren, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, PropsWithChildren, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ApiProblem } from '../api/client'
+import './foundation.css'
 
 export function PageHeader({ title, description, children }: PropsWithChildren<{ title: string; description?: string }>) {
   return <div className="page-header"><div><h1>{title}</h1>{description && <p>{description}</p>}</div>{children}</div>
 }
-export function LoadingState() { return <p role="status">Loading…</p> }
+export function LoadingState() { return <p className="ui-loading" role="status"><span className="ui-spinner" aria-hidden="true" />Loading…</p> }
 export function EmptyState({ children }: PropsWithChildren) { return <div className="empty-state">{children}</div> }
-export function StatusBadge({ children }: PropsWithChildren) { return <span className="status-badge">{children}</span> }
-export function DataTable({ headings, children, caption }: PropsWithChildren<{ headings: string[]; caption: string }>) {
-  return <div className="table-scroll"><table><caption className="sr-only">{caption}</caption><thead><tr>{headings.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>
+export function StatusBadge({ children, tone = 'neutral' }: PropsWithChildren<{ tone?: 'neutral' | 'success' | 'attention' | 'danger' | 'unknown' | 'pending' }>) { return <span className="status-badge" data-tone={tone}>{children}</span> }
+export function DataTable({ headings, children, caption, density = 'comfortable' }: PropsWithChildren<{ headings: string[]; caption: string; density?: 'comfortable' | 'compact' }>) {
+  return <div className="table-scroll" data-density={density} role="region" aria-label={caption} tabIndex={0}><table><caption className="sr-only">{caption}</caption><thead><tr>{headings.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>
 }
 export function ErrorBanner({ error, retry, reload, staleMessage }: { error: unknown; retry?: () => void; reload?: () => void; staleMessage?: string }) {
   const problem = error instanceof ApiProblem ? error.problem : undefined
@@ -41,10 +42,15 @@ export function ConfirmDialog({ title, children, confirmLabel = 'Confirm', onCon
   const cancel = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    if (dialog.current?.showModal) dialog.current.showModal()
-    else dialog.current?.setAttribute('open', '')
+    const element = dialog.current
+    if (element?.showModal) element.showModal()
+    else element?.setAttribute('open', '')
     cancel.current?.focus()
-    return () => { previous?.focus() }
+    return () => {
+      // Release native modal inertness before restoring focus to the trigger.
+      if (element?.open && element.close) element.close()
+      previous?.focus()
+    }
   }, [])
   return createPortal(<dialog ref={dialog} aria-labelledby="confirmation-title" onKeyDown={event => { if (event.key === 'Escape' && !busy) { event.preventDefault(); onCancel() } }} onCancel={event => { event.preventDefault(); if (!busy) onCancel() }}>
     <h2 id="confirmation-title">{title}</h2>{children}<div className="actions">
@@ -54,4 +60,31 @@ export function ConfirmDialog({ title, children, confirmLabel = 'Confirm', onCon
 }
 export function DetailList({ items }: { items: [string, ReactNode][] }) {
   return <dl className="detail-list">{items.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value ?? 'Not provided'}</dd></div>)}</dl>
+}
+
+/** Visual variants never infer a business outcome or grant permission. */
+export function Button({ variant = 'secondary', density = 'comfortable', loading = false, disabled, className = '', children, type = 'button', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'primary' | 'secondary' | 'subtle' | 'danger'; density?: 'comfortable' | 'compact'; loading?: boolean
+}) {
+  return <button {...props} type={type} disabled={disabled || loading} aria-busy={loading || undefined} className={`ui-button ui-button--${variant} ui-button--${density} ${className}`}>
+    {loading && <span className="ui-spinner" aria-hidden="true" />}{children}
+  </button>
+}
+export function Card({ title, description, children, density = 'comfortable' }: PropsWithChildren<{ title: string; description?: string; density?: 'comfortable' | 'compact' }>) {
+  return <section className={`ui-card ui-card--${density}`}><header className="ui-card-header"><div><h2>{title}</h2>{description && <p>{description}</p>}</div></header>{children}</section>
+}
+export function FilterPanel({ legend = 'Filters', children, density = 'comfortable' }: PropsWithChildren<{ legend?: string; density?: 'comfortable' | 'compact' }>) {
+  return <fieldset className={`ui-filter-panel ui-filter-panel--${density}`}><legend>{legend}</legend><div className="ui-filter-fields">{children}</div></fieldset>
+}
+export function AccessDeniedState({ children }: PropsWithChildren) {
+  return <section className="ui-notice ui-notice--denied"><h2>Access not available</h2><p>{children ?? 'You do not have access to this record.'}</p></section>
+}
+export function OfflineState({ children }: PropsWithChildren) {
+  return <div className="ui-notice ui-notice--offline" role="status"><h2>Pending synchronization</h2><p>{children ?? 'Saved on device. Waiting to sync.'}</p></div>
+}
+export function Timeline({ children, label }: PropsWithChildren<{ label: string }>) {
+  return <ol className="ui-timeline" aria-label={label}>{children}</ol>
+}
+export function TimelineEvent({ title, dateTime, timeLabel, source, children }: PropsWithChildren<{ title: string; dateTime: string; timeLabel: string; source?: string }>) {
+  return <li><time dateTime={dateTime}>{timeLabel}</time><h3>{title}</h3>{source && <span className="ui-timeline-meta">{source}</span>}{children}</li>
 }

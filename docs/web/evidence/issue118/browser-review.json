@@ -1,0 +1,233 @@
+{
+  "capturedAt": "2026-10-17T00:11:21.052Z",
+  "kind": "Real static component harness, DEMO DATA, not operational screens",
+  "baseline": "7c9a2bdc2fe276deabe1cdbee736a034e33cf754",
+  "viewports": [
+    {
+      "width": 390,
+      "height": 844,
+      "bodyWidth": 390,
+      "tableOverflow": [
+        {
+          "client": 356,
+          "scroll": 589
+        },
+        {
+          "client": 356,
+          "scroll": 539
+        }
+      ],
+      "sidebar": "rgb(248, 250, 252)"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "bodyWidth": 768,
+      "tableOverflow": [
+        {
+          "client": 718,
+          "scroll": 718
+        },
+        {
+          "client": 718,
+          "scroll": 718
+        }
+      ],
+      "sidebar": "rgb(248, 250, 252)"
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "bodyWidth": 1280,
+      "tableOverflow": [
+        {
+          "client": 994,
+          "scroll": 994
+        },
+        {
+          "client": 994,
+          "scroll": 994
+        }
+      ],
+      "sidebar": "rgb(248, 250, 252)"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "bodyWidth": 1440,
+      "tableOverflow": [
+        {
+          "client": 1154,
+          "scroll": 1154
+        },
+        {
+          "client": 1154,
+          "scroll": 1154
+        }
+      ],
+      "sidebar": "rgb(248, 250, 252)"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "bodyWidth": 1920,
+      "tableOverflow": [
+        {
+          "client": 1294,
+          "scroll": 1294
+        },
+        {
+          "client": 1294,
+          "scroll": 1294
+        }
+      ],
+      "sidebar": "rgb(248, 250, 252)"
+    },
+    {
+      "width": 320,
+      "height": 844,
+      "bodyWidth": 320,
+      "tableOverflow": [
+        {
+          "client": 286,
+          "scroll": 589
+        },
+        {
+          "client": 286,
+          "scroll": 539
+        }
+      ],
+      "sidebar": "rgb(248, 250, 252)"
+    }
+  ],
+  "checks": [
+    {
+      "keyboardFocus": {
+        "outline": "3px",
+        "background": "rgb(37, 99, 235)",
+        "color": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "reducedMotion": "none"
+    },
+    {
+      "variantIsolation": [
+        {
+          "name": "Primary action",
+          "expected": {
+            "background": "rgb(37, 99, 235)",
+            "color": "rgb(255, 255, 255)",
+            "border": "rgb(37, 99, 235)"
+          },
+          "actual": {
+            "background": "rgb(37, 99, 235)",
+            "color": "rgb(255, 255, 255)",
+            "border": "rgb(37, 99, 235)"
+          }
+        },
+        {
+          "name": "Secondary",
+          "expected": {
+            "background": "rgb(255, 255, 255)",
+            "color": "rgb(30, 41, 59)",
+            "border": "rgb(100, 116, 139)"
+          },
+          "actual": {
+            "background": "rgb(255, 255, 255)",
+            "color": "rgb(30, 41, 59)",
+            "border": "rgb(100, 116, 139)"
+          }
+        },
+        {
+          "name": "Subtle",
+          "expected": {
+            "background": "rgba(0, 0, 0, 0)",
+            "color": "rgb(29, 78, 216)",
+            "border": "rgba(0, 0, 0, 0)"
+          },
+          "actual": {
+            "background": "rgba(0, 0, 0, 0)",
+            "color": "rgb(29, 78, 216)",
+            "border": "rgba(0, 0, 0, 0)"
+          }
+        },
+        {
+          "name": "Destructive action",
+          "expected": {
+            "background": "rgb(254, 242, 242)",
+            "color": "rgb(153, 27, 27)",
+            "border": "rgb(185, 28, 28)"
+          },
+          "actual": {
+            "background": "rgb(254, 242, 242)",
+            "color": "rgb(153, 27, 27)",
+            "border": "rgb(185, 28, 28)"
+          }
+        },
+        {
+          "name": "Disabled",
+          "expected": {
+            "background": "rgb(241, 245, 249)",
+            "color": "rgb(71, 85, 105)",
+            "border": "rgb(100, 116, 139)"
+          },
+          "actual": {
+            "background": "rgb(241, 245, 249)",
+            "color": "rgb(71, 85, 105)",
+            "border": "rgb(100, 116, 139)"
+          }
+        },
+        {
+          "name": "Saving\u2026",
+          "expected": {
+            "background": "rgb(241, 245, 249)",
+            "color": "rgb(71, 85, 105)",
+            "border": "rgb(100, 116, 139)"
+          },
+          "actual": {
+            "background": "rgb(241, 245, 249)",
+            "color": "rgb(71, 85, 105)",
+            "border": "rgb(100, 116, 139)"
+          }
+        },
+        {
+          "name": "Compact",
+          "expected": {
+            "background": "rgb(255, 255, 255)",
+            "color": "rgb(30, 41, 59)",
+            "border": "rgb(100, 116, 139)"
+          },
+          "actual": {
+            "background": "rgb(255, 255, 255)",
+            "color": "rgb(30, 41, 59)",
+            "border": "rgb(100, 116, 139)"
+          }
+        },
+        {
+          "name": "Preview confirmation",
+          "expected": {
+            "background": "rgb(255, 255, 255)",
+            "color": "rgb(30, 41, 59)",
+            "border": "rgb(100, 116, 139)"
+          },
+          "actual": {
+            "background": "rgb(255, 255, 255)",
+            "color": "rgb(30, 41, 59)",
+            "border": "rgb(100, 116, 139)"
+          }
+        }
+      ]
+    },
+    {
+      "dialog": "Native focus containment, Escape and focus restoration passed"
+    },
+    {
+      "zoom": "200% layout-equivalent 1440x900 -> 720x450 CSS viewport. Not a native browser zoom certification.",
+      "viewport": 720,
+      "body": 720
+    }
+  ],
+  "errors": [],
+  "result": "PASS"
+}
