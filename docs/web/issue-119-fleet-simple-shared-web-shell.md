@@ -169,6 +169,13 @@ and production output excludes development gallery fixtures. Recapture final HEA
 and compare PNG hashes. No source commits follow final validation unless all
 affected final checks are rerun for the replacement candidate.
 
+The first complete native Windows run on superseded candidate `62b5a2c` reported
+568/572 passing and four timeout failures (CustomerOrders, Operations and
+TrailerViews). Its logs/JSON remain in the local evidence package. Final gates
+run from a fresh Git archive in the existing local Linux Node 24 runtime, using
+the unchanged default npm test command and the original test timeouts. No test
+assertion, worker setting or timeout is changed to obtain the final result.
+
 Backend/OpenAPI/Flutter suites are not executed or reported as passing for this
 Web-only change. Current GitHub Actions status and actual Billing annotations are
 reported in the PR. Draft-deferred suites or Billing-blocked jobs are **NOT
