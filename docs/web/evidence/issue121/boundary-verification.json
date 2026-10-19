@@ -1,0 +1,88 @@
+{
+  "base": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+  "head": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+  "workingTree": false,
+  "files": [
+    {
+      "file": "web/src/areas/transport-operations/BoardPages.tsx",
+      "protectedCalls": 25,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/PlanTrip.tsx",
+      "protectedCalls": 37,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/TripDetailPage.tsx",
+      "protectedCalls": 24,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/TripAction.tsx",
+      "protectedCalls": 25,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/TrailerPages.tsx",
+      "protectedCalls": 31,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/MasterDataStatus.tsx",
+      "protectedCalls": 1,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/TransportOperationsArea.tsx",
+      "protectedCalls": 11,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/queries.ts",
+      "protectedCalls": 18,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/mutations.ts",
+      "protectedCalls": 7,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/contracts.ts",
+      "protectedCalls": 0,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/operationsApi.ts",
+      "protectedCalls": 4,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/planning.ts",
+      "protectedCalls": 0,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/transport-operations/historyContracts.ts",
+      "protectedCalls": 1,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/alerts/AlertsWorkspace.tsx",
+      "protectedCalls": 23,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/shared/trailers/TrailerReadView.tsx",
+      "protectedCalls": 7,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/shared/ui/components.tsx",
+      "protectedCalls": 1,
+      "result": "IDENTICAL"
+    }
+  ],
+  "result": "PASS"
+}
