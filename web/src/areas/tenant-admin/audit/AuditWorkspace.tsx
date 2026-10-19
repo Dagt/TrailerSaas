@@ -3,7 +3,8 @@ import { Link, useParams, useSearchParams } from 'react-router'
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../../shared/auth/context'
 import { ApiProblem } from '../../../shared/api/client'
-import { DataTable, DetailList, EmptyState, ErrorBanner, LoadingState, PageHeader, StatusBadge } from '../../../shared/ui/components'
+import { Button, DataTable, DetailList, EmptyState, ErrorBanner, LoadingState, StatusBadge } from '../../../shared/ui/components'
+import { AdminPageHeader as PageHeader, AdminPanel } from '../AdminPresentation'
 import { useAdminIdentity, useAdminTenant } from '../tenant'
 import { auditApi, auditRoot, firstPosition, type AuditOwner, type AuditPosition } from './api'
 import { auditActionCode, auditEntityType, parseFilters, uuid, type AuditEvent } from './contracts'
@@ -47,23 +48,23 @@ function AuditListContent({ owner, api, search, apply }: { owner: AuditOwner; ap
     const params = new URLSearchParams(Object.entries(draft).filter(([, v]) => v !== ''))
     try { parseFilters(params); setFormError(false); apply(params) } catch { setFormError(true) }
   }
-  return <section className="audit-workspace"><PageHeader title="Audit" description="Administrative changes, attributed to their recorded actor. Operational movements keep their separate histories.">
-    <button type="button" disabled={invalid || pages.isFetching} onClick={() => void pages.refetch()}>Refresh Audit</button>
+  return <section className="audit-workspace admin-page"><PageHeader title="Audit" description="Administrative changes, attributed to their recorded actor. Operational movements keep their separate histories.">
+    <Button disabled={invalid || pages.isFetching} loading={pages.isFetching} onClick={() => void pages.refetch()}>Refresh Audit</Button>
   </PageHeader>
     <form onSubmit={submit} noValidate aria-label="Audit filters"><fieldset className="audit-filters"><legend>Filter administrative history</legend>
       {Object.entries(fields).map(([key, title]) => <label key={key}>{title}{key === 'actionCode' || key === 'entityType' ? <select value={draft[key]} onChange={e => setDraft({ ...draft, [key]: e.target.value })}>
         <option value="">All</option>{(key === 'actionCode' ? auditActionCode.options : auditEntityType.options).map(v => <option key={v} value={v}>{label(v)}</option>)}
       </select> : <input value={draft[key as keyof typeof fields]} onChange={e => setDraft({ ...draft, [key]: e.target.value })} placeholder={key === 'from' || key === 'to' ? '2026-10-16T09:00:00-05:00' : 'Canonical UUID'} autoComplete="off" />}</label>)}
       <p className="muted">Enter exact timestamps with a timezone offset or Z. Both date boundaries are inclusive; displayed dates use your local timezone.</p>
-      <div className="actions"><button type="submit">Apply filters</button><button type="button" onClick={() => apply(new URLSearchParams())}>Clear filters</button></div>
+      <div className="actions"><Button type="submit" variant="primary">Apply filters</Button><Button variant="subtle" onClick={() => apply(new URLSearchParams())}>Clear filters</Button></div>
     </fieldset></form>
     {(invalid || formError) && <p role="alert">Check the UUIDs, action, entity and RFC3339 dates. From must not be later than To. Unknown or duplicate URL filters are not accepted.</p>}
     {!invalid && (pages.isPending ? <LoadingState /> : pages.isError ? <><ErrorBanner error={pages.error} retry={() => void (pages.isFetchNextPageError ? pages.fetchNextPage() : pages.refetch())} />{pages.error instanceof ApiProblem && pages.error.problem.status === 400 && <p>The history cursor or filters are no longer valid. Restart the query or review the filters.</p>}<button type="button" onClick={() => { void cache.resetQueries({ queryKey: [...auditRoot(owner), 'list', filters], exact: true }) }}>Restart history query</button></> : !items.length ? <EmptyState>No administrative changes match these filters.</EmptyState> : <>
       <p className="muted">Newest first. This is a bounded history page, not a total count.</p>
-      <DataTable caption="Administrative Audit events" headings={['Timestamp', 'Actor', 'Actor type', 'Action', 'Entity', 'Source', 'Summary', 'Detail']}>
+      <AdminPanel title="Administrative history" description="Recorded changes and their historical actor references. Audit is read-only." className="admin-table-panel"><DataTable caption="Administrative Audit events" headings={['Timestamp', 'Actor', 'Actor type', 'Action', 'Entity', 'Source', 'Summary', 'Detail']}>
         {items.map(e => <tr key={e.id}><td><AuditTime at={e.occurredAt} /></td><td className="audit-reference">{actor(e)}</td><td>{label(e.actor.type)}</td><td>{label(e.actionCode)}</td><td>{label(e.entityType)}<small className="audit-reference">{e.entityId}</small></td><td>{label(e.sourceType)}</td><td>{summary(e)}</td><td><Link to={`/admin/audit/${e.id}${search.size ? `?${search}` : ''}`} aria-label={`View Audit event ${e.id}`}>View detail</Link></td></tr>)}
-      </DataTable>
-      {pages.hasNextPage && <button type="button" disabled={pages.isFetchingNextPage} onClick={() => void pages.fetchNextPage()}>{pages.isFetchingNextPage ? 'Loading history…' : 'Load more Audit events'}</button>}
+      </DataTable></AdminPanel>
+      {pages.hasNextPage && <Button className="admin-pagination" disabled={pages.isFetchingNextPage} loading={pages.isFetchingNextPage} onClick={() => void pages.fetchNextPage()}>{pages.isFetchingNextPage ? 'Loading history…' : 'Load more Audit events'}</Button>}
     </>)}
   </section>
 }
@@ -78,21 +79,22 @@ function AuditDetail({ owner, id }: { owner: AuditOwner; id: string }) {
   const query = useQuery({ queryKey: [...auditRoot(owner), 'detail', id], gcTime: 0, queryFn: ({ signal }) => auditApi(api, owner).detail(id, signal) })
   useRevalidateAccess(query.error)
   const back = `/admin/audit${search.size ? `?${search}` : ''}`
-  if (query.isPending) return <LoadingState />
-  if (query.isError) return <><Link to={back}>Back to Audit</Link><ErrorBanner error={query.error} retry={() => void query.refetch()} /></>
+  if (query.isPending) return <div className="admin-page"><PageHeader title="Loading Audit event" description="Reading the recorded administrative evidence." /><LoadingState /></div>
+  if (query.isError) return <div className="admin-page"><PageHeader title="Audit event unavailable"><Link to={back}>Back to Audit</Link></PageHeader><ErrorBanner error={query.error} retry={() => void query.refetch()} /></div>
   const e = query.data
-  return <section className="audit-workspace"><PageHeader title="Audit event detail" description="Read-only administrative evidence. Snapshots cannot be restored or replayed."><Link to={back}>Back to Audit</Link><Link to={`/admin/audit?${new URLSearchParams({ entityType: e.entityType, entityId: e.entityId })}`}>View entity history</Link><button disabled={query.isFetching} onClick={() => void query.refetch()}>Refresh event</button></PageHeader>
-    <DetailList items={[
+  return <section className="audit-workspace admin-page"><PageHeader title="Audit event detail" description="Read-only administrative evidence. Snapshots cannot be restored or replayed."><Link to={back}>Back to Audit</Link><Link to={`/admin/audit?${new URLSearchParams({ entityType: e.entityType, entityId: e.entityId })}`}>View entity history</Link><Button disabled={query.isFetching} loading={query.isFetching} onClick={() => void query.refetch()}>Refresh event</Button></PageHeader>
+    <div className="admin-audit-metadata"><DetailList items={[
       ['Event ID', e.id], ['Actor', actor(e)], ['Actor type', label(e.actor.type)], ['Historical membership ID', e.actor.membershipId ?? 'Not applicable'],
       ['Source', label(e.sourceType)], ['Action', label(e.actionCode)], ['Entity type', label(e.entityType)], ['Entity ID', e.entityId],
       ['Occurred', <AuditTime at={e.occurredAt} />], ['Exact timestamp', e.occurredAt], ['Reason', e.reason ?? 'No reason recorded'],
-    ]} />
+    ]} /></div>
     <p className="muted">User and membership references identify the recorded actor even after access is disabled. No current profile is substituted for a historical identity.</p>
-    <h2>Before / after comparison</h2>
+    <AdminPanel title="Before / after comparison" description="Compare the permitted snapshots. Absent, null and withheld values remain distinct." className="admin-comparison">
     {e.beforeData === null && <p>This creation has no previous snapshot.</p>}
     <DataTable caption="Recorded field comparison" headings={['Field', 'Before', 'After', 'Change']}>
-      {auditDiff(e).map(row => <tr key={row.field}><th scope="row">{label(row.field)}</th>{row.state === 'Withheld' ? <td colSpan={2}>Sensitive field changed — value withheld</td> : <><td className="audit-value">{typeof row.before === 'string' ? <q>{row.before}</q> : canonical(row.before)}</td><td className="audit-value">{typeof row.after === 'string' ? <q>{row.after}</q> : canonical(row.after)}</td></>}<td><StatusBadge>{row.state}</StatusBadge></td></tr>)}
+      {auditDiff(e).map(row => <tr key={row.field}><th scope="row">{label(row.field)}</th>{row.state === 'Withheld' ? <td colSpan={2}>Sensitive field changed — value withheld</td> : <><td className="audit-value">{typeof row.before === 'string' ? <q>{row.before}</q> : canonical(row.before)}</td><td className="audit-value">{typeof row.after === 'string' ? <q>{row.after}</q> : canonical(row.after)}</td></>}<td><StatusBadge tone={row.state === 'Withheld' ? 'attention' : row.state === 'Unchanged' ? 'neutral' : 'pending'}>{row.state}</StatusBadge></td></tr>)}
     </DataTable>
     <p className="muted">Not recorded means the field is absent; null is an explicitly recorded value. Arrays retain their recorded order. Omitted sensitive values cannot be reconstructed.</p>
+    </AdminPanel>
   </section>
 }

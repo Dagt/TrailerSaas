@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, useState } from 'react'
+import type { PropsWithChildren } from 'react'
 import { Link, useParams } from 'react-router'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -7,6 +8,7 @@ import { ApiProblem } from '../../shared/api/client'
 import { ConfirmDialog, DataTable, DetailList, EmptyState, ErrorBanner, LoadingState, PageHeader, StatusBadge } from '../../shared/ui/components'
 import { useAdminTenant } from '../tenant-admin/tenant'
 import { OperationsTenant } from '../transport-operations/queries'
+import { AdminPageHeader, AdminPanel, AdminStatus } from '../tenant-admin/AdminPresentation'
 
 const alertSchema = z.object({
   id: z.uuid(), tenantId: z.uuid(), alertType: z.enum(['TRAILER_MISSING', 'STALE_TRAILER']), severity: z.literal('WARNING'),
@@ -26,6 +28,9 @@ const alertSchema = z.object({
 export type Alert = z.infer<typeof alertSchema>
 const pageSchema = z.object({ items: z.array(alertSchema).max(100), nextCursor: z.string().max(512).nullable() }).strict()
 type Context = { tenantId: string; capabilities?: string[] }
+function AdminRegion({ area, className, children }: PropsWithChildren<{ area: 'admin' | 'operations'; className: string }>) {
+  return area === 'admin' ? <div className={className}>{children}</div> : <>{children}</>
+}
 export function AdminAlerts() { return <AlertsWorkspace owner={useAdminTenant()} area="admin" /> }
 export function OperationsAlerts() {
   const owner = useContext(OperationsTenant)
@@ -77,12 +82,16 @@ function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin'
   const reload = () => { setAction(null); setReason(''); command.reset(); void detail.refetch() }
   if (!allowed) return <EmptyState><h1>Alerts access is not available</h1><p>Refresh your session to verify your current capabilities.</p></EmptyState>
   if (alertId) {
-    if (detail.isPending) return <LoadingState />
-    if (detail.isError) return <ErrorBanner error={detail.error} retry={() => void detail.refetch()} />
+    if (detail.isPending) return area === 'admin' ? <div className="admin-page"><AdminPageHeader title="Loading Alert" description="Reading the persisted condition." /><LoadingState /></div> : <LoadingState />
+    if (detail.isError) {
+      const error = <ErrorBanner error={detail.error} retry={() => void detail.refetch()} />
+      return area === 'admin' ? <div className="admin-page"><AdminPageHeader title="Alert unavailable"><Link to="/admin/alerts">Back to Alerts</Link></AdminPageHeader>{error}</div> : error
+    }
     const a = detail.data, recovered = a.alertType==='STALE_TRAILER'||a.relatedResource.locationState === 'AT_LOCATION' && a.relatedResource.currentLocationId !== null
-    return <section><PageHeader title="Alert detail" description="The persisted Alert is authoritative. Push acceptance does not confirm phone delivery."><button onClick={reload}>Refresh Alert</button><Link to={`/${area}/alerts`}>Back to Alerts</Link></PageHeader>
-      <StatusBadge>{a.status}</StatusBadge>
-      <DetailList items={[
+    const Heading = area === 'admin' ? AdminPageHeader : PageHeader
+    return <section className={area === 'admin' ? 'admin-alerts admin-page' : undefined}><Heading title="Alert detail" description="The persisted Alert is authoritative. Push acceptance does not confirm phone delivery."><button onClick={reload}>Refresh Alert</button><Link to={`/${area}/alerts`}>Back to Alerts</Link></Heading>
+      {area === 'admin' ? <AdminStatus value={a.status} /> : <StatusBadge>{a.status}</StatusBadge>}
+      <AdminRegion area={area} className="admin-audit-metadata"><DetailList items={[
         ['Type', a.alertType], ['Severity', a.severity], ['Created', a.createdAt], ['Version', String(a.version)],
         ['Trailer', <Link to={`/${area}/trailers/${a.relatedResource.id}`}>{a.relatedResource.operationalNumber}</Link>], ['Recorded location state', a.relatedResource.locationState],
         ['Acknowledged', a.acknowledgedAt], ['Acknowledged by', a.acknowledgedBy], ['Resolved', a.resolvedAt], ['Resolved by', a.resolvedBy], ['Resolution reason', a.resolutionReason],
@@ -91,13 +100,15 @@ function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin'
           ['Last physical observation',a.detection.lastSeenAt], ['Threshold at detection',String(a.detection.thresholdHours)+' hours'],
           ['Elapsed at detection',a.detection.elapsedHours.toFixed(1)+' hours'], ['Detected',a.detection.detectedAt],
         ] as [string,string][] : []),
-      ]} />
+      ]} /></AdminRegion>
+      <AdminRegion area={area} className="admin-panel">
       <p>Acknowledgement means attention, not physical recovery. Resolving an Alert never changes Trailer location.</p>
       {a.alertType==='STALE_TRAILER'&&<p>Physical freshness uses observation time. Administrative edits and old offline receipt time do not count as new activity. Automatic resolution may also reflect a changed Tenant threshold.</p>}
       {Object.entries(a.pushSummary).map(([status, count]) => <p key={status}>Push transport: {status} · {count} recipient(s)</p>)}
       {a.status === 'OPEN' && owner.capabilities?.includes('ALERT_ACKNOWLEDGE') && <button onClick={() => { command.reset(); setAction({ kind: 'acknowledgement', alert: a }) }}>Acknowledge</button>}
       {a.status !== 'RESOLVED' && owner.capabilities?.includes('ALERT_RESOLVE') && <><button disabled={!recovered} onClick={() => { command.reset(); setAction({ kind: 'resolution', alert: a }); setReason('') }}>Resolve</button>{!recovered && <p>Record the Trailer's physical recovery through an authorized correction before resolving.</p>}</>}
-      {action && <ConfirmDialog title={action.kind === 'resolution' ? 'Resolve Alert' : 'Acknowledge Alert'} confirmLabel={action.kind === 'resolution' ? 'Confirm resolution' : 'Confirm acknowledgement'} onConfirm={() => void submit()} onCancel={() => { setAction(null); command.reset() }} busy={command.isPending} confirmDisabled={action.kind === 'resolution' && !reason.trim()}>
+      </AdminRegion>
+      {action && <ConfirmDialog className={area === 'admin' ? 'admin-dialog' : undefined} title={action.kind === 'resolution' ? 'Resolve Alert' : 'Acknowledge Alert'} confirmLabel={action.kind === 'resolution' ? 'Confirm resolution' : 'Confirm acknowledgement'} onConfirm={() => void submit()} onCancel={() => { setAction(null); command.reset() }} busy={command.isPending} confirmDisabled={action.kind === 'resolution' && !reason.trim()}>
         <p>{action.alert.relatedResource.operationalNumber} · reviewed version {action.alert.version}</p>
         {action.kind === 'resolution' && <label>Resolution reason<textarea maxLength={4000} value={reason} onChange={e => setReason(e.target.value)} /></label>}
         {command.isError && <ErrorBanner error={command.error} reload={reload} />}
@@ -105,14 +116,18 @@ function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin'
     </section>
   }
   const items = [...new Map(pages.data?.pages.flatMap(page => page.items).map(a => [a.id, a]) ?? []).values()]
-  return <section><PageHeader title="Alerts" description="Operational conditions remain available even if push is missed."><button onClick={() => void pages.refetch()}>Refresh Alerts</button></PageHeader>
+  const Heading = area === 'admin' ? AdminPageHeader : PageHeader
+  const records = <DataTable caption="Operational Alerts" headings={['Trailer', 'Type', 'Severity', 'Status', 'Created']}>
+    {items.map(a => <tr key={a.id}><td><Link to={`/${area}/alerts/${a.id}`}>{a.relatedResource.operationalNumber}</Link></td><td>{a.alertType}</td><td>{area === 'admin' ? <AdminStatus value={a.severity} /> : a.severity}</td><td>{area === 'admin' ? <AdminStatus value={a.status} /> : a.status}</td><td>{a.createdAt}</td></tr>)}
+  </DataTable>
+  return <section className={area === 'admin' ? 'admin-alerts admin-page' : undefined}><Heading title="Alerts" description="Operational conditions remain available even if push is missed."><button onClick={() => void pages.refetch()}>Refresh Alerts</button></Heading>
     <form onSubmit={e => { e.preventDefault(); setFilters(Object.fromEntries(Object.entries(draft).filter(([, v]) => v).map(([k, v]) => [k, k === 'from' || k === 'to' ? new Date(v).toISOString() : v]))) }}>
+      <AdminRegion area={area} className="admin-alert-filters">
       {Object.entries({ status: ['', 'OPEN', 'ACKNOWLEDGED', 'RESOLVED'], alertType: ['', 'TRAILER_MISSING', 'STALE_TRAILER'], severity: ['', 'WARNING'], relatedEntityType: ['', 'TRAILER'] }).map(([name, choices]) => <label key={name}>{({ status: 'Status', alertType: 'Alert type', severity: 'Severity', relatedEntityType: 'Related resource' })[name]}<select aria-label={({ status: 'Status', alertType: 'Alert type', severity: 'Severity', relatedEntityType: 'Related resource' })[name]} value={draft[name as keyof typeof draft]} onChange={e => setDraft({ ...draft, [name]: e.target.value })}>{choices.map(value => <option key={value} value={value}>{value || 'All'}</option>)}</select></label>)}
-      <label>From<input type="datetime-local" value={draft.from} onChange={e => setDraft({ ...draft, from: e.target.value })} /></label><label>To<input type="datetime-local" value={draft.to} onChange={e => setDraft({ ...draft, to: e.target.value })} /></label><button>Apply filters</button>
+      <label>From<input type="datetime-local" value={draft.from} onChange={e => setDraft({ ...draft, from: e.target.value })} /></label><label>To<input type="datetime-local" value={draft.to} onChange={e => setDraft({ ...draft, to: e.target.value })} /></label><AdminRegion area={area} className="actions"><button type="submit">Apply filters</button></AdminRegion>
+      </AdminRegion>
     </form>
-    {pages.isPending ? <LoadingState /> : pages.isError ? <ErrorBanner error={pages.error} retry={() => void pages.refetch()} /> : !items.length ? <EmptyState>No Alerts match these filters.</EmptyState> : <DataTable caption="Operational Alerts" headings={['Trailer', 'Type', 'Severity', 'Status', 'Created']}>
-      {items.map(a => <tr key={a.id}><td><Link to={`/${area}/alerts/${a.id}`}>{a.relatedResource.operationalNumber}</Link></td><td>{a.alertType}</td><td>{a.severity}</td><td>{a.status}</td><td>{a.createdAt}</td></tr>)}
-    </DataTable>}
-    {pages.hasNextPage && <button disabled={pages.isFetchingNextPage} onClick={() => void pages.fetchNextPage()}>Load more Alerts</button>}
+    {pages.isPending ? <LoadingState /> : pages.isError ? <ErrorBanner error={pages.error} retry={() => void pages.refetch()} /> : !items.length ? <EmptyState>No Alerts match these filters.</EmptyState> : area === 'admin' ? <AdminPanel title="Recorded Alerts" description="Persisted conditions and their current lifecycle status." className="admin-table-panel">{records}</AdminPanel> : records}
+    {pages.hasNextPage && <button className={area === 'admin' ? 'admin-pagination' : undefined} disabled={pages.isFetchingNextPage} onClick={() => void pages.fetchNextPage()}>Load more Alerts</button>}
   </section>
 }

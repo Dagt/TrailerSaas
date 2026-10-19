@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { Customer, Items, Site, Location } from './contracts'
 import { useTenantQuery } from './hooks'
 import { operationalNumber } from './resources'
+import { Button } from '../../shared/ui/components'
 
 const empty = { operationalNumber: '', designatedCustomerId: '', locationState: '', currentLocationId: '', loadState: '', serviceabilityState: '', active: '', coupled: '' }
 export function TrailerFilters({ customers, onApply }: { customers: Customer[]; onApply(query: string): void }) {
@@ -24,7 +25,7 @@ export function TrailerFilters({ customers, onApply }: { customers: Customer[]; 
       <option value="">All</option>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
     </select></label>
   const choices = (values: string[]) => values.map(value => ({ value, label: value }))
-  return <form className="filters" aria-label="Trailer filters" onSubmit={event => { event.preventDefault(); apply() }}>
+  return <form aria-label="Trailer filters" onSubmit={event => { event.preventDefault(); apply() }}><fieldset className="filters"><legend>Filter Trailer records</legend>
     <label htmlFor="filter-number">Operational number <input id="filter-number" value={values.operationalNumber} onChange={event => setValues({ ...values, operationalNumber: event.target.value })} /></label>
     {select('designatedCustomerId', 'Designated Customer filter', customers.map(c => ({ value: c.id, label: c.name })))}
     {select('locationState', 'Location state', choices(['AT_LOCATION', 'IN_TRANSIT', 'LOCATION_UNKNOWN']))}
@@ -37,10 +38,10 @@ export function TrailerFilters({ customers, onApply }: { customers: Customer[]; 
     {select('serviceabilityState', 'Serviceability', choices(['IN_SERVICE', 'OUT_OF_SERVICE']))}
     {select('active', 'Active filter', [{ value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive' }])}
     {select('coupled', 'Coupling filter', [{ value: 'true', label: 'Coupled' }, { value: 'false', label: 'Uncoupled' }])}
-    <div className="actions"><button>Apply filters</button>
-      <button type="button" onClick={() => { const next = { ...values, serviceabilityState: 'OUT_OF_SERVICE' }; setValues(next); apply(next) }}>Out of Service</button>
-      <button type="button" onClick={() => { const next = { ...values, locationState: 'LOCATION_UNKNOWN' }; setValues(next); apply(next) }}>Location Unknown</button>
-      <button type="button" onClick={() => { setValues(empty); setSite(''); apply(empty) }}>Clear filters</button></div>
+    <div className="actions"><Button type="submit" variant="primary">Apply filters</Button>
+      <Button onClick={() => { const next = { ...values, serviceabilityState: 'OUT_OF_SERVICE' }; setValues(next); apply(next) }}>Out of Service</Button>
+      <Button onClick={() => { const next = { ...values, locationState: 'LOCATION_UNKNOWN' }; setValues(next); apply(next) }}>Location Unknown</Button>
+      <Button variant="subtle" onClick={() => { setValues(empty); setSite(''); apply(empty) }}>Clear filters</Button></div>
     {invalid && <p role="alert">Check the filter values.</p>}
-  </form>
+  </fieldset></form>
 }

@@ -7,6 +7,7 @@ import { readWebEnvironment } from './shared/config/environment'
 import { initializeObservability } from './shared/observability/sentry'
 import './styles.css'
 import './shared/ui/workspace.css'
+import './areas/tenant-admin/admin.css'
 
 const rootOptions = await initializeObservability(readWebEnvironment(import.meta.env))
 
