@@ -102,7 +102,9 @@ it('keeps the new Admin surface out of Operations Alerts markup', async () => {
   const table = await screen.findByRole('table', { name: 'Operational Alerts' })
   expect(document.querySelector('.admin-alerts')).toBeNull()
   expect(document.querySelector('.admin-alert-filters')).toBeNull()
-  expect(within(table).getByText('OPEN')).not.toHaveClass('status-badge')
+  expect(within(table).getByText('OPEN')).toHaveClass('status-badge')
+  expect(within(table).getByText('OPEN')).toHaveAttribute('data-tone', 'attention')
+  expect(table.closest('.ops-alerts')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Apply filters' })).not.toHaveAttribute('type')
 })
 

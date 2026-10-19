@@ -1,10 +1,11 @@
 import { MasterDataStatus } from './MasterDataStatus'
 import { useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../shared/auth/context'
 import { historyIdentity, type HistoryPosition } from './historyContracts'
-import { DataTable, DetailList, EmptyState, ErrorBanner, LoadingState, PageHeader, StatusBadge } from '../../shared/ui/components'
+import { Button, Card, DataTable, DetailList, EmptyState, ErrorBanner, LoadingState } from '../../shared/ui/components'
+import { OperationsHeader as PageHeader, OperationsStatus } from './OperationsPresentation'
 import { key, useLocations, useNames, useOperations } from './queries'
 import { human, reference, when } from './display'
 import type { AssignmentHistory, OperationalHistory, TripDetail, TripStop } from './contracts'
@@ -23,29 +24,29 @@ export function TripDetailPage() {
   const orders = useQueries({ queries: ids.map(id => ({ queryKey: key(tenantId, 'order', id), queryFn: ({ signal }: { signal: AbortSignal }) => api.order(id, signal) })) })
   const orderName = (id: string) => orders.find(q => q.data?.id === id)?.data?.orderNumber ?? 'Order unavailable'
   const [action, choose] = useState<{ kind: ActionKind; snapshot: TripDetail; stop?: TripStop } | null>(null)
-  if (query.isPending) return <LoadingState />
-  if (query.isError) return <ErrorBanner error={query.error} retry={() => void query.refetch()} />
+  if (query.isPending) return <div className="ops-page"><PageHeader title="Loading Trip" /><LoadingState /></div>
+  if (query.isError) return <div className="ops-page"><PageHeader title="Trip unavailable"><Link to="/operations/trips">Back to Trips</Link></PageHeader><ErrorBanner error={query.error} retry={() => void query.refetch()} /></div>
   const t = query.data, allowed = actions(t)
   const open = (kind: ActionKind, stop?: TripStop) => choose({ kind, snapshot: t, stop })
   const reload = () => { choose(null); void query.refetch(); void timeline.refetch() }
-  return <><PageHeader title={reference(t.id)} description="Current operational planning. Expected Trailer is not physical coupling."><StatusBadge>{human(t.status)}</StatusBadge></PageHeader>
-    <MasterDataStatus queries={[names.customers, names.drivers, names.tractors, names.trailers, names.sites]} /><DetailList items={[["Version", t.version], ["Created", when(t.createdAt)], ["Updated", when(t.updatedAt)]]} />
-    <section className="dispatch-card"><h2>Current assignments</h2><DetailList items={[["Driver", names.driver(t.currentDriverId)], ["Tractor", names.tractor(t.currentTractorId)], ["Expected Trailer", names.trailer(t.plannedInitialTrailerId)]]} />
-      <div className="operations-actions">{allowed.driver && <button onClick={() => open('driver')}>Assign / reassign Driver</button>}{allowed.tractor && <button onClick={() => open('tractor')}>Assign / reassign Tractor</button>}{allowed.trailer && <button onClick={() => open('trailer')}>Plan / change expected Trailer</button>}{allowed.substitution && <button onClick={() => open('substitution')}>Resolve alternate Trailer</button>}</div>
-    </section>
-    <section><h2>Executable Stops</h2><DataTable caption="Executable Stops" headings={['Sequence / type', 'Status', 'Destination', 'Appointment', 'Orders / instructions', 'Action']}>
-      {[...t.stops].sort((a, b) => a.sequenceNumber - b.sequenceNumber).map(s => <tr key={s.id}><th scope="row">{s.sequenceNumber}. {human(s.stopType)}</th><td><StatusBadge>{human(s.status)}</StatusBadge></td><td><StopDestination stop={s} /></td><td>{when(s.scheduledAt)}</td><td>{s.orderIds.map(orderName).join(', ') || 'Operational visit'}<small>{s.instructions ?? 'No instructions'}</small></td><td>{allowed.reroute && ['PENDING', 'EN_ROUTE'].includes(s.status) && <button onClick={() => open('reroute', s)}>Reroute Stop {s.sequenceNumber}</button>}</td></tr>)}
-    </DataTable></section>
-    <section className="dispatch-card"><h2>Linked Orders</h2>{!ids.length ? <EmptyState>No Orders are currently mapped to these Stops.</EmptyState> : <ul>{ids.map(id => <li key={id}>{orderName(id)}{orders.find(q => q.data?.id === id)?.data && <> · {names.customer(orders.find(q => q.data?.id === id)!.data!.customerId)}</>}</li>)}</ul>}{orders.some(q => q.isError) && <p>Some linked Order details are unavailable.</p>}</section>
-    <section className="dispatch-card"><h2>Operational timeline</h2><p className="muted">Oldest first. Assignments and operational instructions share one paginated history. Planning assignments do not prove physical coupling. Administrative Audit is separate.</p>
+  return <div className="ops-page"><PageHeader title={reference(t.id)} description="Current operational planning. Expected Trailer is not physical coupling."><OperationsStatus value={t.status} /><Link to="/operations/trips">Back to Trips</Link></PageHeader>
+    <MasterDataStatus queries={[names.customers, names.drivers, names.tractors, names.trailers, names.sites]} /><div className="ops-record-meta"><DetailList items={[["Version", t.version], ["Created", when(t.createdAt)], ["Updated", when(t.updatedAt)]]} /></div>
+    <Card title="Current assignments" description="Expected resources describe the plan. They are not evidence of physical coupling."><DetailList items={[["Driver", names.driver(t.currentDriverId)], ["Tractor", names.tractor(t.currentTractorId)], ["Expected Trailer", names.trailer(t.plannedInitialTrailerId)]]} />
+      <div className="operations-actions">{allowed.driver && <Button onClick={() => open('driver')}>Assign / reassign Driver</Button>}{allowed.tractor && <Button onClick={() => open('tractor')}>Assign / reassign Tractor</Button>}{allowed.trailer && <Button onClick={() => open('trailer')}>Plan / change expected Trailer</Button>}{allowed.substitution && <Button onClick={() => open('substitution')}>Resolve alternate Trailer</Button>}</div>
+    </Card>
+    <Card title="Executable Stops" description="Current authorized sequence, destinations and appointments." className="ops-table-card"><DataTable caption="Executable Stops" headings={['Sequence / type', 'Status', 'Destination', 'Appointment', 'Orders / instructions', 'Action']}>
+      {[...t.stops].sort((a, b) => a.sequenceNumber - b.sequenceNumber).map(s => <tr key={s.id}><th scope="row">{s.sequenceNumber}. {human(s.stopType)}</th><td><OperationsStatus value={s.status} /></td><td><StopDestination stop={s} /></td><td>{when(s.scheduledAt)}</td><td>{s.orderIds.map(orderName).join(', ') || 'Operational visit'}<small>{s.instructions ?? 'No instructions'}</small></td><td>{allowed.reroute && ['PENDING', 'EN_ROUTE'].includes(s.status) && <Button onClick={() => open('reroute', s)}>Reroute Stop {s.sequenceNumber}</Button>}</td></tr>)}
+    </DataTable></Card>
+    <Card title="Linked Orders">{!ids.length ? <EmptyState>No Orders are currently mapped to these Stops.</EmptyState> : <ul className="ops-reference-list">{ids.map(id => <li key={id}><Link to={`/operations/orders/${id}`}>{orderName(id)}</Link>{orders.find(q => q.data?.id === id)?.data && <> · {names.customer(orders.find(q => q.data?.id === id)!.data!.customerId)}</>}</li>)}</ul>}{orders.some(q => q.isError) && <p>Some linked Order details are unavailable.</p>}</Card>
+    <Card title="Operational timeline"><p className="muted">Oldest first. Assignments and operational instructions share one paginated history. Planning assignments do not prove physical coupling. Administrative Audit is separate.</p>
       {timeline.isPending ? <LoadingState /> : timeline.isError ? <ErrorBanner error={timeline.error} retry={() => void (timeline.isFetchNextPageError ? timeline.fetchNextPage() : timeline.refetch())} /> : !timeline.data.pages.some(p => p.items.length) ? <EmptyState>No operational events recorded.</EmptyState> : <ol className="operations-timeline" aria-label="Trip operational history">{timeline.data.pages.flatMap(p => p.items).map(e => <HistoryEntry key={historyIdentity(e)} event={e} />)}</ol>}
-      {timeline.hasNextPage && !timeline.isError && <button disabled={timeline.isFetchingNextPage} onClick={() => void timeline.fetchNextPage()}>{timeline.isFetchingNextPage ? 'Loading history…' : 'Load more Trip events'}</button>}
+      {timeline.hasNextPage && !timeline.isError && <Button disabled={timeline.isFetchingNextPage} onClick={() => void timeline.fetchNextPage()}>{timeline.isFetchingNextPage ? 'Loading history…' : 'Load more Trip events'}</Button>}
       <h3>Recorded Stop execution</h3><p className="muted">These physical timestamps come from the current authorized Stop projection; no missing events are reconstructed.</p>
       <ul>{t.stops.filter(s => s.arrivedAt || s.serviceStartedAt || s.completedAt || s.departedAt).map(s => <li key={s.id}>Stop {s.sequenceNumber}: {s.arrivedAt && <>Arrived {when(s.arrivedAt)}. </>}{s.serviceStartedAt && <>Service started {when(s.serviceStartedAt)}. </>}{s.completedAt && <>Completed {when(s.completedAt)}. </>}{s.departedAt && <>Departed {when(s.departedAt)}.</>}</li>)}</ul>
-    </section>
-    <section className="dispatch-card"><h2>Available actions</h2>{allowed.cancellation ? <button className="danger" onClick={() => open('cancellation')}>Cancel Trip</button> : <p>No cancellation action is available in this state.</p>}<p className="muted">All actions are revalidated by the server. Execution and physical Trailer commands are not available here.</p></section>
+    </Card>
+    <Card title="Available actions">{allowed.cancellation ? <Button variant="danger" className="danger" onClick={() => open('cancellation')}>Cancel Trip</Button> : <p>No cancellation action is available in this state.</p>}<p className="muted">All actions are revalidated by the server. Execution and physical Trailer commands are not available here.</p></Card>
     {action && <TripAction kind={action.kind} trip={action.snapshot} stop={action.stop} onClose={() => choose(null)} reload={reload} />}
-  </>
+  </div>
 }
 function StopDestination({ stop }: { stop: TripStop }) {
   const names = useNames(), locations = useLocations(stop.siteId)

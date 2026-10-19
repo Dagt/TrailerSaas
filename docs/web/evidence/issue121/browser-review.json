@@ -1,0 +1,1780 @@
+{
+  "base": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+  "head": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+  "webTree": "47da6d182a9ed5ae098cca1e1e8d11c1338897a2",
+  "kind": "ISOLATED DEMO; actual React routes, synthetic read fixtures; no authenticated Firebase session or Backend writes",
+  "screenshots": [
+    {
+      "file": "before/dispatch-1440x900.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "78ee586374ce5785fc5552715304b52863a07d8a26514761e2bfe614e0c26e94"
+    },
+    {
+      "file": "before/orders-1440x900.png",
+      "route": "/operations/orders",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "13bb91206891e52ff1a9ec48c96d5c3730e5f0061a7c7697966dcef84f5897bc"
+    },
+    {
+      "file": "before/order-detail-1440x900.png",
+      "route": "/operations/orders/12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "7552f763a39c95c81ac7f2e5353cd82934f3452c4e595246df5a1bf02cd61c6e"
+    },
+    {
+      "file": "before/trips-1440x900.png",
+      "route": "/operations/trips",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a95b3b8c6bc2f79f9a5c304e279b32642943bc1820efe278e1a8e4ad6bb494d1"
+    },
+    {
+      "file": "before/plan-orders-1440x900.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c51d66936bde30070ce720d1af7ed63f87d7f1c1805e5ce25f8c00e7565f7e60"
+    },
+    {
+      "file": "before/trip-detail-1440x900.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "762b93fc614c1158c2e053c6f980a31d12422e3f0235b1183360e07a4e617b92"
+    },
+    {
+      "file": "before/trailer-search-empty-1440x900.png",
+      "route": "/operations/trailers",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "1e8e5421f74283964c63112f2be773bde0be738b22f29fed6bfbb09fd015d780"
+    },
+    {
+      "file": "before/trailer-search-1440x900.png",
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "999faaa69422034e8b453a07ab331e4ad1fd85be6d973a55d358dda3ce495d7f"
+    },
+    {
+      "file": "before/trailer-detail-1440x900.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "cac10ee74a006761c00e949b6faa8e24f8a41f52c2a89c8512f9511278a1ad50"
+    },
+    {
+      "file": "before/alerts-1440x900.png",
+      "route": "/operations/alerts",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ad6575846b4349d5a2b057ff9c442e1fa6ab49a3718d529c1d165ecc673fe20e"
+    },
+    {
+      "file": "before/alert-detail-1440x900.png",
+      "route": "/operations/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "aa9cd767001e578b5781296e76fb560a835077bde64ced8ea94900e7580295db"
+    },
+    {
+      "file": "before/dispatch-390x844.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "40c9411320d4f3e86a9ed38d0466f5911027bf620f6b93350be9bcad7895ed2a"
+    },
+    {
+      "file": "before/trip-detail-390x844.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "56d5e5904fd800a4cf69780777bef00c12c95d4eec07c5ad21c20b06b5f5aafd"
+    },
+    {
+      "file": "before/trailer-search-390x844.png",
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "state": "Ready",
+      "sourceRevision": "87c1cd3922742df7297d1816870996e78dfeb9d3",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "26d9be6ac26f15d7805045db9fd3b237d05c0bb1dc591ae212e4d16d8e8b42e6"
+    },
+    {
+      "file": "after/dispatch-390x844.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "05849940e6d8a3f6bdadf7006321113da178d931ecae34ea1e266825409a0104"
+    },
+    {
+      "file": "after/orders-390x844.png",
+      "route": "/operations/orders",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "3f465ca094cb13ea7b3cc8a4135cbbb23120a0fc65758608e819f7088e3dbe19"
+    },
+    {
+      "file": "after/order-detail-390x844.png",
+      "route": "/operations/orders/12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "cd2d55dc31fbe3c452ab80842bfdfc771b921f95f8de6752cf924be73a253a05"
+    },
+    {
+      "file": "after/trips-390x844.png",
+      "route": "/operations/trips",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "1b5893282276ae3741e6fe6b94c7a7215179a8b9c0337d243a397d03b224b525"
+    },
+    {
+      "file": "after/plan-orders-390x844.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "0ad28088fad050ba02f3f61ffc5a0bc1f1811a66ecab73f9e85683f0fe15795a"
+    },
+    {
+      "file": "after/trip-detail-390x844.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "a2f2f73d0333e235c5993138ebae19d6456e6b53147e699fa96b82addbc4639c"
+    },
+    {
+      "file": "after/trailer-search-empty-390x844.png",
+      "route": "/operations/trailers",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "b0e985829bae732efec2dd5e8a489c3db996d7cd1206855b2c081eb81e0ddeb7"
+    },
+    {
+      "file": "after/trailer-search-390x844.png",
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "9777bbac75470fb982595124ce86a672cbfe7dafc641516f54b60d5b20a53595"
+    },
+    {
+      "file": "after/trailer-detail-390x844.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "ce3577406a7a06f71c5c3437ae9258781365fb40efadd5eb2c930dc2c6835507"
+    },
+    {
+      "file": "after/alerts-390x844.png",
+      "route": "/operations/alerts",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "bdb63eb7fa96aa4276ca3d8151e2a10fe22fd0c296e736b93301028f4ef381d0"
+    },
+    {
+      "file": "after/alert-detail-390x844.png",
+      "route": "/operations/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "b9474c7007c8d3d0e4377d743e98ba37acbc4186ed8d9db78ab8898112aab5d3"
+    },
+    {
+      "file": "after/dispatch-768x1024.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "81b9a23c5993e72283797b01335fab68e48932e0c4c672917f80c8e3ca296aa3"
+    },
+    {
+      "file": "after/orders-768x1024.png",
+      "route": "/operations/orders",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "c3dfd4f518dc6ad34823df707de4eb8eadd850df59d9c84969a2b5ea68d3b4ef"
+    },
+    {
+      "file": "after/order-detail-768x1024.png",
+      "route": "/operations/orders/12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "b7ed8af9f01849f5d3efe5018f9837fcd3d6e4bc7b58393bb493bea2efee0d2c"
+    },
+    {
+      "file": "after/trips-768x1024.png",
+      "route": "/operations/trips",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "d4c8579dd059b6eca6b3ede359a24b194609205c784ece6628fa2382c125d9c3"
+    },
+    {
+      "file": "after/plan-orders-768x1024.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "bdacc9ee1004f6573f1dc0408a9913d6464c645316bba1528e8445df855a201c"
+    },
+    {
+      "file": "after/trip-detail-768x1024.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "974ce11bb4a26b85fb73849ff55e2f5d4b7c9529b380b617ec714e0f7400080a"
+    },
+    {
+      "file": "after/trailer-search-empty-768x1024.png",
+      "route": "/operations/trailers",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "5e721c0b2ccab478083f409d977f02241283e89791f3562369e9fc6cd2d093b8"
+    },
+    {
+      "file": "after/trailer-search-768x1024.png",
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "51256d03c45db588a33a082119302ea29aad6df97cf1cec7ae6c5696754787b3"
+    },
+    {
+      "file": "after/trailer-detail-768x1024.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "4ffa5a82b1c3e3e24fc2c18d48b7af758ae78c59edfa39e3565d07d93f833094"
+    },
+    {
+      "file": "after/alerts-768x1024.png",
+      "route": "/operations/alerts",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "86d96d85de77fd06047cb896f463ae0b8da96cc535a0eccd15fda08f136ac9f1"
+    },
+    {
+      "file": "after/alert-detail-768x1024.png",
+      "route": "/operations/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "25065da0e579cc33cf007f4aa28889d969d6cc416575def4f0fb3c29598a286d"
+    },
+    {
+      "file": "after/dispatch-1280x800.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "3a0a35f2cd8516af6411e181ff1743937904fde2df1a49291e3316037985b126"
+    },
+    {
+      "file": "after/orders-1280x800.png",
+      "route": "/operations/orders",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "5110a3d1a69024c30fcbcba538a41929983de3ffeda84701246ec043ee530d0a"
+    },
+    {
+      "file": "after/order-detail-1280x800.png",
+      "route": "/operations/orders/12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "010c4709daedd7820dd58a62cebbc6a83194a1e0a90095dea1e004698226b0fb"
+    },
+    {
+      "file": "after/trips-1280x800.png",
+      "route": "/operations/trips",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "50f93f4c942c101c2c1b0fe25ae6cd89c9175449ba7f8c8b98f34fbbf221bfb8"
+    },
+    {
+      "file": "after/plan-orders-1280x800.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "ee7d6f5c52ae0626f9ac35551621c093171e651f4158d9947c9f0ab63a3d628f"
+    },
+    {
+      "file": "after/trip-detail-1280x800.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "46e07515a12f079156be8e8a7c0b8806525e315847ed7c0ba9511d4ef9594566"
+    },
+    {
+      "file": "after/trailer-search-empty-1280x800.png",
+      "route": "/operations/trailers",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "1ab94b71cb279f1b761a6ed7bd5f8a0fb4782b773169b3607e7525c68ebf96a3"
+    },
+    {
+      "file": "after/trailer-search-1280x800.png",
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "28c548984315a424ef7144696647cf6e6193c40ef1915cd981c254e196c6e0f2"
+    },
+    {
+      "file": "after/trailer-detail-1280x800.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "606aa7c79974466093f2379da0c380223cb85fd0ce679501591f35a2c2177d8d"
+    },
+    {
+      "file": "after/alerts-1280x800.png",
+      "route": "/operations/alerts",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "897e25f4c0e0673f776c8787d5a74e9b2120fc879df5829fe9a4777b36f82bb7"
+    },
+    {
+      "file": "after/alert-detail-1280x800.png",
+      "route": "/operations/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "9a7e2e58357d6eb57dfb277ad3ea8c9b2ae8689cc1b08fba77cb10ac3d6b9e6a"
+    },
+    {
+      "file": "after/dispatch-1440x900.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "9f2abac9f9c214f16438d2d39fd6bc48bc266867febfb2147f458158a1a07dc6"
+    },
+    {
+      "file": "after/orders-1440x900.png",
+      "route": "/operations/orders",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "9759a031840a04c15bcfd7fc4f6c4e5a31c71b2333f36f31ae5b0ef4b62685a1"
+    },
+    {
+      "file": "after/order-detail-1440x900.png",
+      "route": "/operations/orders/12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "eddb5c9615ce63098cdf9180d25d4267b8ad570379d19a79a2be29b2c5d3d874"
+    },
+    {
+      "file": "after/trips-1440x900.png",
+      "route": "/operations/trips",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0141abb1c9244025d49f0f58c2b249433abe371d34ab45d2480825a52ca75bc2"
+    },
+    {
+      "file": "after/plan-orders-1440x900.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0cf02663920c8bc8566cfce8e510e8bdcde985a6665c01abddf44947c8701bc4"
+    },
+    {
+      "file": "after/trip-detail-1440x900.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "fafb3b835501c155ff65b8d30e00d918fb4c7a53f1cb6229bd3b853a9b7a8c34"
+    },
+    {
+      "file": "after/trailer-search-empty-1440x900.png",
+      "route": "/operations/trailers",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "cfcbd595e962dffff6bfe1c6c023d7116b277c6286f1b24a73a55b2727a688fb"
+    },
+    {
+      "file": "after/trailer-search-1440x900.png",
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "91049c91a2774d32fd7c3de035329796275b16f400ceb14e7121bcb61021ff2a"
+    },
+    {
+      "file": "after/trailer-detail-1440x900.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "eb915d0b19a5a18f3363a36443b34a614033973f856096891bf2622b1fdaa944"
+    },
+    {
+      "file": "after/alerts-1440x900.png",
+      "route": "/operations/alerts",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2426361bceab5ad45e077db1c3a1de602a7ffbea49eb0ee5fba5db18fef04b9c"
+    },
+    {
+      "file": "after/alert-detail-1440x900.png",
+      "route": "/operations/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f13f7d186c26a3f2a2bbb63e8fd352b2843ef7ec11720eb2a96ce3e0692a3086"
+    },
+    {
+      "file": "after/plan-stops-1440x900.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "d43052fdb1036dd053da62cc27d3a5fd56c4478437988fcdc943f5fb4a648239"
+    },
+    {
+      "file": "after/plan-resources-1440x900.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c5f01b83c75dbf1dcf6dc0a5d41dde0c973eaa06be77b00637ac595801f3442f"
+    },
+    {
+      "file": "after/plan-review-1440x900.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "46985e5ebb7fc83605ad2a52dbbccf6b0a5a9c232223bb7ee2c9c8523cf1f364"
+    },
+    {
+      "file": "after/plan-stops-768x1024.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "1c19e5ec3afa9b152a6df86d5f2ce2c92db2f21d69aad4bf9c3f4922cc864757"
+    },
+    {
+      "file": "after/plan-resources-768x1024.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "a2a2113b4c3090f23414d8e5a54476fc25227b8b57447048ed1b58d5095568c4"
+    },
+    {
+      "file": "after/plan-review-768x1024.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "5e5dcf21e476344e7552201fb5b6d9074570c6acf80fc1ad5d492b29516eeacb"
+    },
+    {
+      "file": "after/plan-stops-390x844.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "6d56bf6aa680791c6d88dbbb516d4850e5ce6f65d92eeb1344d5a1d9da50d331"
+    },
+    {
+      "file": "after/plan-resources-390x844.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "191ac6d074cb2d638a595f724430d8c7bb91889b1a045a4e2d14e8ff673bbbbb"
+    },
+    {
+      "file": "after/plan-review-390x844.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "b89b9b28757a36c55e95e2d71ca749dc376585cf733348c51a8a8c56f5de2be0"
+    },
+    {
+      "file": "after/drawer-390x844.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "57ecfcfed54b9ff62f219199ea88e236fe7ecd4b0d967ee074221c4fefea0edd"
+    },
+    {
+      "file": "after/orders-selected-1440x900.png",
+      "route": "/operations/orders",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "9d3368602d6599f5a0c7cb8a9ca4b2f5893de7618025d71b07ebebb48d495320"
+    },
+    {
+      "file": "after/orders-next-page-1440x900.png",
+      "route": "/operations/orders",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "98aa0144927680de530b8102a3e6609ffc123e2b0d11af72a45c19cae2a6446a"
+    },
+    {
+      "file": "after/plan-reordered-stops-1440x900.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "971b833db404b788749efa926d46afe57796f6fe2c3cd04ab1b57ae38b562ba8"
+    },
+    {
+      "file": "after/assign-driver-1440x900.png",
+      "route": "/operations/trips/12100031-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "4df6a242d0e10b79b5f79b1456948cad4eea4c262bd71ff7e8c053379348ed1f"
+    },
+    {
+      "file": "after/assign-tractor-1440x900.png",
+      "route": "/operations/trips/12100031-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ddbd2d8928dc098f1c35a7a393e061a57c6d68a5b4bda8183993d8e19fdf26a7"
+    },
+    {
+      "file": "after/expected-trailer-1440x900.png",
+      "route": "/operations/trips/12100031-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "00653688339780283b08bf61d62e139981499cfe55b54b7756d9b3af2f093624"
+    },
+    {
+      "file": "after/substitution-1440x900.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "93ba9bdd7cf3ec0b46e1d22ac5e043ed21a13e97204dbc35b577ebbb0776753c"
+    },
+    {
+      "file": "after/reroute-1440x900.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ca1df19ce8c800a2fb20906b712f65ea43465ba7c051df46100517432d80ca5d"
+    },
+    {
+      "file": "after/cancel-active-1440x900.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "b719014b9385ab50a98a5bb16675c06312953f1e4550fa02a12d25525fbe2e40"
+    },
+    {
+      "file": "after/cancel-before-execution-1440x900.png",
+      "route": "/operations/trips/12100031-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "5112e0aeb79c16912d02caddd74e2d333a9a35be2fb4e3ff06bf78c56a0d4f71"
+    },
+    {
+      "file": "after/substitution-reject-390x844.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "1a46a37b6b3951a2ba29f2f488e482ee6084a9bdaa3c06a3b3aec45361265919"
+    },
+    {
+      "file": "after/cancel-active-390x844.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "8cc03d4164ad488a23df9bc1583e04881ddc4c1fa2e00b0f3cb15fb7b0ffe23e"
+    },
+    {
+      "file": "after/assignment-conflict-1440x900.png",
+      "route": "/operations/trips/12100031-0000-4000-8000-000000000001",
+      "state": "conflict",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2acc94a7856d14c987d178c3ac80cf7932f6b1290d50a56a90e451e57395ce90"
+    },
+    {
+      "file": "after/plan-uncertain-1440x900.png",
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "08298871732151e810737782c4cca4cd3744e8ceb21536937192051e501bb38b"
+    },
+    {
+      "file": "after/trip-history-next-page-1440x900.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "3bb80dc2daffbceaeb81a6148196c38d6c58717a4290c8108109a0aa014e26ee"
+    },
+    {
+      "file": "after/trailer-history-next-page-1440x900.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0c200c72d2909d58e91d501c38301ff29e33c59244a89efabd0478889757c311"
+    },
+    {
+      "file": "after/trip-history-page-error-1440x900.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "state": "page-error",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "83600a483582b7651f15f83d6d2c8d6d0ba04e77c829e37a392a8b0c62f7821a"
+    },
+    {
+      "file": "after/trailer-history-page-error-1440x900.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "page-error",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "038ec3dd77730192a17174d176c9df89bb17c20054e55edfa5f704bddbb0ab2f"
+    },
+    {
+      "file": "after/acknowledge-alert-1440x900.png",
+      "route": "/operations/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ea995df9088c8201d37dff14225fd625ab3aaaa1936f47d3ace066219624f1a3"
+    },
+    {
+      "file": "after/resolve-alert-1440x900.png",
+      "route": "/operations/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "e3209603a89e36b72c69a6f01c47bba4216a4cc7e4cf7fc3c8fec14f3ced4177"
+    },
+    {
+      "file": "after/dispatch-loading-1440x900.png",
+      "route": "/operations",
+      "state": "loading",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "1d758e478b7112280860d8fe1e0f3e1a6af7e56b8325c2245d9222358c52cf85"
+    },
+    {
+      "file": "after/dispatch-empty-1440x900.png",
+      "route": "/operations",
+      "state": "empty",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c3f7c65b8349814a609a0730026f8cf16807c6b4c2d774fbf63b162f8a12ea6f"
+    },
+    {
+      "file": "after/dispatch-401-1440x900.png",
+      "route": "/operations",
+      "state": "401",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2144c93e3841dbef0bc8bb86fe47af70d5f8fc27364d7b3d504887bc17c989d5"
+    },
+    {
+      "file": "after/dispatch-403-1440x900.png",
+      "route": "/operations",
+      "state": "403",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0e5eaea6272db78706c8a75e38489af24cd0d484fad0fa8766cacf651238a4a4"
+    },
+    {
+      "file": "after/dispatch-404-1440x900.png",
+      "route": "/operations",
+      "state": "404",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "6c6505ca08ef28fad14894fbff684e737c4e1aaaf9988f0fc965170a483feb69"
+    },
+    {
+      "file": "after/dispatch-500-1440x900.png",
+      "route": "/operations",
+      "state": "500",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "bcbfe62707b8eff69725884b39275a0e175e7a7a4d55c019209fe2362becd30d"
+    },
+    {
+      "file": "after/alerts-denied-1440x900.png",
+      "route": "/operations/alerts",
+      "state": "denied",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "4cd54c8feb00abb1b8d31e8bf5652d73bc0dcc091af5fe638ddf99f06aebd6b6"
+    },
+    {
+      "file": "after/membership-denied-1440x900.png",
+      "route": "/operations",
+      "state": "no-membership",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0f01cbf7e3dd4abe7b0e81d57e3a829947c87f4bf5e52c41162162893dab90f7"
+    },
+    {
+      "file": "after/dispatch-reflow-1920x1080.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920,
+      "viewportWidth": 1920,
+      "sha256": "ddfa421c67e2269e879eec523a1b601764a92de5574b1b9c4e8471b46af2b828"
+    },
+    {
+      "file": "after/dispatch-reflow-320x844.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320,
+      "viewportWidth": 320,
+      "sha256": "775a968416add2eff9e51bd5002cde6a3c9bdfe610cef6e78988cb4b540e7c6a"
+    },
+    {
+      "file": "after/dispatch-reflow-720x450.png",
+      "route": "/operations",
+      "state": "Ready",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "TRANSPORT_OPERATIONS (synthetic fixture)",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720,
+      "viewportWidth": 720,
+      "sha256": "1b3d4d547e9920aa227e4f019469f3638fde051eb2cce50b37aee7bc9d81c1d8"
+    },
+    {
+      "file": "environment/actual-app-unconfigured-390x844.png",
+      "route": "/operations",
+      "state": "Actual product: Firebase unconfigured",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "Unauthenticated",
+      "dataSource": "Actual product configuration",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "3211342789c74d880798723d2f79077aedfbafa410cbc6049098bb42368b815c"
+    },
+    {
+      "file": "environment/actual-app-unconfigured-1440x900.png",
+      "route": "/operations",
+      "state": "Actual product: Firebase unconfigured",
+      "sourceRevision": "a75eb93242dffa81de6231f5cb8286a8752cacfd",
+      "role": "Unauthenticated",
+      "dataSource": "Actual product configuration",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "aca0c579b5f6775cd3ab4d0f913f942d8b7e71110e83941d6e37c95e2f615ce3"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Drawer Escape and focus restoration",
+      "result": "PASS"
+    },
+    {
+      "name": "Keyboard table scrolling, focus and critical Trailer columns",
+      "result": "PASS"
+    },
+    {
+      "name": "Queue selection across pages and filter retirement",
+      "result": "PASS"
+    },
+    {
+      "name": "Keyboard Stop reorder and unchanged four-step progression",
+      "result": "PASS"
+    },
+    {
+      "name": "Dialog assign-driver: cancel focus, Escape, no write",
+      "result": "PASS"
+    },
+    {
+      "name": "Dialog assign-tractor: cancel focus, Escape, no write",
+      "result": "PASS"
+    },
+    {
+      "name": "Dialog expected-trailer: cancel focus, Escape, no write",
+      "result": "PASS"
+    },
+    {
+      "name": "Dialog substitution: cancel focus, Escape, no write",
+      "result": "PASS"
+    },
+    {
+      "name": "Dialog reroute: cancel focus, Escape, no write",
+      "result": "PASS"
+    },
+    {
+      "name": "Dialog cancel-active: cancel focus, Escape, no write",
+      "result": "PASS"
+    },
+    {
+      "name": "Dialog cancel-before-execution: cancel focus, Escape, no write",
+      "result": "PASS"
+    },
+    {
+      "name": "Substitution rejection and active cancellation instructions on mobile",
+      "result": "PASS"
+    },
+    {
+      "name": "409 keeps action draft, blocks writes, requires explicit reload",
+      "result": "PASS"
+    },
+    {
+      "name": "Uncertain create never claims success or offers unsafe replay",
+      "result": "PASS"
+    },
+    {
+      "name": "Paged histories and preserved baseline transient-error behavior",
+      "result": "PASS"
+    },
+    {
+      "name": "Operations Alert acknowledgement/resolution keeps required reason",
+      "result": "PASS"
+    },
+    {
+      "name": "Wide, narrow and 200% equivalent reflow; reduced motion",
+      "result": "PASS"
+    },
+    {
+      "name": "Admin Alerts and shared Trailer views remain byte-identical",
+      "result": "PASS"
+    },
+    {
+      "name": "Fleet Simple contrast targets",
+      "result": "PASS"
+    }
+  ],
+  "errors": [],
+  "browser": "155.0.4283.62",
+  "reflow": [
+    {
+      "route": "/operations",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920
+    },
+    {
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920
+    },
+    {
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920
+    },
+    {
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920
+    },
+    {
+      "route": "/operations",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320
+    },
+    {
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320
+    },
+    {
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320
+    },
+    {
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320
+    },
+    {
+      "route": "/operations",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720
+    },
+    {
+      "route": "/operations/trips/new?orderId=12100010-0000-4000-8000-000000000001",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720
+    },
+    {
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720
+    },
+    {
+      "route": "/operations/trailers?operationalNumber=DEMO-TR-104",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720
+    }
+  ],
+  "adminParity": [
+    {
+      "route": "/admin/alerts",
+      "sha256": "dc2985937f8fd326d9b9b4f77de85ebcf1b644174e75f894eea82ac57e7d7cb1",
+      "result": "IDENTICAL"
+    },
+    {
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "sha256": "caf8901fc4d600282ecda3b6d062ec925963c5b57ebdff01aff6ee79bf4909fc",
+      "result": "IDENTICAL"
+    },
+    {
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "sha256": "f8954af107d80e281c952e161b00a3b232d371fad88572694ded921194c10d49",
+      "result": "IDENTICAL"
+    }
+  ],
+  "contrast": [
+    {
+      "foreground": "color-text",
+      "background": "color-surface",
+      "target": 4.5,
+      "ratio": 14.628718079350334
+    },
+    {
+      "foreground": "color-text-secondary",
+      "background": "color-surface",
+      "target": 4.5,
+      "ratio": 7.577663953533317
+    },
+    {
+      "foreground": "color-accent",
+      "background": "color-canvas",
+      "target": 4.5,
+      "ratio": 5.099825007957025
+    },
+    {
+      "foreground": "color-on-primary",
+      "background": "color-primary",
+      "target": 4.5,
+      "ratio": 5.168555560022562
+    },
+    {
+      "foreground": "color-control-border",
+      "background": "color-surface",
+      "target": 3,
+      "ratio": 4.758842787868666
+    },
+    {
+      "foreground": "status-neutral-text",
+      "background": "status-neutral-bg",
+      "target": 4.5,
+      "ratio": 9.451924418631656
+    },
+    {
+      "foreground": "status-success-text",
+      "background": "status-success-bg",
+      "target": 4.5,
+      "ratio": 6.811651629293788
+    },
+    {
+      "foreground": "status-attention-text",
+      "background": "status-attention-bg",
+      "target": 4.5,
+      "ratio": 6.837002380367332
+    },
+    {
+      "foreground": "status-pending-text",
+      "background": "status-pending-bg",
+      "target": 4.5,
+      "ratio": 8.014836919642205
+    },
+    {
+      "foreground": "status-unknown-text",
+      "background": "status-unknown-bg",
+      "target": 4.5,
+      "ratio": 7.242510935504382
+    }
+  ]
+}
