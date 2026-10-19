@@ -17,4 +17,3 @@ export function AdminStatus({ value }: { value: string }) {
         : ['IN_TRANSIT', 'ACKNOWLEDGED'].includes(value) ? 'pending' : 'neutral'
   return <StatusBadge tone={tone}>{value}</StatusBadge>
 }
-

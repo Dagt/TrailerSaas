@@ -94,7 +94,7 @@ New `AdminPresentation.test.tsx` tests cover primary actions/scroll regions, one
 | G — responsive/security/accessibility | Viewport matrix, keyboard/focus/contrast/reduced-motion checks; protected AST calls identical; complete security/cache suites retained |
 | H — full final Web gate | Fresh `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` on a frozen archive of final HEAD; logs, real counts and SHA-256 manifest supplied in PR/evidence package |
 
-Full suite results and current Actions status are attached to the Draft PR after the final candidate is frozen. Remote CI blocked by Billing is **NOT VERIFIED**; no workflow/protection/check status is changed to bypass it. Backend, OpenAPI and Flutter tests are not claimed because those areas do not change. Final PR inspection reports conflicts, reviews and unresolved threads without merging.
+The complete Web suite contains **598 passing tests in 30 files**, including 26 new presentation/isolation tests. Failures, errors, skipped and todo: **0**. Fresh install, typecheck, lint and production build pass using Node 24.15.0 / npm 11.12.1 in the local Linux runtime. Twelve existing CI-policy tests also pass. The original 572 tests remain unchanged. Final commands are repeated against the definitive commit after the documentation/format review; logs, archive hash, source/lock checksums and current Actions status are attached to the Draft PR/evidence package. Remote CI blocked by Billing is **NOT VERIFIED**; no workflow/protection/check status is changed to bypass it. Backend, OpenAPI and Flutter tests are not claimed because those areas do not change. Final PR inspection reports conflicts, reviews and unresolved threads without merging.
 
 ## Risks and limits
 
