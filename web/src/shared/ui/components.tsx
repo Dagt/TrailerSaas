@@ -35,8 +35,8 @@ export function FormField({ id, label, error, children, hint }: PropsWithChildre
     {hint && <small id={`${id}-hint`}>{hint}</small>}{error && <span id={`${id}-error`} className="field-error" role="alert">{error}</span>}
   </div>
 }
-export function ConfirmDialog({ title, children, confirmLabel = 'Confirm', onConfirm, onCancel, busy = false, confirmDisabled = false }: PropsWithChildren<{
-  title: string; confirmLabel?: string; onConfirm(): void; onCancel(): void; busy?: boolean; confirmDisabled?: boolean
+export function ConfirmDialog({ title, children, confirmLabel = 'Confirm', onConfirm, onCancel, busy = false, confirmDisabled = false, className }: PropsWithChildren<{
+  title: string; confirmLabel?: string; onConfirm(): void; onCancel(): void; busy?: boolean; confirmDisabled?: boolean; className?: string
 }>) {
   const dialog = useRef<HTMLDialogElement>(null)
   const cancel = useRef<HTMLButtonElement>(null)
@@ -52,7 +52,7 @@ export function ConfirmDialog({ title, children, confirmLabel = 'Confirm', onCon
       previous?.focus()
     }
   }, [])
-  return createPortal(<dialog ref={dialog} aria-labelledby="confirmation-title" onKeyDown={event => { if (event.key === 'Escape' && !busy) { event.preventDefault(); onCancel() } }} onCancel={event => { event.preventDefault(); if (!busy) onCancel() }}>
+  return createPortal(<dialog ref={dialog} className={className} aria-labelledby="confirmation-title" onKeyDown={event => { if (event.key === 'Escape' && !busy) { event.preventDefault(); onCancel() } }} onCancel={event => { event.preventDefault(); if (!busy) onCancel() }}>
     <h2 id="confirmation-title">{title}</h2>{children}<div className="actions">
       <button ref={cancel} type="button" onClick={onCancel} disabled={busy}>Cancel</button>
       <button type="button" className="danger" onClick={onConfirm} disabled={busy || confirmDisabled}>{confirmLabel}</button>

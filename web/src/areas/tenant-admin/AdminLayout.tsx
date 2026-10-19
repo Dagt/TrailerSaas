@@ -8,6 +8,7 @@ import { Button, EmptyState, ErrorBanner, FormField, LoadingState, PageHeader } 
 import { AuthLayout, WorkspaceHeader, WorkspaceNavigation, WorkspaceState } from '../../shared/ui/WorkspaceShell'
 import { AdminIdentity, AdminTenant } from './tenant'
 import { useCurrentUser } from '../../shared/auth/currentUser'
+import { TenantAdminArea } from './TenantAdminArea'
 export function AdminLayout() {
   const session = useAuth()
   if (session.identity === undefined) return <WorkspaceState title="Verifying session"><LoadingState /></WorkspaceState>
@@ -51,7 +52,7 @@ function AdminDirectory() {
         </div></AdminTenant.Provider></AdminIdentity.Provider>}
   </section>
 }
-export function AdminHome() { return <PageHeader title="Tenant Admin" description="Manage master data and Tenant settings. Choose a section from the navigation." /> }
+export function AdminHome() { return <TenantAdminArea /> }
 export function SignIn({ operations = false, customer = false }: { operations?: boolean; customer?: boolean }) {
   const { auth, refresh, expired } = useAuth()
   const [failed, setFailed] = useState(false)

@@ -1,0 +1,24 @@
+{
+  "sourceHead": "88eeee812d5e0842471afb5e4ed62b507f85cd71",
+  "source": "Isolated real route components with DEMO fixtures; Edge print-to-PDF; no real authentication",
+  "results": [
+    {
+      "phase": "before",
+      "pages": 1,
+      "sizePoints": [
+        612.0,
+        792.0
+      ],
+      "text": "DEMO-TR-104"
+    },
+    {
+      "phase": "after",
+      "pages": 1,
+      "sizePoints": [
+        612.0,
+        792.0
+      ],
+      "text": "DEMO-TR-104"
+    }
+  ]
+}
