@@ -70,8 +70,8 @@ export function Button({ variant = 'secondary', density = 'comfortable', loading
     {loading && <span className="ui-spinner" aria-hidden="true" />}{children}
   </button>
 }
-export function Card({ title, description, children, density = 'comfortable' }: PropsWithChildren<{ title: string; description?: string; density?: 'comfortable' | 'compact' }>) {
-  return <section className={`ui-card ui-card--${density}`}><header className="ui-card-header"><div><h2>{title}</h2>{description && <p>{description}</p>}</div></header>{children}</section>
+export function Card({ title, description, children, density = 'comfortable', actions, className }: PropsWithChildren<{ title: string; description?: string; density?: 'comfortable' | 'compact'; actions?: ReactNode; className?: string }>) {
+  return <section className={`ui-card ui-card--${density}${className ? ` ${className}` : ''}`}><header className="ui-card-header"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{actions && <div className="ui-card-actions">{actions}</div>}</header>{children}</section>
 }
 export function FilterPanel({ legend = 'Filters', children, density = 'comfortable' }: PropsWithChildren<{ legend?: string; density?: 'comfortable' | 'compact' }>) {
   return <fieldset className={`ui-filter-panel ui-filter-panel--${density}`}><legend>{legend}</legend><div className="ui-filter-fields">{children}</div></fieldset>
