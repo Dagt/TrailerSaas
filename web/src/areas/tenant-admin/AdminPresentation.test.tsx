@@ -103,6 +103,7 @@ it('keeps the new Admin surface out of Operations Alerts markup', async () => {
   expect(document.querySelector('.admin-alerts')).toBeNull()
   expect(document.querySelector('.admin-alert-filters')).toBeNull()
   expect(within(table).getByText('OPEN')).not.toHaveClass('status-badge')
+  expect(screen.getByRole('button', { name: 'Apply filters' })).not.toHaveAttribute('type')
 })
 
 it.each(['POST','PATCH','DELETE'] as const)('the isolated review rejects %s instead of manufacturing an accepted business change', async method => {
