@@ -64,6 +64,8 @@ Run with `npm run dev` and open `/dev/tenant-admin.html?route=/admin/customers`.
 
 The same fixtures/review harness are used on the exact baseline source (before) and candidate (after). Both are labeled isolated DEMO, not authenticated sessions. [Before](evidence/issue120/before/) and [after](evidence/issue120/after/) contain every route variant at all four requested viewports, plus interactive/state/reflow evidence. [browser-review.json](evidence/issue120/browser-review.json) records source SHA, route/state, viewport, document width, image hashes, checks and browser errors. The final evidence package records the definitive PR HEAD and verifies committed PNGs against captures from that HEAD; no self-referential commit hash is embedded in its own commit.
 
+The candidate review produced 178 indexed captures, 13 passing interactive checks, zero page/console errors and ten passing contrast pairs (4.5:1 for normal text; 3:1 for control boundaries). All candidate documents fit their CSS viewport; wide tables scroll locally. The additional Operations Alerts before/after images are byte-identical. [QR print evidence](evidence/issue120/print/) includes browser-generated before/after PDFs and their rendered pages, with only the synthetic `DEMO-TR-104` identity. [Boundary verification](evidence/issue120/boundary-verification.json) compares 112 protected calls across eight files against the base. These checks are limited to the scenarios recorded, not a blanket accessibility/security certification.
+
 Representative comparisons:
 
 | Screen | Before (isolated DEMO) | After (isolated DEMO) |

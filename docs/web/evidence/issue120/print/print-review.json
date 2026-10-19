@@ -1,0 +1,18 @@
+[
+  {
+    "phase": "before",
+    "width": 352,
+    "imageWidth": 320,
+    "imageHeight": 320,
+    "visible": "visible",
+    "number": "DEMO-TR-104"
+  },
+  {
+    "phase": "after",
+    "width": 1280,
+    "imageWidth": 320,
+    "imageHeight": 320,
+    "visible": "visible",
+    "number": "DEMO-TR-104"
+  }
+]

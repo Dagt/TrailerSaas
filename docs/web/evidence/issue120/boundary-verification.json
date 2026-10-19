@@ -1,0 +1,47 @@
+{
+  "base": "556fab0fb42643d553e53cd17fdbc136afa6ee3b",
+  "head": "88eeee812d5e0842471afb5e4ed62b507f85cd71",
+  "files": [
+    {
+      "file": "web/src/areas/tenant-admin/AdminLayout.tsx",
+      "protectedCallCount": 14,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/tenant-admin/MasterDataPages.tsx",
+      "protectedCallCount": 34,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/tenant-admin/RecordEditor.tsx",
+      "protectedCallCount": 14,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/tenant-admin/QrManagement.tsx",
+      "protectedCallCount": 13,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/tenant-admin/TrailerFilters.tsx",
+      "protectedCallCount": 2,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/tenant-admin/audit/AuditWorkspace.tsx",
+      "protectedCallCount": 17,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/alerts/AlertsWorkspace.tsx",
+      "protectedCallCount": 17,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/shared/ui/components.tsx",
+      "protectedCallCount": 1,
+      "result": "IDENTICAL"
+    }
+  ],
+  "result": "PASS"
+}

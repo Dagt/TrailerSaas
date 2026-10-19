@@ -1,0 +1,2260 @@
+{
+  "base": "556fab0fb42643d553e53cd17fdbc136afa6ee3b",
+  "head": "88eeee812d5e0842471afb5e4ed62b507f85cd71",
+  "environment": "Headless Microsoft Edge; isolated real route components with controlled read fixtures; NO authenticated Firebase/Backend session",
+  "screenshots": [
+    {
+      "file": "before/overview-390x844.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "39db3891817023ae1e200942cdcd5655f4a8a18e82069835f156b2003496a39f"
+    },
+    {
+      "file": "before/customers-390x844.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "d5571457770f8fe28297c6c62d00652cdcf8acec69f8e267f2585d90677e7d2d"
+    },
+    {
+      "file": "before/customer-detail-390x844.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "5420206c154dbfda972fc1bf403397105bb687e880bc3db51fd6c0e1ad939e2a"
+    },
+    {
+      "file": "before/sites-390x844.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "a4bad059d3ed3aac93af71484ae1b45fd2acfe0487522f97c31f3bf205f5b3d4"
+    },
+    {
+      "file": "before/site-detail-390x844.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "c223d2dfed0ab7b21d73ecbf173b009c0267386fe756d1e8ed535159d396156c"
+    },
+    {
+      "file": "before/drivers-390x844.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "d79247b1262f58235e00bbfae674f6ddcb264ab25cfe042e74d6deb8c41c96fd"
+    },
+    {
+      "file": "before/driver-detail-390x844.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "1ba8ee73d158c64e87e95643e60af9ccf8e1b08de60847bb96c2df5bf73968da"
+    },
+    {
+      "file": "before/tractors-390x844.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "8f1c2b08c70c14a660bb9d5249f8e71dc8849a8139ddd3e87cfb24a3d4a666c7"
+    },
+    {
+      "file": "before/tractor-detail-390x844.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "e2d0e3ab2504a744b4f6a6ee655d127b7ad862a015603569d3a39f881ce8e3de"
+    },
+    {
+      "file": "before/trailers-390x844.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "643031fac734545517c9837be766210b3995fe58002fabf2bcc8a8c0e4ee6211"
+    },
+    {
+      "file": "before/trailer-detail-390x844.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "37f90154128036b89581d5ed6cd46cfd4c9cb6f78b2e1ff17b3a07cce0b411f1"
+    },
+    {
+      "file": "before/settings-390x844.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "f9bf57865e104db00790aaf7344a72047d549ca76956d03d4373b88e0bd387c4"
+    },
+    {
+      "file": "before/alerts-390x844.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "bda7c84b34b908ef628976f320ed97aa8bf37b4bba452acf0419a08b7109dfb8"
+    },
+    {
+      "file": "before/alert-detail-390x844.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "cfb992f9b9a151812ea62fb48759f9d9883f2b25e6ac8cca9507b0024a0bb6c6"
+    },
+    {
+      "file": "before/audit-390x844.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "356ec25d8a0764a0400878333143818c51396dc92b0925deb3405dbd9977f8bc"
+    },
+    {
+      "file": "before/audit-detail-390x844.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "2849e9b6c1c700dd03cea68d415d0353720efc02db5cc21c2ace9dc830798a6f"
+    },
+    {
+      "file": "before/audit-withheld-390x844.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "e4b2c017a68c29f4768d155e45a9661b403ac75f67808a9a5d2b9d4d618703a8"
+    },
+    {
+      "file": "before/overview-768x1024.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "15b85ea719358771966b3a5e7434f1c968a2bfbf4a32f9c8cc11ded280cc6fb5"
+    },
+    {
+      "file": "before/customers-768x1024.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "20f637161e15ef31435c46cd9486731b03d73d95c37f54aa19e15091117912c6"
+    },
+    {
+      "file": "before/customer-detail-768x1024.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "286b650268cb2aceb127a0081cd8349acd4ef4bf9a9636b897c6128a230d69ea"
+    },
+    {
+      "file": "before/sites-768x1024.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "378aa423ee4226a3a8443e5060a673a0e66dd85fc152c56556d96808ed969912"
+    },
+    {
+      "file": "before/site-detail-768x1024.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "61d2a9b59b38a30c27bac154fab92988483f73277f07116a44f2986825bab5e8"
+    },
+    {
+      "file": "before/drivers-768x1024.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "443048f60b161c860742854d115732ec9d48d8f61366b58ee2fb5c450b5cdac4"
+    },
+    {
+      "file": "before/driver-detail-768x1024.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "0a33547ad15f0b24cb96f2a9472ac4b3edb6e84630e2be79fcc7a71e21a56a24"
+    },
+    {
+      "file": "before/tractors-768x1024.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "126f40c1edd1da743b0a36fa74a1a49f74ac1edc649427c45a543a4e439cc106"
+    },
+    {
+      "file": "before/tractor-detail-768x1024.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "4a5af0a85e0417d2e6c647a329419183281206bc96a56d37200d833a3d5b761b"
+    },
+    {
+      "file": "before/trailers-768x1024.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "8eab2b681ad13ca8d3ee05fa936c539b9ff9b0d13fbdf4905943931bd341145c"
+    },
+    {
+      "file": "before/trailer-detail-768x1024.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "4bcc9447e97318dc33a68682ec444107846a747921ee38557822a23d4bbce4ff"
+    },
+    {
+      "file": "before/settings-768x1024.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "7e3d00f9846dc34476f0741a272d8a42b9d13bad7c7e01ec3729cfcc2b2eac03"
+    },
+    {
+      "file": "before/alerts-768x1024.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "93ade2653b0de8ef4df7ead1b2c282bf12d8382d04ce08a92aea02428b511554"
+    },
+    {
+      "file": "before/alert-detail-768x1024.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "a2f76365ca5e8ea502c6baf3d8c5bb11fa85758397d95de3a950a9b816fd2732"
+    },
+    {
+      "file": "before/audit-768x1024.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "59620e3549eed73355244b31945e2ddb8faa8a7b93bb5a39fbb25a8508520ca3"
+    },
+    {
+      "file": "before/audit-detail-768x1024.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "c4418415ba43fe07d69e39eae2db3bcc66d5460809e56deb1f3c385431bf951a"
+    },
+    {
+      "file": "before/audit-withheld-768x1024.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "184ba2eaecae565fa6c049f956e4db945c90e11451efa40803e622d1593b8f86"
+    },
+    {
+      "file": "before/overview-1280x800.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "a9d8c26899cce6d097952efceb37167cf617b63cd5131a340b5c4776739ae4c5"
+    },
+    {
+      "file": "before/customers-1280x800.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "87afe7823309deac8f4397201cc54cd6f4bd1c1e41abdd0d21d5bc6f6c8cbafc"
+    },
+    {
+      "file": "before/customer-detail-1280x800.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "aa0690acf9b33e1f2cc255a2e0a2a301570f0fbf888fe2e69927ca1ff943c907"
+    },
+    {
+      "file": "before/sites-1280x800.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "4b436a352fd60a62e60d2c5dbdd7242398fce0dc42b01201e1f3c03bf1163e5e"
+    },
+    {
+      "file": "before/site-detail-1280x800.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "fe54896ffb9f5f8d941e8021596ff1bdc75e0a015cda9b5cf397a41b5061273e"
+    },
+    {
+      "file": "before/drivers-1280x800.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "ffea5f24341c685d9db2f6bed63ddb0ae1385631b499e64fce9451629ba1e670"
+    },
+    {
+      "file": "before/driver-detail-1280x800.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "3011c01978d1e05fc8cfc022374ab0f53cf056538f5e7291f3a798d6c70c6241"
+    },
+    {
+      "file": "before/tractors-1280x800.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "da5c1db5d0f1381eb5d5a5bce45eba4fd7eac6340836bd0e7aaca461cfb81f33"
+    },
+    {
+      "file": "before/tractor-detail-1280x800.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "c21b2c67602286c52541907f6463e0d84a5610143d4e1b27313a784bfa818d2c"
+    },
+    {
+      "file": "before/trailers-1280x800.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "cc2822cabe44cbb5ea6afec25de2ca73067fa73b3bf3165a0c11a0feb95bd93a"
+    },
+    {
+      "file": "before/trailer-detail-1280x800.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "6d2478498a0f64f9a995a84167bc076c4083aec4ba8100a7163f514cfd4cf508"
+    },
+    {
+      "file": "before/settings-1280x800.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "e668b34cdb7a3e4ffeee1732c5d06f9474816b1a0992d02d17fe2d3d64871fc4"
+    },
+    {
+      "file": "before/alerts-1280x800.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "91e4c64ecd8526c394f17de437ca52c656d9dcb42f481addd38fa50b3d8d7636"
+    },
+    {
+      "file": "before/alert-detail-1280x800.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "afc9e0949ee1e5d217a54c1db0325629054fdde9ae1a807af52b12aee7df083d"
+    },
+    {
+      "file": "before/audit-1280x800.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "e2337ecd4afd73ce908eb8f438daef3b22728114db7c1aa0f368871a4399e7f3"
+    },
+    {
+      "file": "before/audit-detail-1280x800.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "55e5fc8c5d6fd243db2cd2ff2871fe2ad9b377480b01d3c4b8f3ea2ffb321b01"
+    },
+    {
+      "file": "before/audit-withheld-1280x800.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "413f0aeec9b86fa0b663cd2516241876d9c9b07312290ebd6d5bcbcd38704a07"
+    },
+    {
+      "file": "before/overview-1440x900.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "14eae1f4a751a2aac925712f9501f48e1dd515baf756c615d2817fe01aa92d2f"
+    },
+    {
+      "file": "before/customers-1440x900.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f579265f424cd7aa925dad8d0fc102f48228c2efa3501e5f3dde3b9a3802c7f8"
+    },
+    {
+      "file": "before/customer-detail-1440x900.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ad871a0263437352e48367563941a8e5cfd57f17c2048c2fe606b8b90a6c56d8"
+    },
+    {
+      "file": "before/sites-1440x900.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "28817967fdc24b8244e86cef2e6471b341f096a96f28daa565b4a58955bc145c"
+    },
+    {
+      "file": "before/site-detail-1440x900.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "15d987aa58505deb2631cecb8011f4c82b9fe1dd2cceddd7dba3e8486a4c247f"
+    },
+    {
+      "file": "before/drivers-1440x900.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "93b525a366b214dfc14808f8f0c02bceacb4ffb1b35e5fd3f3139f589f3775df"
+    },
+    {
+      "file": "before/driver-detail-1440x900.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "60fa73fce9bf5eb76cc577f7b1959e31909c35b7c789f798fa815a1376cb6978"
+    },
+    {
+      "file": "before/tractors-1440x900.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2990ffb087ce9408312e3ef6647020f1ed642990d9379f827b538091317eb356"
+    },
+    {
+      "file": "before/tractor-detail-1440x900.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "115b6a347db43b94349a369f292f27f7cab702250ae5d140e047eb0fae27b234"
+    },
+    {
+      "file": "before/trailers-1440x900.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "607a24b7c106f3cd42f99dba427d662eeaeaaf60c1c83eb4e5872eadc06647d9"
+    },
+    {
+      "file": "before/trailer-detail-1440x900.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "abd1eecc4a3ff501ed801e70b0e9542c1e0e474caacbefa1ec7e0aa9b85440c6"
+    },
+    {
+      "file": "before/settings-1440x900.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "6657c7d202ba71d93d4501816539b9bb4b8f8194e19a1f5fa82c983fff73d14e"
+    },
+    {
+      "file": "before/alerts-1440x900.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "20870af26b50332c859785e91d3685a5f3f7cd0f22cbc87789741dff09968515"
+    },
+    {
+      "file": "before/alert-detail-1440x900.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "658088c761c926952b8783541a18ce18d12d038ebc6e152e2b831defb23b237d"
+    },
+    {
+      "file": "before/audit-1440x900.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "25d83be4b340f380504fdf068eaf72892d9c7122751ea0a622cc6e71fff6f743"
+    },
+    {
+      "file": "before/audit-detail-1440x900.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f2d7e534cd6067f2e449f0041df78bd7297f8911f00a2b0a56544c6598a26cd5"
+    },
+    {
+      "file": "before/audit-withheld-1440x900.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "1483c0e0d0b6c4bc53a1a3f4e18c68e88e2717202e5276d65ff6b9b2ae54e65a"
+    },
+    {
+      "file": "after/overview-390x844.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "b3922af8762c190089d5d8941aaa71ef4d4e38f170a4b488295b17c7f72bf50b"
+    },
+    {
+      "file": "after/customers-390x844.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "aee54991f98c2fcc97e371c0bb7323d3393fe9806893a1b60bc3eb50b443ab92"
+    },
+    {
+      "file": "after/customer-detail-390x844.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "d811d4b38749d538f167fb6014d2ab050b39951373b6d2a903cd167a9da35ea7"
+    },
+    {
+      "file": "after/sites-390x844.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "1f0aaa13a5d73ff9becbb4113f78211bc21f6e15c289c71e4d9455e99e2aa636"
+    },
+    {
+      "file": "after/site-detail-390x844.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "4ccd2a17ad2db387494ec0321aacbbcec4f43ec44847970121fd61443944cfe2"
+    },
+    {
+      "file": "after/drivers-390x844.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "cbcbd054138d786f85aea999a089e8740696cc11b9bafc312a1b54208ffb97a4"
+    },
+    {
+      "file": "after/driver-detail-390x844.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "2019f7e2976f1d35d28e5beb7e4ff894c5babc0910a072283c9520e709ff7a13"
+    },
+    {
+      "file": "after/tractors-390x844.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "ca2538214c8542f34a64d646cec01ffedc952f5fa10f297477b4ee2524b0d41a"
+    },
+    {
+      "file": "after/tractor-detail-390x844.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "c63824f7d1179b1f48e83a640785dd2ed9fc4d479aa0bf6afede9a6e7a3ef138"
+    },
+    {
+      "file": "after/trailers-390x844.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "f4cbcf19b9cf84ac8d5e9c18b3959185028a0bf7b343e2563700e5416b9b751f"
+    },
+    {
+      "file": "after/trailer-detail-390x844.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "0acd23bff6c9de25e818b27deb19d6e0a553f9b10f5e9f02d948a6e508087a2f"
+    },
+    {
+      "file": "after/settings-390x844.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "5cf76f9998542446bfac2fc2105aba84e9a6ec781d046acf32d8a214206efdc8"
+    },
+    {
+      "file": "after/alerts-390x844.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "b5a24f334c7475d8fe16bcc903ca252f9792cb9c8e8d7614504aa93f088ed650"
+    },
+    {
+      "file": "after/alert-detail-390x844.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "b65f76f1883d9fc2d6b7efdf80741236f3a36c71431dc01da18055b206773b92"
+    },
+    {
+      "file": "after/audit-390x844.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "1988d25a6ddf8ecc8e99dbf1acaea693a9fe6cd76e17f2022ba78f3f7d888d75"
+    },
+    {
+      "file": "after/audit-detail-390x844.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "49f3a5c4f38a302182d16f741522c4367e61989d0c2ea689da25704bf4478857"
+    },
+    {
+      "file": "after/audit-withheld-390x844.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "15cc31e33588b9a57608d1bbc1ceb71eb632e0cd2fd4012aa642953a87a69c86"
+    },
+    {
+      "file": "after/overview-768x1024.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "765b09f060daec589ffdc9861fa1d0fe3e3bc76563156a635e285ab40965e1a1"
+    },
+    {
+      "file": "after/customers-768x1024.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "0ea62d9e295d4af86a6a6ab0126baedaeb627eab0e67d2fcbf6ff581aae37bcc"
+    },
+    {
+      "file": "after/customer-detail-768x1024.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "8d6c67c1992b6d512ba4b560232788a76da39ae7cfabb9f3190dc8312df60aa4"
+    },
+    {
+      "file": "after/sites-768x1024.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "7e720f7319af9e14c0b5519fd1fad2b389665e31992ffb1edf54740234fbdbd5"
+    },
+    {
+      "file": "after/site-detail-768x1024.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "8ffdf7dca83946447e63de007707e4f77419c467764468430cc62da1e81a4e79"
+    },
+    {
+      "file": "after/drivers-768x1024.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "5c32fe1e8c38075c2e40b87c505519f4f8cd5ba230bf04ca9cf4aea33db85b9d"
+    },
+    {
+      "file": "after/driver-detail-768x1024.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "983638c210d7f8f9769b93fd54a70f8dac73438daeff7b940bc356b5edff832d"
+    },
+    {
+      "file": "after/tractors-768x1024.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "f199082f5bdb2d341733b7f7a4f36fa8be5940837c55a78fec39ca6b5502672d"
+    },
+    {
+      "file": "after/tractor-detail-768x1024.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "02c0446a091936e221498051f77a46cac45c33553af271f7060044543b4d2897"
+    },
+    {
+      "file": "after/trailers-768x1024.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "16b426b6d26241c2d65d01c9643f9c3df5ec35521af970c25a852983ab2bb7a1"
+    },
+    {
+      "file": "after/trailer-detail-768x1024.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "94fae18ced553d0fb3d8b491bbc40d37eda19d323e95139b49c08ec3d4321978"
+    },
+    {
+      "file": "after/settings-768x1024.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "6aa0519bdddc3060c1d9eb60e346044212e60b8581d12019ade51ffc08ed2cd8"
+    },
+    {
+      "file": "after/alerts-768x1024.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "ea16fa7972b894410c6f1f709d1607b4640f49807723c11e033640ec2d02d4b5"
+    },
+    {
+      "file": "after/alert-detail-768x1024.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "f5381c31ef2372a3260678172d3118dc214a4209e646a8c7f2392ef18cde801c"
+    },
+    {
+      "file": "after/audit-768x1024.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "6a3a7870f3aeff70037a3ba47d61f7c3dd37f65aa1f279ce697b782b2ac70e21"
+    },
+    {
+      "file": "after/audit-detail-768x1024.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "a9f1dc82732c3216a426b217cd727345e13da42d141b19dadb6babede5388ff7"
+    },
+    {
+      "file": "after/audit-withheld-768x1024.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "2f8925711663e104229a704c55663a589d63a81d8ddf5ab060266bdbd9f304a1"
+    },
+    {
+      "file": "after/overview-1280x800.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "aa6861115b9ed2bb53af991198874a95f5e2f3877907fa8bdfcd20ba32f85931"
+    },
+    {
+      "file": "after/customers-1280x800.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "dfcab25e492ceb42b951686e348367ddb78d6c3dca32978a2201f6a2d8a3f0a2"
+    },
+    {
+      "file": "after/customer-detail-1280x800.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "ba98e50512917c78a10f034f03d1713e0ae714548d1c1168d979fa501a565132"
+    },
+    {
+      "file": "after/sites-1280x800.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "745ac2533547e082324cf9faf64f961bbfb5b7668e07b1d2046f9a720cc72a1b"
+    },
+    {
+      "file": "after/site-detail-1280x800.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "f920e401f6c71ea019138ba105fd8c59151aa302da7d35c39f0e26f59fdf4bea"
+    },
+    {
+      "file": "after/drivers-1280x800.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "88c9d985d3333cc5b7de8b7b77ad7c556cce5c5181da05a97015139f9dd2c57f"
+    },
+    {
+      "file": "after/driver-detail-1280x800.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "c5b0be5e89c66cd4f73c43354f6c8cf56f6f03a2a4c20c971ffa1890f0f6edbf"
+    },
+    {
+      "file": "after/tractors-1280x800.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "a0562cccd681b1159ad586b92e725f4d2e141c819cbe6b056a72bc41b46f105d"
+    },
+    {
+      "file": "after/tractor-detail-1280x800.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "7d2a7cbc3ea87a5997d3efb96c140c522d884dca32e6d3991e392fa1ccf92634"
+    },
+    {
+      "file": "after/trailers-1280x800.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "e332275c9a6789e3df442c39e322bca30b71524e3c5e4c7d067c1e1a50b9479b"
+    },
+    {
+      "file": "after/trailer-detail-1280x800.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "2507871aef715e0914e00e270d7c135964aed92f26103e4af766e3fc5f7de30f"
+    },
+    {
+      "file": "after/settings-1280x800.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "54f7e1f6aa6cd3c3c3a841def860e876871b855334162e13ca0821e16f691565"
+    },
+    {
+      "file": "after/alerts-1280x800.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "dc2985937f8fd326d9b9b4f77de85ebcf1b644174e75f894eea82ac57e7d7cb1"
+    },
+    {
+      "file": "after/alert-detail-1280x800.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "caf8901fc4d600282ecda3b6d062ec925963c5b57ebdff01aff6ee79bf4909fc"
+    },
+    {
+      "file": "after/audit-1280x800.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "5ad0d11bae8f0f25123d5fb2aef1aeb9e15b5ac64499691342d06be91de4b5e0"
+    },
+    {
+      "file": "after/audit-detail-1280x800.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "4ec8f71f892c5d078e5742e6c279c6fe92f0f85721c5271a619efdc43ad26334"
+    },
+    {
+      "file": "after/audit-withheld-1280x800.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "7d4e3e59a403302ad4c4fee18cae49a625ed98c987ccfd78fdc4d2e5ca01087d"
+    },
+    {
+      "file": "after/overview-1440x900.png",
+      "route": "/admin",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c5974149fe04770806acfc4accd15ae56a64e1c5edccd2c62a96d01f8504b09b"
+    },
+    {
+      "file": "after/customers-1440x900.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "3959dffa128c8224989253b74b1bbc5dd68bf99dce3579030c7ebb57055703b5"
+    },
+    {
+      "file": "after/customer-detail-1440x900.png",
+      "route": "/admin/customers/12000000-0000-4000-8000-000000000010",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "bca813d24683305355422c2b34c97bdefe58a4563f920f0e44cb3689fdc231c1"
+    },
+    {
+      "file": "after/sites-1440x900.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "52cfdb1c6955f93d1f1bb217b014bdd19d80d800a341128830f09b9791ed1d3e"
+    },
+    {
+      "file": "after/site-detail-1440x900.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "84a4273def05bfc67624e155f2b2b9543edf1369bca5d95b9ee76967bc4531a7"
+    },
+    {
+      "file": "after/drivers-1440x900.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "66404f50ece64169d2fb82d106eebce2a4fc383cbbb96440b7c9b715fe5161c7"
+    },
+    {
+      "file": "after/driver-detail-1440x900.png",
+      "route": "/admin/drivers/12000000-0000-4000-8000-000000000030",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "5c58f15b32d64f50f40f327806b7795a96207b614bbe27997d67b4a36e716a37"
+    },
+    {
+      "file": "after/tractors-1440x900.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "8f9660720b7980151062f5e555fee6b61e4a8bdaa322f1c6ab96b14b93fac8c1"
+    },
+    {
+      "file": "after/tractor-detail-1440x900.png",
+      "route": "/admin/tractors/12000000-0000-4000-8000-000000000040",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a939d5d2be099f1e76f330666820a5dc3001b4a7e635216709c15f0a14bcf6a9"
+    },
+    {
+      "file": "after/trailers-1440x900.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "8f0c2661b246385654f08169369c5c43bbec4ca9bf229ecc39188f534d0400ad"
+    },
+    {
+      "file": "after/trailer-detail-1440x900.png",
+      "route": "/admin/trailers/12000000-0000-4000-8000-000000000050",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "b682c1b3e738ea138b86d6f61fcab9e89b5726cc24a534edc2beea32b4b6659a"
+    },
+    {
+      "file": "after/settings-1440x900.png",
+      "route": "/admin/settings",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "e568aa81ef2ecb1feaaf3f49ceb14af01cc560c9cfbebd24748afc5cbd56306a"
+    },
+    {
+      "file": "after/alerts-1440x900.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ceac507815dfe85adce3d6c73d5d8b266183c174dc14b31343507fba3ce03407"
+    },
+    {
+      "file": "after/alert-detail-1440x900.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2ea1484aebaf4fca0602af3c34e75188032fb67090f540dcea0694b86cb7275d"
+    },
+    {
+      "file": "after/audit-1440x900.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2ef86ae5186c3c8d28aa100d4a722557e57bcb9b29835294646cfd8e511be273"
+    },
+    {
+      "file": "after/audit-detail-1440x900.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "56f59db9d770408272e30076d78c4632d55b66cc9ba7591c38f2bde4151e80c9"
+    },
+    {
+      "file": "after/audit-withheld-1440x900.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "5d9b309b785eeb9d9f82dc4030e50f9b1ea8e41a01a8d90aed7563f8354f7190"
+    },
+    {
+      "file": "after/drawer-390x844.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "0221c5e364c1aeeb7e15211623794b46fea55efb2ed1d5e03f608530f31191da"
+    },
+    {
+      "file": "after/create-customers-1440x900.png",
+      "route": "/admin/customers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c6b9b50f6bbbbef9ce75745bab0f7d4b8da4984325f32127412b26951f03d49e"
+    },
+    {
+      "file": "after/create-locations-1440x900.png",
+      "route": "/admin/locations",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "7fdb7b33367623c4df456d38280867a986bb0e3613af050e88213a7f3673c816"
+    },
+    {
+      "file": "after/create-drivers-1440x900.png",
+      "route": "/admin/drivers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f390e58dd6ef2756f1c9969190e8e5054f888290527dc576a77b5d0cb465b0c1"
+    },
+    {
+      "file": "after/create-tractors-1440x900.png",
+      "route": "/admin/tractors",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "d2e286c6933f5a68defe7f8490e5bede8164b4f99e2dafd1735e521b36816535"
+    },
+    {
+      "file": "after/create-trailers-1440x900.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ba7f27641ed93d14cda1ee463a15a7da59ac77c11584635c1f8e7e331a51de26"
+    },
+    {
+      "file": "after/site-validation-1440x900.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "9afa154f36b64aa62f8556bbb5a49503677d598a5d99fe8db6d1f973cb897ade"
+    },
+    {
+      "file": "after/deactivate-customer-1440x900.png",
+      "route": "interactive dialog",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a7e9da34e3cd6fa7c562874674b7cd669445219ad52984c536f8eec0c4fc98c8"
+    },
+    {
+      "file": "after/unlink-driver-1440x900.png",
+      "route": "interactive dialog",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "08fc9a1e84d5ca9b6316efa78409a402214252123d8a62af52b5f8336c4b26f3"
+    },
+    {
+      "file": "after/create-operational-location-1440x900.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0f933238d4629600bb70a4d3c15366420ee5704ffe9829016468cd107871e31d"
+    },
+    {
+      "file": "after/edit-operational-location-1440x900.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f8f0cb784320a44d670bd4263f5761a8078a8335696b56712b9835a9fd702c46"
+    },
+    {
+      "file": "after/revoke-qr-1440x900.png",
+      "route": "interactive dialog",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "b1e6b216f9a7d3277f7df0850655090723a4565aab24bd43dc4dfafcaee6f827"
+    },
+    {
+      "file": "after/acknowledge-alert-1440x900.png",
+      "route": "interactive dialog",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a854a75c07d9db0efdfb36bb53500f0c652da851ccf86f2c61ec8440c9058a6a"
+    },
+    {
+      "file": "after/resolve-alert-1440x900.png",
+      "route": "/admin/alerts/12000000-0000-4000-8000-000000000070",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "7ed5a6e8f612c82274e30557603293a96af1472e417d3830e36a1558594766f0"
+    },
+    {
+      "file": "after/settings-conflict-1440x900.png",
+      "route": "/admin/settings",
+      "state": "conflict",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a5d8ad4ae763f921874d38824044a7d3d23168bebcad52c96d34f448afbed7f8"
+    },
+    {
+      "file": "after/audit-next-page-1440x900.png",
+      "route": "/admin/audit",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "7dd60eef8d73b478571b57990f4284b332407b9bcb20ad251f2f87d27a47ba9b"
+    },
+    {
+      "file": "after/alerts-next-page-1440x900.png",
+      "route": "/admin/alerts",
+      "state": "",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "8bb237e6977232b626abdcd342400aa3e0caf69aeca9fba780c4adcd9e401bde"
+    },
+    {
+      "file": "after/customers-state-loading-390.png",
+      "route": "/admin/customers",
+      "state": "loading",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "f71cb639f32469bb7030a2bccd62b7b1da338f06b4164078c6ea4cb8c352d28b"
+    },
+    {
+      "file": "after/customers-state-loading-1440.png",
+      "route": "/admin/customers",
+      "state": "loading",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "96c8426afc08382049b3652d13b7f303c402ac775dbdb0b5d412d0b3650b4dbb"
+    },
+    {
+      "file": "after/customers-state-empty-390.png",
+      "route": "/admin/customers",
+      "state": "empty",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "a50a8cd9c1de65d2ea5788c859b45100e0c339061b88d78cee84670ce390e184"
+    },
+    {
+      "file": "after/customers-state-empty-1440.png",
+      "route": "/admin/customers",
+      "state": "empty",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "29729c7e01cf693655b4bc523cfaf4d0162443e0fee553b69644f773997488da"
+    },
+    {
+      "file": "after/customers-state-401-390.png",
+      "route": "/admin/customers",
+      "state": "401",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "d6a6b6d879cf56c051819daa0d6df84ac816cbd721a48c689d1b799ad883e777"
+    },
+    {
+      "file": "after/customers-state-401-1440.png",
+      "route": "/admin/customers",
+      "state": "401",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "97936db0848e96603d6f4782cfaf8461215aebd7016e121a7e3d2d9b2624d9dd"
+    },
+    {
+      "file": "after/customers-state-403-390.png",
+      "route": "/admin/customers",
+      "state": "403",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "177051ba612ba4258145c92e24b843c5805e325edac74a05681e335fea0e5863"
+    },
+    {
+      "file": "after/customers-state-403-1440.png",
+      "route": "/admin/customers",
+      "state": "403",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "dfd796f97e7c442772dad267841f27f8e3e92c56690190a5dcb0b62e6235fe09"
+    },
+    {
+      "file": "after/customers-state-404-390.png",
+      "route": "/admin/customers",
+      "state": "404",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "041e97ee8db8e87af91de2c51d67bfca82bd7551dbf6cec0dc7f61b683473983"
+    },
+    {
+      "file": "after/customers-state-404-1440.png",
+      "route": "/admin/customers",
+      "state": "404",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "fd2f57e69bdacd08436ca3cf5312f24f7bac21e4766aa5b32731a740015c5cdd"
+    },
+    {
+      "file": "after/customers-state-500-390.png",
+      "route": "/admin/customers",
+      "state": "500",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "e200a9eb689cf22e6f41ef5e4afa8039ba1badbadf0fd1a448850282408d2e71"
+    },
+    {
+      "file": "after/customers-state-500-1440.png",
+      "route": "/admin/customers",
+      "state": "500",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a3b77b003290cb885471565cc937280e6418d36ea1a384bacaa5b40af2ba1bc3"
+    },
+    {
+      "file": "after/alerts-denied-1440.png",
+      "route": "/admin/alerts",
+      "state": "denied",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "3a5621ce1f7cb02afb0d995bde26f722553fa2bca98cf67bb7a9cbe3ddae7794"
+    },
+    {
+      "file": "after/audit-denied-1440.png",
+      "route": "/admin/audit",
+      "state": "denied",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "b18d8785600232646cae3c928cb6514ff8e7bd77d898d7ff6f8216014e9d5e00"
+    },
+    {
+      "file": "after/reflow-trailers-1920x1080.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920,
+      "viewportWidth": 1920,
+      "sha256": "1c4f5804e5ca01122582c358a21f6dc521d65e82b8ab11655d66ef3417a14b5f"
+    },
+    {
+      "file": "after/reflow-sites-1920x1080.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920,
+      "viewportWidth": 1920,
+      "sha256": "b05f25abe35ac46add5669a15f90a008e6afa12e3e3f1a1cd582ce112456f2af"
+    },
+    {
+      "file": "after/reflow-audit-1920x1080.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "documentWidth": 1920,
+      "viewportWidth": 1920,
+      "sha256": "b4aaef071573f5bebd51acc22a8492bf3ab2f2e841280edb29bd6217ce6c7132"
+    },
+    {
+      "file": "after/reflow-trailers-720x450.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720,
+      "viewportWidth": 720,
+      "sha256": "94750edd5ce3400a9d1f7a6748b94739fdaa2cee16ab06185a52fc49186ae99a"
+    },
+    {
+      "file": "after/reflow-sites-720x450.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720,
+      "viewportWidth": 720,
+      "sha256": "b535fef59690283c68077b6cb81a57963696477fa4a340a33f8f6d6fe15454ff"
+    },
+    {
+      "file": "after/reflow-audit-720x450.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "documentWidth": 720,
+      "viewportWidth": 720,
+      "sha256": "6db8b8de628993384174b5ea3191bcfad34d849398fa84ce8f43dadd6526752e"
+    },
+    {
+      "file": "after/reflow-trailers-320x844.png",
+      "route": "/admin/trailers",
+      "state": "",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320,
+      "viewportWidth": 320,
+      "sha256": "64306d83ffd9012c42847afe42d7aa7ebf41d8e8c257ebc692dedebad76fab6f"
+    },
+    {
+      "file": "after/reflow-sites-320x844.png",
+      "route": "/admin/sites/12000000-0000-4000-8000-000000000020",
+      "state": "",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320,
+      "viewportWidth": 320,
+      "sha256": "a1642b8eb05dea8ebc0f3447a54472a3304c8265f801968e708f0f13c511be3e"
+    },
+    {
+      "file": "after/reflow-audit-320x844.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000081",
+      "state": "",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "documentWidth": 320,
+      "viewportWidth": 320,
+      "sha256": "400485e54639d8ba44d5e42bec99ed7b7f97b7fc3a8d7fc138ebac8b2d73cc78"
+    },
+    {
+      "file": "environment/actual-app-firebase-unconfigured-390.png",
+      "route": "/admin",
+      "state": "real app; no Firebase configuration",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "ea213c3c6f3cf359ea46799c1f330abe5f15e5de2b2a88e100f8c598ef611ff6"
+    },
+    {
+      "file": "environment/actual-app-firebase-unconfigured-1440.png",
+      "route": "/admin",
+      "state": "real app; no Firebase configuration",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "af2d0290f3ed388c42224cc8806398b22f2de1220633e038b99d2862151ac80f"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Mobile drawer Escape and focus restoration",
+      "result": "PASS"
+    },
+    {
+      "name": "Keyboard table scrolling and visible focus",
+      "result": "PASS"
+    },
+    {
+      "name": "Inline validation and field help",
+      "result": "PASS"
+    },
+    {
+      "name": "Deactivate confirmation keeps focus and cancels without writes",
+      "result": "PASS"
+    },
+    {
+      "name": "Unlink confirmation keeps identity and roles disclaimer",
+      "result": "PASS"
+    },
+    {
+      "name": "Operational Location create and edit remain distinct",
+      "result": "PASS"
+    },
+    {
+      "name": "QR revoke confirmation and disabled duplicate issuance",
+      "result": "PASS"
+    },
+    {
+      "name": "Alerts confirmations and required resolution reason",
+      "result": "PASS"
+    },
+    {
+      "name": "Settings version conflict preserves edits and requires Reload latest",
+      "result": "PASS"
+    },
+    {
+      "name": "Audit and Alerts cursor pagination remains available",
+      "result": "PASS"
+    },
+    {
+      "name": "Operations Alerts rendering unchanged",
+      "result": "PASS"
+    },
+    {
+      "name": "Reduced motion retains still loading indicator",
+      "result": "PASS"
+    },
+    {
+      "name": "Fleet Simple text, status and control contrast",
+      "result": "PASS"
+    }
+  ],
+  "errors": [],
+  "contrast": [
+    {
+      "foreground": "color-text",
+      "background": "color-surface",
+      "target": 4.5,
+      "ratio": 14.628718079350334
+    },
+    {
+      "foreground": "color-text-secondary",
+      "background": "color-surface",
+      "target": 4.5,
+      "ratio": 7.577663953533317
+    },
+    {
+      "foreground": "color-accent",
+      "background": "color-canvas",
+      "target": 4.5,
+      "ratio": 5.099825007957025
+    },
+    {
+      "foreground": "color-on-primary",
+      "background": "color-primary",
+      "target": 4.5,
+      "ratio": 5.168555560022562
+    },
+    {
+      "foreground": "color-control-border",
+      "background": "color-surface",
+      "target": 3,
+      "ratio": 4.758842787868666
+    },
+    {
+      "foreground": "status-neutral-text",
+      "background": "status-neutral-bg",
+      "target": 4.5,
+      "ratio": 9.451924418631656
+    },
+    {
+      "foreground": "status-success-text",
+      "background": "status-success-bg",
+      "target": 4.5,
+      "ratio": 6.811651629293788
+    },
+    {
+      "foreground": "status-attention-text",
+      "background": "status-attention-bg",
+      "target": 4.5,
+      "ratio": 6.837002380367332
+    },
+    {
+      "foreground": "status-unknown-text",
+      "background": "status-unknown-bg",
+      "target": 4.5,
+      "ratio": 7.242510935504382
+    },
+    {
+      "foreground": "status-pending-text",
+      "background": "status-pending-bg",
+      "target": 4.5,
+      "ratio": 8.014836919642205
+    }
+  ]
+}
