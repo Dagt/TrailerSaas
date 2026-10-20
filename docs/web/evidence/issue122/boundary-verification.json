@@ -1,0 +1,88 @@
+{
+  "base": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+  "head": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+  "workingTree": true,
+  "files": [
+    {
+      "file": "web/src/areas/customer-portal/CustomerPortalArea.tsx",
+      "protectedCalls": 34,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/CustomerPages.tsx",
+      "protectedCalls": 1,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/OrdersList.tsx",
+      "protectedCalls": 8,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/CreateOrder.tsx",
+      "protectedCalls": 15,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/OrderDetail.tsx",
+      "protectedCalls": 17,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/OrderActions.tsx",
+      "protectedCalls": 42,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/OrderEditors.tsx",
+      "protectedCalls": 6,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/queries.ts",
+      "protectedCalls": 5,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/orderQueries.ts",
+      "protectedCalls": 31,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/readQueries.ts",
+      "protectedCalls": 27,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/orderContracts.ts",
+      "protectedCalls": 0,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/readContracts.ts",
+      "protectedCalls": 0,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/useSubmission.ts",
+      "protectedCalls": 7,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/workspaceMemory.ts",
+      "protectedCalls": 3,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/CustomerReadViews.tsx",
+      "protectedCalls": 40,
+      "result": "IDENTICAL"
+    },
+    {
+      "file": "web/src/areas/customer-portal/context.ts",
+      "protectedCalls": 1,
+      "result": "IDENTICAL"
+    }
+  ],
+  "result": "PASS"
+}

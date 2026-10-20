@@ -1,0 +1,2122 @@
+{
+  "base": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+  "head": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+  "webTree": "43c0d5b7b9a7c29f7d3c79338a2ba2a1fbf43184",
+  "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+  "screenshots": [
+    {
+      "file": "before/dashboard-1440x900.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "623ee9253cb0e58816b55a3d82bb60855222a0c77d3454029700aaf7eca37162"
+    },
+    {
+      "file": "before/orders-1440x900.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ef4e70dfb533d90280fd94e2f728b8521dbd18ceb8dc2cfc5bf3b9547dbf6b0d"
+    },
+    {
+      "file": "before/create-information-1440x900.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f0707b2bc772859658d92dbef32a28f0c41ce354a5314a80623cd7c59d9f1739"
+    },
+    {
+      "file": "before/order-detail-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a895a2e42537696267d9e8338c4bbdbb3378afce06964fdaf1f06cb162ef9b4e"
+    },
+    {
+      "file": "before/trailers-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c5925656681bffa66af6017fcc053cafdb578ad1e5fb289780dd193a390272d3"
+    },
+    {
+      "file": "before/trailer-detail-1440x900.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "899fc6d95a4161af6faf245e995d0742de71cde12c66e1b5e8d668b81532866d"
+    },
+    {
+      "file": "before/deliveries-1440x900.png",
+      "route": "/customer/deliveries",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "84e683b883568db1fa7431e36764e0f1369965ee612877ad6d081dbfacad7e7c"
+    },
+    {
+      "file": "before/delivery-detail-1440x900.png",
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0b3ed5cc6a522d9bcaab6e3f3142674823d809e96d1716ac5969e31ec639e933"
+    },
+    {
+      "file": "before/documents-1440x900.png",
+      "route": "/customer/documents",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "55a4272812a2d97fdea2f503eebdb86a154cb363d4b88275ca32267a7e6466d8"
+    },
+    {
+      "file": "before/document-detail-1440x900.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "state": "Ready",
+      "sourceRevision": "7f655a26b94afa41f3cbb1e2a8fd028f3aedda24",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2cfe44b33513353281c3d83ee1179017762503563f89a25379af2ee930118485"
+    },
+    {
+      "file": "after/dashboard-390x844.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "96ad743cf7f6960558751cd57a7d7bd9fce98449d58e2fc00b47a96644f8d0f9"
+    },
+    {
+      "file": "after/orders-390x844.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "8019429207dcb736e1d3841010d54602e37f76e249aceaf37d93482b42e151f6"
+    },
+    {
+      "file": "after/create-information-390x844.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "1ac3c10199251b43b267bfd6ab2f50fb2039ffa88987ec4c46339db16a97a7de"
+    },
+    {
+      "file": "after/order-detail-390x844.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "d03d7ca6275ed967b8f6bb7d1faf27dd3e67a91a6562839ca4748663c7df226b"
+    },
+    {
+      "file": "after/trailers-390x844.png",
+      "route": "/customer/trailers",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "a63c3b8d1976c1b00446b82dc18eb2fd77c9ea017dddd9fbd92434cc57c80dad"
+    },
+    {
+      "file": "after/trailer-detail-390x844.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "4cd143b5be1ca4fc4251c46bd66c2c2eb1c8d588de20f39c9ca5526c0be2044b"
+    },
+    {
+      "file": "after/deliveries-390x844.png",
+      "route": "/customer/deliveries",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "9b7e6dbac35edf70a95f5c3d52eb699ee2036363b6904c1d510db6e1904ee79b"
+    },
+    {
+      "file": "after/delivery-detail-390x844.png",
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "d690e2b8e4d429b2355ca9afafe8fc0dcfd0fd85a2c98ea402b3c2d8e6f8a2aa"
+    },
+    {
+      "file": "after/documents-390x844.png",
+      "route": "/customer/documents",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "dbc2e8bbc1724d1716efbf9e3453d775c2d09f26b9597c9cdda1e04553dac065"
+    },
+    {
+      "file": "after/document-detail-390x844.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "d1d844e61fa42baf640e088c496281db500205103616ce9b8aa4b3bd00c0b391"
+    },
+    {
+      "file": "after/dashboard-768x1024.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "e5265383b60b1729435b583e695395e2213a44c98b764df32cbb72d21eb33926"
+    },
+    {
+      "file": "after/orders-768x1024.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "883f727153fd6fa2e47d8d679bc93cf6529b7cab127054228a53e5d9069fd91c"
+    },
+    {
+      "file": "after/create-information-768x1024.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "56c82024e2c411b747552faa4614f9604b3af18743faae2c986827b503cb5cde"
+    },
+    {
+      "file": "after/order-detail-768x1024.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "6c9af6a96007d5accfcffe4bc548fc2e30d750dcf1845619ac2d6330eaae9899"
+    },
+    {
+      "file": "after/trailers-768x1024.png",
+      "route": "/customer/trailers",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "ae325d20fd54541506b0e4638652804cae8bad3f651b6047074990e683a822c1"
+    },
+    {
+      "file": "after/trailer-detail-768x1024.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "27e9633299b9f45df65857d523519e7e11b8f6e5cadfc2428733765529e624a7"
+    },
+    {
+      "file": "after/deliveries-768x1024.png",
+      "route": "/customer/deliveries",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "6030c0250c8ccb89085fcd608960cc93f856c63929fa501a1d40d990f8ad1616"
+    },
+    {
+      "file": "after/delivery-detail-768x1024.png",
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "8c0d537dfcc1127f76892f664583761545863508f28a5f3ec2c5c7d9259e48e4"
+    },
+    {
+      "file": "after/documents-768x1024.png",
+      "route": "/customer/documents",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "c4e123d22f421173a53965dd8cec40865c3f163cbb92f780ed1ea7a1542bc934"
+    },
+    {
+      "file": "after/document-detail-768x1024.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "f49e4c4c0d1b12a8106b599f895b177a8b07a6c2e96f3479f3a974ec06325664"
+    },
+    {
+      "file": "after/dashboard-1280x800.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "53cf6af0471710d2bd8fb5d3984506f9e7bec1fb5fd27c757a08609192dd2edf"
+    },
+    {
+      "file": "after/orders-1280x800.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "44f27949bede4f63a1ffe32d464b505e8897b456a2ad4ee68b41a978ad363b47"
+    },
+    {
+      "file": "after/create-information-1280x800.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "fd6dca0310471c1900375735b505f6ee47e10c0d08a3cdbbc3e3c1bfb624141d"
+    },
+    {
+      "file": "after/order-detail-1280x800.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "5eab7c21286dd23b570589a7d02806afcaeabd56c5a66d809730640965a4952e"
+    },
+    {
+      "file": "after/trailers-1280x800.png",
+      "route": "/customer/trailers",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "198732c670d6c281db35dc7b5af01b7cad38a60f9532b10dfc5338056c8c1673"
+    },
+    {
+      "file": "after/trailer-detail-1280x800.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "12c873be5d84dea4cf715ee6c44722182838179c3435eb19e90e503fe6b1b8cf"
+    },
+    {
+      "file": "after/deliveries-1280x800.png",
+      "route": "/customer/deliveries",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "937dc1b1c09718948a1948d10b79d24875e20276a3d40f601858ef6818912ece"
+    },
+    {
+      "file": "after/delivery-detail-1280x800.png",
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "9e8ae9274be4217566a299eadf6558998c218b031c94646db38bb7e98dee6444"
+    },
+    {
+      "file": "after/documents-1280x800.png",
+      "route": "/customer/documents",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "9d0325d6f5be76f1c2c9922a3daa29d173efda4e27eda632750c2a7a90356080"
+    },
+    {
+      "file": "after/document-detail-1280x800.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "sha256": "f6edc9a65a90a7d6a65699901fe33d7524b98b2a6f07716364acbce3b102aed1"
+    },
+    {
+      "file": "after/dashboard-1440x900.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "77fc9494537bb45af5ba8593a94484686710d4fe4b3a8713bf357c704014d290"
+    },
+    {
+      "file": "after/orders-1440x900.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "9b595d3d3466f0db16be0efa0f4fd92dd16d01b593afdeeb1adc318004c9f225"
+    },
+    {
+      "file": "after/create-information-1440x900.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "1775df9d3953897b4904d8fc4303c61212b251caefec05bf159e9c018eeca8a7"
+    },
+    {
+      "file": "after/order-detail-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "93d8c428a89542982539dd811d8bd605268c21d68283c0d2a6211d6c5d3c9200"
+    },
+    {
+      "file": "after/trailers-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "b2a1923d5a79927d916a604fde77dfa1d3c37247eb15b3db88723b5bdefe186d"
+    },
+    {
+      "file": "after/trailer-detail-1440x900.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ade2bf0411f67d2d0928676e2e558613674f52f373337384eacfa45f31e3197c"
+    },
+    {
+      "file": "after/deliveries-1440x900.png",
+      "route": "/customer/deliveries",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c8cbd25353057f8f2b870fc89e2d0ade62ab7e1e1fff6736dc1517daea98df77"
+    },
+    {
+      "file": "after/delivery-detail-1440x900.png",
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c9f18a80a2c3df7c47f0cee7fe527dac793a2af4249edb4d02e4cfc9b182d31c"
+    },
+    {
+      "file": "after/documents-1440x900.png",
+      "route": "/customer/documents",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "57a51ab884a3d36662e017aaefedfb22dff0b077f0c71e8a7dffc050983580a0"
+    },
+    {
+      "file": "after/document-detail-1440x900.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "ee9b8a7046f66a4b961d5d99a7b24868dab95dbae8bb2c85f1b6057593c0806a"
+    },
+    {
+      "file": "after/orders-next-page-1440x900.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "000794e2c1d7d2c1c882ecc5ad75dc4a328230e10fca30014a3f2fd2a3276538"
+    },
+    {
+      "file": "after/orders-filtered-1440x900.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "352ecf7aae632391c09aa39db3ba299fd73cdd05ae1f87af6d9d8ddb3445046f"
+    },
+    {
+      "file": "after/create-cargo-390x844.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "17502cce710618143a0c96d24bd985e6de02096302079d2a695f181cd8dfac69"
+    },
+    {
+      "file": "after/create-stops-390x844.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "729a71be8d28743841d31f5565745f74644deef1095faa61d9af5e9c002359fb"
+    },
+    {
+      "file": "after/create-review-390x844.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "c3a9499a947ac8d12a975325e2386b3d37b08153a50b266330c306d6002f7c14"
+    },
+    {
+      "file": "after/create-cargo-768x1024.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "20f71e3cbe89ef7bae57ccdc578b009d41840a4672830cf7e14a8bd7db1d02cf"
+    },
+    {
+      "file": "after/create-stops-768x1024.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "b23777714c45cd01da4ec0f5be36a2533b21d2bffd1bcac81bd88fc45e34babc"
+    },
+    {
+      "file": "after/create-review-768x1024.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 768,
+      "viewportWidth": 768,
+      "sha256": "b5c38d0299b801b52fcdf71e7851778e018a24b6371fa70c0c6ef9938860bdfd"
+    },
+    {
+      "file": "after/create-cargo-1440x900.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "75b20c7057844d1347b33fc924c2c3e1f6cebd27452b5cb2bd20aa1befa2a031"
+    },
+    {
+      "file": "after/create-stops-1440x900.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "21f3b5ec1ca2023413f94abb6b63e79a58aa4f1ae70458de168d47dfaa253319"
+    },
+    {
+      "file": "after/create-review-1440x900.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "502b45ea6009e37fed3bc5256eb14cd39e5f7d37545f3bc154a4a04ccde809f8"
+    },
+    {
+      "file": "after/create-uncertain-1440x900.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "540504d1467b5325869f149d1ff3490c0a43c6002556d5c76fee162b30db9efe"
+    },
+    {
+      "file": "after/create-validation-1440x900.png",
+      "route": "/customer/orders/new",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "87c64be6639dfeb1c768bedf25bc4246d7c48e9550ea3f12232820741d4777ec"
+    },
+    {
+      "file": "after/edit-order-390x844.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000100",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "f953528dc0e818b3c056e33d8eaab23d4703a707eecc3433ceaba6f2cbd5f5d1"
+    },
+    {
+      "file": "after/cancel-before-execution-390x844.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000100",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "447d9a772a2e52854ca2113fbe586648d59fb563205c2e0668486c8768b460ec"
+    },
+    {
+      "file": "after/active-cancellation-390x844.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "8e1a127069f74d4346b5a2edea0f7988a8b94bd2b6b743976b9864fc2aa046b5"
+    },
+    {
+      "file": "after/reroute-390x844.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "b37ee5b5456494f9a8670c733e9696960a8cae57f33803a9351986be92da2419"
+    },
+    {
+      "file": "after/substitution-390x844.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "8a13b2a73b4188cc1bc55b0082d121bd97e78b7148cd8c8c05af0d75333e248c"
+    },
+    {
+      "file": "after/administrative-completion-390x844.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000104",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "2a10000c5df49555bbb0cfb3a97e53efc708bab4b2ecf38f452f289a9cbc087f"
+    },
+    {
+      "file": "after/edit-order-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000100",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "5accc229ff0dd4d8108615623c811cd05795ed6438f2da9b101b65a3ec57c0c3"
+    },
+    {
+      "file": "after/cancel-before-execution-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000100",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "d4032a15fbafeaa413805d958cbee81aad04df9606b2557526f6750c8c31cdf3"
+    },
+    {
+      "file": "after/active-cancellation-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c93f6a718f14668b68288361faa5de0f714e9af25b78b642f5e2263d6e8bb90b"
+    },
+    {
+      "file": "after/reroute-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a6c790ff6ce99ad7220329b66f2c0a8a6a21b08e0e23739aa5a5157422d6af52"
+    },
+    {
+      "file": "after/substitution-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "0b5026a9525cf3f273fa068cd6f82c401f2858389c6f3c9165cb616b6a487c40"
+    },
+    {
+      "file": "after/administrative-completion-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000104",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "3be5ecf2eefe649f0d152c9679acee5c1bbeca31cc987868e42b55ec9bd57459"
+    },
+    {
+      "file": "after/cancel-conflict-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000100",
+      "state": "conflict",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "6ce5229bb9dd1ddb156d499ce4edd0c8a5d53e3ffd0b92258741ee56978122a6"
+    },
+    {
+      "file": "after/trailer-exact-unknown-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c28f607763ae7b7a19e081fab2f7643a23da339121788f1a0bcc2e12c3c4abcb"
+    },
+    {
+      "file": "after/trailer-in-transit-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "4ed539dd530ee7d90cd2f3d107d3cc41cbefb0920a4bcebe1aad6ea6c0126fea"
+    },
+    {
+      "file": "after/movement-next-page-1440x900.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "8e9c5e35acbb7b4d7892c2a1aa104ca71a65b2fa2a3427d28d83962176ca3613"
+    },
+    {
+      "file": "after/movement-page-error-1440x900.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "state": "page-error",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "2024d6c001e819446f477928ad321ebeb654edcb064b0d116e2e10aa0ab195cd"
+    },
+    {
+      "file": "after/document-storage-unavailable-1440x900.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "4f8e079b14824e6b8b9576146360145454ad25fb5a69729a283dedec2ae8c9db"
+    },
+    {
+      "file": "after/customer-context-selection-1440x900.png",
+      "route": "/customer",
+      "state": "contexts",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "fa6b0440f8a6b9603db02f6cbe678f76385a9b91660040076776694e8e3a4e48"
+    },
+    {
+      "file": "after/customer-context-verified-1440x900.png",
+      "route": "/customer",
+      "state": "contexts",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c4814701819fa8ad038f8c3e75a03f71a173380899eb8b4db4b72954d1d0c0b3"
+    },
+    {
+      "file": "after/order-actions-denied-1440x900.png",
+      "route": "/customer/orders",
+      "state": "denied",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "16ac9d0f677e20189297353e978d234204f4d5a4438a0dfe6784d739226db8f8"
+    },
+    {
+      "file": "after/dashboard-loading-1440x900.png",
+      "route": "/customer",
+      "state": "loading",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "471ab180d16ecaee9cdd3b883608d9c81d6fb1e859abb9f5c8ced48e9aaf7e4e"
+    },
+    {
+      "file": "after/dashboard-empty-1440x900.png",
+      "route": "/customer",
+      "state": "empty",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "11aa4c485416369d5befd3d8daf5fac16e401ccdde4bf4761d22d2ade3b4f2e9"
+    },
+    {
+      "file": "after/dashboard-500-1440x900.png",
+      "route": "/customer",
+      "state": "500",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "4713db49b11e85f347e077cf387fc33bf4b27e2b9c8903510d6cc19d1106f6a7"
+    },
+    {
+      "file": "after/dashboard-403-1440x900.png",
+      "route": "/customer",
+      "state": "403",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "177f2e7257c7bb99b2ce6d673c15a829274dcce867e1187937c0f883a7ca1d37"
+    },
+    {
+      "file": "after/orders-loading-1440x900.png",
+      "route": "/customer/orders",
+      "state": "loading",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "31cf1020b5638fb409b698f2bc08c6085ebfb59979695c8089ea6a47f6e47746"
+    },
+    {
+      "file": "after/orders-empty-1440x900.png",
+      "route": "/customer/orders",
+      "state": "empty",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "dc4b0c3528e54a96b6ff4c31fa3928d03ff58099d1d6d4bc0c122d6f217d3786"
+    },
+    {
+      "file": "after/orders-500-1440x900.png",
+      "route": "/customer/orders",
+      "state": "500",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "e9b7dd3e1fe058725c266e50800a7acc68af29efe62526cb9909694ffd2a1fab"
+    },
+    {
+      "file": "after/orders-403-1440x900.png",
+      "route": "/customer/orders",
+      "state": "403",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "7a0bee535ac3b6ce646e4b4c4ce150e926dd1bab3c71dd81f0a19d729acf9c6b"
+    },
+    {
+      "file": "after/trailers-loading-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "loading",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "1b2245a83a6947e7ab9e86ab0fc8e6d69202081edc2fa782f9cde947ac227b69"
+    },
+    {
+      "file": "after/trailers-empty-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "empty",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "27fb590398f1026cc1afbe67f8c94be2c1cbbe2f330c96f061bdfa2acfb4ca4c"
+    },
+    {
+      "file": "after/trailers-500-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "500",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "4a82b9a83cf2c2ee48f83fa54826dc56986ba165be44d83154094cecfd42b3e0"
+    },
+    {
+      "file": "after/trailers-403-1440x900.png",
+      "route": "/customer/trailers",
+      "state": "403",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c7927e1f2fe591e9f928da0b89208ef9842008c311341447ca1ec478452a77d0"
+    },
+    {
+      "file": "after/deliveries-loading-1440x900.png",
+      "route": "/customer/deliveries",
+      "state": "loading",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "1bab915028619ee76a3a799b3a2365ee94d4f163094679276242f6144230b8a4"
+    },
+    {
+      "file": "after/deliveries-empty-1440x900.png",
+      "route": "/customer/deliveries",
+      "state": "empty",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c3efa56623b0c23e3e58cc1b62769ea658fdc61d049ddba72ed9e0b4b1831d26"
+    },
+    {
+      "file": "after/deliveries-500-1440x900.png",
+      "route": "/customer/deliveries",
+      "state": "500",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "a058e1903b787a6662fb6ddfdb390e44fe6b6840e23f80e0ddcda68db7d49cae"
+    },
+    {
+      "file": "after/deliveries-403-1440x900.png",
+      "route": "/customer/deliveries",
+      "state": "403",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "9f0bed2a7a3668a63f18896263e6481745387912e8dc6a0c27d61e6617ea703b"
+    },
+    {
+      "file": "after/documents-loading-1440x900.png",
+      "route": "/customer/documents",
+      "state": "loading",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "193e881fff6e26d40652357f1c4d3b89ee38e2234b2b9921059f809473d52bf9"
+    },
+    {
+      "file": "after/documents-empty-1440x900.png",
+      "route": "/customer/documents",
+      "state": "empty",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "e34b182bc31139d0f4988055558459c21185e32eccecd235c073e9b910800e87"
+    },
+    {
+      "file": "after/documents-500-1440x900.png",
+      "route": "/customer/documents",
+      "state": "500",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f11ec1514d0cba4c6c573fc46f381d9ed5a3e200979ebe322743e4b39f827c77"
+    },
+    {
+      "file": "after/documents-403-1440x900.png",
+      "route": "/customer/documents",
+      "state": "403",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "03552298f8cce224c5266b9fd25244a82a48e3384ccb23b219204c507d4bb099"
+    },
+    {
+      "file": "after/membership-unavailable-1440x900.png",
+      "route": "/customer",
+      "state": "no-membership",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "f5740c1b560d91672bc3298b770f660ccdecde37ef01f7707f13234910a3b379"
+    },
+    {
+      "file": "after/document-unavailable-1440x900.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "state": "empty",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "c1c27ec721a40e88e940e72bf725749bd3ffcedd7adbe4c8f417a5f9657e6103"
+    },
+    {
+      "file": "after/resource-not-found-1440x900.png",
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "state": "404",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "88b08cac5621f23ffabb5a5c2d2dba66ad3ef28edd75856ef7f8b53c52ce1324"
+    },
+    {
+      "file": "after/drawer-390x844.png",
+      "route": "/customer/orders",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "09b5b49611dba183e0858ad2bd06a086acbf4413e9688e9b88ec281304b2c948"
+    },
+    {
+      "file": "after/dashboard-reflow-1920x1080.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 1920,
+      "viewportWidth": 1920,
+      "sha256": "a297637251a66b23d99c11357d852d963d3e15b7d3b49764ad70be06bd5880c4"
+    },
+    {
+      "file": "after/dashboard-reflow-320x844.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 320,
+      "viewportWidth": 320,
+      "sha256": "370e327e0d67be3670227502edea2de4bebd714d64f47036829f3dec56b87e34"
+    },
+    {
+      "file": "after/dashboard-reflow-720x450.png",
+      "route": "/customer",
+      "state": "Ready",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "environment": "ISOLATED DEMO; actual React routes; synthetic Customer read fixtures; no Firebase session, authorized Backend or successful writes",
+      "documentWidth": 720,
+      "viewportWidth": 720,
+      "sha256": "33a417999df86836f127ad07fd3326301b2bf0fe2afcaa60020d3702ff9775ab"
+    },
+    {
+      "file": "environment/actual-app-unconfigured-390x844.png",
+      "route": "/customer",
+      "state": "Actual product: Firebase unconfigured",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "role": "Unauthenticated",
+      "dataSource": "Actual application configuration; no business data",
+      "environment": "Actual app: Firebase unconfigured",
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "sha256": "0b0c4ec8471df854bc9797b847d6424550e8ae92d5b423666b6c0d5434608165"
+    },
+    {
+      "file": "environment/actual-app-unconfigured-1440x900.png",
+      "route": "/customer",
+      "state": "Actual product: Firebase unconfigured",
+      "sourceRevision": "0c4b61a2f292f431cebb80cf843012c6ddf2bbf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "role": "Unauthenticated",
+      "dataSource": "Actual application configuration; no business data",
+      "environment": "Actual app: Firebase unconfigured",
+      "documentWidth": 1440,
+      "viewportWidth": 1440,
+      "sha256": "20e1e95fe164090df460e4b8324e41b43838fcb37e6390718914d3d2155d6538"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Bounded previews and no invented total metrics",
+      "result": "PASS"
+    },
+    {
+      "name": "Order filters, keyset pages and active navigation",
+      "result": "PASS"
+    },
+    {
+      "name": "Four real creation steps, review reset, Stop keyboard reorder and uncertain ACK block",
+      "result": "PASS"
+    },
+    {
+      "name": "Validation feedback and creation form association",
+      "result": "PASS"
+    },
+    {
+      "name": "State-aware Order dialogs, Escape, focus restoration and Customer-safe context",
+      "result": "PASS"
+    },
+    {
+      "name": "409 conflict blocks a repeated cancellation while retaining reviewed context",
+      "result": "PASS"
+    },
+    {
+      "name": "Current versus Last Known, exact search and independent Trailer states",
+      "result": "PASS"
+    },
+    {
+      "name": "Customer movement cursor and known transient page failure presentation",
+      "result": "PASS"
+    },
+    {
+      "name": "Order to Delivery to Document links and no internal navigation",
+      "result": "PASS"
+    },
+    {
+      "name": "Storage unavailable never fabricates an issued download grant",
+      "result": "PASS"
+    },
+    {
+      "name": "Customer selectors preserve separate verified authority and active refresh",
+      "result": "PASS"
+    },
+    {
+      "name": "Denied capability does not show create/edit commands",
+      "result": "PASS"
+    },
+    {
+      "name": "Mobile drawer closes on Escape and restores keyboard focus",
+      "result": "PASS"
+    },
+    {
+      "name": "Reflow, local table scroll, visible focus and reduced motion",
+      "result": "PASS"
+    },
+    {
+      "name": "Admin and Operations remain byte-identical with Customer CSS loaded",
+      "result": "PASS"
+    },
+    {
+      "name": "Mobile resource previews stack at full readable width",
+      "result": "PASS"
+    },
+    {
+      "name": "Table status labels remain readable at operational widths",
+      "result": "PASS"
+    },
+    {
+      "name": "Fleet Simple text and control contrast",
+      "result": "PASS"
+    }
+  ],
+  "errors": [],
+  "reflow": [
+    {
+      "route": "/customer",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/orders",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/orders/new",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/trailers",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/deliveries",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/documents",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "viewport": 1920,
+      "width": 1920
+    },
+    {
+      "route": "/customer",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/orders",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/orders/new",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/trailers",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/deliveries",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/documents",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "route": "/customer",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/orders",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/orders/new",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/orders/12200000-0000-4000-8000-000000000102",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/trailers",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/deliveries",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/deliveries/12200000-0000-4000-8000-000000000104/12200000-0000-4000-8000-000000000204",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/documents",
+      "viewport": 720,
+      "width": 720
+    },
+    {
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "viewport": 720,
+      "width": 720
+    }
+  ],
+  "parity": [
+    {
+      "route": "/admin/alerts",
+      "sha256": "dc2985937f8fd326d9b9b4f77de85ebcf1b644174e75f894eea82ac57e7d7cb1",
+      "result": "IDENTICAL"
+    },
+    {
+      "route": "/operations",
+      "sha256": "3a0a35f2cd8516af6411e181ff1743937904fde2df1a49291e3316037985b126",
+      "result": "IDENTICAL"
+    },
+    {
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "sha256": "606aa7c79974466093f2379da0c380223cb85fd0ce679501591f35a2c2177d8d",
+      "result": "IDENTICAL"
+    }
+  ],
+  "contrast": [
+    {
+      "foreground": "color-text",
+      "background": "color-surface",
+      "target": 4.5,
+      "ratio": 14.628718079350334
+    },
+    {
+      "foreground": "color-text-secondary",
+      "background": "color-surface",
+      "target": 4.5,
+      "ratio": 7.577663953533317
+    },
+    {
+      "foreground": "color-accent",
+      "background": "color-canvas",
+      "target": 4.5,
+      "ratio": 5.099825007957025
+    },
+    {
+      "foreground": "color-on-primary",
+      "background": "color-primary",
+      "target": 4.5,
+      "ratio": 5.168555560022562
+    },
+    {
+      "foreground": "color-control-border",
+      "background": "color-surface",
+      "target": 3,
+      "ratio": 4.758842787868666
+    },
+    {
+      "foreground": "status-neutral-text",
+      "background": "status-neutral-bg",
+      "target": 4.5,
+      "ratio": 9.451924418631656
+    },
+    {
+      "foreground": "status-success-text",
+      "background": "status-success-bg",
+      "target": 4.5,
+      "ratio": 6.811651629293788
+    },
+    {
+      "foreground": "status-attention-text",
+      "background": "status-attention-bg",
+      "target": 4.5,
+      "ratio": 6.837002380367332
+    },
+    {
+      "foreground": "status-pending-text",
+      "background": "status-pending-bg",
+      "target": 4.5,
+      "ratio": 8.014836919642205
+    },
+    {
+      "foreground": "status-unknown-text",
+      "background": "status-unknown-bg",
+      "target": 4.5,
+      "ratio": 7.242510935504382
+    }
+  ]
+}
