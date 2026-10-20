@@ -42,6 +42,59 @@ void main() {
     expect(theme.materialTapTargetSize, MaterialTapTargetSize.padded);
   });
 
+  testWidgets(
+    'mode navigation icons retain contrast in either selected state',
+    (tester) async {
+      var selected = 0;
+      final theme = fleetTheme();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: StatefulBuilder(
+            builder: (context, setState) => Scaffold(
+              bottomNavigationBar: NavigationBar(
+                selectedIndex: selected,
+                onDestinationSelected: (value) =>
+                    setState(() => selected = value),
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.local_shipping_outlined),
+                    label: 'Road Mode',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.warehouse_outlined),
+                    label: 'Yard Mode',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      for (final index in [0, 1]) {
+        if (index == 1) {
+          await tester.tap(find.text('Yard Mode'));
+          await tester.pumpAndSettle();
+        }
+        for (final (position, icon) in [
+          (0, Icons.local_shipping_outlined),
+          (1, Icons.warehouse_outlined),
+        ]) {
+          final foreground = IconTheme.of(tester.element(find.byIcon(icon)))
+              .color!;
+          final background = position == index
+              ? theme.navigationBarTheme.indicatorColor!
+              : theme.navigationBarTheme.backgroundColor!;
+          final a = foreground.computeLuminance(),
+              b = background.computeLuminance();
+          final contrast =
+              (a > b ? a + .05 : b + .05) / (a > b ? b + .05 : a + .05);
+          expect(contrast, greaterThanOrEqualTo(3));
+        }
+      }
+    },
+  );
+
   for (final state in [
     'QUEUED',
     'SENDING',

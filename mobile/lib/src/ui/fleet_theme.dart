@@ -174,6 +174,13 @@ ThemeData fleetTheme() {
       backgroundColor: FleetColors.surface,
       surfaceTintColor: Colors.transparent,
       indicatorColor: FleetColors.selected,
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected)
+              ? FleetColors.primary
+              : FleetColors.secondary,
+        ),
+      ),
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => TextStyle(
           fontSize: 14,
