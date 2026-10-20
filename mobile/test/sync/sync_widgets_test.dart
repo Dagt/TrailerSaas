@@ -216,8 +216,8 @@ void main() {
         ),
       );
       await settleReads(tester);
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Sync now'),
+      final button = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Sync now'),
       );
       expect(button.onPressed, isNull);
       expect(f.requests.where((r) => r.method == 'POST'), isEmpty);

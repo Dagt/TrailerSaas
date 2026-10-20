@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import '../shift/camera_capture.dart';
@@ -75,12 +77,12 @@ class RoadEvidenceActions extends StatelessWidget {
                           stop['status'] == 'IN_SERVICE' ||
                       service.contains(stop['id']))) ...[
                 Text(
-                  'Entrega: ${stop['locationName'] ?? stop['siteName'] ?? (stop['siteSnapshot'] as Map?)?['name'] ?? 'Destino descargado'}',
+                  'Delivery: ${stop['locationName'] ?? stop['siteName'] ?? (stop['siteSnapshot'] as Map?)?['name'] ?? 'Downloaded destination'}',
                 ),
                 if (service.contains(stop['id']) &&
                     stop['status'] != 'IN_SERVICE')
                   const Text(
-                    'Servicio registrado localmente. POD esperará su confirmación; el estado del Stop no cambió en servidor.',
+                    'Service recorded locally. POD waits for confirmation; the server Stop state has not changed.',
                   ),
                 RoadEvidencePanel(
                   worker: worker,
@@ -152,7 +154,7 @@ class _PanelState extends State<RoadEvidencePanel> {
     } catch (_) {
       if (mounted) {
         setState(
-          () => message = 'No se pudo abrir el formulario. Conservamos el trabajo guardado. Actualiza la sesión.',
+          () => message = 'The form could not be opened. Saved work was retained. Refresh your session.',
         );
       }
     } finally {
@@ -174,7 +176,10 @@ class _PanelState extends State<RoadEvidencePanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Evidencia y operaciones Road'),
+        const FleetSectionTitle(
+          'Road evidence and operations',
+          icon: Icons.photo_library_outlined,
+        ),
         if (message != null) Text(message!),
         if (widget.tripId != null && canRecord) ...[
           if (widget.deliveryAvailable &&
@@ -182,11 +187,11 @@ class _PanelState extends State<RoadEvidencePanel> {
               caps.contains('TRIP_EXECUTE_ASSIGNED')) ...[
             FilledButton(
               onPressed: working ? null : () => open('SIGNED_BOL'),
-              child: const Text('Entrega con BOL firmado'),
+              child: const Text('Delivery with signed BOL'),
             ),
             FilledButton(
               onPressed: working ? null : () => open('NO_RECEIVER_AVAILABLE'),
-              child: const Text('Entrega sin receptor disponible'),
+              child: const Text('Delivery with no receiver available'),
             ),
           ],
           if (widget.auxiliaryActions &&
@@ -199,12 +204,12 @@ class _PanelState extends State<RoadEvidencePanel> {
                   )))
             OutlinedButton(
               onPressed: working ? null : () => open('FUEL'),
-              child: const Text('Registrar combustible'),
+              child: const Text('Record fuel'),
             ),
           if (widget.auxiliaryActions && caps.contains('EXCEPTION_REPORT'))
             OutlinedButton(
               onPressed: working ? null : () => open('PROBLEM'),
-              child: const Text('Reportar problema'),
+              child: const Text('Report a problem'),
             ),
         ],
         StreamBuilder<List<RoadDraft>>(
@@ -214,24 +219,22 @@ class _PanelState extends State<RoadEvidencePanel> {
             children: [
               for (final draft in snapshot.data ?? <RoadDraft>[])
                 if (widget.tripId == null || draft.tripId == widget.tripId)
-                  ListTile(
+                  FleetRecord(
                     title: Text(switch (draft.purpose) {
-                      'SIGNED_BOL' => 'BOL firmado',
-                      'NO_RECEIVER_AVAILABLE' => 'Sin receptor',
-                      'FUEL' => 'Combustible',
-                      _ => 'Problema operativo',
+                      'SIGNED_BOL' => 'Signed BOL',
+                      'NO_RECEIVER_AVAILABLE' => 'No receiver',
+                      'FUEL' => 'Fuel',
+                      _ => 'Operational problem',
                     }),
                     subtitle: Text(
-                      draft.commandId == null
-                          ? 'Borrador guardado en este dispositivo'
-                          : 'Operación guardada; revisa su confirmación en sincronización',
+                      draft.commandId == null ? 'Draft saved on this device' : 'Operation saved; check confirmation in Synchronization',
                     ),
-                    trailing: draft.commandId == null
+                    action: draft.commandId == null
                         ? TextButton(
                             onPressed: canRecord && !working
                                 ? () => open(draft.purpose, draft)
                                 : null,
-                            child: const Text('Continuar'),
+                            child: const Text('Resume'),
                           )
                         : null,
                   ),
@@ -299,15 +302,15 @@ class _FormState extends State<RoadEvidenceForm> {
       ))!;
       if (mounted && widget.store.current(draft)) {
         setState(
-          () => message = 'Guardado en este dispositivo. Pendiente de confirmación del servidor.',
+          () => message = 'Saved on this device. Awaiting server confirmation.',
         );
       }
     } catch (error) {
       if (mounted && widget.store.current(draft)) {
         setState(
           () => message = error is FormatException && error.message == 'El Tractor cambió. Conserva el recibo y revisa con operaciones.'
-              ? error.message
-              : 'No se pudo completar la acción. Revisa campos y archivos; el borrador se conserva.',
+              ? 'The Tractor changed. Keep the receipt and review with Operations.'
+              : 'The action could not be completed. Review fields and files; the draft was retained.',
         );
       }
     } finally {
@@ -319,18 +322,19 @@ class _FormState extends State<RoadEvidenceForm> {
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar intención'),
+        scrollable: true,
+        title: const Text('Confirm recorded intent'),
         content: const Text(
-          'Registra solo una acción que ocurrió. El servidor validará la evidencia y la operación; guardar offline no confirma su ejecución.',
+          'Record only an action that occurred. The server validates the evidence and operation; saving offline does not confirm execution.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Guardar operación'),
+            child: const Text('Save operation'),
           ),
         ],
       ),
@@ -352,118 +356,129 @@ class _FormState extends State<RoadEvidenceForm> {
     builder: (context, _) {
       if (!widget.store.current(draft)) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Evidencia')),
-          body: const Text('La sesión cambió. Vuelve al trabajo actual.'),
+          appBar: AppBar(title: const Text('Evidence')),
+          body: const Text('The session changed. Return to current work.'),
         );
       }
       final photos = jsonDecode(draft.mediaJson) as Map;
       final fields = switch (draft.purpose) {
-        'SIGNED_BOL' => {'bol': 'Fotografiar BOL firmado'},
+        'SIGNED_BOL' => {'bol': 'Capture signed BOL'},
         'NO_RECEIVER_AVAILABLE' => {
-          'bol': 'Fotografiar BOL',
-          'deliveryPhoto': 'Fotografiar entrega',
+          'bol': 'Capture BOL',
+          'deliveryPhoto': 'Capture delivery photo',
         },
-        'FUEL' => {'receipt': 'Fotografiar recibo'},
+        'FUEL' => {'receipt': 'Capture receipt'},
         _ => {
-          'damage0': 'Fotografiar daño',
-          'damage1': 'Agregar foto de daño',
-          'damage2': 'Agregar otra foto',
-          'damage3': 'Agregar última foto',
+          'damage0': 'Capture damage photo',
+          'damage1': 'Add damage photo',
+          'damage2': 'Add another photo',
+          'damage3': 'Add final photo',
         },
       };
       return Scaffold(
         appBar: AppBar(
           title: Text(switch (draft.purpose) {
-            'FUEL' => 'Combustible',
-            'PROBLEM' => 'Reportar problema',
+            'FUEL' => 'Fuel',
+            'PROBLEM' => 'Report a problem',
             _ => 'Proof of Delivery',
           }),
         ),
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const Text(
-              'Datos y fotografías privados. El servidor es la autoridad. No uses este formulario mientras conduces.',
-            ),
-            if (draft.purpose == 'FUEL') ...[
-              Text('Trip seleccionado: ${draft.tripId}'),
-              Text(
-                'Tractor del registro: ${widget.store.session.snapshot!.driver?.shiftContext?.tractors.where((t) => t.id == draft.tractorId).firstOrNull?.number ?? draft.tractorId}',
-              ),
-              const Text(
-                'Trip y Tractor: asignación descargada; se validarán nuevamente al sincronizar.',
-              ),
-              TextField(
-                controller: odometer,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+            FleetFormBody(
+              children: [
+                const FleetHeader(
+                  'Capture and review',
+                  eyebrow: 'EVIDENCE',
+                  description: 'Save private evidence, then review the recorded operation.',
                 ),
-                decoration: const InputDecoration(labelText: 'Odómetro'),
-              ),
-            ],
-            if (draft.purpose == 'PROBLEM')
-              DropdownButtonFormField<String>(
-                initialValue: category,
-                decoration: const InputDecoration(labelText: 'Categoría'),
-                items: [
-                  for (final entry in {
-                    'DELAY_TRAFFIC': 'Demora por tráfico',
-                    'EQUIPMENT_DAMAGE': 'Daño de equipo',
-                    'DESTINATION_CUSTOMER_ISSUE': 'Problema en destino',
-                    'LOAD_REJECTED': 'Carga rechazada',
-                    'OTHER': 'Otro',
-                  }.entries)
-                    DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
+                const FleetNotice(
+                  'Private data and photos. The server is authoritative. Do not use this form while driving.',
+                ),
+                if (draft.purpose == 'FUEL') ...[
+                  Text('Selected Trip: ${draft.tripId}'),
+                  Text(
+                    'Recorded Tractor: ${widget.store.session.snapshot!.driver?.shiftContext?.tractors.where((t) => t.id == draft.tractorId).firstOrNull?.number ?? draft.tractorId}',
+                  ),
+                  const Text(
+                    'Trip and Tractor are downloaded assignments; they are revalidated on sync.',
+                  ),
+                  TextField(
+                    controller: odometer,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
+                    decoration: const InputDecoration(labelText: 'Odometer'),
+                  ),
                 ],
-                onChanged: busy
-                    ? null
-                    : (value) => setState(() => category = value!),
-              ),
-            if (draft.purpose == 'NO_RECEIVER_AVAILABLE' ||
-                draft.purpose == 'PROBLEM')
-              TextField(
-                controller: comment,
-                maxLength: 4000,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Comentario requerido',
-                ),
-              ),
-            for (final entry in fields.entries)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: OutlinedButton.icon(
+                if (draft.purpose == 'PROBLEM')
+                  DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    itemHeight: null,
+                    initialValue: category,
+                    decoration: const InputDecoration(labelText: 'Category'),
+                    items: [
+                      for (final entry in {
+                        'DELAY_TRAFFIC': 'Traffic delay',
+                        'EQUIPMENT_DAMAGE': 'Equipment damage',
+                        'DESTINATION_CUSTOMER_ISSUE': 'Destination issue',
+                        'LOAD_REJECTED': 'Load rejected',
+                        'OTHER': 'Other',
+                      }.entries)
+                        DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                    ],
+                    onChanged: busy
+                        ? null
+                        : (value) => setState(() => category = value!),
+                  ),
+                if (draft.purpose == 'NO_RECEIVER_AVAILABLE' ||
+                    draft.purpose == 'PROBLEM')
+                  TextField(
+                    controller: comment,
+                    maxLength: 4000,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Required comment',
+                    ),
+                  ),
+                for (final entry in fields.entries)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: OutlinedButton.icon(
+                      onPressed: busy || draft.commandId != null
+                          ? null
+                          : () => perform(() async {
+                              await saved();
+                              await widget.store.take(draft, entry.key);
+                            }),
+                      icon: Icon(
+                        photos.containsKey(entry.key)
+                            ? Icons.photo
+                            : Icons.camera_alt,
+                      ),
+                      label: Text(
+                        '${entry.value}${photos.containsKey(entry.key) ? ' · saved locally' : ''}',
+                      ),
+                    ),
+                  ),
+                if (message != null)
+                  Semantics(liveRegion: true, child: Text(message!)),
+                if (busy) const LinearProgressIndicator(),
+                OutlinedButton(
                   onPressed: busy || draft.commandId != null
                       ? null
-                      : () => perform(() async {
-                          await saved();
-                          await widget.store.take(draft, entry.key);
-                        }),
-                  icon: Icon(
-                    photos.containsKey(entry.key)
-                        ? Icons.photo
-                        : Icons.camera_alt,
-                  ),
-                  label: Text(
-                    '${entry.value}${photos.containsKey(entry.key) ? ' · guardada localmente' : ''}',
-                  ),
+                      : () => perform(saved),
+                  child: const Text('Save draft'),
                 ),
-              ),
-            if (message != null)
-              Semantics(liveRegion: true, child: Text(message!)),
-            if (busy) const LinearProgressIndicator(),
-            FilledButton(
-              onPressed: busy || draft.commandId != null
-                  ? null
-                  : () => perform(saved),
-              child: const Text('Guardar borrador'),
-            ),
-            FilledButton(
-              onPressed: busy || draft.commandId != null ? null : queue,
-              child: const Text('Confirmar y sincronizar'),
+                FilledButton(
+                  onPressed: busy || draft.commandId != null ? null : queue,
+                  child: const Text('Confirm and synchronize'),
+                ),
+              ],
             ),
           ],
         ),

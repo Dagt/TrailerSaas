@@ -106,7 +106,11 @@ void main() {
     await start(tester);
     await tester.tap(find.text('Check arrival location'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Not Yet'));
+    final notYet = find.widgetWithText(TextButton, 'Not Yet');
+    await Scrollable.ensureVisible(tester.element(notYet), alignment: .5);
+    await tester.pumpAndSettle();
+    expect(notYet.hitTestable(), findsOneWidget);
+    await tester.tap(notYet);
     await tester.pumpAndSettle();
     expect(find.text('Confirm Arrival'), findsNothing);
     expect(find.text('Check arrival location'), findsNothing);

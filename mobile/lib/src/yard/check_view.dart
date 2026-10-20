@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../platform/native_qr_scanner.dart';
 import '../platform/qr_scanner.dart';
 import '../session/session_controller.dart';
@@ -124,6 +126,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
         builder: (context, _) {
           final current = valid();
           return AlertDialog(
+            scrollable: true,
             title: Text(current ? title : 'Check context changed'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -301,9 +304,9 @@ class _YardChecksPanelState extends State<YardChecksPanel>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
+              const FleetHeader(
                 'Yard Check inventory',
-                style: Theme.of(context).textTheme.titleLarge,
+                eyebrow: 'INVENTORY REVIEW',
               ),
               const Text(
                 'Scanning records inventory evidence. It never moves or corrects a Trailer.',
@@ -313,6 +316,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                 Semantics(liveRegion: true, child: Text(c.message!)),
               if (widget.site != null)
                 DropdownButton<String>(
+                  itemHeight: null,
                   key: const Key('check-start-location'),
                   isExpanded: true,
                   value: startLocation,
@@ -366,7 +370,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                 Text(
                   'Matched ${confirmed.count('matchedCount')} · unexpected ${confirmed.count('unexpectedCount')} · location mismatches ${confirmed.count('mismatchCount')} · missing ${confirmed.count('missingCount')}',
                 ),
-                Text(
+                FleetNotice(
                   'Local unobserved expected $locallyRemaining · locally observed expected $capturedExpected · pending synchronization $syncing · unresolved QR $unresolved · conflicts requiring review $conflicts',
                 ),
                 if (!matchingSite)
@@ -375,6 +379,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                   ),
                 if (matchingSite)
                   DropdownButton<String>(
+                    itemHeight: null,
                     key: const Key('check-observed-location'),
                     isExpanded: true,
                     value: scopeLocations.any((l) => l.id == observedLocation)
@@ -389,8 +394,8 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                         ? null
                         : (id) => setState(() => observedLocation = id),
                   ),
-                SizedBox(
-                  height: 56,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 56),
                   child: FilledButton.icon(
                     key: const Key('check-scan'),
                     onPressed:
@@ -445,7 +450,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                           : (jsonDecode(
                               item.originalJson,
                             ) as Map)['recordedSnapshot']['operationalNumber'];
-                      return ListTile(
+                      return FleetRecord(
                         title: Text(
                           '$number · ${accepted
                               ? 'Server ACK · $outcome'
@@ -460,7 +465,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                         subtitle: Text(
                           '${o.scannedAt}\nObserved ${o.observedLocationId} · expected ${item?.expectedLocationId ?? 'not in original snapshot'}\n${cmd?.state ?? 'Saved'} ${cmd?.lastErrorCode ?? ''}',
                         ),
-                        trailing:
+                        action:
                             cmd != null &&
                                 {
                                   'CONFLICT',
@@ -496,14 +501,14 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                           latest = CheckItem(
                             checkMap(jsonDecode(row.serverJson)),
                           );
-                      return ListTile(
+                      return FleetRecord(
                         title: Text(
                           '${original.json['recordedSnapshot']['operationalNumber']} · ${latest.json['result'] ?? 'Remaining candidate'}',
                         ),
                         subtitle: Text(
                           'Original expected: ${original.expectedLocationId ?? 'Unexpected'}\nObserved: ${latest.json['observedLocationId'] ?? 'Not observed'}\nScan: ${latest.json['scannedAt'] ?? 'None'}${latest.json['reconciliationId'] == null ? '' : '\nHistorical reconciliation: ${latest.json['reconciliationId']}'}',
                         ),
-                        trailing:
+                        action:
                             c.canCorrect &&
                                 s.status == 'COMPLETED' &&
                                 latest.json['reconciliationId'] == null &&
@@ -536,7 +541,7 @@ class _YardChecksPanelState extends State<YardChecksPanel>
                       final result = checkMap(
                         jsonDecode(receipt.projectionJson),
                       );
-                      return ListTile(
+                      return FleetRecord(
                         title: const Text(
                           'Server-confirmed historical reconciliation',
                         ),

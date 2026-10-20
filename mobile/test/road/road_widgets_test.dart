@@ -73,19 +73,16 @@ void main() {
         await store.refresh();
       });
       await tester.pump();
-      expect(find.text('Sustitución de Trailer autorizada'), findsOneWidget);
-      expect(find.text('Sustitución rechazada'), findsOneWidget);
-      await tester.tap(find.text('Sustitución de Trailer autorizada'));
+      expect(find.text('Trailer substitution authorized'), findsOneWidget);
+      expect(find.text('Substitution rejected'), findsOneWidget);
+      await tester.tap(find.text('Trailer substitution authorized'));
       await tester.pumpAndSettle();
-      expect(
-        find.textContaining('no es un acoplamiento físico'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Cambio de asignación / Trip actualizado'));
+      expect(find.textContaining('is not physical coupling'), findsOneWidget);
+      await tester.tap(find.text('Assignment changed / Trip updated'));
       await tester.pumpAndSettle();
-      expect(find.text('Asignación retirada'), findsOneWidget);
+      expect(find.text('Assignment removed'), findsOneWidget);
       expect(
-        find.textContaining('no autoriza continuar el Trip'),
+        find.textContaining('does not authorize continuing the Trip'),
         findsOneWidget,
       );
       await mount(tester, const SizedBox.shrink());
@@ -128,10 +125,10 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Fotografiar BOL'), findsOneWidget);
-      expect(find.text('Fotografiar entrega'), findsOneWidget);
-      expect(find.text('Comentario requerido'), findsOneWidget);
-      for (final label in ['Fotografiar BOL', 'Fotografiar entrega']) {
+      expect(find.text('Capture BOL'), findsOneWidget);
+      expect(find.text('Capture delivery photo'), findsOneWidget);
+      expect(find.text('Required comment'), findsOneWidget);
+      for (final label in ['Capture BOL', 'Capture delivery photo']) {
         await tester.ensureVisible(find.text(label));
         await real(tester, () => tester.tap(find.text(label)));
         await real(tester, () async {
@@ -141,14 +138,14 @@ void main() {
               .firstWhere(
                 (rows) =>
                     rows.where((r) => r.state == 'CAPTURED').length ==
-                    (label == 'Fotografiar BOL' ? 1 : 2),
+                    (label == 'Capture BOL' ? 1 : 2),
               );
         });
         await tester.pump();
       }
       await tester.enterText(find.byType(TextField), 'No había receptor');
-      await tester.ensureVisible(find.text('Guardar borrador'));
-      await real(tester, () => tester.tap(find.text('Guardar borrador')));
+      await tester.ensureVisible(find.text('Save draft'));
+      await real(tester, () => tester.tap(find.text('Save draft')));
       await real(tester, () async {
         await f.db
             .select(f.db.roadDrafts)
@@ -162,7 +159,7 @@ void main() {
       });
       await tester.pump();
       expect(
-        find.textContaining('Pendiente de confirmación del servidor'),
+        find.textContaining('Awaiting server confirmation'),
         findsOneWidget,
       );
       expect(f.businessEffects, 0);
@@ -172,10 +169,10 @@ void main() {
       });
       await tester.pump();
       expect(
-        find.text('La sesión cambió. Vuelve al trabajo actual.'),
+        find.text('The session changed. Return to current work.'),
         findsOneWidget,
       );
-      expect(find.text('Fotografiar BOL'), findsNothing);
+      expect(find.text('Capture BOL'), findsNothing);
       await mount(tester, const SizedBox.shrink());
       await real(tester, f.close);
     },
@@ -208,9 +205,9 @@ void main() {
         await f.db.select(f.db.roadDrafts).watch().first;
       });
       await tester.pump();
-      expect(find.text('Problema operativo'), findsOneWidget);
-      expect(find.text('Continuar'), findsOneWidget);
-      expect(find.text('Entrega con BOL firmado'), findsNothing);
+      expect(find.text('Operational problem'), findsOneWidget);
+      expect(find.text('Resume'), findsOneWidget);
+      expect(find.text('Delivery with signed BOL'), findsNothing);
       await mount(tester, const SizedBox.shrink());
       await real(tester, f.close);
     },
@@ -242,10 +239,10 @@ void main() {
         await f.db.select(f.db.roadDrafts).watch().first;
       });
       await tester.pump();
-      expect(find.text('Entrega con BOL firmado'), findsOneWidget);
-      expect(find.text('Entrega sin receptor disponible'), findsOneWidget);
-      expect(find.text('Registrar combustible'), findsOneWidget);
-      expect(find.text('Reportar problema'), findsOneWidget);
+      expect(find.text('Delivery with signed BOL'), findsOneWidget);
+      expect(find.text('Delivery with no receiver available'), findsOneWidget);
+      expect(find.text('Record fuel'), findsOneWidget);
+      expect(find.text('Report a problem'), findsOneWidget);
       await mount(tester, const SizedBox.shrink());
       await real(tester, f.close);
     },
@@ -289,12 +286,12 @@ void main() {
         await store.refresh();
       });
       await tester.pump();
-      expect(find.textContaining('Cancelación activa'), findsOneWidget);
-      await tester.tap(find.textContaining('Cancelación activa'));
+      expect(find.textContaining('Active cancellation'), findsOneWidget);
+      await tester.tap(find.textContaining('Active cancellation'));
       await tester.pumpAndSettle();
       expect(find.text('Regresa a base'), findsOneWidget);
       expect(find.textContaining('{"'), findsNothing);
-      expect(find.text('Actualizar instrucciones'), findsOneWidget);
+      expect(find.text('Refresh instructions'), findsOneWidget);
       await mount(tester, const SizedBox.shrink());
       await real(tester, f.close);
     },

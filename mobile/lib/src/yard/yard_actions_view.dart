@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import '../shift/camera_capture.dart';
@@ -114,6 +116,7 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
         context: context,
         builder: (dialogContext) => StatefulBuilder(
           builder: (dialogContext, update) => AlertDialog(
+            scrollable: true,
             title: Text(switch (kind) {
               'LOCATION_CORRECTION' => 'Correct Recorded Location',
               'LOAD_STATE_CHANGE' => 'Correct Load State',
@@ -129,7 +132,7 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
                     'Recorded: ${asset.location?['name'] ?? asset.data['locationState']}',
                   ),
                   Text(
-                    'Version: ${asset.data['version']} · Observed: ${at.toLocal()}',
+                    'Version: ${asset.data['version']} · Observed: ${fleetTime(at)}',
                   ),
                   if (reviewedConflict)
                     const Text(
@@ -138,6 +141,7 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
                   if (kind == 'LOAD_STATE_CHANGE') ...[
                     Text('Current Load State: ${asset.data['loadState']}'),
                     DropdownButton<String>(
+                      itemHeight: null,
                       key: const Key('yard-load-state'),
                       isExpanded: true,
                       value: load,
@@ -152,6 +156,7 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
                     ),
                   ] else
                     DropdownButton<String>(
+                      itemHeight: null,
                       key: const Key('yard-observed-location'),
                       isExpanded: true,
                       value: destination,
@@ -302,6 +307,7 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
         context: context,
         builder: (dialogContext) => StatefulBuilder(
           builder: (dialogContext, update) => AlertDialog(
+            scrollable: true,
             title: const Text('Report Damage / Mark OOS'),
             content: SingleChildScrollView(
               child: Column(
@@ -355,13 +361,12 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
                         return Column(
                           children: photos
                               .map(
-                                (p) => ListTile(
-                                  dense: true,
+                                (p) => FleetRecord(
                                   title: Text('Damage photo ${p.id}'),
                                   subtitle: Text(
                                     '${p.state}${p.lastErrorCode == null ? '' : ' · ${p.lastErrorCode}'}',
                                   ),
-                                  trailing: selected.contains(p.id)
+                                  action: selected.contains(p.id)
                                       ? const Icon(Icons.check)
                                       : TextButton(
                                           onPressed: working
@@ -433,6 +438,10 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
               ),
               FilledButton(
                 key: const Key('yard-oos-confirm'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(dialogContext).colorScheme.error,
+                  foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+                ),
                 onPressed: working
                     ? null
                     : () async {
@@ -513,7 +522,7 @@ class _YardActionsPanelState extends State<YardActionsPanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Divider(),
-        const Text('Explicit Yard actions'),
+        const FleetSectionTitle('Explicit Yard actions', icon: Icons.tune),
         if (_message != null)
           Semantics(liveRegion: true, child: Text(_message!)),
         OutlinedButton(

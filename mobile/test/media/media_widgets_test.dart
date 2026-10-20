@@ -64,8 +64,8 @@ void main() {
       expect(find.textContaining('Finalized by server'), findsNothing);
       expect(find.textContaining('private-bearer'), findsNothing);
       expect(find.textContaining('private-signature'), findsNothing);
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Sync now'),
+      final button = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Sync now'),
       );
       expect(button.onPressed, offline ? isNull : isNotNull);
       if (!offline) {

@@ -1,0 +1,534 @@
+{
+  "kind": "Actual Flutter widget-test engine renders; NOT emulator/device screenshots",
+  "base": "b942dfd4b82766770836328e4d6177867259e3cf",
+  "capturedSourceCommit": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+  "afterMobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b",
+  "productionLibGitTree": "6c8e595c35450b8e9f06fcd1cda89f996e26211b",
+  "provenance": "Historical widget captures from the frozen Git archive of capturedSourceCommit. Their actual source/tree/hashes remain unchanged. The later native review found and corrected only selected navigation icon presentation (fleet_theme.dart); final lib tree is 3b1e069a1de9a575b91487c52957feb0890b4a98. These historical renders do not represent that correction. Current native evidence and complete Mobile-tree bridge are in native/provenance.json; final-HEAD fresh tests are in PR delivery.",
+  "runtime": "Flutter 3.47.6 / Dart 3.13.5, Linux flutter_tester, devicePixelRatio 1",
+  "fonts": "SDK Roboto Regular/Medium/Bold loaded under a test-only alias to avoid Ahem; no product font dependency",
+  "data": "Isolated synthetic fixture reads/local SQLite state; no live Firebase/Backend/R2; capture tests assert no HTTP writes/PUTs/business effects",
+  "deviceGate": "Historical widget-only evidence did not verify native gates. Subsequent Android builds/emulator/IME/camera-denial results are documented in native/README.md. Physical device, live integrations, iOS and assistive technology remain unverified.",
+  "fullCaptureCounts": {
+    "before": 71,
+    "after": 76
+  },
+  "selectedImages": [
+    {
+      "file": "before/sign-in-360x800-scale1.0.png",
+      "sha256": "890aa74544a9c5f81b11602a7fa49494c16bf18e1afcf7f8ae77a9662087056f",
+      "sourceRevision": "b942dfd4b82766770836328e4d6177867259e3cf",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "sign-in",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": true,
+      "renderErrors": [],
+      "captureKind": "before"
+    },
+    {
+      "file": "before/road-home-430x932-scale1.0.png",
+      "sha256": "ede7c5f4698c79d09f5ec98d09f7082de8459da77cb8cdc729e72f5648975f2e",
+      "sourceRevision": "b942dfd4b82766770836328e4d6177867259e3cf",
+      "viewport": {
+        "width": 430.0,
+        "height": 932.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "road-home",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": true,
+      "renderErrors": [],
+      "captureKind": "before"
+    },
+    {
+      "file": "before/road-trip-430x932-scale1.0.png",
+      "sha256": "1ad2503f54925210aa087c07d475782ae5073a9c57eba708aa32f7bbc27b4e8f",
+      "sourceRevision": "b942dfd4b82766770836328e4d6177867259e3cf",
+      "viewport": {
+        "width": 430.0,
+        "height": 932.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "road-trip",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": true,
+      "renderErrors": [],
+      "captureKind": "before"
+    },
+    {
+      "file": "before/yard-home-360x800-scale1.0.png",
+      "sha256": "28106649e3a3afa5a3969c4764f3cb212c7280e40877cb8cd5a6c742ce2d6060",
+      "sourceRevision": "b942dfd4b82766770836328e4d6177867259e3cf",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-home",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": true,
+      "renderErrors": [],
+      "captureKind": "before"
+    },
+    {
+      "file": "before/pre-trip-360x800-scale1.0.png",
+      "sha256": "b146bcc441bbd367913ff0185bc78da45b68793be9861f8039ab0108747a0f71",
+      "sourceRevision": "b942dfd4b82766770836328e4d6177867259e3cf",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "pre-trip",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": true,
+      "renderErrors": [],
+      "captureKind": "before"
+    },
+    {
+      "file": "before/evidence-360x800-scale1.0.png",
+      "sha256": "dc8744c9044306f2af6807b6de5af3fcba8d1d9dcbe90d1c497f540050c37309",
+      "sourceRevision": "b942dfd4b82766770836328e4d6177867259e3cf",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "evidence",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": true,
+      "renderErrors": [],
+      "captureKind": "before"
+    },
+    {
+      "file": "after/sign-in-360x800-scale1.0.png",
+      "sha256": "8ec107cc6d95699507701b76b467ee000d7e9c044085bfaf5996412303fdf1ba",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "sign-in",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/configuration-error-360x800-scale1.0.png",
+      "sha256": "bbd73cb934d36c597fb520db5404a4570f9ca8e29ae19198e1e0097b10e48888",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "configuration-error",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/road-home-430x932-scale1.0.png",
+      "sha256": "3271ca851396db03f0d250fce96a8c0b5938306d7cdaaa6280aa79b8b150b4c7",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 430.0,
+        "height": 932.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "road-home",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/road-offline-360x800-scale1.0.png",
+      "sha256": "d91c4bef3cafd4fcaed235ea38895d833f523590693133824c7eccbeef2b6565",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "road-offline",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/road-offline-lower-360x800-scale1.0.png",
+      "sha256": "2203fe53eb4dc6c8b2b6e424841c74ead2aa490e047e6e2c2a94d02541da5282",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "road-offline-lower",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/road-trip-430x932-scale1.0.png",
+      "sha256": "b1d5cd7b14e26cd76e1a89587acd58c15d544f0711402865735e3d4520fbf4a2",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 430.0,
+        "height": 932.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "road-trip",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/qr-mismatch-360x800-scale1.8.png",
+      "sha256": "5db080a90ef980166f46ec73d0fa4c7b2bbe0c6b6b4db32c5c736415bcb5e95b",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.8,
+      "scenario": "qr-mismatch",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/sync-states-360x800-scale1.0.png",
+      "sha256": "9dad2b6c53b09b3487a22b1bb62321dc03645809a5f97c9b74816545759c9f6c",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "sync-states",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/sync-states-lower-360x800-scale1.0.png",
+      "sha256": "4cd0510f1946f93bb32fc992c726fbe389c30ecc08201329d475da1bbbca7028",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "sync-states-lower",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-home-360x800-scale1.0.png",
+      "sha256": "3e370aed81f3026fdc1f2c4f5f007c26178d740d04fa00b2b714a0bd258df3f0",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-home",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-home-360x800-scale1.8.png",
+      "sha256": "daf83056034553aac06ab7585950dd89be9259a083e058bf0ae4163f68f71195",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.8,
+      "scenario": "yard-home",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-move-review-360x800-scale1.0.png",
+      "sha256": "d389b57b0b40e2004b875151356b61955270ba4c21677ad47f8566f7863ce67c",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-move-review",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-move-review-844x390-scale1.0.png",
+      "sha256": "ed52fcc650cb08809807dbdbe5dec84738e80fdcae75dfaf2dd03927f37c972c",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 844.0,
+        "height": 390.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-move-review",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-qr-error-360x800-scale1.0.png",
+      "sha256": "e789d4a5d8018247dcaab84d20587a6c9abeee4a372e70ac087858f32a044f7f",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-qr-error",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-check-360x800-scale1.0.png",
+      "sha256": "049dee8cf55cb68d98cef3a3e21b78c5ef05a29e3cd5819b049d0302ee77a8f7",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-check",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-check-lower-360x800-scale1.0.png",
+      "sha256": "962ee37d186e81c6e85164aadef858aeb08b55a837f09de68e13a327fc680aa0",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-check-lower",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/pre-trip-360x800-scale1.0.png",
+      "sha256": "4046c8010dd17eacccf32f219ee1d919973dbe806c547b75d719fee04dc762ac",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "pre-trip",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/pre-trip-lower-360x800-scale1.0.png",
+      "sha256": "082f0d6d056c76f62e8e7907eaac212528ae03a80e60c079583e45037917dc75",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "pre-trip-lower",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/post-trip-lower-360x800-scale1.0.png",
+      "sha256": "6cedfbfbf39995cf0fd74c1ae898731900076fe670667e99dc8d70fb808cc77b",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "post-trip-lower",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/evidence-360x800-scale1.0.png",
+      "sha256": "b28260eaa90695ae58866a3034e4c8d050d2996364e8f8660d81af0dd72c6cc5",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "evidence",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/evidence-lower-360x800-scale1.0.png",
+      "sha256": "294cfdde3b56cf83959f7e0e14bc381d9aa153b923e62e3685b353a5260a786a",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "evidence-lower",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/media-pending-360x800-scale1.0.png",
+      "sha256": "89723f7df827754557f94969cd08f314d0661fb99150d5ad459b84246a6f4fb1",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 360.0,
+        "height": 800.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "media-pending",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    },
+    {
+      "file": "after/yard-damage-430x932-scale1.0.png",
+      "sha256": "f0ad3068433bd002b29a6cbf63a90037b09cc910ff7f600731866d2525a638af",
+      "sourceRevision": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
+      "viewport": {
+        "width": 430.0,
+        "height": 932.0,
+        "pixelRatio": 1
+      },
+      "textScale": 1.0,
+      "scenario": "yard-damage",
+      "environment": "Flutter widget-test engine on Linux; NOT emulator/device",
+      "data": "Isolated synthetic test fixtures / memory or temporary SQLite; no live authentication or Backend",
+      "baseline": false,
+      "renderErrors": [],
+      "captureKind": "after",
+      "mobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b"
+    }
+  ]
+}

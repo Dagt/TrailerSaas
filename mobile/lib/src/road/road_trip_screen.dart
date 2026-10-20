@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../session/session_controller.dart';
 import '../session/contracts.dart';
 import '../platform/qr_scanner.dart';
@@ -75,20 +77,26 @@ class _RoadTripScreenState extends State<RoadTripScreen>
     }
   }
 
-  Future<bool> confirm(String title, String text) async =>
+  Future<bool> confirm(
+    String title,
+    String text, {
+    bool informationOnly = false,
+  }) async =>
       await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
+          scrollable: true,
           title: Text(title),
           content: Text(text),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
+            if (!informationOnly)
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confirm'),
+              child: Text(informationOnly ? 'Close' : 'Confirm'),
             ),
           ],
         ),
@@ -123,6 +131,7 @@ class _RoadTripScreenState extends State<RoadTripScreen>
       await confirm(
         'Trailer not authorized',
         'This Trailer differs from the expected Trailer. Contact dispatch; scanning does not authorize substitution.',
+        informationOnly: true,
       );
       return;
     }
@@ -153,6 +162,7 @@ class _RoadTripScreenState extends State<RoadTripScreen>
       await confirm(
         'Location required',
         'Dispatch must provide an authorized Operational Location before physical Drop.',
+        informationOnly: true,
       );
       return;
     }
@@ -248,10 +258,13 @@ class _RoadTripScreenState extends State<RoadTripScreen>
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(
-              'Trip · ${trip['status']}',
-              style: Theme.of(context).textTheme.headlineSmall,
+            const FleetHeader(
+              'Your assigned Trip',
+              eyebrow: 'ROAD WORK',
+              description:
+                  'Recorded work and physical execution remain separate.',
             ),
+            FleetStatus('Trip · ${trip['status']}'),
             if (session.state == SessionState.offline)
               Text(
                 widget.worker == null
@@ -262,18 +275,21 @@ class _RoadTripScreenState extends State<RoadTripScreen>
               const Text(
                 'Refreshing session and assigned work. Execution is unavailable.',
               ),
-            Text(
-              'Tractor: ${controller.detail?['tractorOperationalNumber'] ?? 'Not refreshed'}',
+            FleetFact(
+              'Tractor',
+              '${controller.detail?['tractorOperationalNumber'] ?? 'Not refreshed'}',
             ),
-            Text(
-              'Expected Trailer: ${expected?['operationalNumber'] ?? 'Not planned'}',
+            FleetFact(
+              'Expected Trailer',
+              '${expected?['operationalNumber'] ?? 'Not planned'}',
             ),
-            Text(
-              'Physical coupling: ${coupled == null ? 'Uncoupled / not refreshed' : coupled['operationalNumber']}',
+            FleetFact(
+              'Physical coupling',
+              '${coupled == null ? 'Uncoupled / not refreshed' : coupled['operationalNumber']}',
             ),
             if (controller.sending) const LinearProgressIndicator(),
             if (controller.message != null)
-              Semantics(liveRegion: true, child: Text(controller.message!)),
+              FleetNotice(controller.message!, tone: FleetTone.attention),
             if (controller.traceId != null)
               Text('Support reference: ${controller.traceId}'),
             if (widget.updates != null)
@@ -455,17 +471,11 @@ class _RoadTripScreenState extends State<RoadTripScreen>
                 'Trip completion confirmed by server. Shift remains separate.',
               ),
             const Divider(),
-            const Text('Executable Stops'),
-            ...stops.map(
-              (stop) => ListTile(
-                title: Text(
-                  '${stop['sequenceNumber']} · ${stop['siteName'] ?? (stop['siteSnapshot'] as Map?)?['name'] ?? 'Operational Stop'}',
-                ),
-                subtitle: Text(
-                  '${stop['stopType']} · ${stop['status']}\n${stop['instructions'] ?? ''}',
-                ),
-              ),
+            const FleetSectionTitle(
+              'Executable Stops',
+              icon: Icons.route_outlined,
             ),
+            ...stops.map((stop) => FleetStop(stop)),
           ],
         ),
       );
