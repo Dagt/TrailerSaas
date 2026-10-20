@@ -30,7 +30,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final yard = YardFixture();
   final trip = work('trip-A');
-  (trip['stops'] as List).first['status'] = 'EN_ROUTE';
   yard.mobile.trips = [trip];
   yard.custom = (request) async {
     if (request.method != 'GET') {
