@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import 'notifications_controller.dart';
 
 class NotificationsPanel extends StatelessWidget {
@@ -17,7 +19,10 @@ class NotificationsPanel extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Notifications'),
+              const FleetSectionTitle(
+                'Notifications',
+                icon: Icons.notifications_outlined,
+              ),
               Semantics(liveRegion: true, child: Text(controller.status)),
               Wrap(
                 spacing: 12,

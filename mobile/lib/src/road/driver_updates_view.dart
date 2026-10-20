@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../persistence/app_database.dart';
 import '../platform/connectivity.dart';
 import '../session/session_controller.dart';
@@ -59,7 +61,7 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
     } catch (_) {
       if (mounted && scope == owner) {
         setState(
-          () => message = 'No se pudieron actualizar las instrucciones. Conservamos las descargadas; reintenta.',
+          () => message = 'Instructions could not be refreshed. Downloaded instructions were retained; retry.',
         );
       }
     } finally {
@@ -79,18 +81,18 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
   }
 
   static String label(String type, Map payload) => switch (type) {
-    'TRIP_REROUTED' => 'Cambio de destino / instrucciones',
+    'TRIP_REROUTED' => 'Destination or instruction change',
     'TRIP_CANCELLATION_STARTED' =>
-      'Cancelación activa: sigue la resolución indicada',
-    'TRIP_CANCELLED' || 'TRIP_CANCELLATION_FINISHED' => 'Trip cancelado',
-    'TRAILER_SUBSTITUTION_AUTHORIZED' => 'Sustitución de Trailer autorizada',
-    'TRAILER_SUBSTITUTION_REJECTED' => 'Sustitución rechazada',
+      'Active cancellation: follow the resolution instructions',
+    'TRIP_CANCELLED' || 'TRIP_CANCELLATION_FINISHED' => 'Trip cancelled',
+    'TRAILER_SUBSTITUTION_AUTHORIZED' => 'Trailer substitution authorized',
+    'TRAILER_SUBSTITUTION_REJECTED' => 'Substitution rejected',
     'TRAILER_EXPECTATION_CHANGED' => switch (payload['decision']) {
-      'AUTHORIZE' => 'Sustitución de Trailer autorizada',
-      'REJECT' => 'Sustitución rechazada',
-      _ => 'Cambio de Trailer esperado',
+      'AUTHORIZE' => 'Trailer substitution authorized',
+      'REJECT' => 'Substitution rejected',
+      _ => 'Expected Trailer changed',
     },
-    _ => 'Cambio de asignación / Trip actualizado',
+    _ => 'Assignment changed / Trip updated',
   };
   @override
   Widget build(BuildContext context) {
@@ -101,31 +103,37 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Instrucciones de operaciones'),
+        const FleetSectionTitle(
+          'Operations instructions',
+          icon: Icons.notifications_active_outlined,
+        ),
         const Text(
-          'Información descargada del servidor. Las notificaciones push no son necesarias para recuperarla.',
+          'Downloaded server information. Push notifications are not required to retrieve it.',
         ),
         TextButton.icon(
           onPressed: busy || session.state != SessionState.ready
               ? null
               : refresh,
           icon: const Icon(Icons.refresh),
-          label: const Text('Actualizar instrucciones'),
+          label: const Text('Refresh instructions'),
         ),
         if (busy) const LinearProgressIndicator(),
         if (message != null || widget.store.message != null)
-          Text(message ?? widget.store.message!),
+          FleetNotice(
+            fleetMessage(message ?? widget.store.message!),
+            tone: FleetTone.attention,
+          ),
         StreamBuilder<List<CachedDriverUpdate>>(
           key: ValueKey(scope),
           stream: widget.store.watch(s.userId, s.membership.tenantId),
           builder: (context, rows) {
             if (rows.hasError) {
               return const Text(
-                'No se pudo leer el historial local. Reintenta actualizar.',
+                'Local history could not be read. Retry refresh.',
               );
             }
             if (rows.data?.isEmpty ?? true) {
-              return const Text('Sin instrucciones descargadas.');
+              return const Text('No downloaded instructions.');
             }
             return Column(
               children: [
@@ -137,38 +145,38 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
                       return ExpansionTile(
                         title: Text(label(row.updateType, payload)),
                         subtitle: Text(
-                          'Descargado: ${row.downloadedAt.toLocal()}',
+                          'Downloaded: ${fleetTime(row.downloadedAt)}',
                         ),
                         children: [
                           if (payload['currentAssignment'] == false)
                             const ListTile(
-                              title: Text('Asignación retirada'),
+                              title: Text('Assignment removed'),
                               subtitle: Text(
-                                'Consulta tu trabajo actual y contacta a operaciones. Esta instrucción no autoriza continuar el Trip.',
+                                'Review current work and contact Operations. This instruction does not authorize continuing the Trip.',
                               ),
                             ),
                           if (row.updateType == 'TRAILER_EXPECTATION_CHANGED')
                             const ListTile(
-                              title: Text('Plan de Trailer y autorización'),
+                              title: Text('Trailer plan and authorization'),
                               subtitle: Text(
-                                'Consulta el plan actual y confirma el QR antes del Hook. Un cambio de plan no es un acoplamiento físico.',
+                                'Review the current plan and confirm the QR before Hook. A plan change is not physical coupling.',
                               ),
                             ),
                           if (payload['instructions'] is String)
                             ListTile(
-                              title: const Text('Qué debes hacer'),
+                              title: const Text('Required action'),
                               subtitle: Text(payload['instructions'] as String),
                             ),
                           if (payload['reason'] is String)
                             ListTile(
-                              title: const Text('Motivo'),
+                              title: const Text('Reason'),
                               subtitle: Text(payload['reason'] as String),
                             ),
                           if (payload['siteSnapshot'] is Map &&
                               (payload['siteSnapshot'] as Map)['name']
                                   is String)
                             ListTile(
-                              title: const Text('Nuevo destino'),
+                              title: const Text('New destination'),
                               subtitle: Text(
                                 (payload['siteSnapshot'] as Map)['name']
                                     as String,
@@ -176,13 +184,13 @@ class _UpdatesState extends State<DriverUpdatesPanel> {
                             ),
                           if (payload['status'] is String)
                             ListTile(
-                              title: const Text('Estado informado'),
+                              title: const Text('Reported state'),
                               subtitle: Text(payload['status'] as String),
                             ),
                           const Padding(
                             padding: EdgeInsets.all(12),
                             child: Text(
-                              'Consulta tu trabajo actual antes de ejecutar. Una instrucción histórica no concede autorización.',
+                              'Review current work before executing. A historical instruction does not grant authorization.',
                             ),
                           ),
                         ],

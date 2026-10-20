@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import 'qr_scanner.dart';
 
 String? trailerPublicToken(String value) {
@@ -72,8 +74,27 @@ class _ScanPageState extends State<_ScanPage> {
     appBar: AppBar(title: const Text('Scan Trailer QR')),
     body: Column(
       children: [
-        if (_message != null) Text(_message!),
+        Flexible(
+          flex: 2,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: FleetHeader(
+                    'Identify the Trailer',
+                    eyebrow: 'SCAN QR',
+                    description: 'Center the Trailer QR label in the camera. Scanning identifies the asset; physical actions still require review and confirmation.',
+                  ),
+                ),
+                if (_message != null)
+                  FleetNotice(_message!, tone: FleetTone.attention),
+              ],
+            ),
+          ),
+        ),
         Expanded(
+          flex: 3,
           child: MobileScanner(
             onDetect: (capture) {
               if (_done) return;
@@ -91,8 +112,11 @@ class _ScanPageState extends State<_ScanPage> {
               setState(() => _message = 'Scan a valid Trailer QR label.');
             },
             errorBuilder: (context, error) => const Center(
-              child: Text(
-                'Camera access is unavailable. Enable camera permission and try again.',
+              child: SingleChildScrollView(
+                child: FleetNotice(
+                  'Camera access is unavailable. Enable camera permission and try again.',
+                  tone: FleetTone.attention,
+                ),
               ),
             ),
           ),

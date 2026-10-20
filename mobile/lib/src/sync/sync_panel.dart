@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import 'command_store.dart';
@@ -44,6 +46,7 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: const Text('Review recorded operation'),
         content: const Text(
           'Refresh current work and review with dispatch. Retry only the SAME recorded action; do not repeat the physical action. The server may still deny it.',
@@ -118,14 +121,11 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Synchronization',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  const FleetSectionTitle('Synchronization', icon: Icons.sync),
                   const Text(
                     'Recorded intent is separate from current server state.',
                   ),
-                  FilledButton.icon(
+                  OutlinedButton.icon(
                     onPressed:
                         w.sending || w.session.state != SessionState.ready
                         ? null
@@ -157,13 +157,29 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
                   ...rows.reversed
                       .take(50)
                       .map(
-                        (c) => ListTile(
+                        (c) => FleetRecord(
                           title: Text(commandLabel(c.commandType)),
-                          subtitle: Text(
-                            '${{'EVIDENCE_PENDING', 'FUTURE_WORKFLOW'}.contains(c.lastErrorCode) ? 'Blocked by evidence or pending workflow' : stateLabel(c.state)}${c.lastErrorCode == null ? '' : '\n${issueMessage(c)}'}'
-                            '${c.nextRetryAt == null ? '' : '\nNext retry: ${c.nextRetryAt!.toLocal()}'}',
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              FleetStatus(
+                                {
+                                      'EVIDENCE_PENDING',
+                                      'FUTURE_WORKFLOW',
+                                    }.contains(c.lastErrorCode)
+                                    ? 'Blocked by evidence or pending workflow'
+                                    : stateLabel(c.state),
+                                tone: commandTone(c.state),
+                              ),
+                              if (c.lastErrorCode != null)
+                                Text(issueMessage(c)),
+                              if (c.nextRetryAt != null)
+                                Text(
+                                  'Next retry: ${fleetTime(c.nextRetryAt!)}',
+                                ),
+                            ],
                           ),
-                          trailing:
+                          action:
                               {
                                     CommandState.conflict.value,
                                     CommandState.permanentFailure.value,
@@ -206,9 +222,9 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
     'service-starts' => 'Start service',
     'completions' => 'Complete non-delivery service',
     'departures' => 'Confirm departure',
-    'delivery-completions' => 'Entrega / POD',
-    'fuel-events' => 'Registro de combustible',
-    'exceptions' => 'Problema operativo',
+    'delivery-completions' => 'Delivery / POD',
+    'fuel-events' => 'Fuel record',
+    'exceptions' => 'Operational problem',
     _ => 'Recorded operation',
   };
   static String stateLabel(String state) => switch (state) {

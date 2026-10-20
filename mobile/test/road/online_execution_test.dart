@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:trailersaas_mobile/src/ui/fleet_widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:trailersaas_mobile/src/road/online_command_journal.dart';
 import 'package:trailersaas_mobile/src/road/road_trip_controller.dart';
@@ -372,7 +373,13 @@ void main() {
       expect(find.text('Confirm manual arrival'), findsOneWidget);
       expect(find.text('Active destination: Dock 17'), findsOneWidget);
       expect(find.text('Complete non-delivery Stop'), findsNothing);
-      expect(find.text('Expected Trailer: TR-123'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(FleetFact, 'Expected Trailer'),
+          matching: find.text('TR-123'),
+        ),
+        findsOneWidget,
+      );
       expect(find.textContaining('Truck 12'), findsOneWidget);
     },
   );
@@ -607,6 +614,8 @@ void main() {
     await tester.tap(find.text('Scan Trailer and confirm Hook'));
     await tester.pumpAndSettle();
     expect(find.text('Trailer not authorized'), findsOneWidget);
+    expect(find.text('Close'), findsOneWidget);
+    expect(find.text('Confirm'), findsNothing);
     expect(find.textContaining('Contact dispatch'), findsOneWidget);
     expect(fixture.requests.where((r) => r.method == 'POST'), isEmpty);
     expect(find.byType(TextField), findsNothing);
@@ -717,7 +726,13 @@ void main() {
       );
       expect(payload['expectedTrailerVersion'], 7);
       expect(payload['driverId'], 'driver');
-      expect(find.text('Physical coupling: TR-123'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(FleetFact, 'Physical coupling'),
+          matching: find.text('TR-123'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Scan Trailer and confirm Hook'), findsNothing);
     },
   );
@@ -822,7 +837,13 @@ void main() {
         posts.first.headers['Idempotency-Key'],
         isNot(posts.last.headers['Idempotency-Key']),
       );
-      expect(find.text('Physical coupling: TR-NEW'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(FleetFact, 'Physical coupling'),
+          matching: find.text('TR-NEW'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 }

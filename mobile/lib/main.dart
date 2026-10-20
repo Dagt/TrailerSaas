@@ -1,4 +1,7 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+
+import 'src/ui/fleet_theme.dart';
+import 'src/ui/fleet_widgets.dart';
 
 import 'src/app/trailer_saas_app.dart';
 import 'src/configuration/app_configuration.dart';
@@ -75,14 +78,17 @@ class _BootstrapState extends State<_Bootstrap> {
           messaging: NativeMessaging(FirebaseMessaging.instance),
         );
       }
-      return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Center(
-          child: Text(
-            snapshot.hasError
-                ? 'Authentication configuration could not be initialized.'
-                : 'Initializing authentication…',
-          ),
+      return MaterialApp(
+        theme: fleetTheme(),
+        debugShowCheckedModeBanner: false,
+        home: FleetAccessState(
+          title: snapshot.hasError
+              ? 'Workspace unavailable'
+              : 'Starting your workspace',
+          loading: !snapshot.hasError,
+          message: snapshot.hasError
+              ? 'Authentication configuration could not be initialized.'
+              : 'Initializing authentication…',
         ),
       );
     },

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../shift/shift_view.dart';
 
 import 'session_controller.dart';
@@ -73,16 +75,25 @@ class _SessionViewState extends State<SessionView> {
                 shrinkWrap: true,
                 padding: const EdgeInsets.all(24),
                 children: [
+                  FleetHeader(
+                    session.state == SessionState.signedOut
+                        ? 'Sign in to your workspace'
+                        : 'Workspace access',
+                    eyebrow: 'TRAILERSAAS',
+                    description: session.state == SessionState.chooseTenant
+                        ? 'Select your authorized Tenant to continue.'
+                        : 'Your assigned work, recorded operations and saved evidence in one place.',
+                  ),
                   if (widget.notifications != null)
                     NotificationsPanel(controller: widget.notifications!),
                   if (session.message != null)
-                    Text(session.message!, semanticsLabel: session.message),
+                    FleetNotice(session.message!, tone: FleetTone.attention),
                   if (session.traceId != null)
                     Text('Support reference: ${session.traceId}'),
                   if (session.state == SessionState.signedOut)
                     Form(
                       key: _form,
-                      child: Column(
+                      child: FleetFormBody(
                         children: [
                           TextFormField(
                             controller: _email,
@@ -168,16 +179,16 @@ class _SessionViewState extends State<SessionView> {
             children: [
               if (widget.notifications != null)
                 NotificationsPanel(controller: widget.notifications!),
-              Text(
-                snapshot.membership.name,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              Text(
+              FleetFact('Tenant workspace', snapshot.membership.name),
+              FleetNotice(
                 session.state == SessionState.offline
                     ? 'Offline — cached, not current authorization'
                     : 'Connected — server validated',
+                tone: session.state == SessionState.offline
+                    ? FleetTone.attention
+                    : FleetTone.neutral,
               ),
-              Text('Last refreshed: ${snapshot.refreshedAt.toLocal()}'),
+              Text('Last refreshed: ${fleetTime(snapshot.refreshedAt)}'),
               if (session.message != null)
                 Semantics(liveRegion: true, child: Text(session.message!)),
               if (session.traceId != null)
@@ -244,7 +255,10 @@ class _SessionViewState extends State<SessionView> {
                   key: const Key('road-mode'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Road Mode — ${snapshot.driver?.name ?? ''}'),
+                    FleetHeader(
+                      'Road Mode — ${snapshot.driver?.name ?? ''}',
+                      description: 'Review assigned work and record physical actions only after they happen.',
+                    ),
                     if (road && widget.worker?.shifts != null)
                       ShiftHomePanel(
                         key: ValueKey(
@@ -252,6 +266,56 @@ class _SessionViewState extends State<SessionView> {
                         ),
                         worker: widget.worker!,
                       ),
+                    const FleetSectionTitle(
+                      'Assigned work',
+                      icon: Icons.route_outlined,
+                    ),
+                    if (snapshot.trips.isEmpty)
+                      const Text('No assigned work downloaded.'),
+                    ...snapshot.trips.map(
+                      (trip) => Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              FleetStatus('Assigned Trip · ${trip.status}'),
+                              FilledButton.icon(
+                                icon: const Icon(Icons.arrow_forward),
+                                onPressed: () =>
+                                    Navigator.of(context)
+                                        .push<void>(
+                                          MaterialPageRoute(
+                                            builder: (_) => RoadTripScreen(
+                                              session: session,
+                                              cached: trip,
+                                              journal: _journal,
+                                              worker: widget.worker,
+                                              updates: widget.updates,
+                                            ),
+                                          ),
+                                        )
+                                        .then((_) {
+                                          if (mounted) {
+                                            setState(() => _recoveryRevision++);
+                                          }
+                                        }),
+                                label: const Text('Open assigned Trip'),
+                              ),
+                              if (trip.plannedTrailer != null)
+                                Text(
+                                  'Expected Trailer: ${trip.plannedTrailer!['operationalNumber']}',
+                                ),
+                              ...trip.stops.map((stop) => FleetStop(stop)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const FleetSectionTitle(
+                      'Updates and synchronization',
+                      icon: Icons.sync,
+                    ),
                     if (road && widget.worker == null)
                       CommandRecoveryPanel(
                         key: ValueKey(
@@ -271,56 +335,6 @@ class _SessionViewState extends State<SessionView> {
                       DriverUpdatesPanel(store: widget.updates!),
                     if (road && widget.worker != null)
                       RoadEvidencePanel(worker: widget.worker!),
-                    if (snapshot.trips.isEmpty)
-                      const Text('No assigned work downloaded.'),
-                    ...snapshot.trips.map(
-                      (trip) => Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Assigned Trip · ${trip.status}'),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context)
-                                        .push<void>(
-                                          MaterialPageRoute(
-                                            builder: (_) => RoadTripScreen(
-                                              session: session,
-                                              cached: trip,
-                                              journal: _journal,
-                                              worker: widget.worker,
-                                              updates: widget.updates,
-                                            ),
-                                          ),
-                                        )
-                                        .then((_) {
-                                          if (mounted) {
-                                            setState(() => _recoveryRevision++);
-                                          }
-                                        }),
-                                child: const Text('Open assigned Trip'),
-                              ),
-                              if (trip.plannedTrailer != null)
-                                Text(
-                                  'Expected Trailer: ${trip.plannedTrailer!['operationalNumber']}',
-                                ),
-                              ...trip.stops.map(
-                                (stop) => ListTile(
-                                  title: Text(
-                                    '${stop['sequenceNumber']} · ${stop['siteName'] ?? (stop['siteSnapshot'] as Map?)?['name'] ?? 'Operational Stop'}',
-                                  ),
-                                  subtitle: Text(
-                                    '${stop['stopType']} · ${stop['status']}\n${stop['instructions'] ?? ''}',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
             ],

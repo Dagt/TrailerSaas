@@ -1,0 +1,31 @@
+# UX-06 verified Flutter inventory
+
+Inspected before UI edits on base `b942dfd4b82766770836328e4d6177867259e3cf` (PR #131 merge). Scope is existing Flutter presentation only. Sources below are relative to `mobile/lib/src`. The actual entry is `app/trailer_saas_app.dart` -> `session/session_view.dart`; `app/navigation/mode_shell.dart` and `road_mode` / `yard_mode` are unused placeholder navigation and are **not implemented production experiences**.
+
+| Actual widget / source | Existing views, actions and states | Presentation work |
+|---|---|---|
+| Bootstrap (`mobile/lib/main.dart`) | Real Firebase initialization, loading and configuration-error branch before SessionView | Theme and access-state presentation only; initialization/configuration unchanged |
+| TrailerSaasApp | Storage initialization/loading/retry; missing configuration; real SessionView | Fleet theme, legible truthful startup states |
+| SessionView | Sign-in, tenant choice, refresh/sign-out; loading, expired/denied/unconfigured messages; role-gated Road/Yard and dual-role navigation | Branded entry, form hierarchy, workspace identity and connection context; preserve all gates/keys |
+| SessionView Road home | Driver, assigned Trips/Stops, Expected Trailer, open detail; empty downloaded work | Put assigned work in a clear task hierarchy, separate Shift and synchronization support |
+| ShiftHomePanel (`shift/shift_view.dart`) | Server Shift state, locally pending start/end, On Duty, tractor choice, Pre/Post-Trip, drafts, blockers, Off Duty confirmation | Status distinctions, grouped shift actions, consistent US English |
+| InspectionScreen (same file) | Odometer/checklist, four exterior photos in Pre-Trip, Post-Trip damage/failure/comments, local save, required-photo validation and explicit queue confirmation | Sectioned form, photo checklist, clear primary/secondary actions, text-scale-safe layout |
+| RoadTripScreen (`road/road_trip_screen.dart`) | Assignment identity fencing, loading/reload, expected vs actual coupling, ordered Stops, manual first/next departure, arrival, service start/completion, Hook QR, Drop, recovery and assisted arrival | Assignment summary, current task, explicit operational actions and Stop sequence |
+| RoadTripScreen confirmations | Physical action, unauthorized Trailer, missing Drop location, previous submission recovery; arrival suggestion with Not Yet | Scrollable confirmations, no altered predicates or payloads |
+| NativeQrScanner (`platform/native_qr_scanner.dart`) | Real MobileScanner, valid-token parsing, invalid scan, unavailable camera, cancellation/route cleanup | Scan instructions and camera-state presentation only; parsing/detection behavior unchanged |
+| OfflineActions (`sync/offline_actions.dart`) | Guided pending intent, dependencies, explicit physical confirmation, delivery/exchange blocks, local save failures | Distinct pending notice and safe action hierarchy; no cached Stop state change |
+| SyncPanel (`sync/sync_panel.dart`) | Scoped queue, QUEUED/SENDING/ACKNOWLEDGED/retry/conflict/blocked/rejected, review dialog, manual sync and issues | Text/icon semantic states, readable event rows, concise support section |
+| CommandRecoveryPanel (`road/command_recovery_panel.dart`) | Original online key/payload recovery even without assigned work, uncertain result and retry-not-before | Attention surface and explicit recovery action |
+| DriverUpdatesPanel (`road/driver_updates_view.dart`) | Refresh/downloaded history, reroute, substitution/assignment/cancellation details, empty/error | Clear instruction timeline, historical-not-authorization wording, US English |
+| RoadEvidencePanel / Actions (`road/road_evidence_view.dart`) | Scoped drafts, resume, Signed BOL, No Receiver, Fuel and Problem only under existing capabilities/context | Organized evidence actions and retained draft rows |
+| RoadEvidenceForm (same file) | Existing photo fields, fuel odometer, problem category/comment, private capture, draft and review/queue confirmation | Purpose-specific header, labeled capture steps and honest pending state |
+| MediaSyncPanel (`media/media_sync_panel.dart`) | Saved file/upload/finalization stages, error/next retry, dependencies, authorized review | Separate file finalization from business acceptance, responsive status rows |
+| NotificationsPanel (`notifications/notifications_panel.dart`) | Existing permission/register retry, server Alert review, status/error | Compact notification section; no delivery promises |
+| YardHomePanel (`yard/yard_view.dart`) | Authorized Site selector/refresh, QR lookup, selected Trailer truth, destination, Review Move/Not Yet/Confirm; recent local/server-confirmed moves and conflicts | Context first, prominent scan, grouped recorded Trailer facts and movement action |
+| YardActionsPanel (`yard/yard_actions_view.dart`) | Reasoned location/load correction, discrepancy report; retained damage photos, OOS comment/capture/confirm under grants; owned dialog fences | Clearly separated correction/damage sections, form spacing and explicit confirmations |
+| YardChecksPanel (`yard/check_view.dart`) | Site/scope, online start, downloaded Check list/resume, expected snapshot, observed location, repeated QR scan, local vs ACK findings, remaining/missing/mismatch/unexpected, history | Scannable server/local progress and inventory rows; primary scan remains accessible |
+| Yard Check dialogs (same file) | Review/complete, reasoned cancel, failed observation review, Missing -> Unknown / correction reconciliation | Readable scrollable review, retained reason and terminal/authorization checks |
+
+No independent public Trailer search, Yard-only Shift, generic document library or new fuel/damage flow is invented. QR lookup is the existing Yard Trailer entry. Road retains its existing native capture and location-assistance infrastructure. All camera, location, auth, owner/context fences, command IDs, queue/replay, Drift and server checks remain authoritative.
+
+Existing regression families: `test/session`, `test/road`, `test/shift`, `test/yard`, `test/sync`, `test/media`, `test/notifications`, `test/persistence`, `test/app`. Test-only fixtures are not production screens or live authorization. Final evidence records device/runtime availability, source revision and any unverified emulator gate separately.

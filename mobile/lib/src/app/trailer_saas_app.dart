@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_theme.dart';
+import '../ui/fleet_widgets.dart';
+
 import '../configuration/app_configuration.dart';
 import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
@@ -131,6 +134,7 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TrailerSaaS',
+      theme: fleetTheme(),
       debugShowCheckedModeBanner: false,
       home: FutureBuilder<void>(
         future: _databaseReady,
@@ -142,7 +146,10 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Local storage could not be opened.'),
+                    const FleetNotice(
+                      'Local storage could not be opened.',
+                      tone: FleetTone.attention,
+                    ),
                     TextButton.icon(
                       onPressed: () {
                         setState(() {
@@ -158,15 +165,16 @@ class _TrailerSaasAppState extends State<TrailerSaasApp>
             );
           }
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+            return const FleetAccessState(
+              title: 'Opening your workspace',
+              message: 'Opening local storage…',
+              loading: true,
             );
           }
           return widget.session == null
-              ? const Scaffold(
-                  body: Center(
-                    child: Text('Authentication configuration is required.'),
-                  ),
+              ? const FleetAccessState(
+                  title: 'Workspace unavailable',
+                  message: 'Authentication configuration is required.',
                 )
               : SessionView(
                   session: widget.session!,

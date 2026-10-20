@@ -1,6 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+
+import '../ui/fleet_widgets.dart';
+
 import 'package:drift/drift.dart' hide Column;
 
 import '../persistence/app_database.dart';
@@ -48,6 +51,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
               controller.key(widget.session.snapshot) != owner ||
               controller.trailer?.id != assetId) {
             return AlertDialog(
+              scrollable: true,
               title: const Text('Yard context changed'),
               actions: [
                 TextButton(
@@ -58,6 +62,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
             );
           }
           return AlertDialog(
+            scrollable: true,
             title: const Text('Confirm Yard Move'),
             content: Text(summary),
             actions: [
@@ -125,15 +130,12 @@ class _YardHomePanelState extends State<YardHomePanel> {
       final owner = widget.session.snapshot;
       if (owner == null) return const SizedBox.shrink();
       final asset = controller.trailer;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      return FleetFormBody(
         children: [
-          Text('Yard Mode', style: Theme.of(context).textTheme.titleLarge),
-          YardChecksPanel(
-            session: widget.session,
-            worker: widget.worker,
-            site: controller.selected,
-            scanner: widget.scanner,
+          const FleetHeader(
+            'Yard Mode',
+            eyebrow: 'YARD WORK',
+            description: 'Identify a Trailer, review its recorded state and confirm the physical move.',
           ),
           TextButton.icon(
             key: const Key('yard-refresh'),
@@ -146,7 +148,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
           if (controller.loading) const LinearProgressIndicator(),
           if (controller.refreshedAt != null)
             Text(
-              'Yard context refreshed: ${controller.refreshedAt!.toLocal()}',
+              'Yard context refreshed: ${fleetTime(controller.refreshedAt!)}',
             ),
           if (controller.message != null)
             Semantics(liveRegion: true, child: Text(controller.message!)),
@@ -155,6 +157,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
               decoration: const InputDecoration(labelText: 'Site / Yard'),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
+                  itemHeight: null,
                   key: const Key('yard-site'),
                   isExpanded: true,
                   value: controller.selectedSiteId,
@@ -197,9 +200,9 @@ class _YardHomePanelState extends State<YardHomePanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    FleetHeader(
                       'Trailer ${asset.number}',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      eyebrow: 'RECORDED TRAILER',
                     ),
                     Text(
                       'Customer: ${(asset.data['designatedCustomer'] as Map?)?['name'] ?? 'Not designated'}',
@@ -215,14 +218,9 @@ class _YardHomePanelState extends State<YardHomePanel> {
                     Text(
                       'Coupling: ${asset.data['couplingState']} · Version: ${asset.data['version']}',
                     ),
-                    const Text(
+                    const FleetNotice(
                       'Recorded server projection; queued moves do not change this location.',
-                    ),
-                    YardActionsPanel(
-                      controller: controller,
-                      session: widget.session,
-                      worker: widget.worker,
-                      camera: widget.camera,
+                      tone: FleetTone.pending,
                     ),
                     FutureBuilder<String?>(
                       future: controller.plannedOrigin(),
@@ -256,6 +254,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
+                                  itemHeight: null,
                                   key: const Key('yard-destination'),
                                   isExpanded: true,
                                   value: selectedDestination,
@@ -287,7 +286,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
                                           reviewedAsset = asset.id,
                                           at = controller.now();
                                       final accepted = await review(
-                                        'Trailer ${asset.number}\nFrom: ${locationName(from)}\nTo: ${locationName(selectedDestination)}\nObserved: ${at.toLocal()}\nConfirm only if the physical origin matches this reviewed origin. A discrepancy must be reviewed without correcting it here.\nSaved locally first; Backend must confirm the move.',
+                                        'Trailer ${asset.number}\nFrom: ${locationName(from)}\nTo: ${locationName(selectedDestination)}\nObserved: ${fleetTime(at)}\nConfirm only if the physical origin matches this reviewed origin. A discrepancy must be reviewed without correcting it here.\nSaved locally first; Backend must confirm the move.',
                                         generationOwner,
                                         reviewedAsset,
                                       );
@@ -317,10 +316,22 @@ class _YardHomePanelState extends State<YardHomePanel> {
                         );
                       },
                     ),
+                    YardActionsPanel(
+                      controller: controller,
+                      session: widget.session,
+                      worker: widget.worker,
+                      camera: widget.camera,
+                    ),
                   ],
                 ),
               ),
             ),
+          YardChecksPanel(
+            session: widget.session,
+            worker: widget.worker,
+            site: controller.selected,
+            scanner: widget.scanner,
+          ),
           SyncPanel(worker: widget.worker),
           StreamBuilder<List<LocalCommand>>(
             stream: widget.worker.store.watch(
@@ -336,7 +347,10 @@ class _YardHomePanelState extends State<YardHomePanel> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Recent Yard moves / pending operations'),
+                  const FleetSectionTitle(
+                    'Recent Yard moves / pending operations',
+                    icon: Icons.history,
+                  ),
                   ...moves.map((c) {
                     final body = jsonDecode(c.payloadJson) as Map;
                     final confirmed = c.state == 'ACKNOWLEDGED';
@@ -359,8 +373,9 @@ class _YardHomePanelState extends State<YardHomePanel> {
                       _ =>
                         '${locationName(body['fromLocationId'] as String)} → ${locationName(body['toLocationId'] as String)}',
                     };
-                    return ListTile(
+                    return FleetRecord(
                       key: ValueKey(c.clientOperationId),
+
                       title: Text(
                         confirmed
                             ? 'Server confirmed $label'
@@ -370,7 +385,7 @@ class _YardHomePanelState extends State<YardHomePanel> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '$detail\nObserved: ${c.occurredAt.toLocal()}${c.lastErrorCode == null ? '' : '\n${c.lastErrorCode}: Original command retained. Refresh and review; no automatic correction applied.'}',
+                            '$detail\nObserved: ${fleetTime(c.occurredAt)}${c.lastErrorCode == null ? '' : '\n${c.lastErrorCode}: Original command retained. Refresh and review; no automatic correction applied.'}',
                           ),
                           if (c.state == 'CONFLICT')
                             _YardConflictLocation(
@@ -417,7 +432,7 @@ class _YardConflictLocation extends StatelessWidget {
                 ..remove('qrPublicToken'),
             );
             return Text(
-              'Last downloaded recorded location: ${trailer.location?['name'] ?? trailer.data['locationState']} · Version ${trailer.data['version']}\nRefreshed: ${row.refreshedAt.toLocal()}',
+              'Last downloaded recorded location: ${trailer.location?['name'] ?? trailer.data['locationState']} · Version ${trailer.data['version']}\nRefreshed: ${fleetTime(row.refreshedAt)}',
             );
           }
         }

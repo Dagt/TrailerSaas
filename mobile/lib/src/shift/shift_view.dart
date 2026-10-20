@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import '../sync/replay_worker.dart';
@@ -37,7 +39,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
       if (mounted && owner == widget.worker.scope) {
         if (showSaved) {
           setState(
-            () => message = 'Guardado en este dispositivo. Solo la confirmación del servidor completa la acción.',
+            () => message = 'Saved on this device. Only server confirmation completes the action.',
           );
         }
         await widget.worker.sync();
@@ -45,7 +47,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
     } catch (_) {
       if (mounted && owner == widget.worker.scope) {
         setState(
-          () => message = 'No se pudo guardar la acción. Los datos y fotografías se conservaron; revisa y reintenta.',
+          () => message = 'The action could not be saved. Data and photos were retained; review and retry.',
         );
       }
     } finally {
@@ -66,8 +68,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
     }.values.toList()..sort((a, b) => a.number.compareTo(b.number));
     if (choices.isEmpty) {
       setState(
-        () =>
-            message = 'No tienes un Tractor asignado. Contacta a operaciones.',
+        () => message = 'No Tractor is assigned to you. Contact Operations.',
       );
       return;
     }
@@ -75,7 +76,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
     final selected = await showDialog<ShiftTractor>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Confirmar Tractor'),
+        title: const Text('Confirm Tractor'),
         children: choices
             .map(
               (t) => SimpleDialogOption(
@@ -133,7 +134,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Text(
-              'No se pudieron leer las acciones de Shift. Reintenta sincronización.',
+              'Shift actions could not be read. Retry synchronization.',
             );
           }
           final rows = snapshot.data ?? [],
@@ -169,26 +170,26 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Shift / inspecciones',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  const FleetSectionTitle(
+                    'Shift and inspections',
+                    icon: Icons.fact_check_outlined,
                   ),
                   Text(
                     home.current == null
-                        ? 'Estado del servidor: Off Duty'
-                        : 'Estado del servidor: On Duty · ${home.current!.onDutyAt.toLocal()}',
+                        ? 'Server state: Off Duty'
+                        : 'Server state: On Duty · ${fleetTime(home.current!.onDutyAt)}',
                   ),
                   if (worker.session.state == SessionState.offline)
                     const Text(
-                      'Estado descargado. Sin conexión no se confirma ninguna transición.',
+                      'Downloaded state. No transition is confirmed while offline.',
                     ),
                   if (starts.isNotEmpty)
                     const Text(
-                      'On Duty registrado localmente — pendiente de confirmación.',
+                      'On Duty recorded locally — awaiting confirmation.',
                     ),
                   if (ends.isNotEmpty)
                     const Text(
-                      'Off Duty pendiente — el Shift no está cerrado en servidor.',
+                      'Off Duty pending — the server has not closed the Shift.',
                     ),
                   if (home.current == null &&
                       starts.isEmpty &&
@@ -205,7 +206,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                     'YARD_CHECK_EXECUTE',
                   ))
                     const Text(
-                      'Yard Check: un Check asociado pendiente o incierto bloquea Off Duty. Actualiza Checks antes de cerrar; el caché offline no demuestra ausencia de trabajo abierto.',
+                      'Yard Check: a pending or uncertain associated Check blocks Off Duty. Refresh Checks before closing; offline cache does not prove there is no open work.',
                     ),
                   if (reference != null) ...[
                     if (home.inspections.any(
@@ -218,17 +219,17 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                           ),
                     ))
                       const Text(
-                        'Pre-Trip aceptado por servidor para equipo asignado; cada salida revalida su contexto.',
+                        'Pre-Trip accepted by the server for assigned equipment; each departure revalidates its context.',
                       )
                     else
-                      const Text('Pre-Trip pendiente para el equipo asignado.'),
+                      const Text('Pre-Trip pending for assigned equipment.'),
                     if (pending.any((c) => c.commandType == 'pre-trip'))
                       const Text(
-                        'Pre-Trip guardado localmente. Fotos/confirmación pendientes.',
+                        'Pre-Trip saved locally. Photos and confirmation are pending.',
                       ),
                     if (home.tractors.isEmpty)
                       const Text(
-                        'No tienes un Tractor asignado. Contacta a operaciones.',
+                        'No Tractor is assigned to you. Contact Operations.',
                       ),
                     if (owner.membership.capabilities.contains(
                       'PRETRIP_CREATE',
@@ -237,7 +238,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                         onPressed: usable && home.tractors.isNotEmpty
                             ? () => inspection(store, reference, true, home)
                             : null,
-                        child: const Text('Pre-Trip · cuatro fotografías'),
+                        child: const Text('Pre-Trip · four photos'),
                       ),
                     if (owner.membership.capabilities.contains(
                       'POSTTRIP_CREATE',
@@ -254,8 +255,8 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                     for (final block in home.offDutyBlockers)
                       Text(
                         block == 'ACTIVE_WORK'
-                            ? 'Cierre bloqueado: hay trabajo operativo activo sin resolver.'
-                            : 'Cierre bloqueado: falta Post-Trip del equipo utilizado.',
+                            ? 'Closing blocked: active operational work remains unresolved.'
+                            : 'Closing blocked: Post-Trip is missing for equipment used.',
                       ),
                     if (owner.membership.capabilities.contains('SHIFT_END'))
                       OutlinedButton(
@@ -267,20 +268,21 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                                 final yes = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
+                                    scrollable: true,
                                     title: const Text('Go Off Duty'),
                                     content: const Text(
-                                      'El servidor comprobará Post-Trip y trabajo activo. Esta acción no completa Trips ni cambia acoplamientos. Offline queda pendiente.',
+                                      'The server checks Post-Trip and active work. This action does not complete Trips or change couplings. Offline requests remain pending.',
                                     ),
                                     actions: [
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.pop(context, false),
-                                        child: const Text('Cancelar'),
+                                        child: const Text('Cancel'),
                                       ),
                                       FilledButton(
                                         onPressed: () =>
                                             Navigator.pop(context, true),
-                                        child: const Text('Guardar Off Duty'),
+                                        child: const Text('Save Off Duty'),
                                       ),
                                     ],
                                   ),
@@ -289,7 +291,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                                   await store.offDuty(reference);
                                   if (mounted) {
                                     setState(
-                                      () => message = 'Off Duty guardado localmente; el servidor debe confirmar el cierre.',
+                                      () => message = 'Off Duty saved locally; the server must confirm closure.',
                                     );
                                   }
                                 }
@@ -307,7 +309,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                     builder: (context, s) {
                       if (s.hasError) {
                         return const Text(
-                          'No se pudieron leer borradores. Nada fue eliminado.',
+                          'Drafts could not be read. Nothing was deleted.',
                         );
                       }
                       return Column(
@@ -326,7 +328,7 @@ class _ShiftHomePanelState extends State<ShiftHomePanel> {
                                       )
                                     : null,
                                 child: Text(
-                                  'Continuar ${d.inspectionType == "PRE_TRIP" ? "Pre-Trip" : "Post-Trip"} guardado',
+                                  'Resume saved ${d.inspectionType == "PRE_TRIP" ? "Pre-Trip" : "Post-Trip"}',
                                 ),
                               ),
                             )
@@ -452,7 +454,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
     } catch (_) {
       if (current) {
         setState(
-          () => message = 'La captura no pudo completarse. Los archivos existentes se conservaron. Reintenta esa posición.',
+          () => message = 'Capture could not be completed. Existing files were retained. Retry that position.',
         );
       }
     } finally {
@@ -465,24 +467,25 @@ class _InspectionScreenState extends State<InspectionScreen> {
     final pre = draft.inspectionType == 'PRE_TRIP',
         photos = jsonDecode(draft.photosJson) as Map;
     if (pre && InspectionCapture.positions.keys.any((p) => photos[p] == null)) {
-      setState(() => message = 'Faltan fotografías obligatorias.');
+      setState(() => message = 'Required photos are missing.');
       return;
     }
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(pre ? 'Guardar Pre-Trip' : 'Guardar Post-Trip'),
+        scrollable: true,
+        title: Text(pre ? 'Save Pre-Trip' : 'Save Post-Trip'),
         content: const Text(
-          'Se conservarán los datos localmente. Solo la aceptación del servidor confirma la inspección; las fotos deben finalizar su carga.',
+          'Data will be retained locally. Only server acceptance confirms the inspection; photo uploads must be finalized.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Guardar inspección'),
+            child: const Text('Save inspection'),
           ),
         ],
       ),
@@ -502,7 +505,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
     } catch (_) {
       if (current) {
         setState(
-          () => message = 'No se pudo guardar la inspección. Revisa los datos y permisos. Fotografías y borrador se conservaron.',
+          () => message = 'The inspection could not be saved. Review data and permissions. Photos and the draft were retained.',
         );
       }
     } finally {
@@ -516,11 +519,11 @@ class _InspectionScreenState extends State<InspectionScreen> {
     builder: (context, _) {
       if (!current) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Inspección')),
+          appBar: AppBar(title: const Text('Inspection')),
           body: const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'La sesión o Tenant cambió. Cierra esta pantalla y vuelve al inicio.',
+              'The session or Tenant changed. Close this screen and return home.',
             ),
           ),
         );
@@ -534,22 +537,27 @@ class _InspectionScreenState extends State<InspectionScreen> {
       ];
       final label =
           tractors.where((t) => t.id == draft.tractorId).firstOrNull?.number ??
-          'Tractor previamente seleccionado — validar asignación al sincronizar';
+          'Previously selected Tractor — validate assignment on sync';
       return Scaffold(
         appBar: AppBar(title: Text(pre ? 'Pre-Trip' : 'Post-Trip')),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Form(
             key: form,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: FleetFormBody(
               children: [
-                Text('Tractor: $label'),
-                const Text('Realiza esta inspección con el vehículo detenido.'),
+                FleetHeader(
+                  pre ? 'Before you drive' : 'End-of-shift inspection',
+                  eyebrow: pre ? 'PRE-TRIP' : 'POST-TRIP',
+                  description: 'Tractor: $label',
+                ),
+                const Text(
+                  'Perform this inspection while the vehicle is stopped.',
+                ),
                 TextFormField(
                   controller: odometer,
                   enabled: !busy,
-                  decoration: const InputDecoration(labelText: 'Odómetro'),
+                  decoration: const InputDecoration(labelText: 'Odometer'),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -560,31 +568,30 @@ class _InspectionScreenState extends State<InspectionScreen> {
                             n < 0 ||
                             n > 1000000000000 ||
                             !RegExp(r'^\d+(\.\d{1,3})?$').hasMatch(v ?? '')
-                        ? 'Introduce un odómetro válido.'
+                        ? 'Enter a valid odometer reading.'
                         : null;
                   },
                 ),
                 if (pre) ...[
-                  const Text(
-                    'Cuatro fotografías obligatorias — estado local separado de aceptación del servidor.',
+                  const FleetSectionTitle(
+                    'Four required photos — local capture is separate from server acceptance.',
+                    icon: Icons.photo_camera_outlined,
                   ),
                   for (final position in InspectionCapture.positions.keys)
-                    ListTile(
+                    FleetRecord(
                       title: Text(switch (position) {
-                        'front' => 'Frontal',
-                        'rear' => 'Trasera',
-                        'driverSide' => 'Lado Driver',
-                        _ => 'Lado Passenger',
+                        'front' => 'Front',
+                        'rear' => 'Rear',
+                        'driverSide' => 'Driver side',
+                        _ => 'Passenger side',
                       }),
                       subtitle: Text(
-                        photos[position] == null ? 'Falta captura' : 'Guardada en este dispositivo — consultar carga en Sincronización',
+                        photos[position] == null ? 'Not captured' : 'Saved on this device — check upload in Synchronization',
                       ),
-                      trailing: OutlinedButton(
+                      action: OutlinedButton(
                         onPressed: busy ? null : () => take(position),
                         child: Text(
-                          photos[position] == null
-                              ? 'Capturar'
-                              : 'Volver a capturar',
+                          photos[position] == null ? 'Capture' : 'Retake',
                         ),
                       ),
                     ),
@@ -594,7 +601,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     maxLines: 4,
                     maxLength: 4000,
                     decoration: const InputDecoration(
-                      labelText: 'Checklist revisado (un punto por línea)',
+                      labelText: 'Reviewed checklist (one item per line)',
                     ),
                     validator: (v) {
                       final points = (v ?? '')
@@ -604,7 +611,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
                           .toList();
                       return points.length > 100 ||
                               points.any((s) => s.length > 2000)
-                          ? 'Máximo 100 puntos; 2000 caracteres por punto.'
+                          ? 'Maximum 100 items; 2,000 characters per item.'
                           : null;
                     },
                   ),
@@ -614,24 +621,24 @@ class _InspectionScreenState extends State<InspectionScreen> {
                     enabled: !busy,
                     maxLines: 3,
                     maxLength: 4000,
-                    decoration: const InputDecoration(labelText: 'Daños'),
+                    decoration: const InputDecoration(labelText: 'Damage'),
                   ),
                   TextFormField(
                     controller: failures,
                     enabled: !busy,
                     maxLines: 3,
                     maxLength: 4000,
-                    decoration: const InputDecoration(labelText: 'Fallas'),
+                    decoration: const InputDecoration(labelText: 'Failures'),
                   ),
                   TextFormField(
                     controller: comments,
                     enabled: !busy,
                     maxLines: 3,
                     maxLength: 4000,
-                    decoration: const InputDecoration(labelText: 'Comentarios'),
+                    decoration: const InputDecoration(labelText: 'Comments'),
                   ),
                   const Text(
-                    'Post-Trip no cierra el Shift ni modifica estados de Trailer. No requiere fotografías por defecto.',
+                    'Post-Trip does not close the Shift or change Trailer states. Photos are not required by default.',
                   ),
                 ],
                 if (message != null)
@@ -645,23 +652,23 @@ class _InspectionScreenState extends State<InspectionScreen> {
                             await save();
                             if (current) {
                               setState(
-                                () => message =
-                                    'Borrador guardado en este dispositivo.',
+                                () => message = 'Draft saved on this device.',
                               );
                             }
                           } catch (_) {
                             if (current) {
                               setState(
-                                () => message = 'No se pudo guardar; reintenta antes de cerrar.',
+                                () => message =
+                                    'Could not save; retry before closing.',
                               );
                             }
                           }
                         },
-                  child: const Text('Guardar borrador'),
+                  child: const Text('Save draft'),
                 ),
                 FilledButton(
                   onPressed: busy ? null : submit,
-                  child: const Text('Confirmar y guardar operación'),
+                  child: const Text('Confirm and save operation'),
                 ),
               ],
             ),

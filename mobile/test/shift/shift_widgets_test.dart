@@ -41,10 +41,10 @@ void main() {
         await f.worker.store.watch(user, tenant).first;
       });
       await tester.pump();
-      await tester.tap(find.text('Pre-Trip · cuatro fotografías'));
+      await tester.tap(find.text('Pre-Trip · four photos'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
-      expect(find.text('Confirmar Tractor'), findsOneWidget);
+      expect(find.text('Confirm Tractor'), findsOneWidget);
       expect(find.text('T-12'), findsOneWidget);
       Navigator.of(tester.element(find.byType(SimpleDialog))).pop();
       await tester.pump(const Duration(milliseconds: 200));
@@ -79,7 +79,7 @@ void main() {
           await f.worker.store.watch(user, tenant).first;
         });
         await tester.pump();
-        expect(find.text('Estado del servidor: Off Duty'), findsOneWidget);
+        expect(find.text('Server state: Off Duty'), findsOneWidget);
         await real(tester, () async {
           await tester.tap(find.text('Go On Duty'));
           await f.worker.store
@@ -95,10 +95,10 @@ void main() {
         expect(f.serverShift, offline ? isNull : isNotNull);
         if (offline) {
           expect(
-            find.textContaining('On Duty registrado localmente'),
+            find.textContaining('On Duty recorded locally'),
             findsOneWidget,
           );
-          expect(find.text('Estado del servidor: Off Duty'), findsOneWidget);
+          expect(find.text('Server state: Off Duty'), findsOneWidget);
         }
         await mount(tester, const SizedBox.shrink());
         await real(tester, f.close);
@@ -132,16 +132,13 @@ void main() {
       });
       await tester.pump();
       expect(
-        find.text('No tienes un Tractor asignado. Contacta a operaciones.'),
+        find.text('No Tractor is assigned to you. Contact Operations.'),
         findsOneWidget,
       );
       expect(
         tester
             .widget<OutlinedButton>(
-              find.widgetWithText(
-                OutlinedButton,
-                'Pre-Trip · cuatro fotografías',
-              ),
+              find.widgetWithText(OutlinedButton, 'Pre-Trip · four photos'),
             )
             .onPressed,
         isNull,
@@ -182,14 +179,14 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Frontal'), findsOneWidget);
-      expect(find.text('Trasera'), findsOneWidget);
-      expect(find.text('Lado Driver'), findsOneWidget);
-      expect(find.text('Lado Passenger'), findsOneWidget);
+      expect(find.text('Front'), findsOneWidget);
+      expect(find.text('Rear'), findsOneWidget);
+      expect(find.text('Driver side'), findsOneWidget);
+      expect(find.text('Passenger side'), findsOneWidget);
       await real(tester, () async {
         tester
             .widget<OutlinedButton>(
-              find.widgetWithText(OutlinedButton, 'Capturar').first,
+              find.widgetWithText(OutlinedButton, 'Capture').first,
             )
             .onPressed!();
       });
@@ -210,8 +207,11 @@ void main() {
       expect(f.puts, 0);
       await real(tester, f.session.signOut);
       await tester.pump();
-      expect(find.text('Frontal'), findsNothing);
-      expect(find.textContaining('La sesión o Tenant cambió'), findsWidgets);
+      expect(find.text('Front'), findsNothing);
+      expect(
+        find.textContaining('The session or Tenant changed'),
+        findsWidgets,
+      );
       await mount(tester, const SizedBox.shrink());
       await real(tester, f.close);
     },

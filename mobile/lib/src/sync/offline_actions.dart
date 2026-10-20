@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../persistence/app_database.dart';
 import '../session/contracts.dart';
 import '../session/session_controller.dart';
@@ -46,6 +48,7 @@ class _OfflineActionsState extends State<OfflineActions> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: Text(title),
         content: const Text(
           'Record only an action that physically happened. It is saved on this device and is NOT confirmed by the server yet.',
@@ -185,7 +188,10 @@ class _OfflineActionsState extends State<OfflineActions> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Record offline intent'),
+              const FleetSectionTitle(
+                'Record offline intent',
+                icon: Icons.cloud_off_outlined,
+              ),
               const Text(
                 'Downloaded server state stays unchanged. Each action depends on the prior recorded action; acceptance is checked on reconnect.',
               ),

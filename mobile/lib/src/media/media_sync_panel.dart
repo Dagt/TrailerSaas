@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../persistence/app_database.dart';
 import '../session/session_controller.dart';
 import '../sync/replay_worker.dart';
@@ -97,9 +99,9 @@ class _MediaSyncPanelState extends State<MediaSyncPanel> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const FleetSectionTitle(
               'Media synchronization',
-              style: Theme.of(context).textTheme.titleMedium,
+              icon: Icons.cloud_upload_outlined,
             ),
             const Text(
               'Local files are not accepted business evidence until the server validates the owning workflow.',
@@ -109,12 +111,12 @@ class _MediaSyncPanelState extends State<MediaSyncPanel> {
               const Text('No saved media in this account and Tenant.'),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final state in files.map((r) => r.state).toSet())
-                  Chip(
-                    label: Text(
-                      '${MediaSyncPanel.label(state)}: ${files.where((r) => r.state == state).length}',
-                    ),
+                  FleetStatus(
+                    '${MediaSyncPanel.label(state)}: ${files.where((r) => r.state == state).length}',
+                    tone: mediaTone(state),
                   ),
               ],
             ),
@@ -123,16 +125,16 @@ class _MediaSyncPanelState extends State<MediaSyncPanel> {
               builder: (context, edges) => Column(
                 children: [
                   for (final row in files.reversed.take(50))
-                    ListTile(
+                    FleetRecord(
                       title: Text(MediaSyncPanel.typeLabel(row.documentType)),
                       subtitle: Text(
                         '${MediaSyncPanel.label(row.state)}\n${row.sizeBytes} bytes'
                         '${row.lastErrorCode == null ? '' : '\n${_error(row.lastErrorCode!)}'}'
-                        '${row.nextRetryAt == null ? '' : '\nNext retry: ${row.nextRetryAt!.toLocal()}'}'
-                        '${row.finalizedAt == null ? '' : '\nServer finalized: ${row.finalizedAt!.toLocal()}'}'
+                        '${row.nextRetryAt == null ? '' : '\nNext retry: ${fleetTime(row.nextRetryAt!)}'}'
+                        '${row.finalizedAt == null ? '' : '\nServer finalized: ${fleetTime(row.finalizedAt!)}'}'
                         '\nReferenced by ${(edges.data ?? []).where((d) => d.mediaId == row.id).length} recorded operation(s).',
                       ),
-                      trailing:
+                      action:
                           row.reviewRequired &&
                               row.lastErrorCode != 'IDEMPOTENCY_KEY_REUSED'
                           ? TextButton(

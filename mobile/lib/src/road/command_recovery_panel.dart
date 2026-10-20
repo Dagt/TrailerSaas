@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/fleet_widgets.dart';
+
 import '../session/session_controller.dart';
 import 'online_command_journal.dart';
 import 'road_trip_controller.dart';
@@ -60,7 +62,10 @@ class _CommandRecoveryPanelState extends State<CommandRecoveryPanel>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Previous online submission'),
+              const FleetSectionTitle(
+                'Previous online submission',
+                icon: Icons.history,
+              ),
               if (controller.pending != null)
                 const Text(
                   'An earlier operation needs reconciliation. Do not repeat the physical action.',
@@ -72,7 +77,7 @@ class _CommandRecoveryPanelState extends State<CommandRecoveryPanel>
                 Text('Support reference: ${controller.traceId}'),
               if (controller.retryNotBefore != null)
                 Text(
-                  'Recovery available after: ${controller.retryNotBefore!.toLocal()}',
+                  'Recovery available after: ${fleetTime(controller.retryNotBefore!)}',
                 ),
               if (controller.pending != null)
                 FilledButton(
@@ -81,6 +86,7 @@ class _CommandRecoveryPanelState extends State<CommandRecoveryPanel>
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
+                              scrollable: true,
                               title: const Text('Recover previous submission'),
                               content: const Text(
                                 'Use the saved key and payload with current server authorization. This does not repeat the physical action.',
