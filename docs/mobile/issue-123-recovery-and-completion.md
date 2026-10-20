@@ -1,5 +1,7 @@
 # UX-06 recovery and completion record
 
+> Historical implementation/recovery snapshot. The later [PR #132 acceptance follow-up](issue-123-acceptance-gates.md) supersedes missing-Android-SDK/emulator and unchanged-final-lib statements below. Original evidence and capture revisions remain preserved.
+
 The owner requested a workspace recovery audit before any further source/branch mutation. **Existing local work was found and retained**, rather than replaced or reimplemented.
 
 ## Recovery snapshot

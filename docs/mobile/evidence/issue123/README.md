@@ -2,13 +2,13 @@
 
 **ISOLATED WIDGET TEST — not emulator/device evidence.** Synthetic fixtures, no live Firebase/Backend/R2 and no confirmed real operation. No generated imagery.
 
-Base: `b942dfd4b82766770836328e4d6177867259e3cf`. Captured source: `05e4e4990853831c36d18b3934a359bf9ebf14a2`. Captured Mobile tree: `14a4af3e87b9e2219f1af837aae33d718c29d38b`. Production `mobile/lib` tree: `6c8e595c35450b8e9f06fcd1cda89f996e26211b`, retained through final HEAD. Later test-only changes scroll controls into view before tapping; no production widget changes. Final SHA/Mobile tree and fresh replay are delivered in the PR. Historical origins remain accurate.
+Base: `b942dfd4b82766770836328e4d6177867259e3cf`. Captured source: `05e4e4990853831c36d18b3934a359bf9ebf14a2`. Captured Mobile tree: `14a4af3e87b9e2219f1af837aae33d718c29d38b`. Production `mobile/lib` tree: `6c8e595c35450b8e9f06fcd1cda89f996e26211b`. These are historical captures. Later native review corrected selected-navigation icon colors; the final production tree is now `3b1e069a1de9a575b91487c52957feb0890b4a98`. See [native evidence](native/README.md) for current images and full Mobile-tree provenance. Historical origins remain accurate.
 
 Flutter 3.47.6 / Dart 3.13.5; Linux widget-test engine; 1x pixel ratio. SDK Roboto test alias replaces Ahem; no product font package. Four layouts: 360×800, 430×932, 360×800 at 1.8x text, 844×390 landscape.
 
 Full original matrix: 71 before + 76 after PNGs. Selected files here: 29. Exact hashes, source, environment, scale and scenario are in [provenance.json](provenance.json). Full/final-HEAD matrix and logs are separate delivery artifacts.
 
-**Unverified gate:** Android/iOS emulator/device, native camera/QR/permissions, keyboard/IME/safe areas, TalkBack/VoiceOver and configured live services. Widget renders do not certify these.
+**Historical limitation:** widget renders alone did not verify native execution. Android emulator, keyboard and camera-denial checks are now in [native evidence](native/README.md). Physical device/QR, iOS, TalkBack/VoiceOver and live services remain unverified.
 
 | State / viewport / scale | Before | After |
 |---|---|---|

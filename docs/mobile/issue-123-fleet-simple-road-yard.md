@@ -1,5 +1,7 @@
 # UX-06 — Fleet Simple Road Driver and Yard Spotter
 
+> Historical implementation/recovery snapshot. The later [PR #132 acceptance follow-up](issue-123-acceptance-gates.md) supersedes missing-Android-SDK/emulator and unchanged-final-lib statements below. Original evidence and capture revisions remain preserved.
+
 Implementation for [#123](https://github.com/Dagt/TrailerSaas/issues/123), Epic #117. Branch `issue-123-fleet-simple-mobile-road-yard`. One Draft PR, **NO MERGE**. UX-07/08 and release work #63–65 are not implemented here.
 
 The owner subsequently requested recovery of unpublished progress. Commit `05e4e49` and its existing branch were found clean and retained; see the [recovery snapshot and completion matrix](issue-123-recovery-and-completion.md). Final validation/publication continue from that source, without duplicate implementation or history rewriting.

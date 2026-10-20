@@ -1,5 +1,7 @@
 # UX-06 Visual Quality Gap Report
 
+> Historical implementation/recovery snapshot. The later [PR #132 acceptance follow-up](issue-123-acceptance-gates.md) supersedes missing-Android-SDK/emulator and unchanged-final-lib statements below. Original evidence and capture revisions remain preserved.
+
 Scope: actual Flutter Road/Yard presentation under issue #123. Fleet Simple Option D written specification and native widget-engine base comparisons are available; original conceptual mockups are not. No image-to-image fidelity claim is made.
 
 ## Corrected issues and standardized components

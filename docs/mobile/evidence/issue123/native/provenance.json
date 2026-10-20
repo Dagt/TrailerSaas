@@ -1,0 +1,548 @@
+{
+  "kind": "Real Android Emulator screenshots, not widget-test renders or generated imagery",
+  "capturedSourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+  "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+  "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+  "finalRevisionBridge": "Later documentation/evidence-only commit preserves the entire Mobile Git tree (201 archived inputs). Compare git rev-parse <final HEAD>:mobile with mobileGitTree, not merely a timestamp or directory name. Final HEAD and fresh validation results are published in the PR. Actual capture origins are never relabeled.",
+  "artifacts": {
+    "result": "PASS",
+    "artifacts": [
+      {
+        "kind": "production",
+        "file": "issue132-production-main-e820b83-debug-x64.apk",
+        "sha256": "b50ed4ba815f20d1d89524c3f52c3ea937f3e6882e3e798ae0ad8b5d399e6cef",
+        "bytes": 104038664,
+        "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+        "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+        "entry": "lib/main.dart",
+        "mode": "debug",
+        "abi": "x86_64",
+        "fixtureMarkerCountsInKernel": {
+          "ISOLATED ANDROID REVIEW": 0,
+          "ISOLATED_REVIEW_WRITES_DISABLED": 0,
+          "UX06_NATIVE_REVIEW": 0,
+          "private-bearer": 0,
+          "FakeYardScanner": 0
+        }
+      },
+      {
+        "kind": "isolated-review",
+        "file": "issue132-isolated-review-e820b83-debug-x64.apk",
+        "sha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+        "bytes": 104038664,
+        "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+        "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+        "entry": "test/native_review/main.dart",
+        "mode": "debug",
+        "abi": "x86_64",
+        "fixtureMarkerCountsInKernel": {
+          "ISOLATED ANDROID REVIEW": 4,
+          "ISOLATED_REVIEW_WRITES_DISABLED": 4,
+          "UX06_NATIVE_REVIEW": 2,
+          "private-bearer": 3,
+          "FakeYardScanner": 4
+        }
+      }
+    ],
+    "allArchivedMobileInputsByteIdenticalAfterNativeBuild": 201,
+    "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+    "androidGitTree": "c48b07fae0bbcebb07a46fd43fd02b01fc7e35bb",
+    "exclusionScope": "Normal lib/main.dart APK asset/kernel and production import graph; no release/store-certification claim. Review entry is debug+explicit-define only and has no production import/route."
+  },
+  "screenshots": [
+    {
+      "file": "production-unconfigured-360.png",
+      "sha256": "a39a820d27a4102714c331b3bed364b4a64f90ac3b02c9d9556539a9914e7f8b",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "lib/main.dart",
+      "apkSha256": "b50ed4ba815f20d1d89524c3f52c3ea937f3e6882e3e798ae0ad8b5d399e6cef",
+      "capturedAt": "2026-10-20T18:50:17.349990+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "Real unconfigured bootstrap; no Firebase credentials",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{8ab79ef u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "b50ed4ba815f20d1d89524c3f52c3ea937f3e6882e3e798ae0ad8b5d399e6cef",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "road-home-360.png",
+      "sha256": "8ce54ceb0e0a8c560e3f75be36ee03ff4954f6f66b92d9f8d9508d5654b0aec8",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T18:51:13.139706+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "road-trip-360.png",
+      "sha256": "6c642f485ac0751d228689ce61cdddd03bfd81febd35061ecf37281ece2e2fbb",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T18:51:20.511766+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "yard-home-360.png",
+      "sha256": "2acbae87aa1dfc8ce7aab111cea1dcd3131b818be0cc454d19b8809baa1cbb0c",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T18:51:27.890967+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "yard-home-430.png",
+      "sha256": "5d58bf8a1b98e100d6b1896be5db6b349f7a45a51d656d49b72d80507c233c0b",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T18:52:26.538791+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 860,
+      "pixelHeight": 1864,
+      "wmSize": "Physical size: 720x1600\r\nOverride size: 860x1864",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "yard-text-scale-1.8-360.png",
+      "sha256": "3dade95d9cc0599c72462b6942c52b6811b0f09462ef81a2bbeb287145a94d9a",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T18:52:13.985174+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.8",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "yard-text-scale-1.8-lower.png",
+      "sha256": "0ae76a2afd777793d379affe733a69d5bfb3825eac185f03f168d4aee17af0e6",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T18:52:19.624066+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.8",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "yard-landscape-top.png",
+      "sha256": "4a169b9b3bd4a966f50a4cab48d6ea74abc20a13153fc0c0119e514f14d3bade",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T22:41:59.493492+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 1600,
+      "pixelHeight": 720,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "1",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=false mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SET|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "sign-in-ime-scrolled-360.png",
+      "sha256": "c0f7f28853a9e7ad20ce5fd1fc322fd6e6777a65eeec5a12ee51f778cc5ea597",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T22:42:34.435787+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=true",
+        "mDecorViewVisible=true mDecorViewWasVisible=true mWindowVisible=true mInShowWindow=false",
+        "mIsInputViewShown=true mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SET|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "qr-permission-dialog-360.png",
+      "sha256": "8b51b7745c70b85e639f1dd6f521e6999f141e139a139b52ebe409465097997f",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T22:39:03.740007+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=true mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{401f47 u0 com.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "qr-permission-denied-360.png",
+      "sha256": "ce2eb789343c60c86e9867a7d57610bb6d93716eca90fb9b1e18df63bfe0cab8",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T22:39:24.544140+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=true mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SET|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "yard-confirm-move-360.png",
+      "sha256": "273e0cb08fd7dc67a5ec4037756b83e6f6f53672608ed66c5d3178f8800fe233",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T22:40:47.551657+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=true mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SET|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    },
+    {
+      "file": "yard-move-cancelled-360.png",
+      "sha256": "5638aae214eee760b44b270cb150022e28d535462f4438cd7893015ecaa39e5a",
+      "sourceRevision": "e820b83182000a09cc68238da4757d7d17052054",
+      "mobileGitTree": "43fcaec88b35773da54cd6b62faf5a064b085ef8",
+      "productionLibGitTree": "3b1e069a1de9a575b91487c52957feb0890b4a98",
+      "entry": "test/native_review/main.dart",
+      "apkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "capturedAt": "2026-10-20T22:41:05.237008+00:00",
+      "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
+      "serial": "emulator-5556",
+      "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
+      "data": "ISOLATED ANDROID REVIEW; actual production widgets with synthetic MockClient reads and in-memory SQLite; no real auth/Backend; non-GET requests rejected",
+      "pixelWidth": 720,
+      "pixelHeight": 1600,
+      "wmSize": "Physical size: 720x1600",
+      "wmDensity": "Physical density: 320",
+      "fontScale": "1.0",
+      "userRotation": "0",
+      "androidApi": "35",
+      "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+      "bootCompleted": "1",
+      "keyboardState": [
+        "mInputShown=false",
+        "mDecorViewVisible=false mDecorViewWasVisible=false mWindowVisible=false mInShowWindow=false",
+        "mIsInputViewShown=true mStatusIcon=0"
+      ],
+      "cameraPermission": [
+        "android.permission.CAMERA: granted=false, flags=[ USER_SET|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+      ],
+      "hardKeyboardImeEnabled": "1",
+      "foregroundWindow": [
+        "mCurrentFocus=Window{d12b0b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+      ],
+      "installedApkSha256": "a64fd9e7d5420fb4dcd9bb704ce7a22d3170465451f6bf27523c37bdb227039d",
+      "avdMemoryMb": 1536,
+      "avdCpuCores": 4
+    }
+  ]
+}

@@ -4,11 +4,11 @@
   "capturedSourceCommit": "05e4e4990853831c36d18b3934a359bf9ebf14a2",
   "afterMobileGitTree": "14a4af3e87b9e2219f1af837aae33d718c29d38b",
   "productionLibGitTree": "6c8e595c35450b8e9f06fcd1cda89f996e26211b",
-  "provenance": "Captured from frozen Git archive of the stated source commit. Final HEAD retains this production mobile/lib tree; later test-only changes scroll controls into view before taps. Verify git rev-parse HEAD:mobile/lib and inspect mobile/test diff from capturedSourceCommit. Exact-final-HEAD replay and final complete Mobile tree are supplied in delivery; historical capture revisions are not relabeled.",
+  "provenance": "Historical widget captures from the frozen Git archive of capturedSourceCommit. Their actual source/tree/hashes remain unchanged. The later native review found and corrected only selected navigation icon presentation (fleet_theme.dart); final lib tree is 3b1e069a1de9a575b91487c52957feb0890b4a98. These historical renders do not represent that correction. Current native evidence and complete Mobile-tree bridge are in native/provenance.json; final-HEAD fresh tests are in PR delivery.",
   "runtime": "Flutter 3.47.6 / Dart 3.13.5, Linux flutter_tester, devicePixelRatio 1",
   "fonts": "SDK Roboto Regular/Medium/Bold loaded under a test-only alias to avoid Ahem; no product font dependency",
   "data": "Isolated synthetic fixture reads/local SQLite state; no live Firebase/Backend/R2; capture tests assert no HTTP writes/PUTs/business effects",
-  "deviceGate": "UNVERIFIED: emulator/device, native camera preview/permissions, IME/safe areas, TalkBack/VoiceOver and live integrations",
+  "deviceGate": "Historical widget-only evidence did not verify native gates. Subsequent Android builds/emulator/IME/camera-denial results are documented in native/README.md. Physical device, live integrations, iOS and assistive technology remain unverified.",
   "fullCaptureCounts": {
     "before": 71,
     "after": 76
