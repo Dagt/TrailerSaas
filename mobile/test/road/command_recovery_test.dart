@@ -475,7 +475,14 @@ void main() {
       expect(find.text('No assigned work downloaded.'), findsOneWidget);
       expect(find.text('Reconcile previous operation'), findsOneWidget);
       expect(f.requests.where((r) => r.method == 'POST'), isEmpty);
-      await tester.tap(find.text('Reconcile previous operation'));
+      final reconcile = find.widgetWithText(
+        FilledButton,
+        'Reconcile previous operation',
+      );
+      await Scrollable.ensureVisible(tester.element(reconcile), alignment: .5);
+      await tester.pumpAndSettle();
+      expect(reconcile.hitTestable(), findsOneWidget);
+      await tester.tap(reconcile);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Recover'));
       await tester.pump();

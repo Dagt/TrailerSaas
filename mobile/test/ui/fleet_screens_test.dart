@@ -523,12 +523,22 @@ void main() {
                     );
               await render(tester, screen, scale);
               if (scenario == 'qr-mismatch') {
+                final hook = find.widgetWithText(
+                  FilledButton,
+                  'Scan Trailer and confirm Hook',
+                );
                 await tester.scrollUntilVisible(
-                  find.text('Scan Trailer and confirm Hook'),
+                  hook,
                   160,
                   scrollable: find.byType(Scrollable).first,
                 );
-                await tester.tap(find.text('Scan Trailer and confirm Hook'));
+                await Scrollable.ensureVisible(
+                  tester.element(hook),
+                  alignment: .5,
+                );
+                await settle(tester);
+                expect(hook.hitTestable(), findsOneWidget);
+                await tester.tap(hook);
                 await settle(tester);
                 expect(find.text('Trailer not authorized'), findsOneWidget);
                 if (!baseline) {
