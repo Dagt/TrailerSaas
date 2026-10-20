@@ -19,6 +19,7 @@ Approved written references: `docs/ux/design-system.md`, master plan, visual acc
 | First Stop reorder control inherited misleading primary styling | Neutral reorder actions and clearly disabled boundary controls | Keyboard Stop order review |
 | Narrow tables offer little indication of additional fields | Explicit narrow-screen scroll guidance plus named focusable regions, all columns retained | Mobile/tablet Orders, inventory, deliveries and documents |
 | Native 1280px review exposed badges shrinking into vertical letters | Customer table badges keep complete labels on one line; table overflow stays local | Trailer inventory at all reviewed widths; checked again after correction |
+| Mobile image inspection exposed a desktop grid span creating implicit narrow columns | Explicitly reset resource-cell spans at the narrow breakpoint; verify each preview occupies the full column | Mobile dashboard; structural browser check added in addition to document overflow |
 | Accepted evidence and file access share one plain area | Separate publication/acceptance columns, metadata/association surfaces and secure authorization section | Documents and delivery details; R2-unavailable capture |
 
 Changes use the existing palette/tokens, understated borders/shadows and system font; no alternate identity, graphics, unsupported counters, GPS or ETA. No new data fetching is used for visual polish.
