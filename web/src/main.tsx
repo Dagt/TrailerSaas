@@ -9,6 +9,7 @@ import './styles.css'
 import './shared/ui/workspace.css'
 import './areas/tenant-admin/admin.css'
 import './areas/transport-operations/operations.css'
+import './areas/customer-portal/customer.css'
 
 const rootOptions = await initializeObservability(readWebEnvironment(import.meta.env))
 
