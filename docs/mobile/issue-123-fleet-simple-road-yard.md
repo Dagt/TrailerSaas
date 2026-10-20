@@ -79,7 +79,7 @@ Exact final HEAD/base, measured counts, command exit statuses, full logs and has
 | Authorization and confirmations | Existing identity/context/permission/QR/cancellation/reconciliation tests; source/parser boundary evidence |
 | Accessibility | Contrast, scaling, keyboard/focus, natural-height controls; device assistive checks still unverified |
 | Locked install | `flutter pub get --enforce-lockfile`; byte-identical lock |
-| Generated persistence | `dart run build_runner build`; byte-identical `app_database.g.dart` and unchanged source/schema |
+| Generated persistence | `dart run build_runner build`; raw-byte identity against the committed Git blob, with unchanged source/schema |
 | Formatting / static analysis | `dart format --output=none --set-exit-if-changed lib test`; `flutter analyze --fatal-infos` |
 | Full tests | Full `flutter test` with machine-readable count/failure/skip report; no omitted historical suite |
 | Build | `flutter build bundle` where supported; Android APK/iOS native build availability recorded separately |
@@ -87,3 +87,9 @@ Exact final HEAD/base, measured counts, command exit statuses, full logs and has
 | Delivery | Single Draft PR, `Closes #123`, no merge; device gate and hosted Full CI remain explicit |
 
 Historical widget assertions are updated only for US English copy, equivalent labeled assignment facts and the secondary Sync button type; no assertions are removed or relaxed. The QR mismatch test additionally requires Close and forbids Confirm. Backend/OpenAPI/Web tests are not represented as run for this mobile-only change. No workflow, protection or check bypass is included.
+
+## Investigated validation archive line endings
+
+The first frozen validation stopped at a raw generated-file comparison. Investigation found that Windows `core.autocrlf=true` converts `git archive` output to CRLF: the exported file was 518,074 bytes, while the actual committed Git blob and regenerated output are both 502,642 bytes with LF. Regeneration on both base and candidate produced bytes identical to their committed Git blobs. This was a validation export artifact, not a baseline Drift or hosted CI defect. The failed attempt and four-way byte/hash comparison are preserved in delivery rather than concealed.
+
+The final source archive uses `git -c core.autocrlf=false archive`, verified against every committed Mobile file. Final validation repeats generation and requires raw-byte identity without normalization. No tracked generated file, schema, repository Git setting or workflow is changed. Earlier widget evidence used the same Mobile tree with checkout-only newline conversion; Dart semantics are unchanged and exact-final-HEAD replay is supplied separately.

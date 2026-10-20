@@ -53,3 +53,5 @@ The unchanged queue's retryable-failure label intentionally says result uncertai
 - Emulator/device and TalkBack/VoiceOver execution remains an unmet verification gate, not a passed visual criterion; staged integration and physical-device release QA remain #65.
 
 No UX-07/08 issue work, new issue, role grant, GPS/ETA, offline engine change or new business flow is introduced.
+
+An initial validation export applied Windows CRLF conversion and caused a Drift byte-comparison failure. Investigation verified that the actual Git blob and base/candidate regenerated output are byte-identical LF; this is not a product defect or baseline CI gate. Final validation uses a Git-blob-identical archive and repeats the raw check. Failed-attempt logs remain in delivery. See the implementation record for provenance.
