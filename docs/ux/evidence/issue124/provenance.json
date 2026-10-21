@@ -6,7 +6,7 @@
   "nativeCapturedSource": "7971457f3d66aaaba39867b2d17e25604e9c36d8",
   "mobileGitTree": "f3db13b8516495265fab5401174ec45a7c858187",
   "productionLibGitTree": "139a154ef4d87dea9dd1aad59d5204c8cecaf29d",
-  "finalRevisionBridge": "Later documentation/evidence-only commit preserves entire Web and Mobile Git trees. Compare git rev-parse <final HEAD>:web and :mobile against these immutable tree IDs. Final HEAD and freshly executed full validations are published in the PR/delivery, not fabricated into historical capture metadata.",
+  "finalRevisionBridge": "Historical first-pass evidence verifies f5031b2 only. Its original capture records remain intact. Current source-tree evidence and commercial refinement are in refinement/provenance.json; do not apply the historical trees to the current PR HEAD.",
   "nativeArtifacts": {
     "result": "PASS",
     "artifacts": [
@@ -8014,5 +8014,7 @@
     "Requested emulator RAM1536MB; actual guest MemTotal2532432kB, recorded per capture; emulator raises minimum",
     "Debug-only fixture Drift multi-instance warning retained; no overflow/unhandled/fatal or ANR in accepted runtime checks",
     "Early exploratory after-* directories superseded; only listed immutable final-source images are acceptance evidence"
-  ]
+  ],
+  "historicalFinalHead": "f5031b2fd6185340720bbf904f372f33f28b8acc",
+  "currentEvidenceIndex": "refinement/provenance.json"
 }

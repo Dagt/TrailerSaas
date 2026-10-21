@@ -101,3 +101,52 @@ Only presentation, directly related regression tests and this audit/evidence cha
 Full frozen-revision validation commands: Web `npm ci`, typecheck, lint, complete Vitest and production build; Flutter locked install, raw Drift regeneration identity, format, fatal-info analyze and complete tests. Exact final HEAD, measured counts/errors/skips, command exits/log hashes, production exclusion, demo-asset integrity and actual GitHub Actions state are recorded in the final PR/delivery after freezing this documentation commit. APK/capture source revisions remain immutable and are bridged by complete equal Web/Mobile Git trees, not relabeled. No Backend/Web/API test result is inferred from another subsystem.
 
 Remaining manual/environment limits: no actual authorized Firebase/Backend/R2 session; interiors use explicit isolated fixtures and reject writes/download grants. No real accepted business operation. No physical QR/printer/camera, iOS, TalkBack/VoiceOver or full WCAG certification. Browser zoom chrome is unavailable in headless review;720×450 reflow is explicitly equivalent coverage rather than a real200% browser-zoom claim. Native hardware/peripheral release checks remain #65. Configured Firebase login browser success is unverified; real unconfigured states and existing SignIn/component tests are retained. Final merge approval requires actual current-revision hosted complete CI; if Billing still blocks runners, report REMOTE CI NOT VERIFIED — BILLING BLOCKED and keep Draft. Never bypass checks, mark Ready or merge on this task.
+
+## Commercial visual quality assessment
+
+### Owner feedback and baseline
+
+The owner found the first pass too austere. Its earlier qualitative scores and technical passes did not constitute owner commercial acceptance. This second pass starts from **f5031b2fd6185340720bbf904f372f33f28b8acc** on the same PR133 branch; fetched main remains cb08d3d. PR130/131/132 merges, open Issue124 and the sole Draft PR133 were reverified. No history rewrite, merge, new PR or Issue125 work. Existing evidence and all112 local demo assets remain preserved. Exact original concepts are unavailable; fidelity to those images is not claimed.
+
+[New before/after comparisons](evidence/issue124/refinement/README.md), [full source/hash provenance](evidence/issue124/refinement/provenance.json) and [actual matrix](evidence/issue124/refinement/route-role-state-matrix.csv) distinguish current evidence from the preserved historical309-image pass.
+
+### Deficiencies and corrections
+
+| Finding / severity | Actual initial deficiency | Applied refinement / verification |
+|---|---|---|
+| R01 / Medium | Shared navigation and workspace bands read as independent stacked lists; active module had weak visual grouping | Compact role/context band, a named visual navigation section, consistent icon wells and a white active tile. All authorized links, context, Refresh/Sign out, drawer and focus behavior remain. |
+| R02 / Medium | Admin's equally wide Master data and Tenant controls panels left unstructured space and weak priorities | Main task directory plus narrower control rail at wide desktop; single reading-order column below1200px. Existing module icon/label/description/link and permission predicates retained. |
+| R03 / Medium | Dispatch repeated Pending, Attention and Active sections vertically with equal weight | Pending planning work with an Attention rail above a full-width Active Trips table. Bounded preview captions, actual records, filtering and DOM reading order retained. Stacks below1280px; no totals or invented metrics. |
+| R04 / Medium | Customer recency, six state previews and resource previews formed a wall of equally treated text | Recent requests alongside a compact2×3 state preview group, with one clear parent bounded-preview disclaimer; remove only repeated state-card helper copy. All seven previews and all six state query filters are explicitly regression-checked. Resource groups and actual linked evidence remain. A taller exploratory layout was rejected after visual inspection. |
+| R05 / Medium | Tables lacked row/identifier emphasis; record metadata and histories appeared as text dumps | Restrained alternate row surfaces, stronger identifiers, consistent compact headers, square semantic chips, ruled fact groups, distinct timeline entries and clearer section/action separation. No value, state meaning, history order or pagination changed. |
+| R06 / Medium | Plan stages lacked consistent visual progression; an initial refinement duplicated numerals and split Order IDs | One decorative numeral plus original accessible step name; original enabled/disabled/state handlers unchanged. Planning identifiers remain intact inside the horizontally scrollable table. Bad exploratory captures retained externally and superseded. |
+| R07 / Medium | Flutter headings, work records and status/action boundaries lacked visual structure | Teal heading rule, consistent blue section icon wells, naturally sized Stop/record surfaces, compact status badges, separated Road status/action/expected Trailer, subtle AppBar elevation and consistent form rhythm. No hidden fields, fixed text heights, suppressed scaling, callback or guard changes. |
+
+Reviewed priority screens: Admin Overview/Customers/Trailers/Audit; Operations Dispatch/Trip Detail/Trailer Detail/Plan Trip; Customer Dashboard/Orders/Deliveries/Trailer Detail/Documents. Each has actual before/after390/768/1440 browser renders, with relevant1280/1920 variants. Android before/after uses actual Road Home, Assigned Trip, synchronization, Yard Home and Yard movement entry; additional after captures cover recorded Trailer state, canceled move review, large phone and landscape. Actual offline/conflict/queued-state visuals use explicitly labeled widget-test-engine renders, **not emulator screenshots**.
+
+### Commercial quality matrix
+
+Scores use the existing qualitative1–5 rubric:1 unusable,2 visibly rough,3 functional/basic,4 intentionally composed and reviewable,5 exceptional and owner validated. They are audit aids, not percentage gains or owner approval. The baseline is the first-pass PR, not pre-redesign main.
+
+| Dimension | Initial assessment | Current assessment / evidence |
+|---|---|---|
+| Visual hierarchy |3: similarly weighted panels |4: Admin control rail, Dispatch Attention rail, Customer recency/state hierarchy |
+| Design consistency |3: mixed table/heading/action rhythm |4: shared quality layer, retained approved Fleet palette and analogous native section cues |
+| Typography |3: weak identifier/metadata distinction |4: differentiated headings, labels, tabular figures and quieter readable metadata |
+| Spacing / density |3: long equal-width stacks |4: purposeful desktop composition, compact rows; native natural height may still require scrolling |
+| Responsive usability |3: functional stacking |4: all13 priority Web routes reviewed at three required widths, controlled table scrolling, actual large/landscape native review |
+| Accessibility |4: earlier scoped checks |4: focus/drawer/labels/contrast and scaling retained; no certification claim |
+| Action clarity |3: status/action adjacency and plain action links |4: separate primary/secondary/danger hierarchy and Road status/action spacing |
+| Operational truth |4: existing explicit meanings |4: preserved physical/expected, current/last-known, queued/ACK, uploaded/accepted distinctions |
+| Empty/error states |4: contextual earlier corrections |4: retained messages/retries with current boundary-state review |
+| Commercial presentation |3: owner found first pass austere |4: auditor assessment from actual comparisons; owner decision explicitly pending |
+
+### Protection, tests, risks and pending work
+
+The Web AST audit still preserves550 protected calls,131 operational guards and176 complete event handlers across59 production feature/auth/shared-Trailer files. Flutter presentation changes preserve operational AST checks and bootstrap/lifecycle/QR functions; complete final regression results, log hashes and exact final SHA are published in the updated PR/delivery after this evidence-only freeze. Focused Web150 and Flutter99 cases passed; these do not replace full final suites. Both normal and isolated Android debug x86_64 builds succeeded from an immutable202-file Mobile archive; normal APK fixture markers are absent. Actual source-tree equality bridges the native9be0e2 and browser541d936 captures to the final documentation-only HEAD without relabeling capture metadata.
+
+Browser replay:49 before and49 after priority captures,50 further boundary/dialog/reflow images,46 PASS checks plus12 dialog observations,12 accessible-name snapshots,16 contrast pairs and30 console visits with no recorded page/console errors. Drawer Escape/focus return, keyboard scrolling, action dialogs and unchanged accessible Plan step names are reviewed. Additional isolated widget captures exercise actual offline and sync-state production widgets with local fixtures. Three early native navigation attempts were rejected after inspection; visible-control bounds and semantic route assertions were added before accepted native comparisons. They are not counted as successful route evidence.
+
+No Backend/OpenAPI/Firebase/role/RLS/query/cache/API contract/offline replay/command/state machine/movement/Drift/native project/dependency changes. No real operational write, QR authorization, physical movement or protected download is claimed. Confirmation was canceled with Not Yet. Existing suites are retained, with stronger assertions for all Customer preview scopes/states. Git diff whitespace warnings from the first pass are cleaned up. Prior native/plugin warnings and actual CI annotations remain visible, not suppressed.
+
+Pending/limitations: owner commercial review; Low technical-enum copy consistency remains an owner decision. Actual browser-chrome200% zoom, real Firebase/Backend/R2 authentication/download grants, physical device/camera/QR/printer, iOS and TalkBack/VoiceOver remain unverified.720×450 reflow is equivalent coverage only. Existing Vite development-tool security finding is separate from this visual refinement; dependencies remain unchanged. Native keyboard/camera guards and SafeArea remain unchanged, with existing tests/evidence preserved; this pass does not assert fresh physical integration certification. Hosted full current-HEAD CI is required for merge approval; the latest actual run and Billing status are reported in the PR. No Ready action, check bypass, merge or UX08 work.
