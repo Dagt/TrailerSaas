@@ -1,0 +1,103 @@
+# UX-07 — cross-platform visual quality and accessibility audit
+
+Issue #124, Epic #117. Fleet Simple Option D remains authoritative. Implemented presentation refinements and reviewed evidence; owner approval and hosted complete CI remain separate gates. Unexecuted manual checks are not passes. One Draft PR; **NO MERGE / no UX-08**.
+
+## Baseline and evidence method
+
+Fetched base: `cb08d3da85ade73ada7bc5bcf38cc7178c9e6b4a`, the owner-merged PR #132. GitHub confirmed #118–123 closed, PR #127–132 merged, #124 open and no competing PR. Clean branch `issue-124-fleet-simple-visual-quality-accessibility` uses a separate worktree. Original branches/worktrees and 112 local demo assets are preserved, with SHA256 inventory outside Git.
+
+The initial browser audit rendered 37 actual route/scenario variants: 1440×900 and 390×844 for all, plus 768×1024, 1280×800 and 1920×1080 for representative dashboards/directories/forms (101 images). Baseline has zero recorded document overflows, page errors or failed captures. This alone is not visual acceptance: screenshots were inspected for composition and interaction checks are separate. The before manifest records exact base, route, synthetic role, viewport, data fixture, source tree and unmodified PNG hash.
+
+Authenticated interior rendering currently uses the existing separate DEV-gated entries: actual React routes with a visible ISOLATED DEMO notice, synthetic read fixtures, no Firebase/Backend session and writes rejected. Real unconfigured bootstrap and Home are separate scenarios. No real customer data, generated imagery or fictional metrics. Old conceptual references are unavailable; fidelity to them is not claimed.
+
+The existing native Android before evidence retains its actual capture source `e820b83182000a09cc68238da4757d7d17052054`; base and that capture have the identical complete Mobile tree `43fcaec88b35773da54cd6b62faf5a064b085ef8`. Those are emulator captures with an isolated fixture banner, not physical-device or real-auth certification. Subsequent native evidence must identify its own actual source/APK. Widget-test renders are indexed separately.
+
+## Actual inventory and traceability
+
+Ready-state browser paths below refer to `issue124-browser/before/browser-review.json` and the eventual after manifest. Automated regression references are existing suites, retained intact, plus new targeted UI/a11y tests. Each family also requires relevant boundary-state review; an unrendered boundary is not implied by a Ready screenshot.
+
+| Role / implemented route or widget | Actual surfaces / states | Regression boundary |
+|---|---|---|
+| Shared `/`, auth in each protected area, global/customer `*` | Home, role entry, SignIn, expired/loading/unconfigured/denied/not-found, drawer | AppShell/WorkspaceShell/auth tests; existing providers and filtered links |
+| Admin `/admin` | Overview: existing master data and capability-filtered controls | AdminPresentation and layout tests |
+| Admin `/admin/customers`, `/:customerId` | Directory, create/edit, partial Site associations, deactivate dialog | MasterDataPages/AdminPresentation tests; versioned writes |
+| Admin `/admin/locations`, `/admin/sites/:siteId` | Physical Sites, address/timezone/geofence, Operational Locations and forms | Existing master-data/resource validation tests |
+| Admin `/admin/drivers`, `/:driverId` | Driver identity/license/certificate, linked account/unlink, deactivate | Existing protected account/record tests |
+| Admin `/admin/tractors`, `/:tractorId` | Equipment directory/detail/create/edit/deactivate | Existing master-data tests |
+| Admin `/admin/trailers`, `/:trailerId` | Filters, metadata/designation, shared read view, movement history, QR history/preview/print/revoke | Existing Trailer/QR/master-data tests |
+| Admin `/admin/settings` | Approved configuration, validation, stale-version reload | Existing settings/conflict tests |
+| Admin `/admin/alerts`, `/:alertId` | Filters, severity/status/detail, ACK/Resolve dialogs, reason, recovery block | Alerts permissions/version/recovery tests |
+| Admin `/admin/audit`, `/:auditEventId` | URL filters, cursor history, actor/time, read-only before/after and withheld fields | Audit privacy/cursor/role tests |
+| Operations `/operations` | Bounded Dispatch previews, filters/search, Pending/Active/Attention | Board/OperationsPresentation tests; no total or GPS inference |
+| Operations `/operations/orders`, `/:orderId` | Planning queue/selection/pagination, read-only references/Stops/cargo | Existing selection/filter/cache/read tests |
+| Operations `/operations/trips`, `/new` | Directory, four planning steps, reorder/resources/review | Existing PlanTrip/idempotency/conflict/uncertain-ACK tests |
+| Operations `/operations/trips/:tripId` | Assignment, executable Stops, linked Orders, actions, paginated timeline | TripDetail/actions/history tests |
+| Operations `/operations/trailers`, `/:trailerId` | Exact search, Current/Last Known, coupling vs expected, paginated movements | Shared TrailerViews tests; no fuzzy/list-all behavior |
+| Operations `/operations/alerts`, `/:alertId` | Shared authorized Alerts, actions/confirmations | Same permission/recovery/version boundaries |
+| Customer `/customer` | Bounded request/delivery/equipment/evidence previews | CustomerPresentation/CustomerReadViews tests |
+| Customer `/customer/orders`, `/new`, `/:orderId` | Filters/pages, four-step creation, edit/cancel/reroute/substitution/completion dialogs | Customer workflows, payload/ACK/version and scope retirement tests |
+| Customer `/customer/trailers`, `/:trailerId` | Confidential inventory/detail and paginated current-designation history | Customer read/privacy/cache tests |
+| Customer `/customer/deliveries`, `/:orderId/:stopId` | Read-only milestones, linked accepted evidence | Customer read/foreign-resource tests |
+| Customer `/customer/documents`, `/:documentId` | Metadata, explicit protected download, unavailable/expired grants | Protected download cancellation/scope tests |
+| Mobile `SessionView` | Sign-in/access/Tenant selection, Road/Yard, cached-vs-current verification, refresh/sign-out | Existing session controller/view/cache tests |
+| Road `ShiftHomePanel`, `InspectionScreen` | On/Off Duty, Pre/Post-Trip, camera/odometer/evidence validation | Shift protocol/photo/queue tests |
+| Road `RoadTripScreen`, native scanner | Assigned work/Stops, QR/Hook/Drop, arrival/service/departure and confirmation | Road execution/QR/arrival/manual confirmation tests |
+| Road `RoadEvidencePanel` | BOL/POD/No Receiver, Fuel, problems, retained drafts | Evidence/media acceptance/payload tests |
+| Road `DriverUpdatesPanel`, `CommandRecoveryPanel` | Changed instructions, cancellation, uncertain command recovery | Existing owner fencing and recovery tests |
+| Shared Mobile `SyncPanel`, `MediaSyncPanel`, `NotificationsPanel` | Queued/sending/ACK/conflict/uncertain; finalized media vs business acceptance; push transport | Queue/replay/media/notification suites |
+| Yard `YardHomePanel`, `YardActionsPanel` | Site, scan/read, physical move review, correction/discrepancy/damage | Yard scope/QR/confirm/version/OOS tests |
+| Yard `YardChecksPanel` | Start/resume/scan, snapshot progress, review/cancel/complete/reconcile, offline/uncertain | Check integrity/history/reconciliation/queue tests |
+
+Tenant CRUD, a general Users/Memberships directory and broad Admin health metrics are **not implemented screens**. Existing membership/context selectors and Driver account controls are the actual access surfaces. No new routes or capabilities are invented. Road/Yard placeholder classes are not counted as implemented screens.
+
+## Severity-ranked defect register
+
+Criteria abbreviations: H hierarchy/density; R responsive/reflow; A accessibility; C consistency; T operational truth. See the [actual before/after index](evidence/issue124/README.md), [per-image provenance](evidence/issue124/provenance.json) and [route-role-state matrix](evidence/issue124/route-role-state-matrix.csv). All listed corrections were visually inspected; exact final full-suite results are published after source freeze in the PR/delivery.
+
+| ID / severity | Actual observed defect / role / scenario | Before | Correction / verification status | Criterion |
+|---|---|---|---|---|
+| V01 / Medium | Mobile shared chrome repeats context in tall stacked bands; Customer create title starts low in 390px viewport | `customer-create-order-390x844.png` | Compact shared header while retaining labels, all actions and authority; corrected image inspected; actual drawer/focus/reflow checks pass | H/R/C |
+| V02 / Medium | Same generic icon for every sidebar module weakens scanning | All three desktop dashboards | Small local decorative SVG cues by destination; visible labels and filtered links remain authoritative | H/C/A |
+| V03 / Medium | Wide tables scroll but Admin/Operations have no visible or screen-reader instruction | `operations-orders-390x844.png` | Actual-overflow ResizeObserver hint, associated description, native keyboard scrolling; reflow/cleanup tests pass | R/A |
+| V04 / Medium | Raw ISO Admin metadata, browser-language Operations dates and a different Customer format lack consistent visible offset | Driver/Trip/Alert detail and Dispatch | Shared US English display formatter with actual browser offset; API/filter/input instants unchanged; propagated to Admin metadata, Audit, Operations, Alerts, shared Trailer and Customer time; seconds preserved and same-minute regression passes | C/T/A |
+| V05 / Medium | Admin Overview link blocks have weak task grouping/cues across otherwise similar white panels | `admin-overview-1440x900.png` | Existing module directory gains aligned task icons, clear labels and restrained interactive surfaces; no counters/new modules | H/C |
+| V06 / Medium | Native Tenant fact + verification notice + timestamp consume much of landscape/large-text workspace before any work | Original native Yard landscape / text-scale captures | One naturally sized context block; same supplied authorization/offline messages; six new reflow/semantics/actual button-access cases pass; native before/after inspected | H/R/A/T |
+
+| V07 / Medium | Two independently failed Customer queries render identical error/Retry blocks | `qa-before/customer-500-390.png` | Named alerts distinguish Order actions from Order records; both original retries retained, tested and visually inspected | H/A/C |
+| V08 / Low / deferred | Some Admin/Customer badges retain technical enum labels while Operations uses friendly labels | Directory/dashboard captures | Domain labels remain explicit; broad copy remapping deferred to owner decision, not silently treated as a business change | C/T |
+
+The new shared table hint initially duplicated Customer's existing portal hint. Visual inspection caught this; the redundant portal hint was removed and an integration regression now enforces one shared hint. Exploratory duplicate-hint captures are superseded, not final acceptance evidence. No unresolved confirmed Critical/High visual/a11y defect was found in the reviewed scenarios; that is not blanket WCAG/device certification. Enlarged native context/time metadata still takes vertical space; it remains readable/scrollable rather than hidden or truncated.
+
+## Scoring rubric and limits
+
+Qualitative scale: **1** obstructed/unsafe, **2** substantial inconsistency, **3** usable with visible refinement deficits, **4** coherent and reviewed with minor disclosed limits, **5** exceptional verified execution. Use identical scenarios before/after, explain each score, and do not convert subjective scores to percentage improvements.
+
+| Dimension | Initial reviewed assessment | Final assessment |
+|---|---|---|
+| Visual hierarchy | 3: work competes with tall context bands | 4: less mobile chrome and stronger task grouping; actual geometry and native comparisons |
+| Design consistency | 3: same palette, repeated icons and inconsistent time presentation | 4: shared navigation cues, single overflow instruction and unified display time |
+| Typography | 3: readable, date language/offset inconsistency | 4: US English, actual offset and seconds; original instants retained |
+| Spacing / density | 3: usable desktop tables, mobile/context density can improve | 4: measured chrome reduction; no claim of smaller content at every text scale |
+| Responsive usability | 3: local scrolling works; discovery/context height weak | 4: visible/accessibly described scrolling, required widths and native enlarged layouts reviewed |
+| Accessibility | 3: semantic controls/focus exist; manual/automated review incomplete | 4 within automated scope:16 contrast pairs, keyboard/focus,12 AX name snapshots and Flutter semantics; manual limits remain |
+| Action clarity | 3: existing actions retained, navigation cues weak | 4: distinct module cues and separately named failure recovery |
+| Operational status clarity | 4 in reviewed examples: bounded previews and separate physical/server states | 4: original status meanings and protected code retained; no fabricated outcome |
+| Empty / error quality | 3 after baseline boundary review: repeated indistinguishable query errors | 4: contextual error titles/retries, loading/empty/denied reviewed |
+| Commercial presentation | 3: cohesive palette, composition still needs refinement | 4: auditor assessment from actual comparisons; owner commercial approval pending |
+
+Scores are the auditor's explained assessment, not WCAG certification or owner approval. Physical devices, TalkBack/VoiceOver and live Firebase/Backend/storage remain separate, explicitly unverified checks. Native browser zoom must be distinguished from CSS/reflow-equivalent testing. Hosted complete CI is required for merge approval; local success does not substitute for it. No Backend/API/auth/policy/state machine/replay/Drift/native integration changes are authorized.
+
+
+## Verified results, protection and explicit limits
+
+Visual browser review: 101 after route/viewport captures,24 before boundary captures,46 passing browser checks plus12 dialog-title observations,12 accessible-tree name snapshots with zero unnamed controls in tested listings,16 measured text/control/status contrast pairs and12 before/after geometry observations. Additional Plan Trip stages and QR preview/print-media checks pass in both source trees. Page-error counts are zero for these recorded scenarios. A separate54-scenario console replay reports zero console/page errors in the recorded cases; [console evidence](evidence/issue124/console-review.json) and [boundary audit](evidence/issue124/boundary-verification.json) retain their actual code snapshot. Complete suite counts are recorded after the final freeze in PR/delivery; automation success alone was not visual acceptance.
+
+At390px, the Customer create heading moved from568px to451.5px; Operations Orders from436px to348.5px; Admin Overview from457px to404.5px. Same synthetic scenario/viewport; no arbitrary percentage improvement or performance claim. All context/actions remain. At1440px these headings moved18px earlier. At1.8/2.0 native text, natural wrapping and scrolling remain; no minimum-height claim is inferred from fixture text lengths.
+
+Web AST comparison preserves550 protected calls,131 operational guards and176 complete event handlers across59 feature/auth/shared-Trailer production files. Mobile AST comparison preserves203 protected calls and624 original operational guards across67 non-presentation production Dart files, plus exact bootstrap/lifecycle/QR detector functions. The modified SessionView alone retains all3 protected calls and10 guards. These are supplementary evidence; original behavioral suites remain required. Authorization/query/cache/contracts/controllers/replay/state machines/Drift/native projects/lockfiles remain unchanged; source integrity and generated-output identity are checked in final validation. One existing Trailer timeline assertion was updated to the new explicit display format, preserving the original dateTime assertion and adding GMT-offset verification; no test is deleted/skipped/weakened.
+
+Only presentation, directly related regression tests and this audit/evidence change. No Backend, Flyway, OpenAPI, Firebase/policy, API/DB schema, QR identity, physical movement, offline idempotency/Drift or UX-08 implementation. No new framework/dependency. SafeArea, native plugins and scanner/confirmation behavior remain. Normal APK review-marker exclusion passes; DEV browser entries are excluded from normal production output and audited again in final validation.
+
+Full frozen-revision validation commands: Web `npm ci`, typecheck, lint, complete Vitest and production build; Flutter locked install, raw Drift regeneration identity, format, fatal-info analyze and complete tests. Exact final HEAD, measured counts/errors/skips, command exits/log hashes, production exclusion, demo-asset integrity and actual GitHub Actions state are recorded in the final PR/delivery after freezing this documentation commit. APK/capture source revisions remain immutable and are bridged by complete equal Web/Mobile Git trees, not relabeled. No Backend/Web/API test result is inferred from another subsystem.
+
+Remaining manual/environment limits: no actual authorized Firebase/Backend/R2 session; interiors use explicit isolated fixtures and reject writes/download grants. No real accepted business operation. No physical QR/printer/camera, iOS, TalkBack/VoiceOver or full WCAG certification. Browser zoom chrome is unavailable in headless review;720×450 reflow is explicitly equivalent coverage rather than a real200% browser-zoom claim. Native hardware/peripheral release checks remain #65. Configured Firebase login browser success is unverified; real unconfigured states and existing SignIn/component tests are retained. Final merge approval requires actual current-revision hosted complete CI; if Billing still blocks runners, report REMOTE CI NOT VERIFIED — BILLING BLOCKED and keep Draft. Never bypass checks, mark Ready or merge on this task.
