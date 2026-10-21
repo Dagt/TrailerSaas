@@ -4,9 +4,9 @@
   "mainBase": "cb08d3da85ade73ada7bc5bcf38cc7178c9e6b4a",
   "webCapturedSource": "541d936aaa64177b04e6aafe26bf17b3ed2c97c6",
   "webGitTree": "0d79f4684a9d37367fe0e64cf7d138e63905b0a9",
-  "nativeCapturedSource": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-  "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-  "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+  "nativeCapturedSource": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+  "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+  "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
   "nativeBeforeSource": "7971457f3d66aaaba39867b2d17e25604e9c36d8",
   "nativeBeforeBridge": "That complete Mobile Git tree equals f5031b2:mobile; raw timestamps and actual capture SHAs remain unchanged.",
   "finalRevisionBridge": "The final documentation/evidence-only commit retains these entire Web/Mobile Git trees. Exact final SHA and freshly measured complete validations are in the PR/delivery. Captures are not relabeled.",
@@ -15,12 +15,12 @@
     "artifacts": [
       {
         "kind": "production",
-        "file": "issue124r-production-main-9be0e2c-debug-x64.apk",
+        "file": "issue124r-production-main-1c05a97-debug-x64.apk",
         "entry": "lib/main.dart",
-        "sha256": "9dea0aee6b190f2f248463a4ffabb0afa9850661cec8db4702d41a653689f705",
+        "sha256": "6b5265ff7a40b51b6175b6a351659181f91d4347e925f6cedd09d7048c177bd4",
         "bytes": 104038664,
-        "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-        "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
+        "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+        "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
         "markers": {
           "ISOLATED ANDROID REVIEW": 0,
           "ISOLATED_REVIEW_WRITES_DISABLED": 0,
@@ -31,12 +31,12 @@
       },
       {
         "kind": "review",
-        "file": "issue124r-isolated-review-9be0e2c-debug-x64.apk",
+        "file": "issue124r-isolated-review-1c05a97-debug-x64.apk",
         "entry": "test/native_review/main.dart",
-        "sha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+        "sha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
         "bytes": 104038664,
-        "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-        "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
+        "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+        "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
         "markers": {
           "ISOLATED ANDROID REVIEW": 4,
           "ISOLATED_REVIEW_WRITES_DISABLED": 4,
@@ -11611,13 +11611,13 @@
     },
     {
       "file": "assigned-trip-verified-360.png",
-      "sha256": "6bc2b4d514a8b109a2385fc3b6d6c36abb925adde5e30e3bb848ccbe201efa91",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "b33a0c5927068f8ee5e6c8413772e6a55a1b9cd3daced42d71a61a81afd3af89",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:03:22.697222+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:32:24.169323+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11641,9 +11641,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{1b72dae u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11657,13 +11657,13 @@
     },
     {
       "file": "road-home-default-360.png",
-      "sha256": "5cf19c85ee42fc972b0af9e36446004e72ff2349ab82211a22835fd341c4e7a3",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "09829fbb7ee23453184e6eeb4adb4354eaeb7fdfdacde88de697937173747b1d",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:03:34.551456+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:32:35.932509+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11687,9 +11687,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{1b72dae u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11703,13 +11703,13 @@
     },
     {
       "file": "road-sync-default-360.png",
-      "sha256": "77d42a71c967221b5721132cddc80ed0549a9400b2fc0bdc1005f4f4c37d0d55",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "21f5c43cb1671adf58db399b71e3a9723c27feaf18d8aadebc4776f9ed0e1e04",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:03:43.007526+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:32:51.207425+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11733,9 +11733,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{1b72dae u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11749,13 +11749,13 @@
     },
     {
       "file": "yard-home-default-360.png",
-      "sha256": "2695374088848801615ece2795b5f8e0aa8b9048300f590c7ca9a376e5fd4a89",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "360b1b207f9f574e442c36945d4216e0e3dfbccf79cda0af5945ffa00dc7dfbe",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:04:56.841529+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:33:00.348913+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11779,9 +11779,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{1b72dae u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11795,13 +11795,13 @@
     },
     {
       "file": "yard-movement-default-360.png",
-      "sha256": "8510dbc04d68f5f555927f7d1d1dfd038b1aa01b2414ea0e7dcc618cc0105394",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "9118c80960425063dadfd5c747cfc8a0a76f190e674528d3ea5d01fa30647adb",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:05:08.691358+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:33:12.060045+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11825,9 +11825,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{1b72dae u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11841,13 +11841,13 @@
     },
     {
       "file": "yard-large-430x932.png",
-      "sha256": "3223d9244f956cb28289ff544a430045f0c2d68bb424bdfdf4fd0fac1310f662",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "7c7120a79cef2a086ae491bc57c527e3cc9753665f8fed44280f6d374dcbefd1",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:09:57.832246+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:33:54.212728+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11871,9 +11871,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{4959503 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{96e22b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11887,13 +11887,13 @@
     },
     {
       "file": "yard-landscape-932x430.png",
-      "sha256": "67c570745e5b95179ae7a6b664fb23e2e841efb1497af9845c8ab088689110b6",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "0fdf3bcfa04b97a8d5c1e4b0cc363df7f41ab27942171069ec65123584e6b126",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:10:05.086023+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:34:01.425186+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11917,9 +11917,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{4959503 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{96e22b1 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11933,13 +11933,13 @@
     },
     {
       "file": "yard-confirm-move-default-360.png",
-      "sha256": "920bf7ff3a9831edb29826426441c8b70cb5d3b15f6ce19e91dd70e580a6b306",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "f0ad963a57970e9d454ca1b6689f5b11f242eac85b5959f38f22fba792666991",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:07:08.810541+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:33:30.326013+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -11963,9 +11963,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{1b72dae u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -11979,13 +11979,13 @@
     },
     {
       "file": "yard-recorded-state-360.png",
-      "sha256": "c0256d73807096ac2b00a4740d0cf075eadf4a7d69bcf38462a13f0b19ae6b29",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "da2aa268e02113c2c66a2acfb93014bc2ab0af35a5ae1819f1e979e55a1bd34d",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:06:26.774717+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:33:19.700676+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -12009,9 +12009,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{1b72dae u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -12025,13 +12025,13 @@
     },
     {
       "file": "production-unconfigured-360.png",
-      "sha256": "20dd70e7f8abe652cdff4a8ea526c272ad67bd8c302e0c22390fb90a92d75390",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "604fdc0bf2f96e792ad65c4d31c5d24643442c55c566acedd80b069828f75664",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "lib/main.dart",
-      "apkSha256": "9dea0aee6b190f2f248463a4ffabb0afa9850661cec8db4702d41a653689f705",
-      "capturedAt": "2026-10-21T18:01:29.520444+00:00",
+      "apkSha256": "6b5265ff7a40b51b6175b6a351659181f91d4347e925f6cedd09d7048c177bd4",
+      "capturedAt": "2026-10-21T18:31:56.012243+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -12040,7 +12040,7 @@
       "pixelHeight": 1600,
       "wmSize": "Physical size: 720x1600",
       "wmDensity": "Physical density: 320",
-      "fontScale": "2.0",
+      "fontScale": "1.0",
       "userRotation": "0",
       "androidApi": "35",
       "androidFingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
@@ -12055,9 +12055,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{b47a29e u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{bd08d5d u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "9dea0aee6b190f2f248463a4ffabb0afa9850661cec8db4702d41a653689f705",
+      "installedApkSha256": "6b5265ff7a40b51b6175b6a351659181f91d4347e925f6cedd09d7048c177bd4",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -12071,13 +12071,13 @@
     },
     {
       "file": "road-home-360.png",
-      "sha256": "2814f08f8948143aeefe70f1ed768f9e08443f3806a2b952280bc10c66e58c8a",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
-      "mobileGitTree": "18b2cb767e33158cbc91eab181ad13ce0614adc5",
-      "productionLibGitTree": "d08f500d63ae869f2b4ce4ad157683febda4eacd",
+      "sha256": "27ac71523624b6e03f04f4d31c2c9bba18875e7055f55083226cf8cd29b2169c",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
+      "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+      "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
       "entry": "test/native_review/main.dart",
-      "apkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
-      "capturedAt": "2026-10-21T18:01:56.185417+00:00",
+      "apkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
+      "capturedAt": "2026-10-21T18:32:42.627488+00:00",
       "capture": "adb exec-out screencap -p; unmodified native emulator pixels",
       "serial": "emulator-5556",
       "environment": "Android Emulator / WHPX / software GPU / AOSP default Android 15 API 35 x86_64; not physical device",
@@ -12101,9 +12101,9 @@
       ],
       "hardKeyboardImeEnabled": "1",
       "foregroundWindow": [
-        "mCurrentFocus=Window{4027ada u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+        "mCurrentFocus=Window{3ee3edf u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
       ],
-      "installedApkSha256": "7c33cb29f92b0acd982393033432617a352cbfa1183495d82d45b8fefde5e83a",
+      "installedApkSha256": "96b2db108f2250acc1a2a3bf12c89bfb9f62994ca2d39cc539cdb8b6e81cb05a",
       "requestedAvdMemoryMb": 1536,
       "actualGuestMemTotal": "MemTotal:        2532432 kB",
       "avdCpuCores": 4,
@@ -12197,8 +12197,8 @@
     },
     {
       "file": "road-offline-360x800-scale1.0.png",
-      "sha256": "9436e0b90de82d1cff9aef52644cf306da5eff463afcf5d3c510fe16820e3785",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
+      "sha256": "91c1e6ceb6bf5304f1248db66fb607cbccb9fb6cc037b9fb1b0ff6f0e6818ab9",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
       "viewport": {
         "width": 360.0,
         "height": 800.0,
@@ -12218,7 +12218,7 @@
     {
       "file": "road-offline-lower-360x800-scale1.0.png",
       "sha256": "e1d215a131d976cfb54b85d991fd4295ee3843b1dfda431dd238d6edc2a789b2",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
       "viewport": {
         "width": 360.0,
         "height": 800.0,
@@ -12238,7 +12238,7 @@
     {
       "file": "sync-states-360x800-scale1.0.png",
       "sha256": "fc39729a85e8cc2ff4357b61b7f3b9c687d50925133ccaa9e9a873ea957b3191",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
       "viewport": {
         "width": 360.0,
         "height": 800.0,
@@ -12258,7 +12258,7 @@
     {
       "file": "sync-states-lower-360x800-scale1.0.png",
       "sha256": "43dfd8cb172dc44407199ce59a497f4617cb195896a7adb28e6f005145f22c58",
-      "sourceRevision": "9be0e2cbb2a20421fd23947fc09e0f0f1601acd4",
+      "sourceRevision": "1c05a970393e515c2f63ce865d54e5b7fd090641",
       "viewport": {
         "width": 360.0,
         "height": 800.0,
@@ -12284,15 +12284,20 @@
         "observedScreen": "Review menu, not Assigned Trip; inherited system font2.0 placed control offscreen"
       },
       {
-        "path": "issue124r-native-captures/assigned-trip-360.png",
+        "path": "issue124r-native-after-before-scrollfix/assigned-trip-360.png",
         "observedScreen": "Road Home, not Assigned Trip; offscreen tap"
       },
       {
-        "path": "issue124r-native-captures/assigned-trip-default-360.png",
+        "path": "issue124r-native-after-before-scrollfix/assigned-trip-default-360.png",
         "observedScreen": "Road Home, not Assigned Trip; route had not changed"
       }
     ],
-    "correction": "Reset font to1.0, require visible control bounds and semantic screen assertion; verified captures use assigned-trip-verified-360.png. Initial incomplete workflow and corrected continuation logs retained."
+    "correction": "Reset font to1.0, require visible control bounds and semantic screen assertion; verified captures use assigned-trip-verified-360.png. Initial incomplete workflow and corrected continuation logs retained.",
+    "geometryBatch": {
+      "path": "issue124r-native-geometry-exploratory",
+      "count": 5,
+      "reason": "Inherited Android WM override860x1864; actual dimensions recorded honestly but filename360 did not match. Batch excluded; reset WM explicitly and assert720x1600 before accepted360 captures."
+    }
   },
   "browserChecks": [
     {
