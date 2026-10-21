@@ -65,7 +65,7 @@ export function MasterDetail({ kind }: { kind: Exclude<ResourceKind, 'locations'
   const record = query.data
   const reload = async () => (await query.refetch()).data
   return <div className="admin-page"><PageHeader title={recordName(record)} eyebrow={`${definitions[kind].singular} record`} description={adminDescriptions[kind]}><Link to={`/admin/${kind === 'sites' ? 'locations' : kind}`}>Back to {definitions[kind].title}</Link></PageHeader>
-    <section className="admin-record-summary" aria-label="Record overview"><DetailList items={[["Status", <AdminStatus value={isActive(record) ? 'Active' : 'Inactive'} />], ['Created', record.createdAt], ['Updated', record.updatedAt]]} /></section>
+    <section className="admin-record-summary" aria-label="Record overview"><DetailList items={[["Status", <AdminStatus value={isActive(record) ? 'Active' : 'Inactive'} />], ['Created', <time dateTime={record.createdAt}>{displayTime(record.createdAt)}</time>], ['Updated', <time dateTime={record.updatedAt}>{displayTime(record.updatedAt)}</time>]]} /></section>
     <RecordEditor key={id} kind={kind} path={`/${kind}/${id}`} record={record} customers={customers.data?.items ?? []} reload={reload} />
     {kind === 'customers' && <CustomerAssociations customerId={id} />}
     {kind === 'sites' && <SiteLocations site={record as Site} />}
@@ -138,3 +138,5 @@ export function SettingsPage() {
       : <RecordEditor kind="settings" path="/settings" record={query.data} reload={async () => (await query.refetch()).data} />}
   </div>
 }
+import { displayTime } from '../../shared/ui/dateTime'
+

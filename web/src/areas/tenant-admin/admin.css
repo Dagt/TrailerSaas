@@ -58,6 +58,14 @@
 .admin-overview-links a strong { font-size: var(--text-body); }
 .admin-overview-links a p { margin: 0; color: var(--color-text-secondary); font-size: var(--text-sm); grid-column: 1; }
 .admin-overview-links a span { grid-column: 2; grid-row: 1; }
+.admin-area .admin-overview-links { gap: var(--space-3); }
+.admin-area .admin-overview-links a { grid-template-columns: 2.5rem minmax(0,1fr) auto; align-items: start; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-muted); }
+.admin-area .admin-overview-links a:hover { background: var(--status-pending-bg); border-color: var(--color-primary); }
+.admin-area .admin-overview-links a strong { grid-column: 2; color: var(--color-text); }
+.admin-area .admin-overview-links a p { grid-column: 2; }
+.admin-area .admin-overview-links a span { grid-column: 3; }
+.admin-module-icon { display: grid; place-items: center; grid-row: 1 / span 2; width: 2.5rem; height: 2.5rem; background: var(--color-sidebar-active-bg); color: var(--color-primary-hover); border-radius: var(--radius-md); }
+.admin-module-icon svg { width: 1.5rem; height: 1.5rem; }
 .admin-area .trailer-read-grid { gap: 0 var(--space-6); }
 .admin-area .trailer-read-grid .detail-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .admin-area .trailer-read-grid .operations-timeline { padding-left: var(--space-5); }

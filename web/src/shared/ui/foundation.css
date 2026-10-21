@@ -20,6 +20,8 @@ button:disabled, .ui-button:disabled { opacity: 1; color: var(--color-disabled-t
 .ui-filter-fields .form-field { margin: 0; }
 .table-scroll[data-density='compact'] td, .table-scroll[data-density='compact'] th { padding-block: var(--table-padding-compact-y); }
 .table-scroll:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.table-scroll-hint { position: sticky; left: 0; width: fit-content; max-width: calc(100% - 2rem); margin: var(--space-3) var(--space-4); color: var(--color-text-secondary); font-size: var(--text-xs); line-height: var(--leading-body); }
+.table-scroll-hint > span { color: var(--color-primary-hover); margin-right: var(--space-2); font-weight: 700; }
 .status-badge { border: var(--border-width) solid var(--status-neutral-border); font-weight: 600; line-height: 1.5; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .status-badge[data-tone='success'] { color: var(--status-success-text); background: var(--status-success-bg); border-color: var(--status-success-border); }
 .status-badge[data-tone='attention'] { color: var(--status-attention-text); background: var(--status-attention-bg); border-color: var(--status-attention-border); }

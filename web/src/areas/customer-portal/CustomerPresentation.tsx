@@ -11,7 +11,7 @@ export function CustomerPanel({ title, description, actions, children, className
 }
 
 export function CustomerTime({ value }: {value:string|null}) {
-  return value ? <time dateTime={value} title={`${value} · Displayed in your browser's local time`}>{new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value))}</time> : <>Not recorded</>
+  return value ? <time dateTime={value} title={`${value} · Displayed in your browser's local time`}>{displayTime(value)}</time> : <>Not recorded</>
 }
 
 export function CustomerCargo({ lines }: {lines:CargoInput[]}) {
@@ -30,3 +30,5 @@ export function CustomerStatus({ value }: {value:string}) {
         : ['COMPLETED','ACTIVE'].includes(value) ? 'success' : 'neutral'
   return <StatusBadge tone={tone}>{value}</StatusBadge>
 }
+import { displayTime } from '../../shared/ui/dateTime'
+

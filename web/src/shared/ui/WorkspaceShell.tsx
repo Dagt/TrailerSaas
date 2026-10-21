@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import type { PropsWithChildren, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { WorkspaceIcon } from './WorkspaceIcon'
 import { Link, NavLink, useLocation } from 'react-router'
 import { Button } from './components'
 
@@ -26,7 +27,7 @@ export function WorkspaceHeader({ title, identity, children, actions }: PropsWit
 
 function NavigationLinks({ links, onNavigate }: { links: WorkspaceLink[]; onNavigate?(): void }) {
   return <>{links.map(link => <NavLink key={link.to} to={link.to} end={link.end} onClick={onNavigate}>
-    <span className="navigation-mark" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="5" height="5" rx="1" /><path d="M12 4h5M12 7h5M3 12h14M3 16h14" /></svg></span>{link.label}
+    <span className="navigation-mark" aria-hidden="true"><WorkspaceIcon to={link.to} /></span>{link.label}
   </NavLink>)}</>
 }
 
