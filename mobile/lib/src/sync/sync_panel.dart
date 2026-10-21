@@ -115,88 +115,93 @@ class _SyncPanelState extends State<SyncPanel> with WidgetsBindingObserver {
             );
           }
           final rows = snapshot.data ?? [];
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const FleetSectionTitle('Synchronization', icon: Icons.sync),
-                  const Text(
-                    'Recorded intent is separate from current server state.',
-                  ),
-                  OutlinedButton.icon(
-                    onPressed:
-                        w.sending || w.session.state != SessionState.ready
-                        ? null
-                        : w.sync,
-                    icon: const Icon(Icons.sync),
-                    label: const Text('Sync now'),
-                  ),
-                  if (w.sending)
-                    const Text('Syncing — awaiting server confirmation'),
-                  if (_reviewError != null)
-                    Semantics(liveRegion: true, child: Text(_reviewError!)),
-                  if (w.message != null)
-                    Semantics(liveRegion: true, child: Text(w.message!)),
-                  if (rows.isEmpty) const Text('No recorded operations.'),
-                  if (w.media != null) MediaSyncPanel(worker: w),
-                  StreamBuilder<List<LocalSyncIssue>>(
-                    stream: _issues,
-                    builder: (context, issues) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (issues.hasError)
-                          const Text('Sync issues could not be loaded.'),
-                        ...(issues.data ?? [])
-                            .take(50)
-                            .map((issue) => Text(issue.message)),
-                      ],
+          return FleetScrollSurface(
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FleetSectionTitle(
+                      'Synchronization',
+                      icon: Icons.sync,
                     ),
-                  ),
-                  ...rows.reversed
-                      .take(50)
-                      .map(
-                        (c) => FleetRecord(
-                          title: Text(commandLabel(c.commandType)),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FleetStatus(
-                                {
-                                      'EVIDENCE_PENDING',
-                                      'FUTURE_WORKFLOW',
-                                    }.contains(c.lastErrorCode)
-                                    ? 'Blocked by evidence or pending workflow'
-                                    : stateLabel(c.state),
-                                tone: commandTone(c.state),
-                              ),
-                              if (c.lastErrorCode != null)
-                                Text(issueMessage(c)),
-                              if (c.nextRetryAt != null)
-                                Text(
-                                  'Next retry: ${fleetTime(c.nextRetryAt!)}',
-                                ),
-                            ],
-                          ),
-                          action:
-                              {
-                                    CommandState.conflict.value,
-                                    CommandState.permanentFailure.value,
-                                  }.contains(c.state) &&
-                                  c.lastErrorCode != 'IDEMPOTENCY_KEY_REUSED'
-                              ? TextButton(
-                                  onPressed:
-                                      w.session.state == SessionState.ready &&
-                                          !w.sending
-                                      ? () => review(c)
-                                      : null,
-                                  child: const Text('Review'),
-                                )
-                              : null,
-                        ),
+                    const Text(
+                      'Recorded intent is separate from current server state.',
+                    ),
+                    OutlinedButton.icon(
+                      onPressed:
+                          w.sending || w.session.state != SessionState.ready
+                          ? null
+                          : w.sync,
+                      icon: const Icon(Icons.sync),
+                      label: const Text('Sync now'),
+                    ),
+                    if (w.sending)
+                      const Text('Syncing — awaiting server confirmation'),
+                    if (_reviewError != null)
+                      Semantics(liveRegion: true, child: Text(_reviewError!)),
+                    if (w.message != null)
+                      Semantics(liveRegion: true, child: Text(w.message!)),
+                    if (rows.isEmpty) const Text('No recorded operations.'),
+                    if (w.media != null) MediaSyncPanel(worker: w),
+                    StreamBuilder<List<LocalSyncIssue>>(
+                      stream: _issues,
+                      builder: (context, issues) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (issues.hasError)
+                            const Text('Sync issues could not be loaded.'),
+                          ...(issues.data ?? [])
+                              .take(50)
+                              .map((issue) => Text(issue.message)),
+                        ],
                       ),
-                ],
+                    ),
+                    ...rows.reversed
+                        .take(50)
+                        .map(
+                          (c) => FleetRecord(
+                            title: Text(commandLabel(c.commandType)),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FleetStatus(
+                                  {
+                                        'EVIDENCE_PENDING',
+                                        'FUTURE_WORKFLOW',
+                                      }.contains(c.lastErrorCode)
+                                      ? 'Blocked by evidence or pending workflow'
+                                      : stateLabel(c.state),
+                                  tone: commandTone(c.state),
+                                ),
+                                if (c.lastErrorCode != null)
+                                  Text(issueMessage(c)),
+                                if (c.nextRetryAt != null)
+                                  Text(
+                                    'Next retry: ${fleetTime(c.nextRetryAt!)}',
+                                  ),
+                              ],
+                            ),
+                            action:
+                                {
+                                      CommandState.conflict.value,
+                                      CommandState.permanentFailure.value,
+                                    }.contains(c.state) &&
+                                    c.lastErrorCode != 'IDEMPOTENCY_KEY_REUSED'
+                                ? TextButton(
+                                    onPressed:
+                                        w.session.state == SessionState.ready &&
+                                            !w.sending
+                                        ? () => review(c)
+                                        : null,
+                                    child: const Text('Review'),
+                                  )
+                                : null,
+                          ),
+                        ),
+                  ],
+                ),
               ),
             ),
           );

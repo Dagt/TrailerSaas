@@ -441,6 +441,20 @@ class FleetRecord extends StatelessWidget {
   );
 }
 
+/// Embedded panels keep their natural height; standalone constrained panels scroll.
+/// No records, statuses or actions are hidden to make the surface fit.
+class FleetScrollSurface extends StatelessWidget {
+  const FleetScrollSurface({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => constraints.hasBoundedHeight
+        ? SingleChildScrollView(primary: false, child: child)
+        : child,
+  );
+}
+
 class FleetStop extends StatelessWidget {
   const FleetStop(this.stop, {super.key});
   final Map<String, dynamic> stop;
