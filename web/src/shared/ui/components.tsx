@@ -29,7 +29,8 @@ export function DataTable({ headings, children, caption, density = 'comfortable'
     {overflowing && <p className="table-scroll-hint" id={hint}><span aria-hidden="true">↔</span> Scroll horizontally to see all columns. Keyboard: focus this table and use the arrow keys.</p>}
     <table><caption className="sr-only">{caption}</caption><thead><tr>{headings.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>
 }
-export function ErrorBanner({ error, retry, reload, staleMessage }: { error: unknown; retry?: () => void; reload?: () => void; staleMessage?: string }) {
+export function ErrorBanner({ error, retry, reload, staleMessage, title }: { error: unknown; retry?: () => void; reload?: () => void; staleMessage?: string; title?: string }) {
+  const titleId = useId()
   const problem = error instanceof ApiProblem ? error.problem : undefined
   const stale = problem?.code === 'STALE_VERSION'
   let message = 'The request could not be completed. Please try again.'
@@ -41,7 +42,7 @@ export function ErrorBanner({ error, retry, reload, staleMessage }: { error: unk
   else if (problem?.code === 'RESOURCE_CONFLICT') message = 'This change conflicts with existing data. Review the values before trying again.'
   else if (problem?.code === 'VALIDATION_FAILED') message = 'Please check the highlighted fields.'
   else if (problem && problem.status >= 500) message = 'The service is temporarily unavailable. Please try again.'
-  return <div className="error-banner" role="alert"><p>{message}</p>
+  return <div className="error-banner" role="alert" aria-labelledby={title ? titleId : undefined}>{title && <h2 id={titleId}>{title}</h2>}<p>{message}</p>
     {problem?.traceId && <p className="support-reference">Support reference: {problem.traceId}</p>}
     {stale && reload ? <button type="button" onClick={reload}>Reload latest</button> : retry && <button type="button" onClick={retry}>Retry</button>}
   </div>

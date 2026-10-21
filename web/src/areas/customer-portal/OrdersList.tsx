@@ -21,8 +21,8 @@ export function OrdersList() {
     {actions.data?.capabilities.includes('ORDER_CREATE')&&<Link className="button-link" to="/customer/orders/new">Create Order</Link>}
   </CustomerHeader><div className="filters" role="group" aria-label="Order filters"><label>State <select aria-label="Order state" value={status} onChange={e=>change('status',e.target.value)}><option value="">All states</option>{orderStatuses.map(s=><option key={s}>{s}</option>)}</select></label>
     <label>Planning <select aria-label="Order planning" value={unplanned} onChange={e=>change('unplanned',e.target.value)}><option value="">All</option><option value="true">No active Trip</option><option value="false">Other planning states</option></select></label><Button onClick={()=>void orders.refetch()}>Refresh Orders</Button></div>
-    {actions.isError&&<ErrorBanner error={actions.error} retry={()=>void actions.refetch()}/>}
-    {orders.isPending?<LoadingState/>:orders.isError?<ErrorBanner error={orders.error} retry={()=>void orders.refetch()}/>:<><CustomerPanel title="Customer requests" description="Review references, current state and linked delivery work."><OrderRows rows={orders.data.pages.flatMap(p=>p.items)}/></CustomerPanel>
+    {actions.isError&&<ErrorBanner title="Order actions unavailable" error={actions.error} retry={()=>void actions.refetch()}/>}
+    {orders.isPending?<LoadingState/>:orders.isError?<ErrorBanner title="Orders could not be loaded" error={orders.error} retry={()=>void orders.refetch()}/>:<><CustomerPanel title="Customer requests" description="Review references, current state and linked delivery work."><OrderRows rows={orders.data.pages.flatMap(p=>p.items)}/></CustomerPanel>
       {orders.hasNextPage&&<Button disabled={orders.isFetchingNextPage} onClick={()=>void orders.fetchNextPage()}>Load more Orders</Button>}</>}
   </section>
 }

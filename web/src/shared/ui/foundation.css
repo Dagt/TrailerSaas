@@ -29,6 +29,7 @@ button:disabled, .ui-button:disabled { opacity: 1; color: var(--color-disabled-t
 .status-badge[data-tone='unknown'] { color: var(--status-unknown-text); background: var(--status-unknown-bg); border-color: var(--status-unknown-border); }
 .status-badge[data-tone='pending'] { color: var(--status-pending-text); background: var(--status-pending-bg); border-color: var(--status-pending-border); }
 .ui-loading { display: flex; align-items: center; gap: var(--space-3); color: var(--color-text-secondary); padding-block: var(--space-3); }
+.error-banner h2 { font-size: var(--text-body); margin: 0 0 var(--space-2); }
 .ui-spinner { display: inline-block; flex: 0 0 auto; width: 1rem; height: 1rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--radius-pill); animation: ui-spin 800ms linear infinite; }
 @keyframes ui-spin { to { transform: rotate(360deg); } }
 .ui-notice { padding: var(--space-4); border: var(--border-width) solid var(--status-neutral-border); border-radius: var(--radius-md); color: var(--status-neutral-text); background: var(--status-neutral-bg); margin: var(--space-4) 0; overflow-wrap: anywhere; }

@@ -1,9 +1,19 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { DataTable } from './components'
+import { DataTable, ErrorBanner } from './components'
 import { displayTime } from './dateTime'
 
 afterEach(() => vi.unstubAllGlobals())
+
+it('distinguishes independent action and record failures with named alerts and the existing separate retry callbacks', () => {
+  const actions = vi.fn(), records = vi.fn()
+  render(<><ErrorBanner title="Order actions unavailable" error={Error('unavailable')} retry={actions} /><ErrorBanner title="Orders could not be loaded" error={Error('unavailable')} retry={records} /></>)
+  fireEvent.click(within(screen.getByRole('alert', { name: 'Order actions unavailable' })).getByRole('button', { name: 'Retry' }))
+  expect(actions).toHaveBeenCalledOnce()
+  expect(records).not.toHaveBeenCalled()
+  fireEvent.click(within(screen.getByRole('alert', { name: 'Orders could not be loaded' })).getByRole('button', { name: 'Retry' }))
+  expect(records).toHaveBeenCalledOnce()
+})
 
 it('offers a named keyboard scrolling hint only for an overflowing table, retires it on reflow, and disconnects observation', () => {
   let resized = () => {}
