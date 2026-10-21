@@ -156,7 +156,10 @@ void main() {
       );
       await tester.ensureVisible(find.text('Review'));
       await tester.pumpAndSettle();
-      expect(tester.getRect(find.text('Review')).bottom, lessThanOrEqualTo(480));
+      expect(
+        tester.getRect(find.text('Review')).bottom,
+        lessThanOrEqualTo(480),
+      );
       expect(tester.takeException(), isNull);
       await close(tester);
     },
