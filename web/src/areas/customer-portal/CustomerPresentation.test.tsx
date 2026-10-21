@@ -1,11 +1,20 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
-import { CustomerStatus } from './CustomerPresentation'
+import { CustomerStatus, CustomerTable } from './CustomerPresentation'
 import { customerReadFixture, inventoryTrailer, evidenceFile, documentId } from '../../test/customerReadFixture'
 import { orderFixture, orderId, stopId, order, trip } from '../../test/customerOrderFixture'
 import { customerId, customerB, dispatcher, response } from '../../test/customerFixture'
 import { createCustomerReviewApi } from '../../dev/customer-fixtures'
+
+it('uses one shared overflow instruction per Customer table instead of duplicating the previous portal hint', () => {
+  render(<CustomerTable headings={['Document']} caption="Related Customer documents"><tr><td>BOL</td></tr></CustomerTable>)
+  const region = screen.getByRole('region', { name: 'Related Customer documents' })
+  Object.defineProperties(region, { clientWidth: { value: 350 }, scrollWidth: { value: 900 } })
+  fireEvent.resize(window)
+  expect(screen.getAllByText(/^Scroll horizontally/)).toHaveLength(1)
+  expect(region).toHaveAccessibleDescription(/Keyboard: focus this table/)
+})
 
 it.each([['UNKNOWN','unknown'],['LOCATION_UNKNOWN','unknown'],['UPLOADED','neutral'],['DELIVERED','neutral'],['COMPLETED','success'],['CANCELLING','attention']])('keeps %s explicit without inventing a different domain outcome', (value,tone)=>{
   render(<CustomerStatus value={value!}/>);expect(screen.getByText(value!)).toHaveAttribute('data-tone',tone)

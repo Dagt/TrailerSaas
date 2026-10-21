@@ -20,7 +20,7 @@ export function CustomerCargo({ lines }: {lines:CargoInput[]}) {
 }
 
 export function CustomerTable(props:ComponentProps<typeof DataTable>) {
-  return <><p className="customer-table-hint">Scroll horizontally to view all columns. Keyboard users can focus the table and use the arrow keys.</p><DataTable {...props}/></>
+  return <DataTable {...props}/>
 }
 
 /** Presentation only. Domain values and authorization predicates remain unchanged. */
