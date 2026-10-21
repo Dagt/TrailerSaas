@@ -29,4 +29,3 @@ export function auditDiff(event: Pick<AuditEvent, 'beforeData' | 'afterData'>): 
 }
 export const label = (value: string) => value.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 export const localTime = displayTime
-

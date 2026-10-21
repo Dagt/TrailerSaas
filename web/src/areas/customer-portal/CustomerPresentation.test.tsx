@@ -23,8 +23,10 @@ it('groups actual dashboard previews and retains bounded reads without internal 
   const f=customerReadFixture('/customer');await screen.findByRole('heading',{name:'Customer dashboard'})
   await screen.findByRole('heading',{name:'Recent Evidence'});await waitFor(()=>expect(screen.queryByText('Loading…')).not.toBeInTheDocument())
   expect(screen.getByRole('region',{name:'Order activity'})).toHaveTextContent('up to five records')
+  expect(within(screen.getByRole('region',{name:'Order activity'})).getAllByRole('article')).toHaveLength(7)
   expect(screen.getByRole('region',{name:'Resources and evidence'})).toHaveTextContent('Customer-scoped previews')
   expect(f.requests.filter(r=>r.path.endsWith('/orders')).every(r=>r.query.get('limit')==='5'&&r.query.get('customerId')===customerId)).toBe(true)
+  expect(new Set(f.requests.filter(r=>r.path.endsWith('/orders')).map(r=>r.query.get('status')).filter(Boolean))).toEqual(new Set(['OPEN','PLANNED','IN_PROGRESS','PARTIALLY_DELIVERED','DELIVERED','CANCELLING']))
   expect(f.requests.some(r=>/dispatch\/board|\/drivers|\/tractors|\/audit/.test(r.path))).toBe(false)
 })
 it('keeps URL filters and browser history independent of table presentation',async()=>{

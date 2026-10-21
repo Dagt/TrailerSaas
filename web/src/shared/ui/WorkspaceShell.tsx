@@ -63,6 +63,7 @@ export function WorkspaceNavigation({ label, links, context }: { label: string; 
     <aside className="workspace-sidebar" id={id}>
       <Link className="sidebar-home" to="/">TrailerSaaS <span aria-hidden="true">↗</span></Link>
       <p className="sidebar-context">Workspace: {context}</p>
+      <p className="sidebar-label" aria-hidden="true">Workspace navigation</p>
       <nav aria-label={label}><NavigationLinks links={links} /></nav>
       <p className="sidebar-footnote">Your workspace, in focus.</p>
     </aside>

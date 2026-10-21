@@ -24,15 +24,15 @@ export function Dashboard() {
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorBanner error={query.error} retry={() => void query.refetch()} /> : <>
       <div className="dispatch-metrics"><article><span>Pending Orders</span><strong>{query.data.pendingOrders.length}</strong><small>Latest unplanned work · up to 20</small></article><article><span>Active Trips</span><strong>{query.data.activeTrips.length}</strong><small>Current projection · up to 20</small></article><article><a href="#dispatch-attention">Needs attention</a><strong>{query.data.attentionItems.length}</strong><small>Within the displayed Trips</small></article></div>
       <p className="ops-preview-note">Bounded previews, not Tenant totals. Up to 20 Orders and 20 Trips are shown; attention refers to the displayed Trips.</p>
-      <Card title="Pending Orders" description="Latest pending work returned for this Customer filter." className="ops-table-card" actions={<Link to="/operations/orders">View planning queue</Link>}>
+      <div className="ops-dispatch-grid"><Card title="Pending Orders" description="Latest pending work returned for this Customer filter." className="ops-table-card" actions={<Link to="/operations/orders">View planning queue</Link>}>
         {!query.data.pendingOrders.length ? <EmptyState>No pending Orders match this Customer.</EmptyState> : <DataTable caption="Pending Orders" headings={['Order', 'Customer', 'Status', 'Created', 'Action']}>
           {query.data.pendingOrders.map(o => <tr key={o.id}><th scope="row"><Link to={`/operations/orders/${o.id}`}>{o.orderNumber}</Link></th><td>{names.customer(o.customerId)}</td><td><OperationsStatus value={o.status} /></td><td>{when(o.createdAt)}</td><td><Link to={`/operations/trips/new?orderId=${o.id}`}>Plan Trip for {o.orderNumber}</Link></td></tr>)}</DataTable>}
       </Card>
       <div id="dispatch-attention"><Card title="Attention" description="Recorded assignment and cancellation conditions within this preview.">{!query.data.attentionItems.length ? <EmptyState>No assignment or cancellation attention in the displayed Trips.</EmptyState> : <ul className="attention-list">{query.data.attentionItems.map(a => <li key={a.tripId}><OperationsStatus value={a.type} /> <Link to={`/operations/trips/${a.tripId}`}>{reference(a.tripId)}</Link></li>)}</ul>}</Card></div>
-      <Card title="Active Trips" description="Expected resources and the next planned Stop, without implying physical coupling." className="ops-table-card" actions={<Link to="/operations/trips">View all Trips</Link>}>
+      <Card title="Active Trips" description="Expected resources and the next planned Stop, without implying physical coupling." className="ops-table-card ops-active-trips" actions={<Link to="/operations/trips">View all Trips</Link>}>
         {!query.data.activeTrips.length ? <EmptyState>No active Trips match these filters.</EmptyState> : <DataTable caption="Active Trips" headings={['Trip', 'Status', 'Driver', 'Tractor', 'Expected Trailer', 'Next planned Stop', 'Action']}>
           {query.data.activeTrips.map(t => <tr key={t.id}><th scope="row">{reference(t.id)}</th><td><OperationsStatus value={t.status} /></td><td>{names.driver(t.currentDriverId)}</td><td>{names.tractor(t.currentTractorId)}</td><td>{names.trailer(t.plannedInitialTrailerId)}</td><td>{t.nextPlannedStop ? <>{t.nextPlannedStop.sequenceNumber}. {names.site(t.nextPlannedStop.siteId, t.nextPlannedStop.snapshotName)}<small>{human(t.nextPlannedStop.stopType)} · {when(t.nextPlannedStop.scheduledAt)}</small></> : 'No future Stop'}</td><td><Link to={`/operations/trips/${t.id}`}>Open {reference(t.id)}</Link></td></tr>)}</DataTable>}
-      </Card>
+      </Card></div>
     </>}
   </div>
 }

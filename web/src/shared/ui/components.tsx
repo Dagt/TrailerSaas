@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes, PropsWithChildren, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ApiProblem } from '../api/client'
 import './foundation.css'
+import './quality.css'
 
 export function PageHeader({ title, description, children }: PropsWithChildren<{ title: string; description?: string }>) {
   return <div className="page-header"><div><h1>{title}</h1>{description && <p>{description}</p>}</div>{children}</div>

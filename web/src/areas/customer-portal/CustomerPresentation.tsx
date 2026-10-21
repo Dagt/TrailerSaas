@@ -31,4 +31,3 @@ export function CustomerStatus({ value }: {value:string}) {
         : ['COMPLETED','ACTIVE'].includes(value) ? 'success' : 'neutral'
   return <StatusBadge tone={tone}>{value}</StatusBadge>
 }
-

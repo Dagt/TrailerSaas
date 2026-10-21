@@ -99,7 +99,7 @@ class FleetStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = fleetTone(tone);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: colors.background,
         border: Border.all(color: colors.text),
@@ -169,30 +169,43 @@ class FleetHeader extends StatelessWidget {
   final String? eyebrow, description;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 8, bottom: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (eyebrow != null) ...[
-          Text(
-            eyebrow!,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: FleetColors.accent,
+    padding: const EdgeInsets.only(top: 4, bottom: 12),
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(left: 16, bottom: 16),
+      decoration: const BoxDecoration(
+        border: Border(
+          left: BorderSide(color: FleetColors.accent, width: 3),
+          bottom: BorderSide(color: FleetColors.border),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (eyebrow != null) ...[
+            Text(
+              eyebrow!,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: FleetColors.accent,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Semantics(
+            header: true,
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
           ),
-          const SizedBox(height: 8),
+          if (description != null) ...[
+            const SizedBox(height: 8),
+            Text(description!, style: Theme.of(context).textTheme.bodySmall),
+          ],
         ],
-        Semantics(
-          header: true,
-          child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
-        ),
-        if (description != null) ...[
-          const SizedBox(height: 8),
-          Text(description!, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ],
+      ),
     ),
   );
 }
@@ -208,7 +221,14 @@ class FleetSectionTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (icon != null) ...[
-          Icon(icon, color: FleetColors.accent, size: 22),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: FleetColors.selected,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: FleetColors.primary, size: 20),
+          ),
           const SizedBox(width: 10),
         ],
         Expanded(
@@ -370,9 +390,12 @@ class FleetRecord extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.symmetric(vertical: 12),
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(12),
     decoration: const BoxDecoration(
-      border: Border(bottom: BorderSide(color: FleetColors.border)),
+      color: FleetColors.muted,
+      border: Border.fromBorderSide(BorderSide(color: FleetColors.border)),
+      borderRadius: BorderRadius.all(Radius.circular(8)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -394,7 +417,14 @@ class FleetRecord extends StatelessWidget {
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 6),
-                    subtitle!,
+                    DefaultTextStyle.merge(
+                      style: const TextStyle(
+                        color: FleetColors.secondary,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                      child: subtitle!,
+                    ),
                   ],
                 ],
               ),
@@ -445,7 +475,7 @@ class FleetFormBody extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       for (final child in children)
-        Padding(padding: const EdgeInsets.only(bottom: 16), child: child),
+        Padding(padding: const EdgeInsets.only(bottom: 12), child: child),
     ],
   );
 }

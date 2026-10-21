@@ -27,13 +27,13 @@ export function OrdersList() {
   </section>
 }
 export function CustomerOrderDashboard() {
-  return <section aria-label="Order activity"><h2 className="customer-section-label">Order activity</h2><p className="customer-note">Recent requests by state. Each preview contains up to five records, not Customer-wide totals.</p><div className="customer-cards"><DashboardPreview title="Recent Order requests"/>{[
+  return <section aria-label="Order activity"><h2 className="customer-section-label">Order activity</h2><p className="customer-note">Recent requests by state. Each preview contains up to five records, not Customer-wide totals.</p><div className="customer-cards customer-order-grid"><DashboardPreview title="Recent Order requests"/><div className="customer-state-previews">{[
     ['Pending Orders','OPEN'],['Planned Orders','PLANNED'],['Orders in execution','IN_PROGRESS'],['Partially delivered Orders','PARTIALLY_DELIVERED'],['Delivered — awaiting closure','DELIVERED'],['Orders in cancellation','CANCELLING'],
-  ].map(([title,status])=><DashboardPreview key={status} title={title!} status={status!}/>)}</div></section>
+  ].map(([title,status])=><DashboardPreview key={status} title={title!} status={status!}/>)}</div></div></section>
 }
 function DashboardPreview({title,status}:{title:string;status?:string}) {
   const query=useOrders({limit:'5',...(status?{status}:{})})
-  return <article className={status?undefined:"customer-recent-orders"}><h3><Link to={`/customer/orders${status?`?status=${status}`:''}`}>{title}</Link></h3><p>Recent requests by creation time. Preview, not a total count.</p>
+  return <article className={status?undefined:"customer-recent-orders"}><h3><Link to={`/customer/orders${status?`?status=${status}`:''}`}>{title}</Link></h3>{!status&&<p>Recent requests by creation time. Preview, not a total count.</p>}
     {query.isPending?<LoadingState/>:query.isError?<ErrorBanner error={query.error} retry={()=>void query.refetch()}/>:<ul className="customer-preview-list">{query.data.pages[0]?.items.length?query.data.pages[0].items.map(r=><li key={r.id}><Link to={`/customer/orders/${r.id}`}>{r.orderNumber}</Link><CustomerStatus value={r.status}/><small>Updated <CustomerTime value={r.updatedAt}/></small></li>):<li>No matching Orders reported.</li>}</ul>}
   </article>
 }
