@@ -26,7 +26,13 @@ it('uses real dashboard previews without pretending first-page totals or dispatc
   const f=orderFixture('/customer');f.state.orders=[order({status:'CANCELLING'})]
   await screen.findByRole('heading',{name:'Customer dashboard'});await screen.findByRole('heading',{name:'Orders in cancellation'})
   await waitFor(()=>expect(screen.getAllByRole('link',{name:'ACME-101'}).length).toBeGreaterThan(0))
-  expect(screen.getAllByText(/Preview, not a total count/).length).toBe(7)
+  const activity=screen.getByRole('region',{name:'Order activity'})
+  expect(within(activity).getAllByRole('article')).toHaveLength(7)
+  expect(activity).toHaveTextContent('Each preview contains up to five records, not Customer-wide totals.')
+  expect(within(activity).getByText(/Preview, not a total count/)).toBeInTheDocument()
+  const previews=f.requests.filter(r=>r.path===f.root+'/orders')
+  expect(previews).toHaveLength(7)
+  expect(previews.every(r=>r.query.get('limit')==='5'&&r.query.get('customerId')===customerId)).toBe(true)
   expect(f.requests.some(r=>r.path.includes('/dispatch/board')||/\/trips$/.test(r.path))).toBe(false)
 })
 it('creates real OPEN work with optional references, multiple cargo lines and requested Stops after explicit review',async()=>{
