@@ -1,4 +1,5 @@
 import type { ComponentProps, PropsWithChildren, ReactNode } from 'react'
+import { displayTime } from '../../shared/ui/dateTime'
 import { Card, DataTable, PageHeader, StatusBadge } from '../../shared/ui/components'
 import type { CargoInput } from './orderContracts'
 
@@ -30,5 +31,4 @@ export function CustomerStatus({ value }: {value:string}) {
         : ['COMPLETED','ACTIVE'].includes(value) ? 'success' : 'neutral'
   return <StatusBadge tone={tone}>{value}</StatusBadge>
 }
-import { displayTime } from '../../shared/ui/dateTime'
 

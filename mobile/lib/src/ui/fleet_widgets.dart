@@ -246,6 +246,115 @@ class FleetFact extends StatelessWidget {
   );
 }
 
+/// Presentation only: keeps Tenant, verification and refresh time together.
+/// The session owner supplies the truthful message and tone; this grants no access.
+class FleetWorkspaceContext extends StatelessWidget {
+  const FleetWorkspaceContext({
+    super.key,
+    required this.tenant,
+    required this.message,
+    required this.refreshedAt,
+    required this.tone,
+  });
+  final String tenant, message;
+  final DateTime refreshedAt;
+  final FleetTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = fleetTone(tone);
+    final identity = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.business_outlined,
+          color: FleetColors.accent,
+          size: 22,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tenant workspace',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Text(
+                tenant,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    final verification = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(colors.icon, size: 18, color: colors.text),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: colors.text,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Last refreshed: ${fleetTime(refreshedAt)}',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colors.background,
+          border: Border(left: BorderSide(color: colors.text, width: 3)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= 600 &&
+                MediaQuery.textScalerOf(context).scale(14) < 20) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: identity),
+                  const SizedBox(width: 20),
+                  Expanded(child: verification),
+                ],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [identity, const SizedBox(height: 10), verification],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 /// Natural-height event/task row; actions stack so long safety labels survive
 /// small phones, keyboard insets and enlarged text without a trailing-width cap.
 class FleetRecord extends StatelessWidget {

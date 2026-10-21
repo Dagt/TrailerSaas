@@ -158,7 +158,9 @@ it.each(['HOOKED','DROPPED','DEPARTED','ARRIVED','YARD_MOVED','LOCATION_CORRECTE
   expect(ui.getByText('Actor type: Human user · Source: User action')).toBeInTheDocument()
   expect(ui.getByText('Dock 12 · Maria Driver · TR-100')).toBeInTheDocument()
   expect(ui.getByText(/Recorded/)).toBeInTheDocument()
-  expect(ui.getByText(new Date(event().occurredAt).toLocaleString())).toHaveAttribute('dateTime',event().occurredAt)
+  const physicalTime = new Date(event().occurredAt).toLocaleString('en-US', { year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'shortOffset' })
+  expect(ui.getByText(physicalTime)).toHaveAttribute('dateTime',event().occurredAt)
+  expect(ui.getByText(physicalTime)).toHaveTextContent(/GMT/)
   expect(ui.queryByText(/"metadata"|"tenantId"|"actorUserId"/)).not.toBeInTheDocument()
 })
 it('timeline Load more uses opaque cursor without client reordering', async () => {

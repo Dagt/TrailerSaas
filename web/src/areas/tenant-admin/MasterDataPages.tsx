@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { displayTime } from '../../shared/ui/dateTime'
 import { Link, useParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../shared/auth/context'
@@ -138,5 +139,3 @@ export function SettingsPage() {
       : <RecordEditor kind="settings" path="/settings" record={query.data} reload={async () => (await query.refetch()).data} />}
   </div>
 }
-import { displayTime } from '../../shared/ui/dateTime'
-
