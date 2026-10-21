@@ -49,7 +49,7 @@ export function PlanTrip() {
   })
   return <div className="ops-page ops-planner"><PageHeader title="Plan a Trip" description="Build executable Stops from requested work. Expected resources do not represent physical execution." />
     <MasterDataStatus queries={[names.customers, names.drivers, names.tractors, names.trailers, names.sites]} />
-    <nav className="planning-steps" aria-label="Planning steps">{['Orders', 'Stops', 'Resources', 'Review'].map((label, i) => <Button type="button" key={label} aria-current={step === i ? 'step' : undefined} disabled={i > step || command.isPending} onClick={() => setStep(i)}>{i + 1}. {label}</Button>)}</nav>
+    <nav className="planning-steps" aria-label="Planning steps">{['Orders', 'Stops', 'Resources', 'Review'].map((label, i) => <Button type="button" key={label} aria-label={`${i + 1}. ${label}`} aria-current={step === i ? 'step' : undefined} disabled={i > step || command.isPending} onClick={() => setStep(i)}><span className="ops-step-number" aria-hidden="true">{i + 1}</span>{label}</Button>)}</nav>
     <p className="ops-step-context">Step {step + 1} of 4 · Orders → Stops → Resources → Review</p>
     <form onSubmit={submit} noValidate aria-label="Trip plan">
       {step === 0 && <section className="ops-planning-section"><h2>Choose Orders</h2>{orders.isPending && <LoadingState />}{orders.isError && <ErrorBanner error={orders.error} retry={() => void orders.refetch()} />}

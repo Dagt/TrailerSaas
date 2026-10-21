@@ -143,10 +143,10 @@ dialog.ops-dialog :is(input[type='checkbox'], input[type='radio']) { width: auto
 .operations-area .ops-record-meta .detail-list > div { border-bottom: 0; }
 .operations-area .operations-actions { padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
 .operations-area .ops-planning-section { border-top: 3px solid var(--color-accent); }
-.operations-area .planning-steps { counter-reset: plan-step; }
 .operations-area .planning-steps button { display: flex; align-items: center; gap: var(--space-3); border-top-width: 1px; background: var(--color-surface); }
-.operations-area .planning-steps button::before { counter-increment: plan-step; content: counter(plan-step); display: grid; place-items: center; min-width: 1.75rem; min-height: 1.75rem; border-radius: var(--radius-sm); background: var(--color-disabled-bg); color: var(--color-text-secondary); }
-.operations-area .planning-steps button[aria-current='step']::before { background: var(--color-primary); color: var(--color-on-primary); }
+.operations-area .planning-steps .ops-step-number { display: grid; place-items: center; min-width: 1.75rem; min-height: 1.75rem; border-radius: var(--radius-sm); background: var(--color-disabled-bg); color: var(--color-text-secondary); }
+.operations-area .planning-steps button[aria-current='step'] .ops-step-number { background: var(--color-primary); color: var(--color-on-primary); }
+.operations-area .ops-planner .table-scroll tbody th { white-space: nowrap; max-width: none; min-width: 8rem; }
 .operations-area .ops-page .trailer-read-grid .dispatch-card > h2 { display: flex; align-items: center; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: 1px solid var(--color-border); }
 .operations-area .ops-page .trailer-read-grid .dispatch-card > h2::before { content: ''; width: .5rem; height: .5rem; flex: 0 0 .5rem; border-radius: var(--radius-sm); background: var(--color-accent); }
 .operations-area .operations-timeline li { margin-bottom: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--color-surface-muted); border-radius: var(--radius-md); }
