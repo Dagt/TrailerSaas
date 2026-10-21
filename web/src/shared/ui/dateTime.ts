@@ -4,6 +4,6 @@ export function displayTime(value: string): string {
   if (Number.isNaN(instant.valueOf())) return value
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric', month: 'short', day: 'numeric',
-    hour: 'numeric', minute: '2-digit', timeZoneName: 'shortOffset',
+    hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'shortOffset',
   }).format(instant)
 }

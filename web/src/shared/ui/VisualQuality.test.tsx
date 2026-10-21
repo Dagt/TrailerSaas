@@ -60,3 +60,7 @@ it('formats operational timestamps in US English with the actual browser offset 
   expect(instant).toBe('2026-10-19T12:00:00Z')
   expect(displayTime('source value unavailable')).toBe('source value unavailable')
 })
+
+it('keeps second-level operational history distinguishable within the same minute', () => {
+  expect(displayTime('2026-10-19T12:00:01Z')).not.toBe(displayTime('2026-10-19T12:00:45Z'))
+})
