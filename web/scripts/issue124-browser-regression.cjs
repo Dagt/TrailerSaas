@@ -76,6 +76,7 @@ async function headingVisible(dialog) {
       await submit.click();
       await page.waitForFunction(() => document.querySelector('#action-reason')?.getAttribute('aria-invalid') === 'true');
       assert.equal(await dialog.getByLabel('Reason', { exact: true }).getAttribute('aria-describedby'), 'action-reason-error');
+      assert.equal(await dialog.evaluate(d => d.scrollWidth <= d.clientWidth + 1), true, 'Long validation feedback must wrap inside the dialog');
       await headingVisible(dialog);
       if (width === 390) await screenshot('cancel-trip-validation-390x844');
       await page.keyboard.press('Escape');
