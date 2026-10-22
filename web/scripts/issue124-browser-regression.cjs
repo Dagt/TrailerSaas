@@ -60,9 +60,11 @@ async function headingVisible(dialog) {
       const submit = dialog.getByRole('button', { name: 'Start cancellation', exact: true });
       assert.equal(await submit.isDisabled(), true, 'Physical confirmation remains mandatory');
       await screenshot(`cancel-trip-${width}x${height}`);
-      // Real native Tab handling must retain the title and keep focused controls below it.
-      for (let i = 0; i < 6; i++) {
-        await page.keyboard.press('Tab');
+      // Walk backwards from safe Cancel through every form control. Native dialogs
+      // may offer browser chrome after the last control; that is not a product trap.
+      const fields = await dialog.locator('form input:not([disabled]), form select:not([disabled]), form textarea:not([disabled])').count();
+      for (let i = 0; i < fields; i++) {
+        await page.keyboard.press('Shift+Tab');
         const focus = await dialog.evaluate(d => {
           const e = document.activeElement, r = e.getBoundingClientRect(), h = d.querySelector('h2').getBoundingClientRect(), b = d.getBoundingClientRect();
           return { inside: d.contains(e), top: r.top, bottom: r.bottom, headingBottom: h.bottom, dialogBottom: b.bottom };
