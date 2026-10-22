@@ -23,12 +23,12 @@ async function load(area, target) {
   await page.evaluate(() => document.fonts.ready);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Document overflow');
 }
-async function screenshot(name) {
+async function screenshot(name, fullPage = false) {
   const file = name + '.png';
-  const png = await page.screenshot({ path: path.join(output, file), animations: 'disabled' });
+  const png = await page.screenshot({ path: path.join(output, file), animations: 'disabled', fullPage });
   report.screenshots.push({ file, sourceRevision: report.sourceRevision, webGitTree: report.webGitTree,
     route, role, viewport: page.viewportSize(), environment: report.environment,
-    capturedAt: new Date().toISOString(), captureMethod: 'Native browser screenshot, unchanged pixels',
+    capturedAt: new Date().toISOString(), captureMethod: 'Native browser screenshot, unchanged pixels', fullPage,
     sha256: crypto.createHash('sha256').update(png).digest('hex') });
 }
 async function headingVisible(dialog) {
@@ -102,12 +102,15 @@ async function headingVisible(dialog) {
         const unnamed = ax.nodes.filter(n => !n.ignored && ['button','link','textbox','combobox','checkbox'].includes(n.role?.value) && !n.name?.value?.trim());
         assert.equal(unnamed.length,0,'Unnamed actionable control');
         report.accessibility.push({ route: target, viewport: {width,height}, unnamedControls: 0, method: 'CDP names, not manual screen-reader certification' });
-        await screenshot(target.replaceAll('/','-').slice(1)+`-${width}x${height}`);
+        await screenshot(target.replaceAll('/','-').slice(1)+`-${width}x${height}`, true);
         if (target.endsWith('orders')) {
           const select = page.getByRole('combobox',{name:'Order state',exact:true});
           await select.selectOption({label:'Partially delivered'});
+          await page.waitForFunction(() => document.querySelector('select[aria-label="Order state"]')?.value === 'PARTIALLY_DELIVERED');
           assert.equal(await select.inputValue(),'PARTIALLY_DELIVERED');
           assert.ok((await select.getByRole('option',{selected:true}).allTextContents()).includes('Partially delivered'));
+          await page.waitForFunction(() => !document.querySelector('.ui-loading'));
+          await screenshot(`customer-orders-filtered-${width}x${height}`, true);
         }
         report.checks.push({name:`L1 readable labels, original filter values, no overflow, accessible names ${target} ${width}`,result:'PASS',labels});
       }
