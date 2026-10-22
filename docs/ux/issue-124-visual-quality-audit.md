@@ -1,5 +1,7 @@
 # UX-07 — cross-platform visual quality and accessibility audit
 
+Current M1/L1 closure evidence: [final corrections](evidence/issue124/final-fixes/README.md). Earlier assessments below are historical snapshots; final local counts, exact HEAD and owner Billing exception are published in PR133 after final validation.
+
 Issue #124, Epic #117. Fleet Simple Option D remains authoritative. Implemented presentation refinements and reviewed evidence; owner approval and hosted complete CI remain separate gates. Unexecuted manual checks are not passes. One Draft PR; **NO MERGE / no UX-08**.
 
 ## Baseline and evidence method
@@ -156,3 +158,35 @@ Browser replay:49 before and49 after priority captures,50 further boundary/dialo
 No Backend/OpenAPI/Firebase/role/RLS/query/cache/API contract/offline replay/command/state machine/movement/Drift/native project/dependency changes. No real operational write, QR authorization, physical movement or protected download is claimed. Confirmation was canceled with Not Yet. Existing suites are retained, with stronger assertions for all Customer preview scopes/states. Git diff whitespace warnings from the first pass are cleaned up. Prior native/plugin warnings and actual CI annotations remain visible, not suppressed.
 
 Pending/limitations: owner commercial review; Low technical-enum copy consistency remains an owner decision. Actual browser-chrome200% zoom, real Firebase/Backend/R2 authentication/download grants, physical device/camera/QR/printer, iOS and TalkBack/VoiceOver remain unverified.720×450 reflow is equivalent coverage only. Existing Vite development-tool security finding is separate from this visual refinement; dependencies remain unchanged. Native keyboard/camera guards and SafeArea remain unchanged, with existing tests/evidence preserved; this pass does not assert fresh physical integration certification. Hosted full current-HEAD CI is required for merge approval; the latest actual run and Billing status are reported in the PR. No Ready action, check bypass, merge or UX08 work.
+
+## Final M1/L1 correction record
+
+The owner authorized closing the two remaining in-scope findings while GitHub Actions remains unavailable. The prior independent review found M1 Medium (initially clipped cancellation heading at390×844) and L1 Low (technical Customer state labels). Both are corrected in the final source indexed by [the correction manifest](evidence/issue124/final-fixes/provenance.json); this section supersedes their earlier unresolved/deferred status, including V08.
+
+M1 uses only Operations dialog CSS: the heading stays visible and its opaque surface covers the top inset while the existing content scrolls. Scroll padding keeps keyboard-focused form controls below the heading; long existing field errors wrap. The shared dialog lifecycle, initial Cancel focus, Escape/busy behavior, focus restoration, required reason/instructions, physical confirmation, API payload/version/idempotency and Trip state machine remain untouched. No command was confirmed in visual fixtures.
+
+L1 introduces a pure Customer presentation label map used by badges, existing state/kind filters, record facts and contextual copy. Examples: In progress, Partially delivered, Canceling, Canceled, Location unknown, In transit, Out of service, Uploaded and Signed BOL. Explicit option values remain the original enums; unknown future values remain explicit rather than receiving an invented interpretation. BOL/POD identifiers remain recognizable. Tone and authorization predicates remain exactly as before: Uploaded is not accepted, Delivered is not Completed, planned equipment is not physical coupling, and Unknown is not success. No query, contract, cache, permission, download or mutation logic changes.
+
+Regression additions retain existing semantic assertions and add22 state-label/tone cases plus one named cancellation validation/focus case (focused148PASS across the four affected suites). The optional real-browser regression verifies22 cases and26 actual screenshots at the immutable capture source; broader replay46PASS plus12OBSERVED dialog observations and16 contrast pairs are separately recorded. Screenshot observations led to wrapping the existing long validation message and covering the sticky heading's top inset. Browser helper readiness corrections are disclosed; assertions/deadlines were not suppressed to obtain success.
+
+### Correction acceptance snapshot
+
+PASS means a check actually executed locally. FAIL means a confirmed remaining defect. BLOCKED identifies unavailable infrastructure/external dependencies. NOT VERIFIED identifies checks not executed; it is never a substitute for PASS.
+
+| Requirement | Status at capture source | Evidence / boundary |
+|---|---|---|
+| M1 title at390×844 and narrow reflow | PASS | Seven viewport cases, heading geometry, form focus visibility, required-field feedback, wrapping and Escape/Cancel restoration; actual before/after screenshots |
+| L1 Customer labels with unchanged state meaning | PASS |28 explicit label/tone cases, all five Customer route families at390/768/1440; Uploaded/Delivered/Unknown retain original tones |
+| Original filters and operational commands | PASS focused regression | Actual request assertions retain raw enums, exact Customer scope and bounded previews; command handlers and guards unchanged |
+| Current browser keyboard/labels/motion/contrast | PASS scoped |22 focused +46 broader checks,15+12 AX name snapshots, reduced-motion replay,16 contrast pairs; not full accessibility certification |
+| Required complete local Web/Flutter/CI-policy gates | NOT VERIFIED in this capture snapshot | Final evidence-only HEAD is validated after this source/evidence freeze. The final PR report supplies actual commands, counts, failures/skips, hashes and exact HEAD. No earlier counts are reused as final results. |
+| Actual browser-chrome200% zoom / manual assistive technology | NOT VERIFIED |720×450 equivalent reflow and automated Flutter/CDP semantics are separate evidence, not manual certification |
+| Live Firebase/Backend/R2 authorization/grants | BLOCKED | Environment not configured; synthetic fixture writes rejected, no real protected download claimed |
+| Hosted GitHub Actions | NOT VERIFIED — BILLING BLOCKED | Owner constraint; no attempt to resolve Billing, rerun/bypass policies, disable workflows or change branch protection |
+| Owner visual/merge decision | BLOCKED | External owner review still required; keep the same PR Draft and unmerged |
+
+The complete final acceptance matrix in PR133 supersedes the capture-time validation status after the final local gates execute. The existing native evidence remains bridged through the unchanged Mobile tree; this correction adds real browser images, not new emulator or widget screenshots.
+
+### Pre-existing dependency advisory (separate scope)
+
+Vite8.3.2 remains unchanged from main. The known High Windows launch-editor advisory and related dev-server advisories require separate owner security review; the maintainer identifies8.3.3 as a patched8.3 version. No dependency/lockfile upgrade or clean security-audit claim is made in UX07. See https://github.com/vitejs/launch-editor/security/advisories/GHSA-587h-7wmj-h5pm . Complete final local results do not resolve this pre-existing advisory or confer staging/production readiness.

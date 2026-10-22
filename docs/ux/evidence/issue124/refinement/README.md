@@ -1,5 +1,7 @@
 # Commercial refinement — actual before / after
 
+**Historical Web comparison through cba7e1d.** The later M1/L1 corrections and their actual final-source screenshots are in [final-fixes](../final-fixes/README.md). The Mobile tree remains unchanged; do not relabel these Web captures as the corrected label/dialog source.
+
 This is the owner-requested second pass of PR133, not a new proposal or issue. The previous309 images remain historical first-pass evidence. These comparisons start from f5031b2, not the earlier pre-UX07 main.
 
 All Web interiors visibly disclose **ISOLATED DEMO**, actual React routes, synthetic read fixtures, no real Firebase/Backend authorization and rejected writes. Android interiors disclose **ISOLATED ANDROID REVIEW**; genuine unmodified ADB screenshots, not physical-device certification. Widget captures are explicitly **NOT emulator screenshots**. No generated imagery or edited pixels. Separate-session timestamps are not commercial events.

@@ -1,0 +1,1491 @@
+{
+  "recordedAt": "2026-10-22T00:33:39.518644+00:00",
+  "captureSource": "cfd077036bcdde68245b2a512925ea066ad35a36",
+  "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+  "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+  "finalRevisionBridge": "The final evidence/documentation commit retains this complete Web tree and the unchanged Mobile tree. Final HEAD and exact local results are published in PR133; capture SHAs remain actual.",
+  "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+  "checks": [
+    {
+      "name": "M1 heading, Tab, confirmation, validation, Escape/Cancel focus 390x844",
+      "result": "PASS",
+      "geometry": {
+        "scrollTop": 62,
+        "headingTop": 17,
+        "headingBottom": 88,
+        "dialogTop": 16,
+        "dialogBottom": 828
+      }
+    },
+    {
+      "name": "M1 heading, Tab, confirmation, validation, Escape/Cancel focus 320x844",
+      "result": "PASS",
+      "geometry": {
+        "scrollTop": 138,
+        "headingTop": 17,
+        "headingBottom": 88,
+        "dialogTop": 16,
+        "dialogBottom": 828
+      }
+    },
+    {
+      "name": "M1 heading, Tab, confirmation, validation, Escape/Cancel focus 768x1024",
+      "result": "PASS",
+      "geometry": {
+        "scrollTop": 0,
+        "headingTop": 107.625,
+        "headingBottom": 178.625,
+        "dialogTop": 106.625,
+        "dialogBottom": 917.375
+      }
+    },
+    {
+      "name": "M1 heading, Tab, confirmation, validation, Escape/Cancel focus 1280x800",
+      "result": "PASS",
+      "geometry": {
+        "scrollTop": 43,
+        "headingTop": 17,
+        "headingBottom": 88,
+        "dialogTop": 16,
+        "dialogBottom": 784
+      }
+    },
+    {
+      "name": "M1 heading, Tab, confirmation, validation, Escape/Cancel focus 1440x900",
+      "result": "PASS",
+      "geometry": {
+        "scrollTop": 0,
+        "headingTop": 45.625,
+        "headingBottom": 116.625,
+        "dialogTop": 44.625,
+        "dialogBottom": 855.375
+      }
+    },
+    {
+      "name": "M1 heading, Tab, confirmation, validation, Escape/Cancel focus 1920x1080",
+      "result": "PASS",
+      "geometry": {
+        "scrollTop": 0,
+        "headingTop": 135.625,
+        "headingBottom": 206.625,
+        "dialogTop": 134.625,
+        "dialogBottom": 945.375
+      }
+    },
+    {
+      "name": "M1 heading, Tab, confirmation, validation, Escape/Cancel focus 720x450",
+      "result": "PASS",
+      "geometry": {
+        "scrollTop": 393,
+        "headingTop": 17,
+        "headingBottom": 88,
+        "dialogTop": 16,
+        "dialogBottom": 434
+      },
+      "limitation": "720x450 equivalent reflow; not browser-chrome200% zoom"
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer 390",
+      "result": "PASS",
+      "labels": [
+        "Open",
+        "Planned",
+        "In progress",
+        "Partially delivered",
+        "Delivered",
+        "Open",
+        "Planned",
+        "In progress",
+        "Partially delivered",
+        "Delivered",
+        "Canceling",
+        "En route",
+        "Arrived",
+        "At location",
+        "In transit",
+        "Location unknown",
+        "Location unknown"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/orders 390",
+      "result": "PASS",
+      "labels": [
+        "Open",
+        "Planned"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/trailers 390",
+      "result": "PASS",
+      "labels": [
+        "At location",
+        "Empty",
+        "In service",
+        "In transit",
+        "Loaded",
+        "In service"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/deliveries 390",
+      "result": "PASS",
+      "labels": [
+        "En route",
+        "Arrived"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/documents 390",
+      "result": "PASS",
+      "labels": [
+        "Uploaded",
+        "Uploaded"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer 768",
+      "result": "PASS",
+      "labels": [
+        "Open",
+        "Planned",
+        "In progress",
+        "Partially delivered",
+        "Delivered",
+        "Open",
+        "Planned",
+        "In progress",
+        "Partially delivered",
+        "Delivered",
+        "Canceling",
+        "En route",
+        "Arrived",
+        "At location",
+        "In transit",
+        "Location unknown",
+        "Location unknown"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/orders 768",
+      "result": "PASS",
+      "labels": [
+        "Open",
+        "Planned"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/trailers 768",
+      "result": "PASS",
+      "labels": [
+        "At location",
+        "Empty",
+        "In service",
+        "In transit",
+        "Loaded",
+        "In service"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/deliveries 768",
+      "result": "PASS",
+      "labels": [
+        "En route",
+        "Arrived"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/documents 768",
+      "result": "PASS",
+      "labels": [
+        "Uploaded",
+        "Uploaded"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer 1440",
+      "result": "PASS",
+      "labels": [
+        "Open",
+        "Planned",
+        "In progress",
+        "Partially delivered",
+        "Delivered",
+        "Open",
+        "Planned",
+        "In progress",
+        "Partially delivered",
+        "Delivered",
+        "Canceling",
+        "En route",
+        "Arrived",
+        "At location",
+        "In transit",
+        "Location unknown",
+        "Location unknown"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/orders 1440",
+      "result": "PASS",
+      "labels": [
+        "Open",
+        "Planned"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/trailers 1440",
+      "result": "PASS",
+      "labels": [
+        "At location",
+        "Empty",
+        "In service",
+        "In transit",
+        "Loaded",
+        "In service"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/deliveries 1440",
+      "result": "PASS",
+      "labels": [
+        "En route",
+        "Arrived"
+      ]
+    },
+    {
+      "name": "L1 readable labels, original filter values, no overflow, accessible names /customer/documents 1440",
+      "result": "PASS",
+      "labels": [
+        "Uploaded",
+        "Uploaded"
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "cancel-trip-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:45.103Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "56de9dda2b6de230d40ebc1f556cdc256b5aa6b50b51f9157be556a1665d51f4",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-390x844.png",
+      "selectedPath": "cancel-trip-390x844.png"
+    },
+    {
+      "file": "cancel-trip-validation-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:45.323Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "480fe5d397d6c3af83c7df9aaa52ca4053cc4829cd363f48b30bc2a7c41a503a",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-validation-390x844.png",
+      "selectedPath": "cancel-trip-validation-390x844.png"
+    },
+    {
+      "file": "cancel-trip-320x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:46.134Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "f97334a884868128ab0d8d0bc98ecfc4102a429b74ce1d96bfdaa247ccafdcbe",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-320x844.png",
+      "selectedPath": null
+    },
+    {
+      "file": "cancel-trip-768x1024.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:47.327Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "211e1882b04a9de7c837600951f9ae358c71c9f9422a636c30f9b0abbca960d4",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-768x1024.png",
+      "selectedPath": null
+    },
+    {
+      "file": "cancel-trip-1280x800.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:48.499Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "58b6d505c3f4b419cc7af44abbca0a2e4770a102c29e3569ae69921ab96169e8",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-1280x800.png",
+      "selectedPath": null
+    },
+    {
+      "file": "cancel-trip-1440x900.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:49.805Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "274f1d61de40cc377f6b6e2b6c68039c074451d07cfabf762a34d66c3b870050",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-1440x900.png",
+      "selectedPath": null
+    },
+    {
+      "file": "cancel-trip-1920x1080.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:50.529Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "6210327e1626cc8f74b16a57af4f6f26372ce4ab99c9878dc0cd567b04463dd3",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-1920x1080.png",
+      "selectedPath": null
+    },
+    {
+      "file": "cancel-trip-720x450.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "viewport": {
+        "width": 720,
+        "height": 450
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:51.350Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": false,
+      "sha256": "f60d108ec60508a412050f0ed22ef704781b2b88ff318c3ac8f55bacb4879589",
+      "externalPath": "issue124fix-browser-final-source/cancel-trip-720x450.png",
+      "selectedPath": "cancel-trip-720x450.png"
+    },
+    {
+      "file": "customer-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:52.021Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "fb26c81fe7b1914f055989dab7e2fe3ac42ec29b9278dd5578b229660d26e85b",
+      "externalPath": "issue124fix-browser-final-source/customer-390x844.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-orders-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/orders",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:52.498Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "bd77a055d5cffa48a6799b8734d8f17d4b1c60b19b676a1e3d9d1e4e079673d1",
+      "externalPath": "issue124fix-browser-final-source/customer-orders-390x844.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-orders-filtered-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/orders",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:52.589Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "32dcaacc9014ef5e6c32a9d651e27d133b040cd06b99d8301c3994c9f68bb6bb",
+      "externalPath": "issue124fix-browser-final-source/customer-orders-filtered-390x844.png",
+      "selectedPath": "customer-orders-filtered-390x844.png"
+    },
+    {
+      "file": "customer-trailers-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/trailers",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:52.936Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "b4b3994b8e7abb8a10fb238beb369eeefda81ad5153c1eec7da8cba9d8fd324e",
+      "externalPath": "issue124fix-browser-final-source/customer-trailers-390x844.png",
+      "selectedPath": "customer-trailers-390x844.png"
+    },
+    {
+      "file": "customer-deliveries-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/deliveries",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:53.420Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "87f528cc1546679488874c8e702ca78faca65a822c7a88a11f6d04d595f6f518",
+      "externalPath": "issue124fix-browser-final-source/customer-deliveries-390x844.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-documents-390x844.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/documents",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:53.834Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "de6e6c7a18cd48b72d0dc407996bbea8003ec0c1fa1d30a9bf91fe1bf7f2f07c",
+      "externalPath": "issue124fix-browser-final-source/customer-documents-390x844.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-768x1024.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:54.245Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "4c4fe056eca2cf1086c0b84b8204c780c287bb245fa0c30aadb294f270c29421",
+      "externalPath": "issue124fix-browser-final-source/customer-768x1024.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-orders-768x1024.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/orders",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:54.733Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "4703c29c266b96d5d196e4f6d87bf3f5d6588f4375913b6106435ffc967d6b06",
+      "externalPath": "issue124fix-browser-final-source/customer-orders-768x1024.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-orders-filtered-768x1024.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/orders",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:54.805Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "71eaf0e994ba60724169c613cd40b626836dd11137e0f8b349600f88f99e6d66",
+      "externalPath": "issue124fix-browser-final-source/customer-orders-filtered-768x1024.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-trailers-768x1024.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/trailers",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:55.430Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "a70ad330b4ba022b1fafff211cc02b53cbc4fd752875b7af942fc39fbd98274f",
+      "externalPath": "issue124fix-browser-final-source/customer-trailers-768x1024.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-deliveries-768x1024.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/deliveries",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:55.891Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "5691d3edd45fa09261b3a2b269e16668abca925505fb9d998f4d97b2ba7533d4",
+      "externalPath": "issue124fix-browser-final-source/customer-deliveries-768x1024.png",
+      "selectedPath": "customer-deliveries-768x1024.png"
+    },
+    {
+      "file": "customer-documents-768x1024.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/documents",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:56.211Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "3054ba5d61a1a38ea8c2feea589f64558fec78eb6ac42385b17ae349fba2bb77",
+      "externalPath": "issue124fix-browser-final-source/customer-documents-768x1024.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-1440x900.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:56.701Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "51df4c06c13be68242bfb847e79e3799cb8e4d5691fd15d5cdf61cdc5b81b8d0",
+      "externalPath": "issue124fix-browser-final-source/customer-1440x900.png",
+      "selectedPath": "customer-1440x900.png"
+    },
+    {
+      "file": "customer-orders-1440x900.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/orders",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:56.970Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "51b2cce167fd5cbf55c1231d4adaed5e7a19777d414f6b8a81d9dda87175975e",
+      "externalPath": "issue124fix-browser-final-source/customer-orders-1440x900.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-orders-filtered-1440x900.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/orders",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:57.081Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "02ea4b59c2da95025f29d28a097068cd306cbb80ceb9557d2cfa20067e2e6a11",
+      "externalPath": "issue124fix-browser-final-source/customer-orders-filtered-1440x900.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-trailers-1440x900.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/trailers",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:57.349Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "815d76c7474a05fce2f9098ccf63a3dcd6492932be7c4eebd1ba26c9241b953d",
+      "externalPath": "issue124fix-browser-final-source/customer-trailers-1440x900.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-deliveries-1440x900.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/deliveries",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:57.679Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "68643350da234c74ad5825e4b00fc7ef6573fcf4e8bf9bc988ea784da798e5de",
+      "externalPath": "issue124fix-browser-final-source/customer-deliveries-1440x900.png",
+      "selectedPath": null
+    },
+    {
+      "file": "customer-documents-1440x900.png",
+      "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "route": "/customer/documents",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "environment": "Actual React route components in explicit ISOLATED DEMO; synthetic read fixtures; no Firebase/Backend session; writes rejected",
+      "capturedAt": "2026-10-22T00:31:57.920Z",
+      "captureMethod": "Native browser screenshot, unchanged pixels",
+      "fullPage": true,
+      "sha256": "12f2fa46bc1288aa12c8eebf3df332517a6b16c057b29149874b48a4c5dfd78c",
+      "externalPath": "issue124fix-browser-final-source/customer-documents-1440x900.png",
+      "selectedPath": "customer-documents-1440x900.png"
+    }
+  ],
+  "accessibleNames": [
+    {
+      "route": "/customer",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/orders",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/trailers",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/deliveries",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/documents",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/orders",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/trailers",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/deliveries",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/documents",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/orders",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/trailers",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/deliveries",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    },
+    {
+      "route": "/customer/documents",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "unnamedControls": 0,
+      "method": "CDP names, not manual screen-reader certification"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "broaderBrowserQA": {
+    "checks": [
+      {
+        "name": "admin loading 390",
+        "result": "PASS"
+      },
+      {
+        "name": "admin empty 390",
+        "result": "PASS"
+      },
+      {
+        "name": "admin 500 390",
+        "result": "PASS"
+      },
+      {
+        "name": "admin 403 390",
+        "result": "PASS"
+      },
+      {
+        "name": "admin loading 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "admin empty 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "admin 500 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "admin 403 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "admin drawer keyboard, Escape, focus return and no removed modules",
+        "result": "PASS"
+      },
+      {
+        "name": "admin table overflow hint and real arrow-key scrolling",
+        "result": "PASS"
+      },
+      {
+        "name": "admin reflow and accessible control names",
+        "result": "PASS"
+      },
+      {
+        "name": "operations loading 390",
+        "result": "PASS"
+      },
+      {
+        "name": "operations empty 390",
+        "result": "PASS"
+      },
+      {
+        "name": "operations 500 390",
+        "result": "PASS"
+      },
+      {
+        "name": "operations 403 390",
+        "result": "PASS"
+      },
+      {
+        "name": "operations loading 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "operations empty 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "operations 500 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "operations 403 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "operations drawer keyboard, Escape, focus return and no removed modules",
+        "result": "PASS"
+      },
+      {
+        "name": "operations table overflow hint and real arrow-key scrolling",
+        "result": "PASS"
+      },
+      {
+        "name": "operations reflow and accessible control names",
+        "result": "PASS"
+      },
+      {
+        "name": "customer loading 390",
+        "result": "PASS"
+      },
+      {
+        "name": "customer empty 390",
+        "result": "PASS"
+      },
+      {
+        "name": "customer 500 390",
+        "result": "PASS"
+      },
+      {
+        "name": "customer 403 390",
+        "result": "PASS"
+      },
+      {
+        "name": "customer loading 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "customer empty 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "customer 500 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "customer 403 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "customer drawer keyboard, Escape, focus return and no removed modules",
+        "result": "PASS"
+      },
+      {
+        "name": "customer table overflow hint and real arrow-key scrolling",
+        "result": "PASS"
+      },
+      {
+        "name": "customer reflow and accessible control names",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "admin Deactivate dialog 390",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "admin Deactivate dialog 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "admin Revoke QR dialog 390",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "admin Revoke QR dialog 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "operations Assign / reassign Driver dialog 390",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "operations Assign / reassign Driver dialog 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "operations Cancel Trip dialog 390",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "operations Cancel Trip dialog 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "operations Resolve dialog 390",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "operations Resolve dialog 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "customer Cancel Order dialog 390",
+        "result": "PASS"
+      },
+      {
+        "name": "Dialog actual accessible title: confirmation-title",
+        "result": "OBSERVED"
+      },
+      {
+        "name": "customer Cancel Order dialog 1440",
+        "result": "PASS"
+      },
+      {
+        "name": "Real unconfigured app, Home and Not Found",
+        "result": "PASS"
+      }
+    ],
+    "accessibleNames": [
+      {
+        "route": "/admin/customers",
+        "viewport": {
+          "width": 320,
+          "height": 844
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/admin/customers",
+        "viewport": {
+          "width": 768,
+          "height": 1024
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/admin/customers",
+        "viewport": {
+          "width": 720,
+          "height": 450
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/admin/customers",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/operations/orders",
+        "viewport": {
+          "width": 320,
+          "height": 844
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/operations/orders",
+        "viewport": {
+          "width": 768,
+          "height": 1024
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/operations/orders",
+        "viewport": {
+          "width": 720,
+          "height": 450
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/operations/orders",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/customer/orders",
+        "viewport": {
+          "width": 320,
+          "height": 844
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/customer/orders",
+        "viewport": {
+          "width": 768,
+          "height": 1024
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/customer/orders",
+        "viewport": {
+          "width": 720,
+          "height": 450
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      },
+      {
+        "route": "/customer/orders",
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "method": "CDP accessible tree; automated names only, not screen-reader certification",
+        "unnamedControls": []
+      }
+    ],
+    "pageErrors": [],
+    "manifest": "issue124fix-browser-final-qa/qa/browser-review.json",
+    "sha256": "a7ed2c3243444455fd9fab3f150bf164d4ec562459f21f34b3be053fb2e5a8c0"
+  },
+  "contrast": {
+    "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+    "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+    "method": "Actual browser CSS tokens and geometry; WCAG relative luminance; automated scoped checks, not full certification",
+    "contrast": [
+      {
+        "foreground": "color-text",
+        "background": "color-surface",
+        "foregroundHex": "#1e293b",
+        "backgroundHex": "#ffffff",
+        "ratio": 14.628718079350334,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-text-secondary",
+        "background": "color-surface",
+        "foregroundHex": "#475569",
+        "backgroundHex": "#ffffff",
+        "ratio": 7.577663953533317,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-accent",
+        "background": "color-canvas",
+        "foregroundHex": "#0f766e",
+        "backgroundHex": "#f5f7fa",
+        "ratio": 5.099825007957025,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-on-primary",
+        "background": "color-primary",
+        "foregroundHex": "#ffffff",
+        "backgroundHex": "#2563eb",
+        "ratio": 5.168555560022562,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-on-primary",
+        "background": "color-primary-hover",
+        "foregroundHex": "#ffffff",
+        "backgroundHex": "#1d4ed8",
+        "ratio": 6.701618401398807,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-control-border",
+        "background": "color-surface",
+        "foregroundHex": "#64748b",
+        "backgroundHex": "#ffffff",
+        "ratio": 4.758842787868666,
+        "target": 3,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-focus",
+        "background": "color-surface",
+        "foregroundHex": "#2563eb",
+        "backgroundHex": "#ffffff",
+        "ratio": 5.168555560022562,
+        "target": 3,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-sidebar-active-text",
+        "background": "color-sidebar-active-bg",
+        "foregroundHex": "#1d4ed8",
+        "backgroundHex": "#dbeafe",
+        "ratio": 5.4928674915472,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-primary",
+        "background": "color-sidebar-active-bg",
+        "foregroundHex": "#2563eb",
+        "backgroundHex": "#dbeafe",
+        "ratio": 4.236318619391649,
+        "target": 3,
+        "result": "PASS"
+      },
+      {
+        "foreground": "color-disabled-text",
+        "background": "color-disabled-bg",
+        "foregroundHex": "#475569",
+        "backgroundHex": "#f1f5f9",
+        "ratio": 6.916973995632248,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "status-neutral-text",
+        "background": "status-neutral-bg",
+        "foregroundHex": "#334155",
+        "backgroundHex": "#f1f5f9",
+        "ratio": 9.451924418631656,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "status-success-text",
+        "background": "status-success-bg",
+        "foregroundHex": "#166534",
+        "backgroundHex": "#f0fdf4",
+        "ratio": 6.811651629293788,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "status-attention-text",
+        "background": "status-attention-bg",
+        "foregroundHex": "#92400e",
+        "backgroundHex": "#fffbeb",
+        "ratio": 6.837002380367332,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "status-danger-text",
+        "background": "status-danger-bg",
+        "foregroundHex": "#991b1b",
+        "backgroundHex": "#fef2f2",
+        "ratio": 7.596644272500255,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "status-unknown-text",
+        "background": "status-unknown-bg",
+        "foregroundHex": "#475569",
+        "backgroundHex": "#f8fafc",
+        "ratio": 7.242510935504382,
+        "target": 4.5,
+        "result": "PASS"
+      },
+      {
+        "foreground": "status-pending-text",
+        "background": "status-pending-bg",
+        "foregroundHex": "#1e40af",
+        "backgroundHex": "#eff6ff",
+        "ratio": 8.014836919642205,
+        "target": 4.5,
+        "result": "PASS"
+      }
+    ],
+    "geometry": [
+      {
+        "phase": "after",
+        "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+        "route": "/admin",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "firstHeadingTop": 408,
+        "appHeaderHeight": 103,
+        "workspaceHeaderHeight": 108.5,
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      {
+        "phase": "after",
+        "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+        "route": "/admin",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "firstHeadingTop": 252.5,
+        "appHeaderHeight": 68,
+        "workspaceHeaderHeight": 87,
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      {
+        "phase": "after",
+        "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+        "route": "/operations/orders",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "firstHeadingTop": 352,
+        "appHeaderHeight": 68,
+        "workspaceHeaderHeight": 108.5,
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      {
+        "phase": "after",
+        "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+        "route": "/operations/orders",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "firstHeadingTop": 252.5,
+        "appHeaderHeight": 68,
+        "workspaceHeaderHeight": 87,
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      {
+        "phase": "after",
+        "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+        "route": "/customer/orders/new",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "firstHeadingTop": 455.5,
+        "appHeaderHeight": 68,
+        "workspaceHeaderHeight": 124,
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      {
+        "phase": "after",
+        "sourceRevision": "cfd077036bcdde68245b2a512925ea066ad35a36",
+        "route": "/customer/orders/new",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "firstHeadingTop": 298.5,
+        "appHeaderHeight": 68,
+        "workspaceHeaderHeight": 87,
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      }
+    ]
+  },
+  "before": {
+    "M1": {
+      "file": "before-cancel-trip-390x844.png",
+      "sha256": "bc265870ba2321d6a6ea6c26eab3bc3cd83210b7951940485590f4e95be09eee",
+      "sourceRevision": "cba7e1d9108bb164215aeb881579b4413e81e67c",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "kind": "Unmodified genuine isolated React browser screenshot"
+    },
+    "L1": {
+      "file": "../refinement/after/customer-dashboard-1440x900.png",
+      "sourceRevision": "79d4c6fd781e0e394e09a83b2782c9ae5ac69b70",
+      "webGitTree": "60a7b3a55d42fe2f2bee591fc407ba57fd7f064b",
+      "note": "That whole Web tree equals cba7e1d:web, before these label corrections."
+    }
+  },
+  "limitations": [
+    "Actual browser-chrome200% zoom not executed;720x450 is equivalent reflow only.",
+    "CDP/Flutter semantics are automated evidence, not manual screen-reader certification.",
+    "No real Firebase/Backend/R2 authentication, protected grant or confirmed business writes.",
+    "Existing native images remain valid for unchanged Mobile source; this pass adds no new emulator screenshots."
+  ],
+  "toolingNotes": [
+    "Initial browser helper attempted to Tab from last safe Cancel into native browser chrome; corrected to walk backwards through all actual form controls, retaining control geometry assertions.",
+    "Controlled filter selection requires awaiting React/router completion; original enum-value assertion retained.",
+    "Visual inspection found long existing validation text escaping its field; scoped wrapping corrected without changing the message or rules.",
+    "Earlier capture batches are preserved externally and are not presented as final-source evidence."
+  ]
+}

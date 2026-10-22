@@ -9,7 +9,7 @@
   "productionLibGitTree": "7cdf512bd270dcac8bc0761315941bda91f8774f",
   "nativeBeforeSource": "7971457f3d66aaaba39867b2d17e25604e9c36d8",
   "nativeBeforeBridge": "That complete Mobile Git tree equals f5031b2:mobile; raw timestamps and actual capture SHAs remain unchanged.",
-  "finalRevisionBridge": "The final documentation/evidence-only commit retains these entire Web/Mobile Git trees. Exact final SHA and freshly measured complete validations are in the PR/delivery. Captures are not relabeled.",
+  "finalRevisionBridge": "Historical Web evidence through cba7e1d only; final M1/L1 Web corrections are indexed in ../final-fixes/provenance.json. The Mobile source tree remains unchanged and can still be bridged to the latest final HEAD. Actual capture SHAs and hashes are retained.",
   "nativeArtifacts": {
     "result": "PASS",
     "artifacts": [
