@@ -195,7 +195,7 @@ it('preserves pre-execution cancellation history and displays only the acknowled
   await detail();await u.click(await screen.findByRole('button',{name:'Cancel Order'}));expect(screen.queryByLabelText('Operational instructions')).not.toBeInTheDocument()
   await u.type(screen.getByLabelText('Cancellation reason'),'Customer no longer needs pickup');await u.click(screen.getByLabelText('I reviewed this cancellation and its consequences.'))
   expect(body).toBeUndefined();await u.click(screen.getByRole('button',{name:'Confirm cancellation'}))
-  await waitFor(()=>expect(body).toEqual({expectedVersion:0,reason:'Customer no longer needs pickup'}));await screen.findByText('State CANCELLED · Version 1')
+  await waitFor(()=>expect(body).toEqual({expectedVersion:0,reason:'Customer no longer needs pickup'}));await screen.findByText('State Canceled · Version 1')
 })
 it('does not acknowledge a completed command whose successful response contradicts the requested outcome',async()=>{
   const u=userEvent.setup(),f=orderFixture(`/customer/orders/${orderId}`);f.state.orders[0]=order({status:'DELIVERED',version:8})

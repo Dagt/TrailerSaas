@@ -144,6 +144,25 @@ it('distinguishes active cancellation from a completed physical action', async (
   expect(within(d).getByRole('button',{name:'Start cancellation'})).toBeDisabled()
 })
 
+it('retains safe cancellation focus, named validation and Escape recovery in the scrollable dialog', async () => {
+  const u=userEvent.setup(),f=operationsFixture(`/operations/trips/${tripId}`,{trip:trip('IN_TRANSIT')})
+  const trigger=await screen.findByRole('button',{name:'Cancel Trip'})
+  await u.click(trigger)
+  const dialog=screen.getByRole('dialog',{name:'Start cancellation'})
+  expect(within(dialog).getByRole('heading',{name:'Start cancellation'})).toBeInTheDocument()
+  expect(within(dialog).getByRole('button',{name:'Cancel'})).toHaveFocus()
+  expect(within(dialog).getByRole('button',{name:'Start cancellation'})).toBeDisabled()
+  await u.click(within(dialog).getByLabelText('I confirm these operational instructions.'))
+  await u.click(within(dialog).getByRole('button',{name:'Start cancellation'}))
+  await waitFor(()=>expect(within(dialog).getByLabelText('Reason')).toHaveAttribute('aria-invalid','true'))
+  expect(within(dialog).getByLabelText('Reason')).toHaveAccessibleDescription('Required.')
+  expect(within(dialog).getByLabelText('Instructions')).toHaveAttribute('aria-invalid','true')
+  expect(f.requests.every(r=>r.method==='GET')).toBe(true)
+  await u.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(trigger).toHaveFocus()
+})
+
 function review(path:string,state='') {
   const f=operationsFixture(path), api=createOperationsReviewApi(state)
   f.fetcher.mockImplementation(async input=>{const u=new URL(String(input)); const data=await api.request(u.pathname.replace('/api/v1','')+u.search); return new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}})})

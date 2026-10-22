@@ -16,8 +16,20 @@ it('uses one shared overflow instruction per Customer table instead of duplicati
   expect(region).toHaveAccessibleDescription(/Keyboard: focus this table/)
 })
 
-it.each([['UNKNOWN','unknown'],['LOCATION_UNKNOWN','unknown'],['UPLOADED','neutral'],['DELIVERED','neutral'],['COMPLETED','success'],['CANCELLING','attention']])('keeps %s explicit without inventing a different domain outcome', (value,tone)=>{
-  render(<CustomerStatus value={value!}/>);expect(screen.getByText(value!)).toHaveAttribute('data-tone',tone)
+it.each([
+  ['UNKNOWN','Unknown','unknown'],['LOCATION_UNKNOWN','Location unknown','unknown'],
+  ['UPLOADED','Uploaded','neutral'],['DELIVERED','Delivered','neutral'],['COMPLETED','Completed','success'],
+  ['CANCELLING','Canceling','attention'],['CANCELLED','Canceled','neutral'],['OPEN','Open','neutral'],
+  ['PLANNED','Planned','neutral'],['IN_PROGRESS','In progress','pending'],
+  ['PARTIALLY_DELIVERED','Partially delivered','pending'],['IN_TRANSIT','In transit','pending'],
+  ['AT_LOCATION','At location','neutral'],['AT_STOP','At Stop','neutral'],['ASSIGNED','Assigned','neutral'],
+  ['PENDING','Pending','neutral'],['EN_ROUTE','En route','pending'],['ARRIVED','Arrived','pending'],
+  ['IN_SERVICE','In service','pending'],['OUT_OF_SERVICE','Out of service','attention'],
+  ['COUPLED','Coupled','neutral'],['UNCOUPLED','Uncoupled','neutral'],['EMPTY','Empty','neutral'],
+  ['LOADED','Loaded','neutral'],['ACTIVE','Active','success'],['INACTIVE','Inactive','neutral'],
+  ['EXCEPTION','Exception','attention'],['NEW_SERVER_STATE','NEW_SERVER_STATE','neutral'],
+])('presents %s as %s without inventing a different domain outcome', (value,label,tone)=>{
+  render(<CustomerStatus value={value!}/>);expect(screen.getByText(label!)).toHaveAttribute('data-tone',tone)
 })
 it('groups actual dashboard previews and retains bounded reads without internal directories',async()=>{
   const f=customerReadFixture('/customer');await screen.findByRole('heading',{name:'Customer dashboard'})
@@ -31,6 +43,7 @@ it('groups actual dashboard previews and retains bounded reads without internal 
 })
 it('keeps URL filters and browser history independent of table presentation',async()=>{
   const u=userEvent.setup(),f=orderFixture();await screen.findByRole('link',{name:'ACME-101'})
+  expect(within(screen.getByLabelText('Order state')).getByRole('option',{name:'Planned'})).toHaveValue('PLANNED')
   await u.selectOptions(screen.getByLabelText('Order state'),'PLANNED');await screen.findByText('No Orders found in this Customer scope.')
   expect(f.router.state.location.search).toContain('status=PLANNED')
   await act(async()=>{await f.router.navigate(-1)});await screen.findByRole('link',{name:'ACME-101'})
@@ -75,17 +88,17 @@ it('keeps destructive cancellation separate and blocks repeat writes after a ver
 })
 it('keeps delivered and administratively completed Orders distinct in the redesigned detail',async()=>{
   const f=orderFixture(`/customer/orders/${orderId}`);f.state.orders=[order({status:'DELIVERED'})];await screen.findByRole('heading',{name:'Order ACME-101'})
-  expect(await screen.findByRole('button',{name:'Complete delivered Order'})).toBeInTheDocument();expect(screen.getByText('DELIVERED',{selector:'.status-badge'})).toHaveAttribute('data-tone','neutral')
+  expect(await screen.findByRole('button',{name:'Complete delivered Order'})).toBeInTheDocument();expect(screen.getByText('Delivered',{selector:'.status-badge'})).toHaveAttribute('data-tone','neutral')
   expect(screen.queryByRole('button',{name:'Edit before execution'})).not.toBeInTheDocument()
 })
 it('does not promote Last Known to Current Location in the redesigned inventory',async()=>{
   const f=customerReadFixture();f.readState.trailers=[inventoryTrailer({locationState:'LOCATION_UNKNOWN',currentLocationId:null,currentLocationName:null})]
-  const row=await screen.findByRole('row',{name:/T114/});expect(within(row).getByText('LOCATION_UNKNOWN')).toHaveAttribute('data-tone','unknown');expect(within(row).getByText('Historical Yard')).toBeInTheDocument();expect(within(row).getByText('Unknown')).toBeInTheDocument()
+  const row=await screen.findByRole('row',{name:/T114/});expect(within(row).getByText('Location unknown')).toHaveAttribute('data-tone','unknown');expect(within(row).getByText('Historical Yard')).toBeInTheDocument();expect(within(row).getByText('Unknown')).toBeInTheDocument()
 })
 it('preserves published versus accepted evidence and never authorizes a file during rendering',async()=>{
   const f=customerReadFixture(`/customer/documents/${documentId}`);await screen.findByRole('heading',{name:'BOL document'})
   expect(screen.getByRole('heading',{name:'Secure file access'})).toBeInTheDocument();expect(screen.getByText('File publication does not independently establish accepted POD.')).toBeInTheDocument()
-  expect(screen.getByText('SIGNED_BOL')).toBeInTheDocument();expect(f.requests.every(r=>r.method==='GET')).toBe(true);expect(screen.queryByRole('link',{name:'Open authorized file'})).not.toBeInTheDocument()
+  expect(screen.getByText('Signed BOL')).toBeInTheDocument();expect(f.requests.every(r=>r.method==='GET')).toBe(true);expect(screen.queryByRole('link',{name:'Open authorized file'})).not.toBeInTheDocument()
 })
 it('rejects foreign accepted-file data before revealing the new document surfaces',async()=>{
   const f=customerReadFixture('/customer/documents');f.handlers.set(f.readRoot+'/documents',async()=>response({customerId,items:[evidenceFile({customerId:customerB,orderNumber:'PRIVATE-FOREIGN'})],nextCursor:null}));await screen.findByRole('alert');expect(screen.queryByText('PRIVATE-FOREIGN')).not.toBeInTheDocument();expect(screen.queryByRole('link',{name:'View BOL'})).not.toBeInTheDocument()

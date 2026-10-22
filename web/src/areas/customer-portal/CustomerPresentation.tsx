@@ -2,6 +2,7 @@ import type { ComponentProps, PropsWithChildren, ReactNode } from 'react'
 import { displayTime } from '../../shared/ui/dateTime'
 import { Card, DataTable, PageHeader, StatusBadge } from '../../shared/ui/components'
 import type { CargoInput } from './orderContracts'
+import { customerLabel } from './customerLabel'
 
 export function CustomerHeader({ title, description, children }: PropsWithChildren<{title:string;description?:string}>) {
   return <header className="customer-heading"><p className="customer-eyebrow">Customer workspace</p><PageHeader title={title} description={description}>{children && <div className="customer-heading-actions">{children}</div>}</PageHeader></header>
@@ -29,5 +30,5 @@ export function CustomerStatus({ value }: {value:string}) {
     : ['CANCELLING','EXCEPTION','OUT_OF_SERVICE'].includes(value) ? 'attention'
       : ['IN_PROGRESS','PARTIALLY_DELIVERED','IN_TRANSIT','EN_ROUTE','ARRIVED','IN_SERVICE'].includes(value) ? 'pending'
         : ['COMPLETED','ACTIVE'].includes(value) ? 'success' : 'neutral'
-  return <StatusBadge tone={tone}>{value}</StatusBadge>
+  return <StatusBadge tone={tone}>{customerLabel(value)}</StatusBadge>
 }

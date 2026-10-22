@@ -1,3 +1,4 @@
+import { customerLabel } from './customerLabel'
 import { useState } from 'react'
 import { ConfirmDialog, ErrorBanner, FormField } from '../../shared/ui/components'
 import { useOrderApi, useOrderTrailers } from './orderQueries'
@@ -44,9 +45,9 @@ export function OrderCancellation({order,close,reload}:Props) {
     void submission.send(signal=>api.command(order.id,'/cancellations',body,signal,active?'CANCELLING':'CANCELLED'),close)
   }
   return <ConfirmDialog className="customer-dialog customer-dialog--danger" title={active?'Start active Order cancellation':'Cancel Order before execution'} onCancel={close} onConfirm={send} confirmLabel={active?'Confirm active cancellation':'Confirm cancellation'} busy={submission.busy} confirmDisabled={!confirmed||submission.blocked}>
-    <p>{active?'This starts CANCELLING. Physical resolution remains required. Existing deliveries and evidence remain.':'Historical requests are retained. Only releasable pre-execution allocations are released.'} Cancelling this Order does not cancel a shared Trip.</p>
+    <p>{active?'This starts cancellation. Physical resolution remains required. Existing deliveries and evidence remain.':'Historical requests are retained. Only releasable pre-execution allocations are released.'} Cancelling this Order does not cancel a shared Trip.</p>
     <fieldset disabled={submission.blocked}><FormField id="cancel-reason" label="Cancellation reason"><textarea id="cancel-reason" value={draft.value.reason} onChange={e=>change({...draft.value,reason:e.target.value})}/></FormField>
-      {active&&<><label>Resolution <select value={draft.value.resolutionType} onChange={e=>change({...draft.value,resolutionType:e.target.value,destination:newStop()})}><option value="">Choose resolution</option>{['RETURN_TO_BASE','REROUTE','HOLD_CONTACT_DISPATCH','OTHER_AUTHORIZED'].map(r=><option key={r}>{r}</option>)}</select></label>
+      {active&&<><label>Resolution <select value={draft.value.resolutionType} onChange={e=>change({...draft.value,resolutionType:e.target.value,destination:newStop()})}><option value="">Choose resolution</option>{['RETURN_TO_BASE','REROUTE','HOLD_CONTACT_DISPATCH','OTHER_AUTHORIZED'].map(r=><option key={r} value={r}>{customerLabel(r)}</option>)}</select></label>
         {draft.value.resolutionType!=='HOLD_CONTACT_DISPATCH'&&<DestinationEditor prefix="cancel-destination" normalizedOnly stop={draft.value.destination} change={destination=>change({...draft.value,destination})}/>}
         <FormField id="cancel-instructions" label="Operational instructions"><textarea id="cancel-instructions" value={draft.value.instructions} onChange={e=>change({...draft.value,instructions:e.target.value})}/></FormField></>}
       <label><input type="checkbox" checked={confirmed} onChange={e=>confirm(e.target.checked)}/>I reviewed this cancellation and its consequences.</label>
@@ -56,7 +57,7 @@ export function OrderCancellation({order,close,reload}:Props) {
 export function OrderCompletion({order,close,reload}:Props) {
   const {api}=useOrderApi(), submission=useSubmission(`complete:${order.id}:${order.version}`), [confirmed,confirm]=useState(false)
   return <ConfirmDialog className="customer-dialog" title="Complete delivered Order" onCancel={close} onConfirm={()=>{if(confirmed&&order.status==='DELIVERED')void submission.send(signal=>api.command(order.id,'/completion',{expectedVersion:order.version},signal,'COMPLETED'),close)}} confirmLabel="Confirm administrative completion" busy={submission.busy} confirmDisabled={!confirmed||submission.blocked||order.status!=='DELIVERED'}>
-    <p>DELIVERED means operational delivery obligations were satisfied. COMPLETED closes the Order administratively. The server validates state and authorization.</p>
+    <p>Delivered means operational delivery obligations were satisfied. Completed closes the Order administratively. The server validates state and authorization.</p>
     <label><input type="checkbox" checked={confirmed} onChange={e=>confirm(e.target.checked)}/>I confirm administrative closure of this delivered Order.</label><Feedback submission={submission} reload={reload}/>
   </ConfirmDialog>
 }

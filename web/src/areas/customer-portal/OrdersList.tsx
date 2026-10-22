@@ -4,6 +4,7 @@ import { LoadingState, ErrorBanner, Button, EmptyState } from '../../shared/ui/c
 import { orderStatuses } from '../transport-operations/contracts'
 import { useOrderActions, useOrders } from './orderQueries'
 import type { OrderRow } from './orderContracts'
+import { customerLabel } from './customerLabel'
 
 export function OrderRows({rows}:{rows:OrderRow[]}) {
   if(!rows.length) return <EmptyState>No Orders found in this Customer scope.</EmptyState>
@@ -19,7 +20,7 @@ export function OrdersList() {
   const change=(key:string,value:string)=>{const next=new URLSearchParams();if(status)next.set('status',status);if(unplanned)next.set('unplanned',unplanned);if(value)next.set(key,value);else next.delete(key);setSearch(next)}
   return <section><CustomerHeader title="Orders" description="Requests for the active Customer. Physical delivery and administrative completion are separate.">
     {actions.data?.capabilities.includes('ORDER_CREATE')&&<Link className="button-link" to="/customer/orders/new">Create Order</Link>}
-  </CustomerHeader><div className="filters" role="group" aria-label="Order filters"><label>State <select aria-label="Order state" value={status} onChange={e=>change('status',e.target.value)}><option value="">All states</option>{orderStatuses.map(s=><option key={s}>{s}</option>)}</select></label>
+  </CustomerHeader><div className="filters" role="group" aria-label="Order filters"><label>State <select aria-label="Order state" value={status} onChange={e=>change('status',e.target.value)}><option value="">All states</option>{orderStatuses.map(s=><option key={s} value={s}>{customerLabel(s)}</option>)}</select></label>
     <label>Planning <select aria-label="Order planning" value={unplanned} onChange={e=>change('unplanned',e.target.value)}><option value="">All</option><option value="true">No active Trip</option><option value="false">Other planning states</option></select></label><Button onClick={()=>void orders.refetch()}>Refresh Orders</Button></div>
     {actions.isError&&<ErrorBanner title="Order actions unavailable" error={actions.error} retry={()=>void actions.refetch()}/>}
     {orders.isPending?<LoadingState/>:orders.isError?<ErrorBanner title="Orders could not be loaded" error={orders.error} retry={()=>void orders.refetch()}/>:<><CustomerPanel title="Customer requests" description="Review references, current state and linked delivery work."><OrderRows rows={orders.data.pages.flatMap(p=>p.items)}/></CustomerPanel>
