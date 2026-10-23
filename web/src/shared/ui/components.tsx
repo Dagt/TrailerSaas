@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { ButtonHTMLAttributes, PropsWithChildren, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ApiProblem } from '../api/client'
 import './foundation.css'
+import './quality.css'
 
 export function PageHeader({ title, description, children }: PropsWithChildren<{ title: string; description?: string }>) {
   return <div className="page-header"><div><h1>{title}</h1>{description && <p>{description}</p>}</div>{children}</div>
@@ -11,9 +12,26 @@ export function LoadingState() { return <p className="ui-loading" role="status">
 export function EmptyState({ children }: PropsWithChildren) { return <div className="empty-state">{children}</div> }
 export function StatusBadge({ children, tone = 'neutral' }: PropsWithChildren<{ tone?: 'neutral' | 'success' | 'attention' | 'danger' | 'unknown' | 'pending' }>) { return <span className="status-badge" data-tone={tone}>{children}</span> }
 export function DataTable({ headings, children, caption, density = 'comfortable' }: PropsWithChildren<{ headings: string[]; caption: string; density?: 'comfortable' | 'compact' }>) {
-  return <div className="table-scroll" data-density={density} role="region" aria-label={caption} tabIndex={0}><table><caption className="sr-only">{caption}</caption><thead><tr>{headings.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>
+  const viewport = useRef<HTMLDivElement>(null), hint = useId()
+  const [overflowing, setOverflowing] = useState(false)
+  useEffect(() => {
+    const element = viewport.current
+    if (!element) return
+    const measure = () => setOverflowing(element.scrollWidth > element.clientWidth + 1)
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure)
+    observer?.observe(element)
+    const table = element.querySelector('table')
+    if (table) observer?.observe(table)
+    window.addEventListener('resize', measure)
+    measure()
+    return () => { observer?.disconnect(); window.removeEventListener('resize', measure) }
+  }, [])
+  return <div ref={viewport} className="table-scroll" data-density={density} role="region" aria-label={caption} aria-describedby={overflowing ? hint : undefined} tabIndex={0}>
+    {overflowing && <p className="table-scroll-hint" id={hint}><span aria-hidden="true">↔</span> Scroll horizontally to see all columns. Keyboard: focus this table and use the arrow keys.</p>}
+    <table><caption className="sr-only">{caption}</caption><thead><tr>{headings.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>
 }
-export function ErrorBanner({ error, retry, reload, staleMessage }: { error: unknown; retry?: () => void; reload?: () => void; staleMessage?: string }) {
+export function ErrorBanner({ error, retry, reload, staleMessage, title }: { error: unknown; retry?: () => void; reload?: () => void; staleMessage?: string; title?: string }) {
+  const titleId = useId()
   const problem = error instanceof ApiProblem ? error.problem : undefined
   const stale = problem?.code === 'STALE_VERSION'
   let message = 'The request could not be completed. Please try again.'
@@ -25,7 +43,7 @@ export function ErrorBanner({ error, retry, reload, staleMessage }: { error: unk
   else if (problem?.code === 'RESOURCE_CONFLICT') message = 'This change conflicts with existing data. Review the values before trying again.'
   else if (problem?.code === 'VALIDATION_FAILED') message = 'Please check the highlighted fields.'
   else if (problem && problem.status >= 500) message = 'The service is temporarily unavailable. Please try again.'
-  return <div className="error-banner" role="alert"><p>{message}</p>
+  return <div className="error-banner" role="alert" aria-labelledby={title ? titleId : undefined}>{title && <h2 id={titleId}>{title}</h2>}<p>{message}</p>
     {problem?.traceId && <p className="support-reference">Support reference: {problem.traceId}</p>}
     {stale && reload ? <button type="button" onClick={reload}>Reload latest</button> : retry && <button type="button" onClick={retry}>Retry</button>}
   </div>

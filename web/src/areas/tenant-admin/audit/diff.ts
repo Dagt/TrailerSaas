@@ -1,4 +1,5 @@
 import type { AuditEvent } from './contracts'
+import { displayTime } from '../../../shared/ui/dateTime'
 
 export const missing = Symbol('missing')
 export type DiffRow = { field: string; before: unknown; after: unknown; state: 'Added' | 'Removed' | 'Changed' | 'Unchanged' | 'Withheld' }
@@ -27,4 +28,4 @@ export function auditDiff(event: Pick<AuditEvent, 'beforeData' | 'afterData'>): 
   return rows.filter(r => r.field).sort((a, b) => a.field < b.field ? -1 : a.field > b.field ? 1 : 0)
 }
 export const label = (value: string) => value.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
-export const localTime = (value: string) => new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'long' })
+export const localTime = displayTime

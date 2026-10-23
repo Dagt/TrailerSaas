@@ -179,16 +179,16 @@ class _SessionViewState extends State<SessionView> {
             children: [
               if (widget.notifications != null)
                 NotificationsPanel(controller: widget.notifications!),
-              FleetFact('Tenant workspace', snapshot.membership.name),
-              FleetNotice(
-                session.state == SessionState.offline
+              FleetWorkspaceContext(
+                tenant: snapshot.membership.name,
+                refreshedAt: snapshot.refreshedAt,
+                message: session.state == SessionState.offline
                     ? 'Offline — cached, not current authorization'
                     : 'Connected — server validated',
                 tone: session.state == SessionState.offline
                     ? FleetTone.attention
                     : FleetTone.neutral,
               ),
-              Text('Last refreshed: ${fleetTime(snapshot.refreshedAt)}'),
               if (session.message != null)
                 Semantics(liveRegion: true, child: Text(session.message!)),
               if (session.traceId != null)
@@ -275,11 +275,12 @@ class _SessionViewState extends State<SessionView> {
                     ...snapshot.trips.map(
                       (trip) => Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               FleetStatus('Assigned Trip · ${trip.status}'),
+                              const SizedBox(height: 12),
                               FilledButton.icon(
                                 icon: const Icon(Icons.arrow_forward),
                                 onPressed: () =>
@@ -303,8 +304,17 @@ class _SessionViewState extends State<SessionView> {
                                 label: const Text('Open assigned Trip'),
                               ),
                               if (trip.plannedTrailer != null)
-                                Text(
-                                  'Expected Trailer: ${trip.plannedTrailer!['operationalNumber']}',
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 12,
+                                    bottom: 8,
+                                  ),
+                                  child: Text(
+                                    'Expected Trailer: ${trip.plannedTrailer!['operationalNumber']}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall,
+                                  ),
                                 ),
                               ...trip.stops.map((stop) => FleetStop(stop)),
                             ],

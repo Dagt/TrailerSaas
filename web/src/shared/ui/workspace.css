@@ -72,3 +72,26 @@
   .auth-layout .sign-in { padding: var(--space-5); }
 }
 @media (prefers-reduced-motion: reduce) { .workspace-drawer, .workspace-sidebar a { animation: none; transition: none; scroll-behavior: auto; } }
+
+/* UX-07: preserve context and every action while returning space to daily work. */
+.app-header { padding-block: var(--space-3); }
+.workspace-header { padding-block: var(--space-4); gap: var(--space-4); }
+.workspace-context > strong { overflow-wrap: anywhere; }
+.workspace-content { padding: var(--space-6) var(--space-8); }
+.workspace-content > :first-child { max-width: 96rem; margin-inline: auto; }
+.navigation-mark { width: 1.25rem; flex-basis: 1.25rem; }
+.workspace-sidebar nav a { min-height: 2.75rem; padding-block: var(--space-2); }
+@media (max-width: 53.125rem) {
+  .app-header { gap: var(--space-2); }
+  .app-header nav { flex: 1 1 10rem; width: auto; justify-content: flex-end; margin-left: auto; }
+  .workspace-header { gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+  .workspace-heading { flex: 1 1 8rem; }
+  .workspace-heading > .workspace-eyebrow { display: none; }
+  .workspace-heading > strong { font-size: var(--text-body); }
+  .workspace-identity { font-size: var(--text-xs); }
+  .workspace-actions { gap: var(--space-2); }
+  .workspace-actions .ui-button { padding-inline: var(--space-3); font-size: var(--text-xs); }
+  .workspace-context { gap: var(--space-2); }
+  .workspace-content { padding: var(--space-5) var(--space-4); }
+  .workspace-mobile-bar { padding-block: var(--space-2); gap: var(--space-3); }
+}

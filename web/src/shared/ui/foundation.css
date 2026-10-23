@@ -20,6 +20,8 @@ button:disabled, .ui-button:disabled { opacity: 1; color: var(--color-disabled-t
 .ui-filter-fields .form-field { margin: 0; }
 .table-scroll[data-density='compact'] td, .table-scroll[data-density='compact'] th { padding-block: var(--table-padding-compact-y); }
 .table-scroll:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+.table-scroll-hint { position: sticky; left: 0; width: fit-content; max-width: calc(100% - 2rem); margin: var(--space-3) var(--space-4); color: var(--color-text-secondary); font-size: var(--text-xs); line-height: var(--leading-body); }
+.table-scroll-hint > span { color: var(--color-primary-hover); margin-right: var(--space-2); font-weight: 700; }
 .status-badge { border: var(--border-width) solid var(--status-neutral-border); font-weight: 600; line-height: 1.5; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .status-badge[data-tone='success'] { color: var(--status-success-text); background: var(--status-success-bg); border-color: var(--status-success-border); }
 .status-badge[data-tone='attention'] { color: var(--status-attention-text); background: var(--status-attention-bg); border-color: var(--status-attention-border); }
@@ -27,6 +29,7 @@ button:disabled, .ui-button:disabled { opacity: 1; color: var(--color-disabled-t
 .status-badge[data-tone='unknown'] { color: var(--status-unknown-text); background: var(--status-unknown-bg); border-color: var(--status-unknown-border); }
 .status-badge[data-tone='pending'] { color: var(--status-pending-text); background: var(--status-pending-bg); border-color: var(--status-pending-border); }
 .ui-loading { display: flex; align-items: center; gap: var(--space-3); color: var(--color-text-secondary); padding-block: var(--space-3); }
+.error-banner h2 { font-size: var(--text-body); margin: 0 0 var(--space-2); }
 .ui-spinner { display: inline-block; flex: 0 0 auto; width: 1rem; height: 1rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--radius-pill); animation: ui-spin 800ms linear infinite; }
 @keyframes ui-spin { to { transform: rotate(360deg); } }
 .ui-notice { padding: var(--space-4); border: var(--border-width) solid var(--status-neutral-border); border-radius: var(--radius-md); color: var(--status-neutral-text); background: var(--status-neutral-bg); margin: var(--space-4) 0; overflow-wrap: anywhere; }

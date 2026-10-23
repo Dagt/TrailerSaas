@@ -1,0 +1,1080 @@
+{
+  "sourceRevision": "dc2b6e74d254f10006e94e291c8357f9c7d8d6cc",
+  "webGitTree": "35c5ee93c02b0e3ace6570b1b57dd7c64d67070f",
+  "mobileGitTree": "f3db13b8516495265fab5401174ec45a7c858187",
+  "runtimeAll202MobileInputsVerified": true,
+  "web": {
+    "result": "PASS",
+    "base": "cb08d3da85ade73ada7bc5bcf38cc7178c9e6b4a",
+    "sourceRevision": "dc2b6e74d254f10006e94e291c8357f9c7d8d6cc",
+    "webGitTree": "35c5ee93c02b0e3ace6570b1b57dd7c64d67070f",
+    "method": "TypeScript parser/printer AST comparison of business/query/cache/form calls, operational conditional guards and complete event-handler expressions across all existing feature/auth/shared-Trailer production files; supplements full regression tests",
+    "files": [
+      {
+        "file": "web/src/areas/alerts/AlertsWorkspace.tsx",
+        "protectedCalls": 21,
+        "operationalGuards": 11,
+        "eventHandlers": 10,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/CreateOrder.tsx",
+        "protectedCalls": 12,
+        "operationalGuards": 2,
+        "eventHandlers": 10,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/CustomerPages.tsx",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/CustomerPortalArea.tsx",
+        "protectedCalls": 29,
+        "operationalGuards": 11,
+        "eventHandlers": 6,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/CustomerPresentation.tsx",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/CustomerReadViews.tsx",
+        "protectedCalls": 34,
+        "operationalGuards": 18,
+        "eventHandlers": 18,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/OrderActions.tsx",
+        "protectedCalls": 33,
+        "operationalGuards": 2,
+        "eventHandlers": 18,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/OrderDetail.tsx",
+        "protectedCalls": 15,
+        "operationalGuards": 5,
+        "eventHandlers": 7,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/OrderEditors.tsx",
+        "protectedCalls": 6,
+        "operationalGuards": 0,
+        "eventHandlers": 17,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/OrdersList.tsx",
+        "protectedCalls": 8,
+        "operationalGuards": 4,
+        "eventHandlers": 4,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/context.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/orderContracts.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/orderQueries.ts",
+        "protectedCalls": 30,
+        "operationalGuards": 6,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/queries.ts",
+        "protectedCalls": 5,
+        "operationalGuards": 4,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/readContracts.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/readQueries.ts",
+        "protectedCalls": 27,
+        "operationalGuards": 5,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/useSubmission.ts",
+        "protectedCalls": 5,
+        "operationalGuards": 6,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/customer-portal/workspaceMemory.ts",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/AdminLayout.tsx",
+        "protectedCalls": 18,
+        "operationalGuards": 4,
+        "eventHandlers": 4,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/AdminPresentation.tsx",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/MasterDataPages.tsx",
+        "protectedCalls": 37,
+        "operationalGuards": 13,
+        "eventHandlers": 7,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/QrManagement.tsx",
+        "protectedCalls": 11,
+        "operationalGuards": 2,
+        "eventHandlers": 3,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/RecordEditor.tsx",
+        "protectedCalls": 18,
+        "operationalGuards": 2,
+        "eventHandlers": 3,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/TenantAdminArea.tsx",
+        "protectedCalls": 1,
+        "operationalGuards": 2,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/TrailerFilters.tsx",
+        "protectedCalls": 4,
+        "operationalGuards": 0,
+        "eventHandlers": 7,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/audit/AuditWorkspace.tsx",
+        "protectedCalls": 18,
+        "operationalGuards": 10,
+        "eventHandlers": 8,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/audit/api.ts",
+        "protectedCalls": 2,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/audit/contracts.ts",
+        "protectedCalls": 8,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/audit/diff.ts",
+        "protectedCalls": 2,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/contracts.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/hooks.ts",
+        "protectedCalls": 5,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/presentation.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 1,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/qrPayload.ts",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/resources.ts",
+        "protectedCalls": 3,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/tenant-admin/tenant.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/BoardPages.tsx",
+        "protectedCalls": 15,
+        "operationalGuards": 4,
+        "eventHandlers": 12,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/MasterDataStatus.tsx",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/OperationsPresentation.tsx",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/PlanTrip.tsx",
+        "protectedCalls": 33,
+        "operationalGuards": 2,
+        "eventHandlers": 20,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/TrailerPages.tsx",
+        "protectedCalls": 27,
+        "operationalGuards": 6,
+        "eventHandlers": 6,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/TransportOperationsArea.tsx",
+        "protectedCalls": 10,
+        "operationalGuards": 3,
+        "eventHandlers": 2,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/TripAction.tsx",
+        "protectedCalls": 23,
+        "operationalGuards": 0,
+        "eventHandlers": 6,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/TripDetailPage.tsx",
+        "protectedCalls": 22,
+        "operationalGuards": 4,
+        "eventHandlers": 7,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/contracts.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/display.ts",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/historyContracts.ts",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/mutations.ts",
+        "protectedCalls": 7,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/operationsApi.ts",
+        "protectedCalls": 8,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/planning.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/areas/transport-operations/queries.ts",
+        "protectedCalls": 17,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/auth/AuthProvider.tsx",
+        "protectedCalls": 13,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/auth/boundary.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/auth/context.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/auth/currentUser.ts",
+        "protectedCalls": 4,
+        "operationalGuards": 1,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/auth/firebase.ts",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/trailers/TrailerReadView.tsx",
+        "protectedCalls": 8,
+        "operationalGuards": 3,
+        "eventHandlers": 1,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/trailers/api.ts",
+        "protectedCalls": 3,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/trailers/contracts.ts",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      },
+      {
+        "file": "web/src/shared/trailers/display.ts",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "eventHandlers": 0,
+        "result": "IDENTICAL"
+      }
+    ],
+    "totalProtectedCalls": 550,
+    "totalGuards": 131,
+    "totalEventHandlers": 176
+  },
+  "mobile": {
+    "result": "PASS",
+    "method": "Dart parser AST comparison; whitespace normalized; protected method invocations and operational guards plus immutable bootstrap/lifecycle/QR functions; does not replace regression tests",
+    "base": "/issue124-base/mobile/lib",
+    "current": "/issue124/mobile/lib",
+    "protectedCalls": 203,
+    "operationalGuards": 624,
+    "files": [
+      {
+        "file": "src/observability/client_observability.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/app/navigation/mode_shell.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/app/trailer_saas_app.dart",
+        "protectedCalls": 14,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/persistence/app_database.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/persistence/session_cache.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 5,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/persistence/app_database.g.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 63,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard_mode/yard_mode_placeholder.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/native_qr_scanner.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 1,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/arrival_location.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/qr_scanner.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/secure_storage.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/camera.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/location_assistance.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/connectivity.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/native_location_assistance.dart",
+        "protectedCalls": 6,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/platform/network_connectivity.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/configuration/app_configuration.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/configuration/firebase_configuration.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/notifications/device_registration_store.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/notifications/notifications_controller.dart",
+        "protectedCalls": 10,
+        "operationalGuards": 15,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/notifications/messaging_port.dart",
+        "protectedCalls": 2,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/notifications/notifications_panel.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 2,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/yard_actions_view.dart",
+        "protectedCalls": 11,
+        "operationalGuards": 32,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/check_controller.dart",
+        "protectedCalls": 13,
+        "operationalGuards": 28,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/check_commands.dart",
+        "protectedCalls": 2,
+        "operationalGuards": 17,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/yard_commands.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 7,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/check_contracts.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 1,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/yard_view.dart",
+        "protectedCalls": 6,
+        "operationalGuards": 10,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/yard_damage_store.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 10,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/yard_contracts.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/check_view.dart",
+        "protectedCalls": 12,
+        "operationalGuards": 23,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/check_store.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 14,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/yard/yard_controller.dart",
+        "protectedCalls": 12,
+        "operationalGuards": 49,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/driver_updates_store.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 10,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/road_evidence_replay.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 4,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/driver_updates_view.dart",
+        "protectedCalls": 5,
+        "operationalGuards": 7,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/online_command_journal.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/road_trip_screen.dart",
+        "protectedCalls": 7,
+        "operationalGuards": 24,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/geofence_evaluator.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 2,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/road_evidence_view.dart",
+        "protectedCalls": 5,
+        "operationalGuards": 14,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/road_trip_controller.dart",
+        "protectedCalls": 14,
+        "operationalGuards": 41,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/arrival_assistance_controller.dart",
+        "protectedCalls": 3,
+        "operationalGuards": 10,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/road_evidence_store.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 6,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road/command_recovery_panel.dart",
+        "protectedCalls": 3,
+        "operationalGuards": 5,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/media/media_store.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 7,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/media/media_dependencies.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 2,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/media/media_file_store.dart",
+        "protectedCalls": 4,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/media/documents_client.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 2,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/media/media_sync_panel.dart",
+        "protectedCalls": 4,
+        "operationalGuards": 5,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/media/media_processor.dart",
+        "protectedCalls": 3,
+        "operationalGuards": 21,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/shift/camera_capture.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 4,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/shift/shift_commands.dart",
+        "protectedCalls": 2,
+        "operationalGuards": 6,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/shift/shift_view.dart",
+        "protectedCalls": 12,
+        "operationalGuards": 30,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/shift/inspection_store.dart",
+        "protectedCalls": 3,
+        "operationalGuards": 8,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/shift/contracts.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/sync/replay_worker.dart",
+        "protectedCalls": 19,
+        "operationalGuards": 73,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/sync/sync_panel.dart",
+        "protectedCalls": 6,
+        "operationalGuards": 8,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/sync/offline_actions.dart",
+        "protectedCalls": 2,
+        "operationalGuards": 9,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/sync/road_command_capture.dart",
+        "protectedCalls": 2,
+        "operationalGuards": 6,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/sync/command_store.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 2,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/session/auth_gateway.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/session/api_client.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 7,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/session/session_controller.dart",
+        "protectedCalls": 8,
+        "operationalGuards": 24,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/session/session_view.dart",
+        "protectedCalls": 3,
+        "operationalGuards": 10,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/session/contracts.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "src/road_mode/road_mode_placeholder.dart",
+        "protectedCalls": 0,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      },
+      {
+        "file": "main.dart",
+        "protectedCalls": 1,
+        "operationalGuards": 0,
+        "callsIdentical": true,
+        "guardsPreserved": true,
+        "addedPresentationPredicates": [],
+        "removedGuards": []
+      }
+    ],
+    "fixedLogic": [
+      {
+        "file": "main.dart",
+        "functions": [
+          "main",
+          "initState",
+          "_initialize",
+          "dispose"
+        ],
+        "onDetectCallbacks": 0,
+        "identical": true
+      },
+      {
+        "file": "src/app/trailer_saas_app.dart",
+        "functions": [
+          "initState",
+          "_initialize",
+          "dispose",
+          "didChangeAppLifecycleState",
+          "_close"
+        ],
+        "onDetectCallbacks": 0,
+        "identical": true
+      },
+      {
+        "file": "src/platform/native_qr_scanner.dart",
+        "functions": [
+          "trailerPublicToken",
+          "scan",
+          "cancel"
+        ],
+        "onDetectCallbacks": 1,
+        "identical": true
+      }
+    ]
+  },
+  "note": "Pre-documentation code snapshot; final documentation-only SHA is supplied in PR with complete source-tree equality and fresh final validation. This is a supplementary AST/import/scope boundary audit, not an authorization penetration test."
+}

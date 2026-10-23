@@ -10,6 +10,7 @@ import { useAdminTenant } from '../tenant-admin/tenant'
 import { OperationsTenant } from '../transport-operations/queries'
 import { AdminPageHeader, AdminPanel, AdminStatus } from '../tenant-admin/AdminPresentation'
 import { OperationsHeader, OperationsStatus } from '../transport-operations/OperationsPresentation'
+import { displayTime } from '../../shared/ui/dateTime'
 
 const alertSchema = z.object({
   id: z.uuid(), tenantId: z.uuid(), alertType: z.enum(['TRAILER_MISSING', 'STALE_TRAILER']), severity: z.literal('WARNING'),
@@ -93,13 +94,13 @@ function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin'
     return <section className={area === 'admin' ? 'admin-alerts admin-page' : 'ops-page ops-alerts'}><Heading title="Alert detail" description="The persisted Alert is authoritative. Push acceptance does not confirm phone delivery."><button className={area === 'operations' ? 'ui-button ui-button--secondary' : undefined} onClick={reload}>Refresh Alert</button><Link to={`/${area}/alerts`}>Back to Alerts</Link></Heading>
       {area === 'admin' ? <AdminStatus value={a.status} /> : <OperationsStatus value={a.status} label={a.status} />}
       <AlertRegion area={area} className="admin-audit-metadata" operationsClassName="ops-alert-metadata"><DetailList items={[
-        ['Type', a.alertType], ['Severity', a.severity], ['Created', a.createdAt], ['Version', String(a.version)],
+        ['Type', a.alertType], ['Severity', a.severity], ['Created', displayTime(a.createdAt)], ['Version', String(a.version)],
         ['Trailer', <Link to={`/${area}/trailers/${a.relatedResource.id}`}>{a.relatedResource.operationalNumber}</Link>], ['Recorded location state', a.relatedResource.locationState],
-        ['Acknowledged', a.acknowledgedAt], ['Acknowledged by', a.acknowledgedBy], ['Resolved', a.resolvedAt], ['Resolved by', a.resolvedBy], ['Resolution reason', a.resolutionReason],
+        ['Acknowledged', a.acknowledgedAt ? displayTime(a.acknowledgedAt) : null], ['Acknowledged by', a.acknowledgedBy], ['Resolved', a.resolvedAt ? displayTime(a.resolvedAt) : null], ['Resolved by', a.resolvedBy], ['Resolution reason', a.resolutionReason],
         ['Origin',a.originActorType??'HUMAN_USER'], ['Resolution actor',a.resolutionActorType??null],
         ...(a.detection ? [
-          ['Last physical observation',a.detection.lastSeenAt], ['Threshold at detection',String(a.detection.thresholdHours)+' hours'],
-          ['Elapsed at detection',a.detection.elapsedHours.toFixed(1)+' hours'], ['Detected',a.detection.detectedAt],
+          ['Last physical observation',displayTime(a.detection.lastSeenAt)], ['Threshold at detection',String(a.detection.thresholdHours)+' hours'],
+          ['Elapsed at detection',a.detection.elapsedHours.toFixed(1)+' hours'], ['Detected',displayTime(a.detection.detectedAt)],
         ] as [string,string][] : []),
       ]} /></AlertRegion>
       <AlertRegion area={area} className="admin-panel" operationsClassName="ops-alert-action-panel">
@@ -119,7 +120,7 @@ function AlertsWorkspaceContent({ owner, area }: { owner: Context; area: 'admin'
   const items = [...new Map(pages.data?.pages.flatMap(page => page.items).map(a => [a.id, a]) ?? []).values()]
   const Heading = area === 'admin' ? AdminPageHeader : OperationsHeader
   const records = <DataTable caption="Operational Alerts" headings={['Trailer', 'Type', 'Severity', 'Status', 'Created']}>
-    {items.map(a => <tr key={a.id}><td><Link to={`/${area}/alerts/${a.id}`}>{a.relatedResource.operationalNumber}</Link></td><td>{a.alertType}</td><td>{area === 'admin' ? <AdminStatus value={a.severity} /> : <OperationsStatus value={a.severity} label={a.severity} />}</td><td>{area === 'admin' ? <AdminStatus value={a.status} /> : <OperationsStatus value={a.status} label={a.status} />}</td><td>{a.createdAt}</td></tr>)}
+    {items.map(a => <tr key={a.id}><td><Link to={`/${area}/alerts/${a.id}`}>{a.relatedResource.operationalNumber}</Link></td><td>{a.alertType}</td><td>{area === 'admin' ? <AdminStatus value={a.severity} /> : <OperationsStatus value={a.severity} label={a.severity} />}</td><td>{area === 'admin' ? <AdminStatus value={a.status} /> : <OperationsStatus value={a.status} label={a.status} />}</td><td><time dateTime={a.createdAt}>{displayTime(a.createdAt)}</time></td></tr>)}
   </DataTable>
   return <section className={area === 'admin' ? 'admin-alerts admin-page' : 'ops-page ops-alerts'}><Heading title="Alerts" description="Operational conditions remain available even if push is missed."><button className={area === 'operations' ? 'ui-button ui-button--secondary' : undefined} onClick={() => void pages.refetch()}>Refresh Alerts</button></Heading>
     <form onSubmit={e => { e.preventDefault(); setFilters(Object.fromEntries(Object.entries(draft).filter(([, v]) => v).map(([k, v]) => [k, k === 'from' || k === 'to' ? new Date(v).toISOString() : v]))) }}>

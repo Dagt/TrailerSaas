@@ -141,6 +141,26 @@ void main() {
       expect(find.text('Review'), findsOneWidget);
       expect(find.textContaining('payloadJson'), findsNothing);
       expect(find.textContaining('private-bearer'), findsNothing);
+      // A standalone queue must reflow and keep recovery reachable on a small
+      // viewport as well as when naturally embedded in the workspace list.
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 480);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.text('Review'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('Review'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(find.text('Review')).bottom,
+        lessThanOrEqualTo(480),
+      );
+      expect(tester.takeException(), isNull);
       await close(tester);
     },
   );

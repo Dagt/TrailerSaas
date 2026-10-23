@@ -1,6 +1,8 @@
 import type { ComponentProps, PropsWithChildren, ReactNode } from 'react'
+import { displayTime } from '../../shared/ui/dateTime'
 import { Card, DataTable, PageHeader, StatusBadge } from '../../shared/ui/components'
 import type { CargoInput } from './orderContracts'
+import { customerLabel } from './customerLabel'
 
 export function CustomerHeader({ title, description, children }: PropsWithChildren<{title:string;description?:string}>) {
   return <header className="customer-heading"><p className="customer-eyebrow">Customer workspace</p><PageHeader title={title} description={description}>{children && <div className="customer-heading-actions">{children}</div>}</PageHeader></header>
@@ -11,7 +13,7 @@ export function CustomerPanel({ title, description, actions, children, className
 }
 
 export function CustomerTime({ value }: {value:string|null}) {
-  return value ? <time dateTime={value} title={`${value} · Displayed in your browser's local time`}>{new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value))}</time> : <>Not recorded</>
+  return value ? <time dateTime={value} title={`${value} · Displayed in your browser's local time`}>{displayTime(value)}</time> : <>Not recorded</>
 }
 
 export function CustomerCargo({ lines }: {lines:CargoInput[]}) {
@@ -19,7 +21,7 @@ export function CustomerCargo({ lines }: {lines:CargoInput[]}) {
 }
 
 export function CustomerTable(props:ComponentProps<typeof DataTable>) {
-  return <><p className="customer-table-hint">Scroll horizontally to view all columns. Keyboard users can focus the table and use the arrow keys.</p><DataTable {...props}/></>
+  return <DataTable {...props}/>
 }
 
 /** Presentation only. Domain values and authorization predicates remain unchanged. */
@@ -28,5 +30,5 @@ export function CustomerStatus({ value }: {value:string}) {
     : ['CANCELLING','EXCEPTION','OUT_OF_SERVICE'].includes(value) ? 'attention'
       : ['IN_PROGRESS','PARTIALLY_DELIVERED','IN_TRANSIT','EN_ROUTE','ARRIVED','IN_SERVICE'].includes(value) ? 'pending'
         : ['COMPLETED','ACTIVE'].includes(value) ? 'success' : 'neutral'
-  return <StatusBadge tone={tone}>{value}</StatusBadge>
+  return <StatusBadge tone={tone}>{customerLabel(value)}</StatusBadge>
 }

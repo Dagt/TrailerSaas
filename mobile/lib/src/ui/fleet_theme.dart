@@ -113,7 +113,8 @@ ThemeData fleetTheme() {
       foregroundColor: FleetColors.text,
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: 1,
-      elevation: 0,
+      elevation: 1,
+      shadowColor: FleetColors.border,
       centerTitle: false,
       titleTextStyle: TextStyle(
         fontSize: 20,
