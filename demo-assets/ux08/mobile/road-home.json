@@ -1,0 +1,25 @@
+{
+  "file": "road-home.png",
+  "widgetOrState": "Road Mode",
+  "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+  "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+  "entry": "mobile/test/native_review/main.dart",
+  "apkSha256": "35d529c6bfc856524d1a6abb3c64ef05949c9f9652fb9cf38a9bc26be0ddf76f",
+  "sha256": "eacd0185fc2a5d3d1d5fd8641b7dcf82feb1b2a91fe5d1dccc64ded7e611e5a0",
+  "pixelWidth": 720,
+  "pixelHeight": 1600,
+  "capturedAt": "2026-10-23T02:18:41.703764+00:00",
+  "environment": "ISOLATED DEMO; actual Flutter widgets on Android emulator; synthetic reads; rejected HTTP writes; no Firebase/Backend",
+  "captureMethod": "adb exec-out screencap -p; unmodified emulator PNG",
+  "disclosureVerification": "Review markers in APK verified; visible banner requires PNG inspection (outer builder absent from UIAutomator tree)",
+  "dataSource": "mobile/test/native_review/main.dart, test/session/fixtures.dart, test/yard/fixtures.dart",
+  "serial": "emulator-5556",
+  "wmSize": "Physical size: 720x1600",
+  "wmDensity": "Physical density: 320",
+  "fontScale": "1.0",
+  "androidApi": "35",
+  "fingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+  "foreground": [
+    "mCurrentFocus=Window{85bd6f8 u0 com.trailersaas.trailersaas_mobile/com.trailersaas.trailersaas_mobile.MainActivity}"
+  ]
+}

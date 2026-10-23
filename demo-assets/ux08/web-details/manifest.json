@@ -1,0 +1,132 @@
+{
+  "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+  "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+  "capturedAt": "2026-10-23T02:12:37.139Z",
+  "environment": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+  "browser": "155.0.4283.62",
+  "screenshots": [
+    {
+      "file": "operations-trip-timeline.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "actions": [
+        "Load more Trip events; scroll actual timeline into view"
+      ],
+      "scroll": {
+        "x": 0,
+        "y": 1245
+      },
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "8470e27ed40d6e482f24a6efd784cee1e74b78df5a8bc712d1f3e74c4223377f",
+      "capturedAt": "2026-10-23T02:12:40.311Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-movement-history.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "actions": [
+        "Scroll actual movement timeline into view"
+      ],
+      "scroll": {
+        "x": 0,
+        "y": 1010
+      },
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "e2b0e7d9e5730129057029cfd80786d43d65aa38fea68d78a6d7b192ea9d37d5",
+      "capturedAt": "2026-10-23T02:12:41.236Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-planning-review.png",
+      "route": "/operations/trips/new",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "actions": [
+        "Select eligible first Order; Continue to Stops / Resources / Review; no submission"
+      ],
+      "scroll": {
+        "x": 0,
+        "y": 25
+      },
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "a3fdbfd7c35a64a7cb38d68bc4cfca874c12085311056bf9b7fad16b52398fa0",
+      "capturedAt": "2026-10-23T02:12:42.704Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-trailer-search.png",
+      "route": "/operations/trailers",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "actions": [
+        "Exact operational-number search DEMO-TR-104"
+      ],
+      "scroll": {
+        "x": 0,
+        "y": 0
+      },
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "5b8b7109e73b448cdaa7f6e679f9b87a4e4371923f39f5eec2333d9291d04982",
+      "capturedAt": "2026-10-23T02:12:43.832Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    }
+  ],
+  "pageErrors": [],
+  "checks": [
+    {
+      "name": "operations-trip-timeline visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-movement-history visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-planning-review visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-trailer-search visible demo disclosure and no document overflow",
+      "result": "PASS"
+    }
+  ]
+}

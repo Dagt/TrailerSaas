@@ -1,0 +1,541 @@
+{
+  "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+  "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+  "capturedAt": "2026-10-23T02:02:56.314Z",
+  "environment": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+  "browser": "155.0.4283.62",
+  "screenshots": [
+    {
+      "file": "admin-overview.png",
+      "route": "/admin",
+      "entry": "/dev/tenant-admin.html",
+      "role": "TENANT_ADMIN (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/tenant-admin-fixtures.ts",
+      "sha256": "afb80f2cfe97ff74717154a54f0e7db30a701a95a1c39a79b1be7585ed4bcf9e",
+      "capturedAt": "2026-10-23T02:03:04.842Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "admin-customers.png",
+      "route": "/admin/customers",
+      "entry": "/dev/tenant-admin.html",
+      "role": "TENANT_ADMIN (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/tenant-admin-fixtures.ts",
+      "sha256": "0ba424045da20739d8403d002ebf05899a9ba578b94537abf5eada2cd22e505a",
+      "capturedAt": "2026-10-23T02:03:05.676Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "admin-equipment.png",
+      "route": "/admin/trailers",
+      "entry": "/dev/tenant-admin.html",
+      "role": "TENANT_ADMIN (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/tenant-admin-fixtures.ts",
+      "sha256": "cd4237883b5cac7591ef516ee45b52620e28d5a72420d8cd4c63339ed1029544",
+      "capturedAt": "2026-10-23T02:03:06.490Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "admin-settings.png",
+      "route": "/admin/settings",
+      "entry": "/dev/tenant-admin.html",
+      "role": "TENANT_ADMIN (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/tenant-admin-fixtures.ts",
+      "sha256": "c11bac091c86f5ceb316a53a73de575be28774b3974db387ac3ad088e52fe904",
+      "capturedAt": "2026-10-23T02:03:07.532Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "admin-audit.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "entry": "/dev/tenant-admin.html",
+      "role": "TENANT_ADMIN (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/tenant-admin-fixtures.ts",
+      "sha256": "d92463d63bcd51ddb2d688ee2c454f4c6e4d4442f6f4d8bbc7bf17cf21ea414e",
+      "capturedAt": "2026-10-23T02:03:08.413Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-dispatch.png",
+      "route": "/operations",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "33631cacdeba6862f271f14cbe45f7a2d3c416307903cc0a529a72b4ff094344",
+      "capturedAt": "2026-10-23T02:03:09.367Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-orders.png",
+      "route": "/operations/orders",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "b6ed7e88e04b25d0ae61823c9d7151e6a35598d2736024466ee1b6dd8fe4c410",
+      "capturedAt": "2026-10-23T02:03:10.396Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-trip.png",
+      "route": "/operations/trips/12100030-0000-4000-8000-000000000001",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "885111965052221bdefb59c559cdd60f9f77bd68c609073d2f80c27cbdc2cd37",
+      "capturedAt": "2026-10-23T02:03:11.343Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-planning.png",
+      "route": "/operations/trips/new",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "760ff2b2bfaa94875bcb840dcfb94e63f95747d924158c800a8f86a1b8dda508",
+      "capturedAt": "2026-10-23T02:03:12.513Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-trailer.png",
+      "route": "/operations/trailers/12000000-0000-4000-8000-000000000050",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "02fe8b9dc8949c31445c483159f5396635d887d6cbb46ca065a1c40c67d0deb8",
+      "capturedAt": "2026-10-23T02:03:13.407Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-alerts.png",
+      "route": "/operations/alerts",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "85be4be4c62d491c644a6bdb3f7ce1258e0b5bc467f46f0ea7a1994955f5c097",
+      "capturedAt": "2026-10-23T02:03:14.610Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-dashboard.png",
+      "route": "/customer",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "35be4061729c742bf1c013ee646614f29ce7ad8316f20a9b58714488828afcc6",
+      "capturedAt": "2026-10-23T02:03:15.633Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-orders.png",
+      "route": "/customer/orders",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "d5b7d1c15563fccd86f66f93a24503b482ba52fb72e7f898fce01d9705d1c40f",
+      "capturedAt": "2026-10-23T02:03:16.706Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-deliveries.png",
+      "route": "/customer/deliveries",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "68e5da0932433a588d233bc1d0fb77fe4a83be2c1d9f383d75e70bb41c9ad9be",
+      "capturedAt": "2026-10-23T02:03:17.563Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-documents.png",
+      "route": "/customer/documents",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "40842d36d477d69cd0294a089a745fd51fd01075640e27dae8455bf5ee80eb08",
+      "capturedAt": "2026-10-23T02:03:18.624Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-document-unavailable.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "84b862df92b03949f7df58c59bd9d56914ab070aa6ddff403bbbc67b0c289ac2",
+      "capturedAt": "2026-10-23T02:03:19.499Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-unknown-location.png",
+      "route": "/customer/trailers/12200000-0000-4000-8000-000000000052",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "178bf04550e169dfc3e7ce636220f580a6420e85475288401697d9e44e62afcd",
+      "capturedAt": "2026-10-23T02:03:20.463Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-empty.png",
+      "route": "/operations/orders",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "empty",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "c99b308e57b511edc4c1fb96100c12f292e75d84e723354f897bbd72239dfd84",
+      "capturedAt": "2026-10-23T02:03:21.363Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-error.png",
+      "route": "/customer/orders",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "500",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "0a86f73fc08076451de404bfe7116ae362c48cba74909872e98ccbad40ab1b6d",
+      "capturedAt": "2026-10-23T02:03:22.265Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-access-denied.png",
+      "route": "/customer/orders",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "403",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "81d49d1b0d4b66fd7d06eb5d9845616002f86a97d899639d0d6539466370b3a5",
+      "capturedAt": "2026-10-23T02:03:23.040Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-loading.png",
+      "route": "/customer/orders",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "loading",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "0de639673ddc58262a61e11954fecdf7fd8346551d7dd109061ba82a6e719981",
+      "capturedAt": "2026-10-23T02:03:23.918Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-mobile.png",
+      "route": "/customer",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "2aed689688f7e8c5dd45663f3a6b7114a5014f0939e893cdab35844533c8b43b",
+      "capturedAt": "2026-10-23T02:03:24.897Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "operations-tablet.png",
+      "route": "/operations",
+      "entry": "/dev/operations.html",
+      "role": "TRANSPORT_OPERATIONS (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "dataSource": "web/src/dev/operations-fixtures.ts",
+      "sha256": "948231ad4e85ac64e522789bb14fe4e5f52f0957245ed7b679479a1d3c699af8",
+      "capturedAt": "2026-10-23T02:03:25.794Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    }
+  ],
+  "pageErrors": [],
+  "checks": [
+    {
+      "name": "admin-overview visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "admin-customers visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "admin-equipment visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "admin-settings visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "admin-audit visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-dispatch visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-orders visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-trip visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-planning visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-trailer visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-alerts visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-dashboard visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-orders visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-deliveries visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-documents visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-document-unavailable visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-unknown-location visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-empty visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-error visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-access-denied visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-loading visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-mobile visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "operations-tablet visible demo disclosure and no document overflow",
+      "result": "PASS"
+    }
+  ]
+}

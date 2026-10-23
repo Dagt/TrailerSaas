@@ -1,0 +1,72 @@
+{
+  "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+  "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+  "capturedAt": "2026-10-23T02:14:55.708Z",
+  "environment": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+  "browser": "155.0.4283.62",
+  "screenshots": [
+    {
+      "file": "admin-audit-changes.png",
+      "route": "/admin/audit/12000000-0000-4000-8000-000000000080",
+      "entry": "/dev/tenant-admin.html",
+      "role": "TENANT_ADMIN (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "actions": [
+        "Scroll actual before/after Audit comparison into view"
+      ],
+      "scroll": {
+        "x": 0,
+        "y": 381
+      },
+      "dataSource": "web/src/dev/tenant-admin-fixtures.ts",
+      "sha256": "d5216a75531e5924c7deb6d230477d2d89a717826e040bab96582f5c4f0d4f7a",
+      "capturedAt": "2026-10-23T02:15:04.623Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    },
+    {
+      "file": "customer-download-unavailable.png",
+      "route": "/customer/documents/12200000-0000-4000-8000-000000000500",
+      "entry": "/dev/customer.html",
+      "role": "CUSTOMER_DISPATCHER (synthetic)",
+      "state": "Synthetic read view",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "sourceRevision": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+      "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+      "actions": [
+        "Request authorized download; fixture explicitly rejects with OBJECT_STORAGE_UNAVAILABLE; no grant or real file"
+      ],
+      "scroll": {
+        "x": 0,
+        "y": 480
+      },
+      "dataSource": "web/src/dev/customer-fixtures.ts",
+      "sha256": "234b4557ac7b37fbcb2a60324b56759c4618cea0c743237602df9e035d772081",
+      "capturedAt": "2026-10-23T02:15:06.078Z",
+      "authenticity": "ISOLATED DEMO: actual React routes, synthetic reads, rejected writes, no Firebase or Backend authorization",
+      "captureMethod": "Unmodified browser PNG; no retouching or generated imagery"
+    }
+  ],
+  "pageErrors": [],
+  "checks": [
+    {
+      "name": "admin-audit-changes visible demo disclosure and no document overflow",
+      "result": "PASS"
+    },
+    {
+      "name": "customer-download-unavailable visible demo disclosure and no document overflow",
+      "result": "PASS"
+    }
+  ]
+}

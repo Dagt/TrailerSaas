@@ -1,0 +1,199 @@
+{
+  "applicationSource": "fa0898e12cbdc358ea7cd7119c76a1e3a11e248c",
+  "webGitTree": "4a729ce9d63d99fb9386b84e279264df1cc089b2",
+  "mobileGitTree": "f7fb8cdf2d89a4e961bda8d822f3785526a6b320",
+  "scope": "assets, documentation and asset tooling only; application source unchanged",
+  "web": {
+    "passed": 668,
+    "failed": 0,
+    "skipped": 0,
+    "files": 33,
+    "finalCommand": "npm test -- --maxWorkers=1 --reporter=default --reporter=json --outputFile=../../issue125-web-tests-final.json",
+    "earlierAttempts": [
+      {
+        "parallel": "default",
+        "passed": 663,
+        "failed": 5
+      },
+      {
+        "parallel": "2 workers",
+        "passed": 667,
+        "failed": 1
+      }
+    ],
+    "note": "Complete final single-worker rerun passed with unchanged assertions and timeouts; earlier logs retained"
+  },
+  "flutter": {
+    "passed": 672,
+    "failed": 0,
+    "skipped": 0,
+    "files": 52,
+    "hiddenSetupTeardown": 2,
+    "command": "flutter test --reporter expanded --file-reporter json:/evidence/issue125-mobile-tests.jsonl"
+  },
+  "ciPolicy": {
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "regressionChecks": 22,
+    "regressionImages": 26,
+    "pageErrors": 0,
+    "consoleErrors": 0,
+    "productionRoutes": 8,
+    "commercialImages": 35
+  },
+  "preservedLocalAssets": 112,
+  "productionIsolation": {
+    "webDistFixtureMarkerHits": 0,
+    "mobileMainReachableFiles": 64,
+    "mobileSyntheticEntryImports": 0
+  },
+  "nativeBuild": {
+    "sourceArchiveSha256": "dc29fe2df29d7e4374579e59aec84cdea0a7c796a69ba4b03585d53732d5103b",
+    "apkSha256": "35d529c6bfc856524d1a6abb3c64ef05949c9f9652fb9cf38a9bc26be0ddf76f",
+    "command": "flutter build apk --debug --target-platform android-x64 -t test/native_review/main.dart --dart-define=UX06_NATIVE_REVIEW=true",
+    "type": "isolated native review; not production signed release",
+    "rawMobileInputs": 202
+  },
+  "presentation": {
+    "slides": 10,
+    "sha256": "ce303210bb339782994eab872b585c549d2ba17e84df349f334efd6e2b31f650",
+    "validation": "Artifact Tool structure/geometry/Arial font/first-party reimport; 10 previews visually inspected; not native PowerPoint/iOS QA"
+  },
+  "remoteCI": "NOT VERIFIED \u2014 BILLING BLOCKED",
+  "liveInfrastructure": "NOT VERIFIED; no real Firebase, Backend, storage or FCM session",
+  "logs": [
+    {
+      "file": "issue125-npm-ci.log",
+      "bytes": 453,
+      "sha256": "84d56f2e5cc4af68d5886299d34518a94ecad7f2f6bfa63482c1403beef50545"
+    },
+    {
+      "file": "issue125-web-typecheck.log",
+      "bytes": 49,
+      "sha256": "33632a8da406042a1df2f8bd33e23365e6a1bb5de1c83f6289d85dc6e3b6fb5c"
+    },
+    {
+      "file": "issue125-web-lint.log",
+      "bytes": 63,
+      "sha256": "8e514e517b6cae7866f1089d96d0e7600131ea3c103f91614c4f5d6a72dabfb1"
+    },
+    {
+      "file": "issue125-web-test.log",
+      "bytes": 18880,
+      "sha256": "a5cbdce20fc162b7d774ee8a075900a8a1044ffd34ff996faca41dc5e3cd56ae"
+    },
+    {
+      "file": "issue125-web-tests-recheck.log",
+      "bytes": 33117,
+      "sha256": "bf1741a5594e84483ba8c259a7f73fc827182f6860a10178d85f3bc97766d02b"
+    },
+    {
+      "file": "issue125-web-tests-final.log",
+      "bytes": 19093,
+      "sha256": "8a421c81dc2690009b71d60048cd7cd5e8cc36bb12ef910c61e68c499ac0f3e7"
+    },
+    {
+      "file": "issue125-web-tests-final.json",
+      "bytes": 209293,
+      "sha256": "d2bae31f9855484521859e7cf2cca92359f3201c586db7e4b915d49bc3af7940"
+    },
+    {
+      "file": "issue125-web-build.log",
+      "bytes": 1892,
+      "sha256": "e1cbedb5d7554bd7f373187ac9f8ea2b1dce17948842aaf61c8d0c18071a15c6"
+    },
+    {
+      "file": "issue125-ci-policy.log",
+      "bytes": 942,
+      "sha256": "4256febf1976ecff320c41b80d4bc8e5d87b7e5d39f63e00a13361fdc18aabaf"
+    },
+    {
+      "file": "issue125-browser-regression.log",
+      "bytes": 76,
+      "sha256": "231b3de4e78a1da98bbb5466be1ec763bc09870d0429e245dd28e3c1ca29728f"
+    },
+    {
+      "file": "issue125-production-review.json",
+      "bytes": 928,
+      "sha256": "6ad409cafa30433c90c7015594ebb6f079a0bf60c871bf74eb000c6cac4f49c9"
+    },
+    {
+      "file": "issue125-mobile-install.log",
+      "bytes": 1740,
+      "sha256": "6e053e4718082a374182248af22d0d6ca98f47456f89d8f3c10fe67d36efb65b"
+    },
+    {
+      "file": "issue125-mobile-generation.log",
+      "bytes": 864,
+      "sha256": "a137743c46fa8a9d16b4227ab9cde4c0c30d118f3d6bae4e141363ab5ca7e469"
+    },
+    {
+      "file": "issue125-mobile-format.log",
+      "bytes": 49,
+      "sha256": "f845e390d6ab8479d7cd6886000bf2a8142f62a8c835b028c5babc2e9e2652ee"
+    },
+    {
+      "file": "issue125-mobile-analysis.log",
+      "bytes": 1836,
+      "sha256": "511e2459d0a2814feb8d1e573d91a1284c6d5e0749ddad4c9ad7151b7ffc0259"
+    },
+    {
+      "file": "issue125-mobile-tests.log",
+      "bytes": 116509,
+      "sha256": "4061e3036a4daeafc76e9c960c40777b3ca5d24d8eeb4e29ee7b2c7f4fdb6a0f"
+    },
+    {
+      "file": "issue125-mobile-tests.jsonl",
+      "bytes": 339793,
+      "sha256": "cf78804c4d8ad176ad36e0c8299ae6cb2a637c4d7e413556e4d572e181fe919f"
+    },
+    {
+      "file": "issue125-android-build.log",
+      "bytes": 3315,
+      "sha256": "3c1202c927a66c03938de8d9278bf985e4014c18b961a6da424331ddddda01a0"
+    },
+    {
+      "file": "issue125-deck-build-v3.log",
+      "bytes": 4180,
+      "sha256": "be5fc8d4c7dab14591fa168dbbd40e915c79d6bba7e434d493518d91f5d46ba6"
+    },
+    {
+      "file": "issue125-deck-v3/build/validation.json",
+      "bytes": 3687,
+      "sha256": "f5f42364189a2a97804976fb6c4412ddd0ccc2ed9ac0bb1b38236e0ef321a334"
+    },
+    {
+      "file": "issue125-native-logcat.log",
+      "bytes": 157315,
+      "sha256": "22e52bde83f17313beb7a3acb80d5c8e46ebc04d843eb48bd5529f09eb6f7be4"
+    },
+    {
+      "file": "issue125-npm-audit.json",
+      "bytes": 3811,
+      "sha256": "fb2b0a72b742cb5f28cc5d3aa4d17adfcd8e23da3bd921e451be5d37485ced0a"
+    },
+    {
+      "file": "issue125-native-logcat-final.log",
+      "bytes": 204322,
+      "sha256": "119d51d9602fd978ea83e8d7f1bd0900dd7ff0d0c95b81a8a70ad60ca991450b"
+    }
+  ],
+  "nativeLogReview": {
+    "applicationFlutterErrors": 0,
+    "applicationFatalExceptions": 0,
+    "applicationANRs": 0,
+    "reviewRejectedWrites": 0,
+    "uiautomatorToolFatal": 1,
+    "cause": "Overlapping UIAutomator dumps: UiAutomationService already registered; sequential retry succeeded; no application source change"
+  },
+  "npmAudit": {
+    "affectedDependencies": 1,
+    "aggregateSeverity": "high",
+    "advisories": 6,
+    "dependency": "vite 8.3.2",
+    "status": "pre-existing; unresolved; no dependency changes"
+  }
+}
