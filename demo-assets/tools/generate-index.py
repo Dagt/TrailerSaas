@@ -68,5 +68,5 @@ index.extend(['','## Reusable presentation','',
  '[10-slide editable commercial deck](ux08/presentation/trailersaas-commercial-demo.pptx). Text and speaker notes remain editable; embedded screenshots preserve their original aspect ratio. This is a presentation of evidence, not a new UI design. See the [13-minute walkthrough](notes/suggested-client-walkthrough.md).','',
  'No video is supplied. Optional recordings are omitted to avoid implying a continuous operational scenario across independent fixtures. No old screenshots are relabeled as new captures.'])
 (root/'asset-index.md').write_text('\n'.join(index)+'\n',encoding='utf-8')
-(root/'notes/captions.md').write_text('\n'.join(notes)+'\n',encoding='utf-8')
+(root/'notes/captions.md').write_text('\n'.join(notes).rstrip()+'\n',encoding='utf-8')
 print('Indexed',len(rows),'screenshots')

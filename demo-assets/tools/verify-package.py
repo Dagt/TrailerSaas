@@ -39,6 +39,12 @@ for folder,item in frames:
     assert item['captureMethod']
     assert 'synthetic' in (item.get('authenticity','')+item.get('environment','')).lower()
 assert set((root/'ux08').rglob('*.png'))=={folder/item['file'] for folder,item in frames},'Unindexed or extra PNGs'
+for line in (root/'SHA256SUMS').read_text().splitlines():
+    expected,relative=line.split('  ',1)
+    assert hashlib.sha256((root/relative).read_bytes()).hexdigest()==expected,relative
+for folder,item in frames:
+    assert item['file'] in (root/'asset-index.md').read_text(encoding='utf-8')
+    assert item['file'] in (root/'notes/captions.md').read_text(encoding='utf-8')
 for doc in root.rglob('*.md'):
     for target in re.findall(r'\]\(([^)#]+)(?:#[^)]*)?\)',doc.read_text(encoding='utf-8')):
         if '://' not in target and not target.startswith('#'):

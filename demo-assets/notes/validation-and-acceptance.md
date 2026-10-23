@@ -45,7 +45,7 @@ test limitation, not a claimed product fix. No test was weakened to obtain a pas
 
 Capture tooling also retained unsuccessful/reframed attempts outside the package:
 a timeline exact-text locator included a rendered reason prefix; two detail
-encuadres were recaptured to show the relevant content; Android's outer review
+frames were recaptured to show the relevant content; Android's outer review
 banner is visible in pixels but absent from UIAutomator semantics. Final Android
 capture verifies review APK markers and installed identity and was visually
 inspected. A UIAutomator process interruption was retried without app changes.
@@ -68,7 +68,7 @@ Only accepted captures and the validated deck are published here.
 | Applicable local gates with remote limit explicit | PASS local / BLOCKED remote | Table above and [machine result summary](../ux08/validation/local-results.json); remote status never described as green |
 | English index, captions, source identity and reusable files | PASS | README, index, captions, per-capture manifests, tools and deck source |
 | Optional real clips | PASS — deliberately omitted | Optional scope; no synthetic flow video supplied |
-| One Draft PR, linked to #125, no merge | Pending publication verification | Final PR description and delivery record supply URL/HEAD; never marked Ready |
+| One Draft PR, linked to #125, no merge | PASS at publication | [PR #134](https://github.com/Dagt/TrailerSaas/pull/134) is Draft, linked with Closes #125, unmerged; final PR description supplies HEAD |
 
 Full raw command logs, test JSON, source archive, native APK and slide previews
 remain in the local `issue125-*` review bundle outside Git. The committed

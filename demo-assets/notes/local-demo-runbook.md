@@ -111,3 +111,14 @@ The presentation's editable authoring source and content are in `tools/` and
 `notes/presentation-content.json`; the supplied PPTX can be reused without any
 SDK. The authoring script additionally requires the documented Artifact Tool
 runtime; it is optional and has no application import.
+
+To regenerate the deck in a Codex environment with the Presentations skill and
+bundled dependencies, set `ARTIFACT_TOOL_IMPORT` to the bundled Artifact Tool
+module file URL (or provide the package), `RUNTIME_NODE_MODULES` to its dependency
+directory, `PRESENTATIONS_SKILL_DIR` to the installed presentations skill,
+`RUNTIME_PYTHON` to its Python executable, and `DECK_WORKSPACE` to a **new** output
+directory. Run `node demo-assets/tools/build-presentation.mjs` with that runtime's
+Node. These are authoring-tool paths, not application settings. The finalizer
+must succeed and every preview must be visually reviewed before replacing or
+publishing a deck. Without this optional runtime, edit the supplied PPTX directly;
+do not install artifact authoring packages into Web or Mobile.

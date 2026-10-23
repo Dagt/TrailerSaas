@@ -211,4 +211,3 @@ Use these captions with the linked assets. All records, names, counts, accepted-
 [yard-review.png](../ux08/mobile/yard-review.png) — Review the recorded origin and selected destination before explicit physical confirmation; Not Yet dismisses and no move was confirmed.
 
 **D2 / synthetic data.** No real authorization or server-confirmed operation is claimed. SHA-256: `1af82116919978916ca74dcecf6f90636b2a297b5e59eaa17daa20151c4b069c`.
-
