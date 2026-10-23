@@ -1,0 +1,67 @@
+[
+  {
+    "title": "Trailer visibility.\nClearer handoffs.",
+    "subtitle": "TrailerSaaS • Commercial demonstration",
+    "body": ["Recorded Trailer state. Dispatch planning. Road and Yard workflows. Customer access.", "Actual applications, isolated synthetic data.\nOwner review copy — not a production release."],
+    "notes": "Open by asking where dispatch, Yard and Customer teams lose time reconstructing status. Explain that the interfaces are implemented, but this demonstration uses independent synthetic fixtures, not one live shipment. No real Firebase or Backend session, no accepted operational writes and no production claim. Source: demo-assets/notes/capabilities-and-claims.md."
+  },
+  {
+    "title": "Know what was recorded",
+    "body": ["Current location and Last Known observation stay separate.", "Load, serviceability and physical coupling answer different questions.", "A starting point for investigation — without inventing a current position."],
+    "image": "web/operations-trailer.png",
+    "caption": "Actual React Trailer detail • ISOLATED DEMO • No GPS or ETA",
+    "notes": "Point to Unknown current location and the retained Last Known Dock/time. Do not say the Trailer is currently at that Dock. There is no live GPS map or ETA. Planned/expected Trailer is not a physical Hook. Sources: web/src/shared/trailers/TrailerReadView.tsx; demo-assets/ux08/web/manifest.json."
+  },
+  {
+    "title": "Bring dispatch work into focus",
+    "body": ["Review pending Orders, active Trips and work needing attention.", "Filter the displayed work and search an exact Trailer number.", "Help dispatch organize the next handoff with fewer repeated lookups."],
+    "image": "web/operations-dispatch.png",
+    "caption": "Actual React Dispatch • Synthetic bounded previews, not Tenant totals",
+    "notes": "Shown counts are fixture records in bounded projections of up to 20 Orders and 20 Trips, not fleet totals or performance metrics. Attention is within displayed Trips. This is not a live fleet monitoring demonstration. Source: web/src/areas/transport-operations/BoardPages.tsx; web/src/dev/operations-fixtures.ts."
+  },
+  {
+    "title": "Plan the work before execution",
+    "body": ["Orders → Stops → Resources → Review.", "Keep requested work, resource plans and physical execution distinct.", "Review the plan without claiming that a demo click dispatched a Trip."],
+    "image": "web-details/operations-planning-review.png",
+    "caption": "Actual four-step React planner • Review only • No Trip submitted",
+    "notes": "The existing planning workflow supports eligible Order selection, Stop configuration/reordering, resources and final review. The capture reaches review through the existing controls. No payload or validation changes. Do not click Create Trip as a claimed success; isolated writes reject. Source: web/src/areas/transport-operations/PlanTrip.tsx; web-details/manifest.json."
+  },
+  {
+    "title": "Give field teams a clear next step",
+    "body": ["Road: assigned work, Stops and reviewed physical actions.", "Yard: identify a Trailer, inspect its recorded state and review the destination.", "Scan identifies. Permission and explicit confirmation still govern the action."],
+    "images": ["mobile/road-trip.png", "mobile/yard-review.png"],
+    "caption": "Actual Flutter widgets on Android emulator • ISOLATED DEMO • No movement confirmed",
+    "notes": "Native AOSP Android 15/API35 x86_64 emulator, not widget-test images or physical-device QA. Existing review entry with synthetic MockClient reads. No real authentication or backend operations. Yard review uses the existing synthetic scanner; Not Yet leaves the move unconfirmed. Road/command/media queues distinguish pending, conflict, uncertain and confirmed; this deck does not demonstrate actual offline replay. Sources: mobile/test/native_review/main.dart; mobile/lib/src/road/road_trip_screen.dart; mobile/lib/src/yard/yard_view.dart; mobile per-frame metadata."
+  },
+  {
+    "title": "Keep changes explainable",
+    "body": ["Review recorded changes with actor, time and before/after values.", "Follow paginated Trip and Trailer histories for operational context.", "Administrative Audit and physical movement history remain separate."],
+    "image": "web-evidence/admin-audit-changes.png",
+    "caption": "Actual read-only Admin Audit • Synthetic Customer change • Capability-filtered access",
+    "notes": "Audit is a read-only administrative history, not an Undo feature or compliance certification. Synthetic event shown. In the live walkthrough, separately open the Trip timeline and Trailer movement history; do not call either the same ledger as Admin Audit. Sources: web/src/areas/tenant-admin/audit/AuditWorkspace.tsx; web-details/manifest.json."
+  },
+  {
+    "title": "Give Customers bounded visibility",
+    "body": ["Orders, deliveries and designated equipment in one Customer workspace.", "Help authorized users answer routine status questions.", "Keep unrelated Customers and internal operational details outside their scope."],
+    "image": "web/customer-dashboard.png",
+    "caption": "Actual React Customer dashboard • Synthetic access context and preview records",
+    "notes": "Access verified is a synthetic fixture UI state, not proof of real Firebase authorization. Existing Customer scope/verification/cache retirement guards remain unchanged. No other Customer, internal Driver/Tractor or Audit access is promised. Dashboard counts are up-to-five-record previews. Sources: CustomerPortalArea.tsx, CustomerPages.tsx, customer-fixtures.ts."
+  },
+  {
+    "title": "Make evidence access deliberate",
+    "body": ["Find evidence associated with permitted Orders and deliveries.", "Protected downloads require fresh authorization and configured private storage.", "This demo shows metadata and the honest unavailable-download state."],
+    "image": "web-evidence/customer-download-unavailable.png",
+    "caption": "Actual React document view • Synthetic metadata • No real file or signed download grant",
+    "notes": "Accepted metadata is synthetic. There is no real accepted POD, storage upload or successful private download in this environment. Upload finalization is not business acceptance. A configured deployment must verify private storage and protected grants independently. Source: CustomerReadViews.tsx; web/src/dev/customer-fixtures.ts."
+  },
+  {
+    "title": "A truthful demonstration boundary",
+    "body": ["Implemented: the role-specific interfaces, reviewed workflows and state distinctions shown here.", "Demonstrated: real React and Flutter execution with isolated synthetic reads and rejected writes.", "Not validated here: real identity, Backend/storage/notification delivery, field-device behavior or production operations."],
+    "notes": "Do not represent local regression tests as production certification. Remote CI: NOT VERIFIED — BILLING BLOCKED. No hosted demo or production deployment is supplied. Independent fixture datasets are not a real-time shipment simulation. All evidence comes from main fa0898e; final asset-only PR preserves identical Web/Mobile trees. Source: demo-assets/notes/limitations.md; validation-and-acceptance.md."
+  },
+  {
+    "title": "Which handoff should we validate first?",
+    "body": ["Locating a Trailer. Preparing a Trip. Reviewing a Yard move. Sharing delivery evidence.", "What does your team use today — and where does the information break down?", "If there is a fit, define a limited evaluation together. No rollout or performance commitment is implied."],
+    "notes": "Ask about carrier workflow, roles, device/connectivity constraints, current tools and interest in evaluation. Do not promise price, deployment date, uptime, savings, integrations or unsupported capabilities. Owner decides any subsequent sharing, commercial terms or infrastructure work. This deck and the 13-minute walkthrough are sales discovery materials, not production acceptance."
+  }
+]
